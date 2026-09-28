@@ -3,7 +3,7 @@ import { useSession } from './SessionProvider'
 import { SessionApiError } from './sessionClient'
 
 export default function SessionDevPanel() {
-    const { hasSession, startSession, request } = useSession()
+    const { hasSession, startSession, verifySessionUser } = useSession()
     const [input, setInput] = useState('')
     const [result, setResult] = useState('')
     const [loading, setLoading] = useState(false)
@@ -40,8 +40,8 @@ export default function SessionDevPanel() {
         setResult('Đang kiểm tra...')
 
         try {
-            const response = await request('/api/auth/session')
-            setResult(`HTTP ${response.status}: phiên còn hiệu lực.`)
+            const verifiedUserId = await verifySessionUser()
+            setResult(`Phiên hợp lệ. Mã người dùng: ${verifiedUserId}`)
         } catch (error) {
             if (error instanceof SessionApiError) {
                 setResult(`${error.code} — HTTP ${error.status}`)

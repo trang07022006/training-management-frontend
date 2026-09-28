@@ -3,11 +3,12 @@ import {
     useCallback,
     useContext,
     useMemo,
+    useRef,
     useState,
 } from 'react'
 import type { ReactNode } from 'react'
 
-import { createSessionClient } from './sessionClient'
+import { createSessionClient, SessionApiError } from './sessionClient'
 
 type SessionTokens = {
     accessToken: string
@@ -17,8 +18,10 @@ type SessionTokens = {
 type SessionContextValue = {
     hasSession: boolean
     endReason: string | null
+    userId: string | null
     startSession: (tokens: SessionTokens) => void
     clearSession: () => void
+    verifySessionUser: () => Promise<string>
     request: (
         path: string,
         init?: RequestInit,
@@ -38,13 +41,18 @@ export function SessionProvider({
 }: SessionProviderProps) {
     const [hasSession, setHasSession] = useState(false)
     const [endReason, setEndReason] = useState<string | null>(null)
+    const [userId, setUserId] = useState<string | null>(null)
 
-    // Tạo một client dùng chung trong suốt vòng đời Provider.
+    // Thay đổi khi bắt đầu hoặc kết thúc một phiên ở frontend.
+    const sessionVersion = useRef(0)
+
     const [client] = useState(() =>
         createSessionClient({
             apiOrigin,
             onSessionEnded: (code) => {
+                sessionVersion.current += 1
                 setHasSession(false)
+                setUserId(null)
                 setEndReason(code)
             },
         }),
@@ -53,7 +61,10 @@ export function SessionProvider({
     const startSession = useCallback(
         (tokens: SessionTokens) => {
             client.setSession(tokens)
+
+            sessionVersion.current += 1
             setHasSession(true)
+            setUserId(null)
             setEndReason(null)
         },
         [client],
@@ -61,19 +72,60 @@ export function SessionProvider({
 
     const clearSession = useCallback(() => {
         client.clearSession()
+
+        sessionVersion.current += 1
         setHasSession(false)
+        setUserId(null)
         setEndReason(null)
+    }, [client])
+
+    const verifySessionUser = useCallback(async (): Promise<string> => {
+        const expectedVersion = sessionVersion.current
+
+        const response = await client.request('/api/auth/session')
+        const body: unknown = await response.json()
+
+        // Người dùng có thể đổi tài khoản trong lúc chờ đọc phản hồi.
+        if (expectedVersion !== sessionVersion.current) {
+            throw new SessionApiError('SESSION_CHANGED')
+        }
+
+        if (
+            typeof body !== 'object' ||
+            body === null ||
+            !('user_id' in body) ||
+            typeof body.user_id !== 'string' ||
+            !body.user_id.trim()
+        ) {
+            throw new SessionApiError(
+                'INVALID_SESSION_RESPONSE',
+                response.status,
+            )
+        }
+
+        setUserId(body.user_id)
+        return body.user_id
     }, [client])
 
     const value = useMemo(
         () => ({
             hasSession,
             endReason,
+            userId,
             startSession,
             clearSession,
+            verifySessionUser,
             request: client.request,
         }),
-        [hasSession, endReason, startSession, clearSession, client],
+        [
+            hasSession,
+            endReason,
+            userId,
+            startSession,
+            clearSession,
+            verifySessionUser,
+            client,
+        ],
     )
 
     return (

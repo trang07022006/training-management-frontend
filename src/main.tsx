@@ -12,7 +12,9 @@ import { RequireSession } from './auth/RequireSession'
 const SessionDevPanel = import.meta.env.DEV
   ? lazy(() => import('./auth/SessionDevPanel.tsx'))
   : null
-
+const DraftDevPanel = import.meta.env.DEV
+  ? lazy(() => import('./drafts/DraftDevPanel'))
+  : null
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN || window.location.origin
 
@@ -33,7 +35,20 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<LoginPage />} />
 
           <Route element={<RequireSession />}>
-            <Route path="/" element={<App />} />
+            <Route
+              path="/"
+              element={
+                <>
+                  {DraftDevPanel && (
+                    <Suspense fallback={null}>
+                      <DraftDevPanel />
+                    </Suspense>
+                  )}
+
+                  <App />
+                </>
+              }
+            />
           </Route>
         </Routes>
       </SessionProvider>
