@@ -267,3 +267,45 @@ export async function revokeUserRoleApi(
     }
     return body.data
 }
+
+/**
+ * Khóa tài khoản người dùng (SCRUM-106).
+ */
+export async function lockUserApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+): Promise<{ user_id: string; status: string }> {
+    const res = await requestFn(`/api/users/${userId}/lock`, {
+        method: 'POST',
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        throw new ApiError(
+            body.message || 'Lỗi khi khóa tài khoản.',
+            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'ALREADY_LOCKED' : res.status === 403 ? 'FORBIDDEN' : 'LOCK_ERROR'),
+            res.status,
+        )
+    }
+    return body.data
+}
+
+/**
+ * Mở khóa tài khoản người dùng (SCRUM-107).
+ */
+export async function unlockUserApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+): Promise<{ user_id: string; status: string }> {
+    const res = await requestFn(`/api/users/${userId}/unlock`, {
+        method: 'POST',
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        throw new ApiError(
+            body.message || 'Lỗi khi mở khóa tài khoản.',
+            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'ALREADY_ACTIVE' : res.status === 403 ? 'FORBIDDEN' : 'UNLOCK_ERROR'),
+            res.status,
+        )
+    }
+    return body.data
+}

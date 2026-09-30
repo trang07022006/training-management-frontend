@@ -120,6 +120,44 @@
     margin: 0;
 }
 
+/* Success State */
+.user-success-banner {
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 0.95rem;
+}
+
+.user-success-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    font-weight: 500;
+}
+
+.user-close-banner-btn {
+    background: none;
+    border: none;
+    color: #065f46;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.user-close-banner-btn:hover {
+    background-color: #d1fae5;
+}
+
 /* Error State */
 .user-error-banner {
     background-color: #fef2f2;

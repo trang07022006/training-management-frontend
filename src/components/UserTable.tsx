@@ -5,8 +5,11 @@ export interface UserTableProps {
     users: User[]
     onEdit?: (user: User) => void
     onManageRoles?: (user: User) => void
+    onLockUser?: (user: User) => void
+    onUnlockUser?: (user: User) => void
     canManage?: boolean
     emptyMessage?: string
+    isActionLoading?: boolean
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -20,8 +23,11 @@ export function UserTable({
     users,
     onEdit,
     onManageRoles,
+    onLockUser,
+    onUnlockUser,
     canManage = true,
     emptyMessage = 'Không có dữ liệu người dùng.',
+    isActionLoading = false,
 }: UserTableProps) {
     if (!users || users.length === 0) {
         return (
@@ -102,6 +108,37 @@ export function UserTable({
                                                     </svg>
                                                     <span>Chỉnh sửa</span>
                                                 </button>
+                                                {statusKey === 'locked' ? (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-unlock-user"
+                                                        data-testid={`btn-unlock-user-${u.id}`}
+                                                        aria-label={`Mở khóa tài khoản ${u.name}`}
+                                                        onClick={() => onUnlockUser?.(u)}
+                                                        disabled={isActionLoading}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                                            <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                                                        </svg>
+                                                        <span>Mở khóa</span>
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-lock-user"
+                                                        data-testid={`btn-lock-user-${u.id}`}
+                                                        aria-label={`Khóa tài khoản ${u.name}`}
+                                                        onClick={() => onLockUser?.(u)}
+                                                        disabled={isActionLoading}
+                                                    >
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                                        </svg>
+                                                        <span>Khóa tài khoản</span>
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     )}

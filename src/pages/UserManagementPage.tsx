@@ -8,6 +8,7 @@ import { UserPagination } from '../components/UserPagination'
 import { CreateUserModal } from '../components/CreateUserModal'
 import { EditUserModal } from '../components/EditUserModal'
 import { UserRoleModal } from '../components/UserRoleModal'
+import { AccountLockModal } from '../components/AccountLockModal'
 import './UserManagementPage.css'
 
 export interface UserManagementPageProps {
@@ -20,6 +21,7 @@ export interface UserManagementPageProps {
     createModalSlot?: ReactNode
     editModalSlot?: ReactNode
     roleModalSlot?: ReactNode
+    lockModalSlot?: ReactNode
     onOpenCreateModal?: () => void
 }
 
@@ -38,6 +40,7 @@ export function UserManagementPage({
     createModalSlot,
     editModalSlot,
     roleModalSlot,
+    lockModalSlot,
     onOpenCreateModal,
 }: UserManagementPageProps) {
     const { request: sessionRequest, role } = useSession()
@@ -65,6 +68,9 @@ export function UserManagementPage({
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [roleManagingUser, setRoleManagingUser] = useState<User | null>(null)
+    const [lockModalUser, setLockModalUser] = useState<User | null>(null)
+    const [lockModalAction, setLockModalAction] = useState<'lock' | 'unlock'>('lock')
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const loadUsers = useCallback(async (params: UserListParams = {}) => {
         setIsLoading(true)
@@ -147,6 +153,23 @@ export function UserManagementPage({
         )
     }
 
+    const handleOpenLock = (targetUser: User) => {
+        setLockModalUser(targetUser)
+        setLockModalAction('lock')
+    }
+
+    const handleOpenUnlock = (targetUser: User) => {
+        setLockModalUser(targetUser)
+        setLockModalAction('unlock')
+    }
+
+    const handleLockSuccess = (updatedUser: User, msg: string) => {
+        setUsers((prev) =>
+            prev.map((u) => (String(u.id) === String(updatedUser.id) ? updatedUser : u))
+        )
+        setSuccessMessage(msg)
+    }
+
     const handleOpenCreate = () => {
         if (onOpenCreateModal) {
             onOpenCreateModal()
@@ -209,6 +232,28 @@ export function UserManagementPage({
                 </div>
             )}
 
+            {/* Success Banner */}
+            {successMessage && (
+                <div className="user-success-banner" data-testid="user-success-state" role="status">
+                    <p className="user-success-message">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                        <span data-testid="user-success-text">{successMessage}</span>
+                    </p>
+                    <button
+                        type="button"
+                        className="user-close-banner-btn"
+                        data-testid="btn-close-success-banner"
+                        onClick={() => setSuccessMessage(null)}
+                        aria-label="Đóng thông báo"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
+
             {/* Search & Filter Section */}
             <div data-testid="user-search-filter-section">
                 {searchFilterSlot !== undefined ? (
@@ -249,6 +294,8 @@ export function UserManagementPage({
                             users={users}
                             onEdit={(u) => setEditingUser(u)}
                             onManageRoles={(u) => setRoleManagingUser(u)}
+                            onLockUser={handleOpenLock}
+                            onUnlockUser={handleOpenUnlock}
                             canManage={canManageUsers}
                         />
                     )}
@@ -302,6 +349,19 @@ export function UserManagementPage({
                     user={roleManagingUser}
                     onClose={() => setRoleManagingUser(null)}
                     onRoleUpdated={handleUserRoleUpdated}
+                    customRequest={customRequest}
+                />
+            )}
+
+            {lockModalSlot !== undefined ? (
+                lockModalSlot
+            ) : (
+                <AccountLockModal
+                    isOpen={!!lockModalUser}
+                    user={lockModalUser}
+                    action={lockModalAction}
+                    onClose={() => setLockModalUser(null)}
+                    onSuccess={handleLockSuccess}
                     customRequest={customRequest}
                 />
             )}

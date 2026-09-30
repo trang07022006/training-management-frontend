@@ -253,6 +253,26 @@
     background-color: #1d4ed8;
 }
 
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #dc2626;
+    border: 1px solid #b91c1c;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #b91c1c;
+}
+
+.btn-danger:disabled,
 .btn-primary:disabled,
 .btn-secondary:disabled {
     opacity: 0.6;

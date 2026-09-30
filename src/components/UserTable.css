@@ -228,6 +228,58 @@
     cursor: not-allowed;
 }
 
+.btn-lock-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #b91c1c;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-lock-user:hover:not(:disabled) {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.btn-lock-user:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-unlock-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #047857;
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-unlock-user:hover:not(:disabled) {
+    background-color: #d1fae5;
+    border-color: #6ee7b7;
+    color: #065f46;
+}
+
+.btn-unlock-user:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* Empty Table State */
 .user-table-empty {
     padding: 40px 20px;
