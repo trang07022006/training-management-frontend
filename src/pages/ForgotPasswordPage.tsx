@@ -7,10 +7,9 @@ export interface ForgotPasswordPageProps {
 }
 
 export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
-  const [email, setEmail] = useState('admin@ictu.edu.vn')
+  const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [submittedEmail, setSubmittedEmail] = useState('')
 
   const trimmedEmail = email.trim()
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
@@ -32,13 +31,8 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
       // Giữ thông báo đồng nhất để bảo mật chống dò quét tài khoản (SCRUM-50)
     } finally {
       setIsLoading(false)
-      setSubmittedEmail(trimmedEmail)
       setIsSubmitted(true)
     }
-  }
-
-  const handleQuickFill = (sampleEmail: string) => {
-    setEmail(sampleEmail)
   }
 
   return (
@@ -90,19 +84,15 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
               <div className="feedback-texts">
-                <span className="feedback-heading">Đã gửi liên kết xác thực</span>
+                <span className="feedback-heading">Đã tiếp nhận yêu cầu</span>
                 <span className="feedback-body">
-                  Vui lòng kiểm tra hộp thư tại{' '}
-                  <span id="targetEmailLabel" className="target-email-highlight">
-                    {submittedEmail}
-                  </span>{' '}
-                  để nhận hướng dẫn đặt lại mật khẩu.
+                  Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.
                 </span>
               </div>
             </div>
 
             <div className="anti-enum-note">
-              🛡️ <strong>Lưu ý bảo mật:</strong> Nếu địa chỉ email tồn tại trên hệ thống ICTU, một liên kết đặt lại mật khẩu có hiệu lực trong 30 phút sẽ được gửi đến hộp thư của bạn.
+              🛡️ <strong>Lưu ý bảo mật:</strong> Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.
             </div>
           </div>
         )}
@@ -251,26 +241,6 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
           </button>
         </form>
 
-        {/* Quick Test Accounts Helper */}
-        <section className="quick-fill-section" aria-label="Tài khoản mẫu để thử nhanh">
-          <span className="quick-fill-label">Thử nhanh với tài khoản mẫu:</span>
-          <div className="quick-fill-chips">
-            <button
-              type="button"
-              onClick={() => handleQuickFill('admin@ictu.edu.vn')}
-              className="chip-btn"
-            >
-              admin@ictu.edu.vn (Có tài khoản)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickFill('notfound@ictu.edu.vn')}
-              className="chip-btn"
-            >
-              notfound@ictu.edu.vn (Không có tk)
-            </button>
-          </div>
-        </section>
 
         {/* Footer */}
         <footer className="forgot-password-footer">

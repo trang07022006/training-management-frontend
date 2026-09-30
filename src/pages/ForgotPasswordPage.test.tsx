@@ -19,10 +19,12 @@ function renderComponent(props = {}) {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  localStorage.clear()
+  sessionStorage.clear()
 })
 
-describe('ForgotPasswordPage (SCRUM-44)', () => {
-  it('hiển thị đầy đủ tiêu đề, mô tả, ô nhập email và nút bấm', () => {
+describe('ForgotPasswordPage (SCRUM-44 & SCRUM-50)', () => {
+  it('hiển thị đầy đủ tiêu đề, mô tả, ô nhập email trống và nút bấm bị khóa ban đầu', () => {
     renderComponent()
 
     expect(screen.getByRole('heading', { name: 'Quên mật khẩu?' })).toBeDefined()
@@ -32,17 +34,20 @@ describe('ForgotPasswordPage (SCRUM-44)', () => {
 
     const emailInput = screen.getByLabelText(/địa chỉ email/i) as HTMLInputElement
     expect(emailInput).toBeDefined()
-    expect(emailInput.value).toBe('admin@ictu.edu.vn')
+    expect(emailInput.value).toBe('')
 
     const submitBtn = screen.getByRole('button', { name: /gửi liên kết đặt lại/i })
     expect(submitBtn).toBeDefined()
-    expect(submitBtn.hasAttribute('disabled')).toBe(false)
+    expect(submitBtn.hasAttribute('disabled')).toBe(true)
 
     expect(screen.getByRole('link', { name: /quay lại đăng nhập/i })).toBeDefined()
   })
 
-  it('xác thực email hợp lệ khi tải trang với tài khoản mẫu', () => {
+  it('xác thực email hợp lệ khi người dùng nhập đúng định dạng', () => {
     renderComponent()
+
+    const emailInput = screen.getByLabelText(/địa chỉ email/i)
+    fireEvent.change(emailInput, { target: { value: 'user@example.com' } })
 
     const helperText = document.getElementById('fieldHelperText')
     expect(helperText?.textContent).toBe('Định dạng hợp lệ. Sẵn sàng gửi yêu cầu.')
@@ -51,7 +56,7 @@ describe('ForgotPasswordPage (SCRUM-44)', () => {
     expect(submitBtn.hasAttribute('disabled')).toBe(false)
   })
 
-  it('hiển thị thông báo trung tính và khóa nút gửi khi xóa trống email', () => {
+  it('hiển thị thông báo trung tính và khóa nút gửi khi để trống email', () => {
     renderComponent()
 
     const emailInput = screen.getByLabelText(/địa chỉ email/i)
@@ -81,29 +86,11 @@ describe('ForgotPasswordPage (SCRUM-44)', () => {
     expect(submitBtn.hasAttribute('disabled')).toBe(true)
   })
 
-  it('nạp nhanh địa chỉ email khi bấm vào các nút tài khoản mẫu', () => {
+  it('gửi form thành công và hiển thị public generic message (SCRUM-50)', async () => {
     renderComponent()
 
-    const emailInput = screen.getByLabelText(/địa chỉ email/i) as HTMLInputElement
-
-    const notfoundChip = screen.getByRole('button', {
-      name: /notfound@ictu.edu.vn/i,
-    })
-    fireEvent.click(notfoundChip)
-    expect(emailInput.value).toBe('notfound@ictu.edu.vn')
-
-    const helperText = document.getElementById('fieldHelperText')
-    expect(helperText?.textContent).toBe('Định dạng hợp lệ. Sẵn sàng gửi yêu cầu.')
-
-    const adminChip = screen.getByRole('button', {
-      name: /admin@ictu.edu.vn/i,
-    })
-    fireEvent.click(adminChip)
-    expect(emailInput.value).toBe('admin@ictu.edu.vn')
-  })
-
-  it('gửi form thành công và hiển thị banner xác thực (SCRUM-50)', async () => {
-    renderComponent()
+    const emailInput = screen.getByLabelText(/địa chỉ email/i)
+    fireEvent.change(emailInput, { target: { value: 'valid-user@ictu.edu.vn' } })
 
     const submitBtn = screen.getByRole('button', { name: /gửi liên kết đặt lại/i })
     fireEvent.click(submitBtn)
@@ -115,25 +102,63 @@ describe('ForgotPasswordPage (SCRUM-44)', () => {
     await waitFor(() => {
       const banner = document.getElementById('resetFeedbackBanner')
       expect(banner).not.toBeNull()
-      expect(screen.getByText('Đã gửi liên kết xác thực')).toBeDefined()
-      expect(document.getElementById('targetEmailLabel')?.textContent).toBe(
-        'admin@ictu.edu.vn'
-      )
+      expect(screen.getByText('Đã tiếp nhận yêu cầu')).toBeDefined()
+      expect(
+        screen.getAllByText(
+          'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.'
+        ).length
+      ).toBeGreaterThanOrEqual(1)
     })
 
     // Nút đổi thành "Gửi lại liên kết đặt lại"
     expect(screen.getByText('Gửi lại liên kết đặt lại')).toBeDefined()
   })
 
-  it('gọi hàm callback onSubmit khi được truyền vào prop', async () => {
-    const onSubmit = vi.fn().mockResolvedValue(undefined)
-    renderComponent({ onSubmit })
+  it('không có demo account / chip test trong giao diện production (SCRUM-50)', () => {
+    renderComponent()
+
+    expect(screen.queryByText(/admin@ictu.edu.vn \(Có tài khoản\)/i)).toBeNull()
+    expect(screen.queryByText(/notfound@ictu.edu.vn/i)).toBeNull()
+    expect(screen.queryByText(/thử nhanh với tài khoản mẫu/i)).toBeNull()
+  })
+
+  it('không có text lộ tồn tại email như "email không tồn tại" trong UI (SCRUM-50)', () => {
+    renderComponent()
+
+    expect(screen.queryByText(/email không tồn tại/i)).toBeNull()
+    expect(screen.queryByText(/không tìm thấy tài khoản/i)).toBeNull()
+    expect(screen.queryByText(/user not found/i)).toBeNull()
+  })
+
+  it('không lưu trạng thái email tồn tại vào localStorage hoặc sessionStorage (SCRUM-50)', async () => {
+    renderComponent()
+
+    const emailInput = screen.getByLabelText(/địa chỉ email/i)
+    fireEvent.change(emailInput, { target: { value: 'unknown@ictu.edu.vn' } })
 
     const submitBtn = screen.getByRole('button', { name: /gửi liên kết đặt lại/i })
     fireEvent.click(submitBtn)
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith('admin@ictu.edu.vn')
+      expect(document.getElementById('resetFeedbackBanner')).not.toBeNull()
+    })
+
+    expect(localStorage.getItem('emailExists')).toBeNull()
+    expect(sessionStorage.getItem('emailExists')).toBeNull()
+  })
+
+  it('gọi hàm callback onSubmit khi được truyền vào prop', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderComponent({ onSubmit })
+
+    const emailInput = screen.getByLabelText(/địa chỉ email/i)
+    fireEvent.change(emailInput, { target: { value: 'test@ictu.edu.vn' } })
+
+    const submitBtn = screen.getByRole('button', { name: /gửi liên kết đặt lại/i })
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith('test@ictu.edu.vn')
     })
 
     const banner = document.getElementById('resetFeedbackBanner')
