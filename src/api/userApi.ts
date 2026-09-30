@@ -16,6 +16,21 @@ export interface User {
     updated_at?: string
 }
 
+export const STATUS_LABELS: Record<string, string> = {
+    active: 'Hoạt động',
+    locked: 'Bị khóa',
+    inactive: 'Không hoạt động',
+}
+
+export function getStatusInfo(status?: string | null): { key: string; label: string } {
+    if (!status || !status.trim()) {
+        return { key: 'unknown', label: 'Không xác định' }
+    }
+    const key = status.trim().toLowerCase()
+    const label = STATUS_LABELS[key] || status.trim()
+    return { key, label }
+}
+
 export interface UserListParams {
     page?: number
     page_size?: number

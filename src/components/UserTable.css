@@ -159,6 +159,16 @@
     background-color: #94a3b8;
 }
 
+.status-badge.status-unknown {
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+}
+
+.status-badge.status-unknown::before {
+    background-color: #94a3b8;
+}
+
 /* Action Buttons */
 .user-cell-actions {
     text-align: right;

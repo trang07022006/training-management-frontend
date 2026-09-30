@@ -1,4 +1,4 @@
-import type { User } from '../api/userApi'
+import { type User, getStatusInfo } from '../api/userApi'
 import './UserTable.css'
 
 export interface UserTableProps {
@@ -14,12 +14,6 @@ const ROLE_LABELS: Record<string, string> = {
     trainer: 'Giảng viên',
     trainee: 'Học viên',
     user: 'Người dùng',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-    active: 'Hoạt động',
-    locked: 'Bị khóa',
-    inactive: 'Không hoạt động',
 }
 
 export function UserTable({
@@ -57,8 +51,7 @@ export function UserTable({
                         {users.map((u) => {
                             const roleKey = (u.role || 'user').toLowerCase()
                             const roleText = ROLE_LABELS[roleKey] || u.role || 'Người dùng'
-                            const statusKey = (u.status || 'active').toLowerCase()
-                            const statusText = STATUS_LABELS[statusKey] || u.status || 'Hoạt động'
+                            const { key: statusKey, label: statusText } = getStatusInfo(u.status)
 
                             return (
                                 <tr key={u.id} data-testid={`user-row-${u.id}`}>
@@ -77,7 +70,7 @@ export function UserTable({
                                         </span>
                                     </td>
                                     <td>
-                                        <span className={`status-badge status-${statusKey}`}>
+                                        <span className={`status-badge status-${statusKey}`} data-testid={`user-status-${u.id}`}>
                                             {statusText}
                                         </span>
                                     </td>
