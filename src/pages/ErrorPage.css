@@ -1,0 +1,207 @@
+/* =========================================================================
+   UI Standard: Error Page Component Styles (SCRUM-76)
+   Tones: Xanh dương (#2563eb, #1e40af), Trắng (#ffffff), Xám (#f8fafc, #64748b)
+   Responsive: Mobile first & Desktop friendly (>= 360px)
+   ========================================================================= */
+
+.error-page-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    width: 100%;
+    flex: 1;
+    padding: 32px 16px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    box-sizing: border-box;
+}
+
+.error-card {
+    width: 100%;
+    max-width: 480px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 12px 24px -4px rgba(37, 99, 235, 0.08);
+    padding: 36px 28px;
+    text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.error-badge-wrapper {
+    margin-bottom: 12px;
+}
+
+.error-status-badge {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #2563eb;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.error-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    color: #2563eb;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.error-icon-svg {
+    width: 32px;
+    height: 32px;
+}
+
+.error-content {
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.error-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 10px 0;
+    line-height: 1.3;
+}
+
+.error-description {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: #64748b;
+    margin: 0;
+}
+
+.error-extra-content {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.error-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.error-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    min-height: 42px;
+    border: 1px solid transparent;
+}
+
+.error-action-primary {
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.error-action-primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.error-action-secondary {
+    background-color: #ffffff;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+.error-action-secondary:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.error-action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.error-action-btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* Responsive Styles for Small Screens (360px) */
+@media (max-width: 480px) {
+    .error-card {
+        padding: 28px 18px;
+    }
+
+    .error-title {
+        font-size: 1.2rem;
+    }
+
+    .error-description {
+        font-size: 0.9rem;
+    }
+
+    .error-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .error-action-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 360px) {
+    .error-page-container {
+        padding: 16px 8px;
+    }
+
+    .error-card {
+        padding: 20px 12px;
+        border-radius: 10px;
+    }
+
+    .error-icon-wrapper {
+        width: 52px;
+        height: 52px;
+        margin-bottom: 14px;
+    }
+
+    .error-icon-svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .error-title {
+        font-size: 1.1rem;
+    }
+
+    .error-description {
+        font-size: 0.85rem;
+    }
+}
