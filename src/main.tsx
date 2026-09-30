@@ -11,6 +11,7 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { UnauthorizedPage } from './pages/UnauthorizedPage'
+import { ForbiddenPage } from './pages/ForbiddenPage'
 import { RequireSession } from './auth/RequireSession'
 import { RequirePermission } from './auth/RequirePermission'
 import { AppLayout } from './navigation/AppLayout'
@@ -62,11 +63,14 @@ createRoot(document.getElementById('root')!).render(
                   </>
                 }
               />
+              <Route path="/forbidden" element={<ForbiddenPage />} />
+              <Route path="/403" element={<ForbiddenPage />} />
               <Route
                 element={
                   <RequirePermission
                     requiredRole="admin"
                     requiredPermission={SYSTEM_PERMISSIONS.USER_MANAGE}
+                    fallbackPath="/forbidden"
                   />
                 }
               >
@@ -77,6 +81,7 @@ createRoot(document.getElementById('root')!).render(
                   <RequirePermission
                     requiredRole="trainer"
                     requiredPermission={SYSTEM_PERMISSIONS.COURSE_MANAGE}
+                    fallbackPath="/forbidden"
                   />
                 }
               >
@@ -87,6 +92,7 @@ createRoot(document.getElementById('root')!).render(
                   <RequirePermission
                     requiredRole="trainee"
                     requiredPermission={SYSTEM_PERMISSIONS.COURSE_VIEW}
+                    fallbackPath="/forbidden"
                   />
                 }
               >
