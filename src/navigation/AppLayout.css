@@ -1,0 +1,39 @@
+/* AppLayout Styling (SCRUM-23) */
+
+.app-layout-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f8fafc;
+}
+
+.app-main-viewport {
+    flex: 1;
+    margin-left: 260px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    transition: margin-left 0.25s ease-in-out;
+}
+
+.app-content-body {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+}
+
+/* Responsive breakpoint for <= 768px and specifically 360px */
+@media (max-width: 768px) {
+    .app-main-viewport {
+        margin-left: 0;
+    }
+
+    .app-content-body {
+        padding: 16px 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .app-content-body {
+        padding: 12px 8px;
+    }
+}

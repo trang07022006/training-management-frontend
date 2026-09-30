@@ -11,6 +11,9 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { RequireSession } from './auth/RequireSession'
+import { RequirePermission } from './auth/RequirePermission'
+import { AppLayout } from './navigation/AppLayout'
+import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { RoleDashboard } from './pages/RoleDashboard'
 
 const SessionDevPanel = import.meta.env.DEV
@@ -41,24 +44,53 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route element={<RequireSession />}>
-            <Route
-              path="/"
-              element={
-                <>
-                  {DraftDevPanel && (
-                    <Suspense fallback={null}>
-                      <DraftDevPanel />
-                    </Suspense>
-                  )}
+            <Route element={<AppLayout />}>
+              <Route
+                path="/"
+                element={
+                  <>
+                    {DraftDevPanel && (
+                      <Suspense fallback={null}>
+                        <DraftDevPanel />
+                      </Suspense>
+                    )}
 
-                  <App />
-                </>
-              }
-            />
-            <Route path="/admin" element={<RoleDashboard role="admin" />} />
-            <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
-            <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
-            <Route path="/change-password" element={<ChangePasswordPage />} />
+                    <App />
+                  </>
+                }
+              />
+              <Route
+                element={
+                  <RequirePermission
+                    requiredRole="admin"
+                    requiredPermission={SYSTEM_PERMISSIONS.USER_MANAGE}
+                  />
+                }
+              >
+                <Route path="/admin" element={<RoleDashboard role="admin" />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredRole="trainer"
+                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_MANAGE}
+                  />
+                }
+              >
+                <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredRole="trainee"
+                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_VIEW}
+                  />
+                }
+              >
+                <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
+              </Route>
+              <Route path="/change-password" element={<ChangePasswordPage />} />
+            </Route>
           </Route>
         </Routes>
       </SessionProvider>
