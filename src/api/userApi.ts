@@ -132,7 +132,7 @@ export async function createUserApi(
  */
 export async function updateUserApi(
     requestFn: RequestFunction,
-    userId: string,
+    userId: string | number,
     data: UpdateUserData,
 ): Promise<User> {
     const res = await requestFn(`/api/users/${userId}`, {

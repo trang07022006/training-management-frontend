@@ -182,11 +182,17 @@
     color: #0f172a;
 }
 
-/* Inline Field Error */
+/* Inline Field Error & Note */
 .field-error-text {
     font-size: 0.8rem;
     color: #dc2626;
     margin: 0;
+}
+
+.field-note-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin: 2px 0 0 0;
 }
 
 /* Two-column layout in modal */
