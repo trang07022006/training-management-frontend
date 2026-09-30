@@ -335,4 +335,65 @@ describe('ChangePasswordPage (SCRUM-52)', () => {
       expect(newInput.value).toBe('NewSecurePass456!')
     })
   })
+
+  // =========================================================================
+  // SCRUM-59: Kiểm thử tổng thể chức năng đổi mật khẩu (Frontend)
+  // =========================================================================
+  it('15. SCRUM-59: tuyệt đối không log password ra console.log/info/warn/error trong toàn bộ quá trình nhập và submit', async () => {
+    const logSpy = vi.spyOn(console, 'log')
+    const infoSpy = vi.spyOn(console, 'info')
+    const warnSpy = vi.spyOn(console, 'warn')
+    const errorSpy = vi.spyOn(console, 'error')
+
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+
+    const secretA = 'P@sswordToNeverLog1'
+    const secretB = 'P@sswordToNeverLog2'
+
+    fireEvent.change(currentInput, { target: { value: secretA } })
+    fireEvent.change(newInput, { target: { value: secretB } })
+    fireEvent.change(confirmInput, { target: { value: secretB } })
+
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalled()
+    })
+
+    const allSpies = [logSpy, infoSpy, warnSpy, errorSpy]
+    for (const spy of allSpies) {
+      for (const call of spy.mock.calls) {
+        const text = call.map((c) => String(c)).join(' ')
+        expect(text).not.toContain(secretA)
+        expect(text).not.toContain(secretB)
+      }
+    }
+  })
+
+  it('16. SCRUM-59: lỗi máy chủ (server error 500) hoặc lỗi mạng được hiển thị rõ ràng trên giao diện', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Lỗi máy chủ khi đổi mật khẩu (500)'))
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'NewValidPass456!' } })
+    fireEvent.change(confirmInput, { target: { value: 'NewValidPass456!' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi mật khẩu' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeDefined()
+      expect(screen.getByText('Lỗi máy chủ khi đổi mật khẩu (500)')).toBeDefined()
+    })
+  })
 })
+
