@@ -155,7 +155,7 @@ export async function updateUserApi(
 }
 
 export interface RoleItem {
-    id: string
+    id: string | number
     code: string
     name: string
     description?: string
@@ -213,7 +213,7 @@ export async function fetchAvailableRolesApi(
 export async function assignUserRoleApi(
     requestFn: RequestFunction,
     userId: string | number,
-    roleIdOrCode: string,
+    roleIdOrCode: string | number,
 ): Promise<{ user_id: string; role: RoleItem }> {
     const res = await requestFn(`/api/users/${userId}/roles`, {
         method: 'POST',
@@ -237,7 +237,7 @@ export async function assignUserRoleApi(
 export async function revokeUserRoleApi(
     requestFn: RequestFunction,
     userId: string | number,
-    roleId: string,
+    roleId: string | number,
 ): Promise<{ user_id: string; role_id: string; role_code: string }> {
     const res = await requestFn(`/api/users/${userId}/roles/${roleId}`, {
         method: 'DELETE',
