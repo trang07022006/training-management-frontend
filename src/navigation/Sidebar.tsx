@@ -5,12 +5,15 @@ import {
     filterMenuItems,
     type MenuItem,
 } from './menuConfig'
+import { getUserDisplayName, getUserRoleDisplay } from './userProfileUtils'
 import './Sidebar.css'
 
 export interface SidebarProps {
     isOpen?: boolean
     onClose?: () => void
     customMenuItems?: readonly MenuItem[]
+    userName?: string | null
+    userEmail?: string | null
 }
 
 /**
@@ -74,8 +77,14 @@ function getMenuIcon(iconName?: string) {
 /**
  * Thành phần Sidebar điều hướng hiển thị theo quyền người dùng (SCRUM-23).
  */
-export function Sidebar({ isOpen = false, onClose, customMenuItems }: SidebarProps) {
-    const { hasSession, role } = useSession()
+export function Sidebar({
+    isOpen = false,
+    onClose,
+    customMenuItems,
+    userName,
+    userEmail,
+}: SidebarProps) {
+    const { hasSession, role, userId } = useSession()
     const location = useLocation()
 
     // Lọc menu theo quyền người dùng thực tế
@@ -148,6 +157,22 @@ export function Sidebar({ isOpen = false, onClose, customMenuItems }: SidebarPro
                         })}
                     </ul>
                 </nav>
+
+                {hasSession && (
+                    <div className="sidebar-user-footer" data-testid="sidebar-user-footer">
+                        <div className="sidebar-user-avatar" aria-hidden="true">
+                            {getUserDisplayName({ name: userName, email: userEmail, userId }).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="sidebar-user-info">
+                            <span className="sidebar-user-name" data-testid="sidebar-user-name">
+                                {getUserDisplayName({ name: userName, email: userEmail, userId })}
+                            </span>
+                            <span className="sidebar-user-role" data-testid="sidebar-user-role">
+                                {getUserRoleDisplay(role)}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </aside>
         </>
     )
