@@ -4,7 +4,7 @@
  */
 
 export interface User {
-    id: string
+    id: string | number
     email: string
     name: string
     phone?: string | null

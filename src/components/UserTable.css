@@ -1,0 +1,222 @@
+/* User Table Styles - SCRUM-90 */
+
+.user-table-container {
+    width: 100%;
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.user-table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.user-table {
+    width: 100%;
+    min-width: 650px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    text-align: left;
+}
+
+.user-table th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.user-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #1e293b;
+    vertical-align: middle;
+}
+
+.user-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.user-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.user-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* User cell contents */
+.user-cell-name {
+    font-weight: 600;
+    color: #0f172a;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-cell-email {
+    color: #475569;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-cell-phone {
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* Role Badges */
+.role-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+}
+
+.role-badge.role-admin {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #c7d2fe;
+}
+
+.role-badge.role-trainer {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+
+.role-badge.role-trainee {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.role-badge.role-user {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-badge::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-badge.status-active {
+    background-color: #ecfdf5;
+    color: #065f46;
+}
+
+.status-badge.status-active::before {
+    background-color: #10b981;
+}
+
+.status-badge.status-locked {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.status-badge.status-locked::before {
+    background-color: #ef4444;
+}
+
+.status-badge.status-inactive {
+    background-color: #f8fafc;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.status-badge.status-inactive::before {
+    background-color: #94a3b8;
+}
+
+/* Action Buttons */
+.user-cell-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.btn-edit-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1e40af;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-edit-user:hover:not(:disabled) {
+    background-color: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
+.btn-edit-user:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Empty Table State */
+.user-table-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #64748b;
+}
+
+.user-table-empty p {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Responsive adjustment for 360px mobile */
+@media (max-width: 640px) {
+    .user-table-container {
+        border-radius: 6px;
+        margin-bottom: 12px;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 10px 12px;
+    }
+
+    .btn-edit-user {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+}
