@@ -88,6 +88,10 @@ export function ChangePasswordPage({
           newPassword,
           confirmPassword,
         })
+        setInternalSuccess('Đổi mật khẩu thành công.')
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
       } catch (err: unknown) {
         const message =
           err instanceof Error

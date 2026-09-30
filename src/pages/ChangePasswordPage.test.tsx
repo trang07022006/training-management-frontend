@@ -282,4 +282,57 @@ describe('ChangePasswordPage (SCRUM-52)', () => {
     })
     expect(screen.queryByRole('alert')).toBeNull()
   })
+
+  // =========================================================================
+  // SCRUM-57: Xử lý phản hồi và thông báo (Frontend)
+  // =========================================================================
+  it('13. SCRUM-57: đổi mật khẩu thành công -> hiển thị "Đổi mật khẩu thành công." và xóa trắng 3 ô nhập', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i) as HTMLInputElement
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i) as HTMLInputElement
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i) as HTMLInputElement
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'NewSecurePass456!' } })
+    fireEvent.change(confirmInput, { target: { value: 'NewSecurePass456!' } })
+
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toBeDefined()
+      expect(screen.getByText('Đổi mật khẩu thành công.')).toBeDefined()
+      // Xóa trắng cả 3 ô nhập
+      expect(currentInput.value).toBe('')
+      expect(newInput.value).toBe('')
+      expect(confirmInput.value).toBe('')
+    })
+  })
+
+  it('14. SCRUM-57: đổi mật khẩu thất bại -> hiển thị lỗi và giữ lại dữ liệu', async () => {
+    const onSubmit = vi.fn().mockRejectedValue(new Error('Mật khẩu hiện tại không chính xác'))
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i) as HTMLInputElement
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i) as HTMLInputElement
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i) as HTMLInputElement
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+
+    fireEvent.change(currentInput, { target: { value: 'WrongCurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'NewSecurePass456!' } })
+    fireEvent.change(confirmInput, { target: { value: 'NewSecurePass456!' } })
+
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeDefined()
+      expect(screen.getByText('Mật khẩu hiện tại không chính xác')).toBeDefined()
+      expect(screen.queryByText('Đổi mật khẩu thành công.')).toBeNull()
+      // Giữ lại để người dùng sửa
+      expect(currentInput.value).toBe('WrongCurrentPass123!')
+      expect(newInput.value).toBe('NewSecurePass456!')
+    })
+  })
 })
