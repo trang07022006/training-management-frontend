@@ -114,4 +114,28 @@ describe('SCRUM-30: Giao diện đăng nhập (LoginPage & LoginForm)', () => {
         expect(screen.getByText(/Phiên bản 1\.0/)).toBeDefined()
         expect(screen.getByText(/Hỗ trợ kỹ thuật:/)).toBeDefined()
     })
+
+    it('đảm bảo cấu trúc layout container và card hỗ trợ responsive cho trang đăng nhập', () => {
+        const { container } = render(
+            <StrictMode>
+                <MemoryRouter initialEntries={['/login']}>
+                    <SessionProvider apiOrigin="https://api.example.test">
+                        <Routes>
+                            <Route path="/login" element={<LoginPage />} />
+                        </Routes>
+                    </SessionProvider>
+                </MemoryRouter>
+            </StrictMode>,
+        )
+
+        const mainContainer = container.querySelector('.login-page-container')
+        const loginCard = container.querySelector('.login-card')
+        const brandLogo = container.querySelector('.login-brand-logo')
+        const actionsRow = container.querySelector('.form-actions-row')
+
+        expect(mainContainer).not.toBeNull()
+        expect(loginCard).not.toBeNull()
+        expect(brandLogo).not.toBeNull()
+        expect(actionsRow).not.toBeNull()
+    })
 })
