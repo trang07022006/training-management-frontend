@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { UnauthorizedPage } from './pages/UnauthorizedPage'
 import { RequireSession } from './auth/RequireSession'
 import { RequirePermission } from './auth/RequirePermission'
 import { AppLayout } from './navigation/AppLayout'
@@ -42,6 +43,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
+          <Route path="/401" element={<UnauthorizedPage />} />
 
           <Route element={<RequireSession />}>
             <Route element={<AppLayout />}>
