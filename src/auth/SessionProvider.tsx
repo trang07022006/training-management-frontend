@@ -19,13 +19,15 @@ type SessionContextValue = {
     hasSession: boolean
     endReason: string | null
     userId: string | null
-    startSession: (tokens: SessionTokens) => void
+    role: string | null
+    startSession: (tokens: SessionTokens, initialRole?: string | null) => void
     clearSession: () => void
     verifySessionUser: () => Promise<string>
     request: (
         path: string,
         init?: RequestInit,
     ) => Promise<Response>
+    apiOrigin: string
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null)
@@ -42,6 +44,7 @@ export function SessionProvider({
     const [hasSession, setHasSession] = useState(false)
     const [endReason, setEndReason] = useState<string | null>(null)
     const [userId, setUserId] = useState<string | null>(null)
+    const [role, setRole] = useState<string | null>(null)
 
     // Thay đổi khi bắt đầu hoặc kết thúc một phiên ở frontend.
     const sessionVersion = useRef(0)
@@ -54,18 +57,20 @@ export function SessionProvider({
                 setHasSession(false)
                 setUserId(null)
                 setEndReason(code)
+                setRole(null)
             },
         }),
     )
 
     const startSession = useCallback(
-        (tokens: SessionTokens) => {
+        (tokens: SessionTokens, initialRole?: string | null) => {
             client.setSession(tokens)
 
             sessionVersion.current += 1
             setHasSession(true)
             setUserId(null)
             setEndReason(null)
+            setRole(initialRole ?? null)
         },
         [client],
     )
@@ -77,6 +82,7 @@ export function SessionProvider({
         setHasSession(false)
         setUserId(null)
         setEndReason(null)
+        setRole(null)
     }, [client])
 
     const verifySessionUser = useCallback(async (): Promise<string> => {
@@ -112,19 +118,23 @@ export function SessionProvider({
             hasSession,
             endReason,
             userId,
+            role,
             startSession,
             clearSession,
             verifySessionUser,
             request: client.request,
+            apiOrigin,
         }),
         [
             hasSession,
             endReason,
             userId,
+            role,
             startSession,
             clearSession,
             verifySessionUser,
             client,
+            apiOrigin,
         ],
     )
 

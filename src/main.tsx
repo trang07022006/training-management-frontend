@@ -8,6 +8,7 @@ import { SessionProvider } from './auth/SessionProvider.tsx'
 import { SessionNotice } from './auth/SessionNotice.tsx'
 import { LoginPage } from './pages/LoginPage'
 import { RequireSession } from './auth/RequireSession'
+import { RoleDashboard } from './pages/RoleDashboard'
 
 const SessionDevPanel = import.meta.env.DEV
   ? lazy(() => import('./auth/SessionDevPanel.tsx'))
@@ -49,6 +50,9 @@ createRoot(document.getElementById('root')!).render(
                 </>
               }
             />
+            <Route path="/admin" element={<RoleDashboard role="admin" />} />
+            <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
+            <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
           </Route>
         </Routes>
       </SessionProvider>

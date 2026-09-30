@@ -1,18 +1,106 @@
-import { Link } from 'react-router'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 
 import { useSession } from '../auth/SessionProvider'
+import { getRoleHomePath } from '../auth/roleRouting'
 import { LoginForm } from '../components/LoginForm'
 import './LoginPage.css'
 
 export function LoginPage() {
-    const { hasSession } = useSession()
+    const { hasSession, startSession, apiOrigin, role } = useSession()
+    const navigate = useNavigate()
+    const [isLoading, setIsLoading] = useState(false)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+    async function handleLogin(email: string, password: string) {
+        setIsLoading(true)
+        setErrorMessage(null)
+
+        try {
+            const origin = apiOrigin || window.location.origin
+            const url = new URL('/api/auth/login', origin).href
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            })
+
+            const data: unknown = await response.json().catch(() => null)
+
+            if (!response.ok) {
+                const message =
+                    data &&
+                    typeof data === 'object' &&
+                    'message' in data &&
+                    typeof data.message === 'string'
+                        ? data.message
+                        : 'Email hoặc mật khẩu không đúng'
+                setErrorMessage(message)
+                return
+            }
+
+            if (
+                typeof data !== 'object' ||
+                data === null ||
+                !('access_token' in data) ||
+                !('refresh_token' in data) ||
+                typeof data.access_token !== 'string' ||
+                typeof data.refresh_token !== 'string'
+            ) {
+                setErrorMessage('Phản hồi đăng nhập không hợp lệ.')
+                return
+            }
+
+            const userRole =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'role' in data.user &&
+                typeof data.user.role === 'string'
+                    ? data.user.role
+                    : null
+
+            // Cập nhật session theo cơ chế SCRUM-19
+            startSession(
+                {
+                    accessToken: data.access_token,
+                    refreshToken: data.refresh_token,
+                },
+                userRole,
+            )
+
+            // Điều hướng người dùng tới trang phù hợp theo role
+            const targetPath = getRoleHomePath(userRole)
+            navigate(targetPath, { replace: true })
+        } catch {
+            setErrorMessage(
+                'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.',
+            )
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const continuePath = role ? getRoleHomePath(role) : '/'
 
     return (
         <main className="login-page-container">
             <div className="login-card">
                 <header className="login-header">
                     <div className="login-brand-logo" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="30" height="30">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            width="30"
+                            height="30"
+                        >
                             {/* Graduation cap / Education Icon */}
                             <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                             <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
@@ -28,13 +116,17 @@ export function LoginPage() {
                 {hasSession && (
                     <div className="active-session-banner" role="status">
                         <span>Bạn đang có phiên làm việc hợp lệ.</span>
-                        <Link to="/" className="continue-session-link">
+                        <Link to={continuePath} className="continue-session-link">
                             Tiếp tục vào hệ thống
                         </Link>
                     </div>
                 )}
 
-                <LoginForm />
+                <LoginForm
+                    onSubmit={handleLogin}
+                    isLoading={isLoading}
+                    errorMessage={errorMessage}
+                />
 
                 <footer className="login-footer">
                     <p>Hệ thống Quản lý Đào tạo • Phiên bản 1.0</p>
