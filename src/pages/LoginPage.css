@@ -1,0 +1,381 @@
+/* =========================================================================
+   UI Standard: Hệ thống Quản lý Đào tạo - Login Page Styles
+   Tones: Xanh dương (#2563eb, #1e40af), Trắng (#ffffff), Xám nhạt (#f8fafc, #f1f5f9)
+   ========================================================================= */
+
+.login-page-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+    width: 100%;
+    flex: 1;
+    padding: 32px 16px;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    box-sizing: border-box;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 440px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 12px 24px -4px rgba(37, 99, 235, 0.08);
+    padding: 36px 32px;
+    text-align: left;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Header & Logo */
+.login-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.login-brand-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    color: #2563eb;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+}
+
+.system-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #2563eb;
+    margin: 0 0 6px 0;
+}
+
+.login-heading {
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Active Session Banner */
+.active-session-banner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    color: #166534;
+    font-size: 14px;
+}
+
+.continue-session-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background-color: #16a34a;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.continue-session-link:hover {
+    background-color: #15803d;
+}
+
+/* Form Styles */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.form-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.form-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px 0 42px;
+    font-size: 14.5px;
+    color: #0f172a;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+.form-input::placeholder {
+    color: #94a3b8;
+}
+
+.form-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.form-input:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.form-input-password {
+    padding-right: 44px;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.password-toggle-btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+/* Actions Row: Remember Me & Forgot Password */
+.form-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13.5px;
+    gap: 8px;
+}
+
+.checkbox-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    color: #475569;
+}
+
+.checkbox-container input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.checkbox-custom {
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    background-color: #ffffff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.checkbox-container:hover .checkbox-custom {
+    border-color: #2563eb;
+}
+
+.checkbox-container input[type="checkbox"]:checked ~ .checkbox-custom {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.checkbox-container input[type="checkbox"]:checked ~ .checkbox-custom::after {
+    content: "";
+    position: absolute;
+    left: 4.5px;
+    top: 1.5px;
+    width: 4px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-container input[type="checkbox"]:focus-visible ~ .checkbox-custom {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.checkbox-label {
+    font-size: 13.5px;
+}
+
+.forgot-password-link {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+
+.forgot-password-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.forgot-password-link:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Submit Button */
+.submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+.submit-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+}
+
+.submit-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+}
+
+.submit-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.loading-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Error Alert */
+.login-error-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    color: #b91c1c;
+    font-size: 13.5px;
+}
+
+.alert-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Footer & Support Notice */
+.login-footer {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+    text-align: center;
+    font-size: 12.5px;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.login-footer p {
+    margin: 0;
+}
