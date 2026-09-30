@@ -7,6 +7,8 @@ import App from './App.tsx'
 import { SessionProvider } from './auth/SessionProvider.tsx'
 import { SessionNotice } from './auth/SessionNotice.tsx'
 import { LoginPage } from './pages/LoginPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { RequireSession } from './auth/RequireSession'
 import { RoleDashboard } from './pages/RoleDashboard'
 
@@ -34,6 +36,8 @@ createRoot(document.getElementById('root')!).render(
 
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route element={<RequireSession />}>
             <Route
