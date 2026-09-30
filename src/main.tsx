@@ -7,6 +7,7 @@ import App from './App.tsx'
 import { SessionProvider } from './auth/SessionProvider.tsx'
 import { SessionNotice } from './auth/SessionNotice.tsx'
 import { LoginPage } from './pages/LoginPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { RequireSession } from './auth/RequireSession'
 
 const SessionDevPanel = import.meta.env.DEV
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
 
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           <Route element={<RequireSession />}>
             <Route

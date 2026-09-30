@@ -12,7 +12,12 @@ export function LoginPage() {
             {hasSession ? (
                 <Link to="/">Tiếp tục vào hệ thống</Link>
             ) : (
-                <p>Đăng nhập để tiếp tục sử dụng hệ thống.</p>
+                <>
+                    <p>Đăng nhập để tiếp tục sử dụng hệ thống.</p>
+                    <p style={{ marginTop: 12 }}>
+                        <Link to="/forgot-password">Quên mật khẩu?</Link>
+                    </p>
+                </>
             )}
 
             {/* Tích hợp form đăng nhập của SCRUM-18 tại đây. */}
