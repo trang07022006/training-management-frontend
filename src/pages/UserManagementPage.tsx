@@ -2,6 +2,11 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { fetchUsersApi, type User, type UserListParams } from '../api/userApi'
+import { UserFilterBar, type UserFilters } from '../components/UserFilterBar'
+import { UserTable } from '../components/UserTable'
+import { UserPagination } from '../components/UserPagination'
+import { CreateUserModal } from '../components/CreateUserModal'
+import { EditUserModal } from '../components/EditUserModal'
 import './UserManagementPage.css'
 
 export interface UserManagementPageProps {
@@ -17,7 +22,7 @@ export interface UserManagementPageProps {
 }
 
 /**
- * Trang Quản lý Người dùng (User Management Page - SCRUM-89).
+ * Trang Quản lý Người dùng (User Management Page - SCRUM-89 -> SCRUM-94).
  * Được bảo vệ bởi RequireSession và RequirePermission (quyền user.view).
  * Nút "Thêm người dùng" chỉ hiển thị khi có quyền user.manage.
  */
@@ -38,16 +43,37 @@ export function UserManagementPage({
     const userPerms = getRolePermissions(role)
     const canManageUsers = userPerms.includes(SYSTEM_PERMISSIONS.USER_MANAGE)
 
+    // Data State
     const [users, setUsers] = useState<User[]>(initialUsers ?? [])
     const [total, setTotal] = useState<number>(initialTotal ?? initialUsers?.length ?? 0)
     const [isLoading, setIsLoading] = useState<boolean>(initialUsers === undefined)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
+    // Pagination & Filter State (SCRUM-94)
+    const [page, setPage] = useState<number>(1)
+    const pageSize = 20
+    const [filters, setFilters] = useState<UserFilters>({
+        search: '',
+        role: '',
+        status: '',
+    })
+
+    // Modal State
+    const [isCreateOpen, setIsCreateOpen] = useState(false)
+    const [editingUser, setEditingUser] = useState<User | null>(null)
+
     const loadUsers = useCallback(async (params: UserListParams = {}) => {
         setIsLoading(true)
         setErrorMessage(null)
         try {
-            const data = await fetchUsersApi(requestFn, params)
+            const queryParams: UserListParams = {
+                page: params.page ?? page,
+                page_size: params.page_size ?? pageSize,
+                search: params.search !== undefined ? params.search : filters.search,
+                role: params.role !== undefined ? params.role : filters.role,
+                status: params.status !== undefined ? params.status : filters.status,
+            }
+            const data = await fetchUsersApi(requestFn, queryParams)
             setUsers(data.items || data.users || [])
             setTotal(data.total || 0)
         } catch (err: unknown) {
@@ -56,12 +82,12 @@ export function UserManagementPage({
         } finally {
             setIsLoading(false)
         }
-    }, [requestFn])
+    }, [requestFn, page, pageSize, filters])
 
     useEffect(() => {
         let isMounted = true
         if (initialUsers === undefined) {
-            fetchUsersApi(requestFn)
+            fetchUsersApi(requestFn, { page: 1, page_size: pageSize })
                 .then((data) => {
                     if (isMounted) {
                         setUsers(data.items || data.users || [])
@@ -79,7 +105,44 @@ export function UserManagementPage({
         return () => {
             isMounted = false
         }
-    }, [initialUsers, requestFn])
+    }, [initialUsers, requestFn, pageSize])
+
+    const handleFilterChange = (newFilters: UserFilters) => {
+        setFilters(newFilters)
+        setPage(1)
+        void loadUsers({
+            page: 1,
+            search: newFilters.search,
+            role: newFilters.role,
+            status: newFilters.status,
+        })
+    }
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage)
+        void loadUsers({ page: newPage })
+    }
+
+    const handleCreateSuccess = (_newUser: User) => {
+        // Tải lại trang 1 để đưa người dùng mới lên đầu danh sách
+        setPage(1)
+        void loadUsers({ page: 1 })
+    }
+
+    const handleEditSuccess = (updatedUser: User) => {
+        setUsers((prev) =>
+            prev.map((u) => (String(u.id) === String(updatedUser.id) ? updatedUser : u))
+        )
+        setEditingUser(null)
+    }
+
+    const handleOpenCreate = () => {
+        if (onOpenCreateModal) {
+            onOpenCreateModal()
+        } else {
+            setIsCreateOpen(true)
+        }
+    }
 
     return (
         <div className="user-management-page" data-testid="user-management-page">
@@ -101,7 +164,7 @@ export function UserManagementPage({
                             type="button"
                             className="btn-primary-action"
                             data-testid="btn-create-user"
-                            onClick={onOpenCreateModal}
+                            onClick={handleOpenCreate}
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <line x1="12" y1="5" x2="12" y2="19" />
@@ -135,9 +198,16 @@ export function UserManagementPage({
                 </div>
             )}
 
-            {/* Search & Filter Slot / Container */}
+            {/* Search & Filter Section */}
             <div data-testid="user-search-filter-section">
-                {searchFilterSlot}
+                {searchFilterSlot !== undefined ? (
+                    searchFilterSlot
+                ) : (
+                    <UserFilterBar
+                        onFilterChange={handleFilterChange}
+                        isLoading={isLoading}
+                    />
+                )}
             </div>
 
             {/* Main Content Area */}
@@ -161,18 +231,56 @@ export function UserManagementPage({
                 </div>
             ) : (
                 <div data-testid="user-table-section">
-                    {tableSlot}
+                    {tableSlot !== undefined ? (
+                        tableSlot
+                    ) : (
+                        <UserTable
+                            users={users}
+                            onEdit={(u) => setEditingUser(u)}
+                            canManage={canManageUsers}
+                        />
+                    )}
                 </div>
             )}
 
-            {/* Pagination Slot */}
+            {/* Pagination Section */}
             <div data-testid="user-pagination-section">
-                {paginationSlot}
+                {paginationSlot !== undefined ? (
+                    paginationSlot
+                ) : (
+                    <UserPagination
+                        page={page}
+                        pageSize={pageSize}
+                        total={total}
+                        onPageChange={handlePageChange}
+                        isLoading={isLoading}
+                    />
+                )}
             </div>
 
-            {/* Modals Slot */}
-            {createModalSlot}
-            {editModalSlot}
+            {/* Create & Edit Modals */}
+            {createModalSlot !== undefined ? (
+                createModalSlot
+            ) : (
+                <CreateUserModal
+                    isOpen={isCreateOpen}
+                    onClose={() => setIsCreateOpen(false)}
+                    onSuccess={handleCreateSuccess}
+                    customRequest={customRequest}
+                />
+            )}
+
+            {editModalSlot !== undefined ? (
+                editModalSlot
+            ) : (
+                <EditUserModal
+                    isOpen={!!editingUser}
+                    user={editingUser}
+                    onClose={() => setEditingUser(null)}
+                    onSuccess={handleEditSuccess}
+                    customRequest={customRequest}
+                />
+            )}
         </div>
     )
 }
