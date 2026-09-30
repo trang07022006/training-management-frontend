@@ -18,6 +18,7 @@ import { RequirePermission } from './auth/RequirePermission'
 import { AppLayout } from './navigation/AppLayout'
 import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { RoleDashboard } from './pages/RoleDashboard'
+import { UserManagementPage } from './pages/UserManagementPage'
 
 const SessionDevPanel = import.meta.env.DEV
   ? lazy(() => import('./auth/SessionDevPanel.tsx'))
@@ -98,6 +99,16 @@ createRoot(document.getElementById('root')!).render(
                 }
               >
                 <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.USER_VIEW}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/users" element={<UserManagementPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
             </Route>
