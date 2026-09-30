@@ -44,7 +44,7 @@ export interface CreateUserData {
     name: string
     email: string
     password: string
-    phone?: string
+    phone?: string | null
     role?: string
     status?: string
 }
@@ -52,7 +52,7 @@ export interface CreateUserData {
 export interface UpdateUserData {
     name?: string
     email?: string
-    phone?: string
+    phone?: string | null
     status?: string
 }
 
