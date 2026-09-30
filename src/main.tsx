@@ -9,6 +9,7 @@ import { SessionNotice } from './auth/SessionNotice.tsx'
 import { LoginPage } from './pages/LoginPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { RequireSession } from './auth/RequireSession'
 import { RoleDashboard } from './pages/RoleDashboard'
 
@@ -57,6 +58,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/admin" element={<RoleDashboard role="admin" />} />
             <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
             <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Routes>
       </SessionProvider>
