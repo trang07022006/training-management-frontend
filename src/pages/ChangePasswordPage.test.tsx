@@ -187,4 +187,99 @@ describe('ChangePasswordPage (SCRUM-52)', () => {
     expect(screen.getByRole('status')).toBeDefined()
     expect(screen.getByText('Đổi mật khẩu thành công.')).toBeDefined()
   })
+
+  // =========================================================================
+  // SCRUM-55: Kiểm tra điều kiện mật khẩu mới (Frontend)
+  // =========================================================================
+  it('9. SCRUM-55: xác nhận mật khẩu không khớp -> hiển thị lỗi và không gọi onSubmit', async () => {
+    const onSubmit = vi.fn()
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'NewSecurePass123!' } })
+    fireEvent.change(confirmInput, { target: { value: 'DifferentPass456!' } })
+
+    fireEvent.click(submitBtn)
+
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toBeDefined()
+    expect(screen.getByText('Xác nhận mật khẩu mới không trùng khớp')).toBeDefined()
+  })
+
+  it('10. SCRUM-55: mật khẩu mới dưới 8 ký tự -> hiển thị lỗi và không gọi onSubmit', async () => {
+    const onSubmit = vi.fn()
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'Abc1' } })
+    fireEvent.change(confirmInput, { target: { value: 'Abc1' } })
+
+    fireEvent.click(submitBtn)
+
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toBeDefined()
+    expect(screen.getByText('Mật khẩu mới phải có tối thiểu 8 ký tự')).toBeDefined()
+  })
+
+  it('11. SCRUM-55: mật khẩu mới chỉ có chữ hoặc chỉ có số -> hiển thị lỗi', async () => {
+    const onSubmit = vi.fn()
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+
+    // Chỉ có chữ
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'OnlyLettersPassword' } })
+    fireEvent.change(confirmInput, { target: { value: 'OnlyLettersPassword' } })
+    fireEvent.click(submitBtn)
+
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText('Mật khẩu mới phải bao gồm cả chữ cái và chữ số')).toBeDefined()
+
+    // Chỉ có số
+    fireEvent.change(newInput, { target: { value: '123456789012' } })
+    fireEvent.change(confirmInput, { target: { value: '123456789012' } })
+    fireEvent.click(submitBtn)
+
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText('Mật khẩu mới phải bao gồm cả chữ cái và chữ số')).toBeDefined()
+  })
+
+  it('12. SCRUM-55: mật khẩu mới hợp lệ (chữ + số >= 8 ký tự và khớp confirm) -> gọi onSubmit', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined)
+    renderComponent({ onSubmit })
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+    const submitBtn = screen.getByRole('button', { name: 'Đổi mật khẩu' })
+
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'ValidPass456!' } })
+    fireEvent.change(confirmInput, { target: { value: 'ValidPass456!' } })
+
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith({
+        currentPassword: 'CurrentPass123!',
+        newPassword: 'ValidPass456!',
+        confirmPassword: 'ValidPass456!',
+      })
+    })
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
 })

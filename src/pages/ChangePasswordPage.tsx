@@ -15,6 +15,30 @@ export interface ChangePasswordPageProps {
   successMessage?: string | null
 }
 
+function validateNewPasswordForm(
+  newPassword: string,
+  confirmPassword?: string
+): { isValid: boolean; message?: string } {
+  if (!newPassword) {
+    return { isValid: false, message: 'Mật khẩu mới là bắt buộc' }
+  }
+  if (newPassword.length < 8) {
+    return { isValid: false, message: 'Mật khẩu mới phải có tối thiểu 8 ký tự' }
+  }
+  const hasLetter = /[a-zA-Z]/.test(newPassword)
+  const hasNumber = /[0-9]/.test(newPassword)
+  if (!hasLetter || !hasNumber) {
+    return {
+      isValid: false,
+      message: 'Mật khẩu mới phải bao gồm cả chữ cái và chữ số',
+    }
+  }
+  if (confirmPassword !== undefined && newPassword !== confirmPassword) {
+    return { isValid: false, message: 'Xác nhận mật khẩu mới không trùng khớp' }
+  }
+  return { isValid: true }
+}
+
 export function ChangePasswordPage({
   onSubmit,
   isLoading: propIsLoading = false,
@@ -48,6 +72,13 @@ export function ChangePasswordPage({
 
     setInternalError(null)
     setInternalSuccess(null)
+
+    // Kiểm tra điều kiện mật khẩu mới (SCRUM-55)
+    const validation = validateNewPasswordForm(newPassword, confirmPassword)
+    if (!validation.isValid) {
+      setInternalError(validation.message || 'Mật khẩu mới không hợp lệ')
+      return
+    }
 
     if (onSubmit) {
       setInternalLoading(true)
