@@ -1,0 +1,242 @@
+/* User Role Management Modal Styles - SCRUM-101 */
+
+.role-modal-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 580px;
+    max-height: calc(100vh - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    animation: modal-appear 0.2s ease-out;
+}
+
+.user-info-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 8px;
+}
+
+.user-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #e0e7ff;
+    color: #4338ca;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.user-info-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-info-name {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.95rem;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-info-email {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 2px 0 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Sections */
+.role-section-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 12px 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.current-roles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.current-role-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+}
+
+.current-role-item:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.role-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.role-item-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.role-item-name {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.9rem;
+}
+
+.role-item-code {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #f1f5f9;
+    color: #475569;
+    font-family: monospace;
+}
+
+.role-item-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.btn-revoke-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-revoke-role:hover:not(:disabled) {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.btn-revoke-role:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.no-roles-notice {
+    padding: 14px;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+/* Assign Section */
+.assign-role-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.assign-role-group .form-select {
+    flex: 1;
+}
+
+.btn-assign-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ffffff;
+    background-color: #2563eb;
+    border: 1px solid #1d4ed8;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-assign-role:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+.btn-assign-role:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Success Banner */
+.modal-banner-success {
+    padding: 10px 14px;
+    border-radius: 6px;
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+/* Responsive down to 360px */
+@media (max-width: 520px) {
+    .current-role-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .btn-revoke-role {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .assign-role-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-assign-role {
+        width: 100%;
+        justify-content: center;
+    }
+}

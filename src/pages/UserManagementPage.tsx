@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
-import { fetchUsersApi, type User, type UserListParams } from '../api/userApi'
+import { fetchUsersApi, type User, type UserListParams, type RoleItem } from '../api/userApi'
 import { UserFilterBar, type UserFilters } from '../components/UserFilterBar'
 import { UserTable } from '../components/UserTable'
 import { UserPagination } from '../components/UserPagination'
 import { CreateUserModal } from '../components/CreateUserModal'
 import { EditUserModal } from '../components/EditUserModal'
+import { UserRoleModal } from '../components/UserRoleModal'
 import './UserManagementPage.css'
 
 export interface UserManagementPageProps {
@@ -18,11 +19,12 @@ export interface UserManagementPageProps {
     paginationSlot?: ReactNode
     createModalSlot?: ReactNode
     editModalSlot?: ReactNode
+    roleModalSlot?: ReactNode
     onOpenCreateModal?: () => void
 }
 
 /**
- * Trang Quản lý Người dùng (User Management Page - SCRUM-89 -> SCRUM-94).
+ * Trang Quản lý Người dùng (User Management Page - SCRUM-89 -> SCRUM-94 -> SCRUM-101).
  * Được bảo vệ bởi RequireSession và RequirePermission (quyền user.view).
  * Nút "Thêm người dùng" chỉ hiển thị khi có quyền user.manage.
  */
@@ -35,6 +37,7 @@ export function UserManagementPage({
     paginationSlot,
     createModalSlot,
     editModalSlot,
+    roleModalSlot,
     onOpenCreateModal,
 }: UserManagementPageProps) {
     const { request: sessionRequest, role } = useSession()
@@ -61,6 +64,7 @@ export function UserManagementPage({
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
+    const [roleManagingUser, setRoleManagingUser] = useState<User | null>(null)
 
     const loadUsers = useCallback(async (params: UserListParams = {}) => {
         setIsLoading(true)
@@ -134,6 +138,13 @@ export function UserManagementPage({
             prev.map((u) => (String(u.id) === String(updatedUser.id) ? updatedUser : u))
         )
         setEditingUser(null)
+    }
+
+    const handleUserRoleUpdated = (targetUser: User, updatedRoles: RoleItem[]) => {
+        const primaryRole = updatedRoles.length > 0 ? updatedRoles[0].code : 'user'
+        setUsers((prev) =>
+            prev.map((u) => (String(u.id) === String(targetUser.id) ? { ...u, role: primaryRole } : u))
+        )
     }
 
     const handleOpenCreate = () => {
@@ -237,6 +248,7 @@ export function UserManagementPage({
                         <UserTable
                             users={users}
                             onEdit={(u) => setEditingUser(u)}
+                            onManageRoles={(u) => setRoleManagingUser(u)}
                             canManage={canManageUsers}
                         />
                     )}
@@ -278,6 +290,18 @@ export function UserManagementPage({
                     user={editingUser}
                     onClose={() => setEditingUser(null)}
                     onSuccess={handleEditSuccess}
+                    customRequest={customRequest}
+                />
+            )}
+
+            {roleModalSlot !== undefined ? (
+                roleModalSlot
+            ) : (
+                <UserRoleModal
+                    isOpen={!!roleManagingUser}
+                    user={roleManagingUser}
+                    onClose={() => setRoleManagingUser(null)}
+                    onRoleUpdated={handleUserRoleUpdated}
                     customRequest={customRequest}
                 />
             )}

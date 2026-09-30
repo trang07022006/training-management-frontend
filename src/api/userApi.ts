@@ -153,3 +153,102 @@ export async function updateUserApi(
 
     return body.data
 }
+
+export interface RoleItem {
+    id: string
+    code: string
+    name: string
+    description?: string
+}
+
+export interface UserRolesData {
+    user_id: string
+    roles: RoleItem[]
+}
+
+/**
+ * Lấy danh sách vai trò của một người dùng (SCRUM-96).
+ */
+export async function fetchUserRolesApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+): Promise<UserRolesData> {
+    const res = await requestFn(`/api/users/${userId}/roles`, {
+        method: 'GET',
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        throw new ApiError(
+            body.message || 'Lỗi khi tải vai trò của người dùng.',
+            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'FETCH_ROLES_ERROR'),
+            res.status,
+        )
+    }
+    return body.data
+}
+
+/**
+ * Lấy danh sách các vai trò khả dụng trong hệ thống (SCRUM-97).
+ */
+export async function fetchAvailableRolesApi(
+    requestFn: RequestFunction,
+): Promise<RoleItem[]> {
+    const res = await requestFn('/api/roles', {
+        method: 'GET',
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        throw new ApiError(
+            body.message || 'Lỗi khi tải danh mục vai trò.',
+            body.code || (res.status === 403 ? 'FORBIDDEN' : 'FETCH_AVAILABLE_ROLES_ERROR'),
+            res.status,
+        )
+    }
+    return body.data?.items || []
+}
+
+/**
+ * Phân vai trò cho người dùng (SCRUM-98).
+ */
+export async function assignUserRoleApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+    roleIdOrCode: string,
+): Promise<{ user_id: string; role: RoleItem }> {
+    const res = await requestFn(`/api/users/${userId}/roles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role_id: roleIdOrCode }),
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        throw new ApiError(
+            body.message || 'Lỗi khi phân vai trò cho người dùng.',
+            body.code || (res.status === 409 ? 'DUPLICATE_ROLE_ASSIGNMENT' : res.status === 404 ? 'NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'ASSIGN_ROLE_ERROR'),
+            res.status,
+        )
+    }
+    return body.data
+}
+
+/**
+ * Gỡ vai trò khỏi người dùng (SCRUM-99).
+ */
+export async function revokeUserRoleApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+    roleId: string,
+): Promise<{ user_id: string; role_id: string; role_code: string }> {
+    const res = await requestFn(`/api/users/${userId}/roles/${roleId}`, {
+        method: 'DELETE',
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        throw new ApiError(
+            body.message || 'Lỗi khi gỡ vai trò khỏi người dùng.',
+            body.code || (res.status === 404 ? 'ROLE_NOT_ASSIGNED' : res.status === 403 ? 'FORBIDDEN' : 'REVOKE_ROLE_ERROR'),
+            res.status,
+        )
+    }
+    return body.data
+}

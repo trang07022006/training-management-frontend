@@ -128,4 +128,16 @@ describe('SCRUM-90: User Table Component', () => {
         const scrollWrapper = screen.getByLabelText('Bảng dữ liệu người dùng')
         expect(scrollWrapper.className).toContain('user-table-scroll-wrapper')
     })
+
+    it('9. hiển thị nút Vai trò khi canManage=true và gọi onManageRoles khi click', () => {
+        const handleManageRoles = vi.fn()
+        render(<UserTable users={mockUsers} canManage={true} onManageRoles={handleManageRoles} />)
+
+        const btnManageRole = screen.getByTestId('btn-manage-role-1')
+        expect(btnManageRole).toBeDefined()
+        expect(btnManageRole.textContent).toContain('Vai trò')
+
+        fireEvent.click(btnManageRole)
+        expect(handleManageRoles).toHaveBeenCalledWith(mockUsers[0])
+    })
 })

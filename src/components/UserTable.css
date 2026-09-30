@@ -165,6 +165,33 @@
     white-space: nowrap;
 }
 
+.user-actions-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btn-manage-role {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4338ca;
+    background-color: #e0e7ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-manage-role:hover:not(:disabled) {
+    background-color: #c7d2fe;
+    color: #3730a3;
+}
+
 .btn-edit-user {
     display: inline-flex;
     align-items: center;

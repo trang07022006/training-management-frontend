@@ -4,6 +4,7 @@ import './UserTable.css'
 export interface UserTableProps {
     users: User[]
     onEdit?: (user: User) => void
+    onManageRoles?: (user: User) => void
     canManage?: boolean
     emptyMessage?: string
 }
@@ -24,6 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
 export function UserTable({
     users,
     onEdit,
+    onManageRoles,
     canManage = true,
     emptyMessage = 'Không có dữ liệu người dùng.',
 }: UserTableProps) {
@@ -81,19 +83,33 @@ export function UserTable({
                                     </td>
                                     {canManage && (
                                         <td className="user-cell-actions">
-                                            <button
-                                                type="button"
-                                                className="btn-edit-user"
-                                                data-testid={`btn-edit-user-${u.id}`}
-                                                aria-label={`Chỉnh sửa ${u.name}`}
-                                                onClick={() => onEdit?.(u)}
-                                            >
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                                </svg>
-                                                <span>Chỉnh sửa</span>
-                                            </button>
+                                            <div className="user-actions-group">
+                                                <button
+                                                    type="button"
+                                                    className="btn-manage-role"
+                                                    data-testid={`btn-manage-role-${u.id}`}
+                                                    aria-label={`Phân vai trò cho ${u.name}`}
+                                                    onClick={() => onManageRoles?.(u)}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                                    </svg>
+                                                    <span>Vai trò</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn-edit-user"
+                                                    data-testid={`btn-edit-user-${u.id}`}
+                                                    aria-label={`Chỉnh sửa ${u.name}`}
+                                                    onClick={() => onEdit?.(u)}
+                                                >
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                                    </svg>
+                                                    <span>Chỉnh sửa</span>
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>

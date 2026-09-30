@@ -189,4 +189,22 @@ describe('SCRUM-89: User Management Page', () => {
         })
         expect(screen.queryByTestId('btn-create-user')).toBeNull()
     })
+
+    it('7. bấm nút Vai trò trên dòng người dùng mở modal quản lý vai trò', async () => {
+        renderWithSession(
+            <UserManagementPage initialUsers={mockUsers} initialTotal={mockUsers.length} />,
+            { role: 'admin' },
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-manage-role-u-1')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('btn-manage-role-u-1'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('user-role-modal')).toBeDefined()
+        })
+        expect(screen.getByText('Quản lý vai trò người dùng')).toBeDefined()
+    })
 })
