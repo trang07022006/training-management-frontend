@@ -7,6 +7,7 @@ import App from './App.tsx'
 import { SessionProvider } from './auth/SessionProvider.tsx'
 import { SessionNotice } from './auth/SessionNotice.tsx'
 import { LoginPage } from './pages/LoginPage'
+import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { RequireSession } from './auth/RequireSession'
 
 const SessionDevPanel = import.meta.env.DEV
@@ -49,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
                 </>
               }
             />
+            <Route path="/change-password" element={<ChangePasswordPage />} />
           </Route>
         </Routes>
       </SessionProvider>
