@@ -1,4 +1,4 @@
-import { lazy, StrictMode, Suspense } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { SessionRedirect } from './auth/SessionRedirect'
@@ -20,12 +20,6 @@ import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { RoleDashboard } from './pages/RoleDashboard'
 import { UserManagementPage } from './pages/UserManagementPage'
 
-const SessionDevPanel = import.meta.env.DEV
-  ? lazy(() => import('./auth/SessionDevPanel.tsx'))
-  : null
-const DraftDevPanel = import.meta.env.DEV
-  ? lazy(() => import('./drafts/DraftDevPanel'))
-  : null
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN || window.location.origin
 
@@ -36,12 +30,6 @@ createRoot(document.getElementById('root')!).render(
         <SessionRedirect />
         <SessionNotice />
 
-        {SessionDevPanel && (
-          <Suspense fallback={null}>
-            <SessionDevPanel />
-          </Suspense>
-        )}
-
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -51,20 +39,7 @@ createRoot(document.getElementById('root')!).render(
 
           <Route element={<RequireSession />}>
             <Route element={<AppLayout />}>
-              <Route
-                path="/"
-                element={
-                  <>
-                    {DraftDevPanel && (
-                      <Suspense fallback={null}>
-                        <DraftDevPanel />
-                      </Suspense>
-                    )}
-
-                    <App />
-                  </>
-                }
-              />
+              <Route path="/" element={<App />} />
               <Route path="/forbidden" element={<ForbiddenPage />} />
               <Route path="/403" element={<ForbiddenPage />} />
               <Route
