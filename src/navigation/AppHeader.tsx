@@ -16,7 +16,7 @@ export function AppHeader({
     userName,
     userEmail,
 }: AppHeaderProps) {
-    const { hasSession, userId, role, clearSession } = useSession()
+    const { hasSession, userId, role, logout, clearSession } = useSession()
 
     if (!hasSession) {
         return null
@@ -70,7 +70,13 @@ export function AppHeader({
                 <button
                     type="button"
                     className="header-logout-btn"
-                    onClick={() => clearSession()}
+                    onClick={() => {
+                        if (logout) {
+                            void logout()
+                        } else {
+                            clearSession()
+                        }
+                    }}
                     title="Đăng xuất khỏi hệ thống"
                     data-testid="header-logout-button"
                 >

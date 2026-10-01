@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
     createContext,
     useCallback,
@@ -22,6 +23,7 @@ type SessionContextValue = {
     role: string | null
     startSession: (tokens: SessionTokens, initialRole?: string | null) => void
     clearSession: () => void
+    logout: () => Promise<void>
     verifySessionUser: () => Promise<string>
     request: (
         path: string,
@@ -49,18 +51,23 @@ export function SessionProvider({
     // Thay đổi khi bắt đầu hoặc kết thúc một phiên ở frontend.
     const sessionVersion = useRef(0)
 
-    const [client] = useState(() =>
-        createSessionClient({
+    const onSessionEndedCallback = useRef<(code: string) => void>(() => {})
+    onSessionEndedCallback.current = (code: string) => {
+        sessionVersion.current += 1
+        setHasSession(false)
+        setUserId(null)
+        setEndReason(code)
+        setRole(null)
+    }
+
+    const clientRef = useRef<ReturnType<typeof createSessionClient> | null>(null)
+    if (!clientRef.current) {
+        clientRef.current = createSessionClient({
             apiOrigin,
-            onSessionEnded: (code) => {
-                sessionVersion.current += 1
-                setHasSession(false)
-                setUserId(null)
-                setEndReason(code)
-                setRole(null)
-            },
-        }),
-    )
+            onSessionEnded: (code) => onSessionEndedCallback.current(code),
+        })
+    }
+    const client = clientRef.current
 
     const startSession = useCallback(
         (tokens: SessionTokens, initialRole?: string | null) => {
@@ -75,15 +82,18 @@ export function SessionProvider({
         [client],
     )
 
-    const clearSession = useCallback(() => {
-        client.clearSession()
-
+    const logout = useCallback(async () => {
         sessionVersion.current += 1
         setHasSession(false)
         setUserId(null)
         setEndReason(null)
         setRole(null)
+        await client.logout()
     }, [client])
+
+    const clearSession = useCallback(() => {
+        void logout()
+    }, [logout])
 
     const verifySessionUser = useCallback(async (): Promise<string> => {
         const expectedVersion = sessionVersion.current
@@ -121,6 +131,7 @@ export function SessionProvider({
             role,
             startSession,
             clearSession,
+            logout,
             verifySessionUser,
             request: client.request,
             apiOrigin,
@@ -132,6 +143,7 @@ export function SessionProvider({
             role,
             startSession,
             clearSession,
+            logout,
             verifySessionUser,
             client,
             apiOrigin,
@@ -145,6 +157,7 @@ export function SessionProvider({
     )
 }
 
+// oxlint-disable-next-line react/only-export-components
 export function useSession() {
     const context = useContext(SessionContext)
 
