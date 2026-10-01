@@ -4,9 +4,10 @@ import './ForgotPasswordPage.css'
 
 export interface ForgotPasswordPageProps {
   onSubmit?: (email: string) => Promise<void> | void
+  apiOrigin?: string
 }
 
-export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
+export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPageProps) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -25,7 +26,15 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
         await onSubmit(trimmedEmail)
       } else {
         try {
-          await fetch('/api/auth/forgot-password', {
+          const origin =
+            apiOrigin ||
+            import.meta.env.VITE_API_ORIGIN ||
+            import.meta.env.VITE_API_BASE_URL ||
+            (typeof window !== 'undefined' && window.location.port === '5173'
+              ? `http://${window.location.hostname}:5000`
+              : (typeof window !== 'undefined' ? window.location.origin : ''))
+          const url = new URL('/api/auth/forgot-password', origin || 'http://localhost:5000').href
+          await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: trimmedEmail }),
