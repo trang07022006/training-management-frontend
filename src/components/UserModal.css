@@ -113,8 +113,8 @@
     color: #ef4444;
 }
 
-.form-input,
-.form-select {
+.modal-overlay .form-input,
+.modal-overlay .form-select {
     width: 100%;
     padding: 9px 12px;
     font-size: 0.9rem;
