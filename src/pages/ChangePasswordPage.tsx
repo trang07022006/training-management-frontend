@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
+import { useSession } from '../auth/SessionProvider'
 import './ChangePasswordPage.css'
 
 export interface ChangePasswordFormData {
@@ -45,6 +46,9 @@ export function ChangePasswordPage({
   errorMessage: propErrorMessage = null,
   successMessage: propSuccessMessage = null,
 }: ChangePasswordPageProps) {
+  const session = useSession()
+  const request = session?.request
+
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -80,27 +84,53 @@ export function ChangePasswordPage({
       return
     }
 
-    if (onSubmit) {
-      setInternalLoading(true)
-      try {
+    setInternalLoading(true)
+    try {
+      if (onSubmit) {
         await onSubmit({
           currentPassword,
           newPassword,
           confirmPassword,
         })
-        setInternalSuccess('Đổi mật khẩu thành công.')
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Đã có lỗi xảy ra khi đổi mật khẩu'
-        setInternalError(message)
-      } finally {
-        setInternalLoading(false)
+      } else if (request) {
+        const response = await request('/api/auth/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+          }),
+        })
+
+        const data: unknown = await response.json().catch(() => null)
+
+        if (!response.ok) {
+          const message =
+            data &&
+            typeof data === 'object' &&
+            'message' in data &&
+            typeof data.message === 'string'
+              ? data.message
+              : 'Đổi mật khẩu thất bại. Vui lòng thử lại.'
+          setInternalError(message)
+          return
+        }
       }
+
+      setInternalSuccess('Đổi mật khẩu thành công.')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Đã có lỗi xảy ra khi đổi mật khẩu'
+      setInternalError(message)
+    } finally {
+      setInternalLoading(false)
     }
   }
 
