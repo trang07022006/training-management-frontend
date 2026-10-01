@@ -103,6 +103,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.USER_MANAGE,
     },
     {
+        key: 'users',
+        label: 'Quản lý Người dùng',
+        path: '/users',
+        icon: 'users',
+        requiredPermission: SYSTEM_PERMISSIONS.USER_VIEW,
+    },
+    {
         key: 'trainer_dashboard',
         label: 'Không gian Giảng viên',
         path: '/trainer',

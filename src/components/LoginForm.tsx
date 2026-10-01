@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 
 export interface LoginFormProps {
     onSubmit?: (email: string, password: string, remember: boolean) => void
@@ -131,9 +132,9 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
                     <span className="checkbox-label">Ghi nhớ đăng nhập</span>
                 </label>
 
-                <a href="#forgot-password" className="forgot-password-link">
+                <Link to="/forgot-password" className="forgot-password-link">
                     Quên mật khẩu?
-                </a>
+                </Link>
             </div>
 
             <button

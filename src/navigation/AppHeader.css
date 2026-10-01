@@ -109,6 +109,27 @@
     border: 1px solid #dbeafe;
 }
 
+.header-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.header-logout-btn:hover {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #ef4444;
+}
+
 /* Responsive adjustment for small screens (360px) */
 @media (max-width: 768px) {
     .app-header {

@@ -24,8 +24,15 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
       if (onSubmit) {
         await onSubmit(trimmedEmail)
       } else {
-        // Mô phỏng độ trễ giao diện tự nhiên khi chưa tích hợp API SCRUM-45
-        await new Promise((resolve) => setTimeout(resolve, 600))
+        try {
+          await fetch('/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: trimmedEmail }),
+          })
+        } catch {
+          // SCRUM-50: Giữ phản hồi đồng nhất bảo mật chống dò quét tài khoản
+        }
       }
     } catch {
       // Giữ thông báo đồng nhất để bảo mật chống dò quét tài khoản (SCRUM-50)

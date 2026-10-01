@@ -99,7 +99,7 @@ describe('SCRUM-30: Giao diện đăng nhập (LoginPage & LoginForm)', () => {
         // Link Quên mật khẩu
         const forgotLink = screen.getByRole('link', { name: 'Quên mật khẩu?' })
         expect(forgotLink).toBeDefined()
-        expect(forgotLink.getAttribute('href')).toBe('#forgot-password')
+        expect(forgotLink.getAttribute('href')).toBe('/forgot-password')
     })
 
     it('hiển thị nút Đăng nhập chính và thông tin hỗ trợ', () => {
