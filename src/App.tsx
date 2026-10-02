@@ -18,10 +18,10 @@ function App() {
   return (
     <div className="overview-dashboard">
       {/* Welcome Banner */}
-      <section className="welcome-banner">
+      <section className="welcome-banner" data-testid="welcome-banner">
         <div className="welcome-content">
-          <div className="welcome-tag">Phiên bản Sprint 1 • Sẵn sàng Nghiệm thu</div>
-          <h1 className="welcome-title">Hệ thống Quản lý Đào tạo & Phân quyền</h1>
+          <div className="welcome-tag" data-testid="welcome-tag">Phiên bản Sprint 1 • Sẵn sàng Nghiệm thu</div>
+          <h1 className="welcome-title" data-testid="welcome-title">Hệ thống Quản lý Đào tạo & Phân quyền</h1>
           <p className="welcome-desc">
             Không gian làm việc hợp nhất phục vụ đào tạo, phân quyền vai trò (RBAC) và quản trị tài khoản người dùng.
           </p>

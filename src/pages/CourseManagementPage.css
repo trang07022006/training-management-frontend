@@ -227,3 +227,63 @@
 .btn-nav-users:hover {
     background-color: #0f172a;
 }
+
+/* Mobile Responsive Breakpoints (SCRUM-23) */
+@media (max-width: 768px) {
+    .courses-page-container {
+        padding: 16px 12px;
+    }
+
+    .courses-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .courses-page-container {
+        padding: 12px 6px;
+    }
+
+    .courses-title {
+        font-size: 1.35rem;
+    }
+
+    .course-card {
+        padding: 16px 12px;
+    }
+
+    .courses-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-create-course {
+        width: 100%;
+        text-align: center;
+    }
+
+    .courses-bottom-nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-nav-users {
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .courses-page-container {
+        padding: 8px 4px;
+    }
+
+    .courses-title {
+        font-size: 1.2rem;
+    }
+
+    .course-card {
+        padding: 12px 10px;
+    }
+}
+

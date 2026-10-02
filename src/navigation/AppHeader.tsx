@@ -57,13 +57,13 @@ export function AppHeader({
                     </button>
                 )}
                 <div className="header-title-container">
-                    <span className="header-app-title">Hệ thống Quản lý Đào tạo</span>
+                    <span className="header-app-title" data-testid="header-app-title">Hệ thống Quản lý Đào tạo</span>
                 </div>
             </div>
 
             <div className="header-right">
                 <div className="header-user-profile" data-testid="user-profile-badge">
-                    <div className="user-avatar" aria-hidden="true">
+                    <div className="user-avatar" data-testid="user-avatar-circle" aria-hidden="true">
                         {displayName.charAt(0).toUpperCase()}
                     </div>
                     <div className="user-details">

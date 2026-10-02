@@ -130,10 +130,10 @@
     color: #ef4444;
 }
 
-/* Responsive adjustment for small screens (360px) */
+/* Responsive adjustment for tablet and mobile (768px, 520px, 400px, 375px, 360px) */
 @media (max-width: 768px) {
     .app-header {
-        padding: 0 14px;
+        padding: 0 12px;
         height: 56px;
     }
 
@@ -141,12 +141,23 @@
         display: flex;
     }
 
+    .header-left {
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .header-right {
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
     .header-app-title {
         font-size: 0.9rem;
+        max-width: 160px;
     }
 
     .user-display-name {
-        max-width: 110px;
+        max-width: 100px;
         font-size: 0.8rem;
     }
 
@@ -156,16 +167,134 @@
     }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 520px) {
     .app-header {
+        height: 54px;
         padding: 0 10px;
     }
 
+    .header-left {
+        gap: 8px;
+        min-width: 0;
+        flex-shrink: 1;
+    }
+
+    .header-right {
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
     .header-app-title {
+        font-size: 0.82rem;
+        max-width: 110px;
+    }
+
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.85rem;
+    }
+
+    /* Ẩn username đầy đủ trên mobile để không làm tràn header */
+    .user-display-name {
         display: none;
     }
 
-    .user-display-name {
-        max-width: 90px;
+    .user-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-role-badge {
+        font-size: 0.68rem;
+        padding: 1px 6px;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 0;
+    }
+
+    .header-logout-btn {
+        padding: 5px 8px;
+        font-size: 0.78rem;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 400px) {
+    .app-header {
+        padding: 0 8px;
+    }
+
+    .header-left {
+        gap: 6px;
+    }
+
+    .header-right {
+        gap: 6px;
+    }
+
+    .sidebar-toggle-btn {
+        padding: 5px;
+    }
+
+    .header-app-title {
+        font-size: 0.78rem;
+        max-width: 85px;
+    }
+
+    .user-role-badge {
+        font-size: 0.65rem;
+        padding: 1px 5px;
+        max-width: 70px;
+    }
+
+    .header-logout-btn {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+        gap: 3px;
+    }
+
+    .header-logout-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 360px) {
+    .app-header {
+        padding: 0 6px;
+    }
+
+    .header-left {
+        gap: 4px;
+    }
+
+    .header-right {
+        gap: 4px;
+    }
+
+    .header-app-title {
+        font-size: 0.72rem;
+        max-width: 70px;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.78rem;
+    }
+
+    .user-role-badge {
+        font-size: 0.62rem;
+        padding: 1px 4px;
+        max-width: 60px;
+    }
+
+    .header-logout-btn {
+        padding: 4px 5px;
+        font-size: 0.72rem;
     }
 }

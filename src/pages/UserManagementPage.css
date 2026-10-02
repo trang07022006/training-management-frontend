@@ -218,10 +218,10 @@
     max-width: 400px;
 }
 
-/* Responsive down to 360px */
+/* Responsive down to 360px (SCRUM-23) */
 @media (max-width: 640px) {
     .user-management-page {
-        padding: 16px;
+        padding: 16px 12px;
         gap: 16px;
     }
 
@@ -239,3 +239,28 @@
         justify-content: center;
     }
 }
+
+@media (max-width: 480px) {
+    .user-management-page {
+        padding: 12px 6px;
+    }
+
+    .user-page-title {
+        font-size: 1.3rem;
+    }
+
+    .user-page-header-text {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 360px) {
+    .user-management-page {
+        padding: 8px 4px;
+    }
+
+    .user-page-title {
+        font-size: 1.15rem;
+    }
+}
+

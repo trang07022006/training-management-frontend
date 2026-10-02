@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { SessionProvider, useSession } from '../auth/SessionProvider'
+import App from '../App'
 import { AppLayout } from './AppLayout'
 
 afterEach(() => {
@@ -107,4 +108,51 @@ describe('SCRUM-23 Phase 5: Responsive Layout on Mobile (360px Viewport)', () =>
         expect(screen.getByTestId('app-header')).toBeDefined()
         expect(screen.getByTestId('app-content-body')).toBeDefined()
     })
+
+    it('4. Header mobile luôn bảo toàn nút toggle, avatar, role badge và nút Đăng xuất', () => {
+        render(
+            <MemoryRouter initialEntries={['/']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="admin" />
+                    <Routes>
+                        <Route element={<AppLayout />}>
+                            <Route path="/" element={<h1>Nội dung</h1>} />
+                        </Route>
+                    </Routes>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        // Các thành phần bắt buộc của Header trên mobile
+        expect(screen.getByTestId('sidebar-toggle-button')).toBeDefined()
+        expect(screen.getByTestId('header-app-title')).toBeDefined()
+        expect(screen.getByTestId('user-avatar-circle')).toBeDefined()
+        expect(screen.getByTestId('user-role-badge')).toBeDefined()
+        expect(screen.getByTestId('header-logout-button')).toBeDefined()
+    })
+
+    it('5. Hero banner và badge Sprint 1 render đầy đủ cấu trúc hỗ trợ wrap tự nhiên trên mobile', () => {
+        render(
+            <MemoryRouter initialEntries={['/']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="admin" />
+                    <Routes>
+                        <Route element={<AppLayout />}>
+                            <Route path="/" element={<App />} />
+                        </Route>
+                    </Routes>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        const banner = screen.getByTestId('welcome-banner')
+        expect(banner).toBeDefined()
+
+        const tag = screen.getByTestId('welcome-tag')
+        expect(tag.textContent).toContain('Phiên bản Sprint 1 • Sẵn sàng Nghiệm thu')
+
+        const title = screen.getByTestId('welcome-title')
+        expect(title.textContent).toBe('Hệ thống Quản lý Đào tạo & Phân quyền')
+    })
 })
+

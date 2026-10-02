@@ -39,9 +39,14 @@
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: var(--font-sans);
