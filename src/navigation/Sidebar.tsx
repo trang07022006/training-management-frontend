@@ -90,11 +90,23 @@ export function Sidebar({
     isOpen = false,
     onClose,
     customMenuItems,
-    userName,
-    userEmail,
+    userName: propUserName,
+    userEmail: propUserEmail,
 }: SidebarProps) {
-    const { hasSession, role, userId } = useSession()
+    const {
+        hasSession,
+        role,
+        userId,
+        userName: contextUserName,
+        userEmail: contextUserEmail,
+    } = useSession()
     const location = useLocation()
+
+    const finalDisplayName = getUserDisplayName({
+        name: propUserName ?? contextUserName,
+        email: propUserEmail ?? contextUserEmail,
+        userId,
+    })
 
     // Lọc menu theo quyền người dùng thực tế
     const menuSource = customMenuItems ?? APP_MENU_CONFIG
@@ -170,11 +182,11 @@ export function Sidebar({
                 {hasSession && (
                     <div className="sidebar-user-footer" data-testid="sidebar-user-footer">
                         <div className="sidebar-user-avatar" aria-hidden="true">
-                            {getUserDisplayName({ name: userName, email: userEmail, userId }).charAt(0).toUpperCase()}
+                            {finalDisplayName.charAt(0).toUpperCase()}
                         </div>
                         <div className="sidebar-user-info">
                             <span className="sidebar-user-name" data-testid="sidebar-user-name">
-                                {getUserDisplayName({ name: userName, email: userEmail, userId })}
+                                {finalDisplayName}
                             </span>
                             <span className="sidebar-user-role" data-testid="sidebar-user-role">
                                 {getUserRoleDisplay(role)}

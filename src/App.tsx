@@ -5,7 +5,7 @@ import { getRolePermissions, SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import './App.css'
 
 function App() {
-  const { role, userId } = useSession()
+  const { role, userId, userName, userEmail } = useSession()
   const roleLabel = getRoleLabel(role)
   const permissions = getRolePermissions(role)
 
@@ -29,7 +29,13 @@ function App() {
             <span className="badge-indicator" />
             <span>
               Đăng nhập với vai trò: <strong>{roleLabel}</strong> ({role ?? 'user'})
-              {userId && <span className="user-id-snippet"> • ID: {userId}</span>}
+              {userName ? (
+                <span className="user-id-snippet"> • {userName}</span>
+              ) : userEmail ? (
+                <span className="user-id-snippet"> • {userEmail}</span>
+              ) : userId ? (
+                <span className="user-id-snippet"> • ID: {userId}</span>
+              ) : null}
             </span>
           </div>
         </div>

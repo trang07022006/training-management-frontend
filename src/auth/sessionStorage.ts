@@ -7,6 +7,8 @@ export type StoredSessionData = {
     tokens: StoredSessionTokens
     role: string | null
     userId: string | null
+    userName?: string | null
+    userEmail?: string | null
 }
 
 export const SESSION_STORAGE_KEY = 'tms_session_data'
@@ -84,6 +86,8 @@ export function loadStoredSession(): StoredSessionData | null {
             const userId = 'userId' in parsed && (typeof parsed.userId === 'string' || typeof parsed.userId === 'number')
                 ? String(parsed.userId)
                 : null
+            const userName = 'userName' in parsed && typeof parsed.userName === 'string' ? parsed.userName : null
+            const userEmail = 'userEmail' in parsed && typeof parsed.userEmail === 'string' ? parsed.userEmail : null
 
             return {
                 tokens: {
@@ -92,6 +96,8 @@ export function loadStoredSession(): StoredSessionData | null {
                 },
                 role,
                 userId,
+                userName,
+                userEmail,
             }
         }
 

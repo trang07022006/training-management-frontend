@@ -83,6 +83,24 @@ export function LoginPage() {
                     ? String(data.user.id)
                     : null
 
+            const userName =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'name' in data.user &&
+                typeof data.user.name === 'string'
+                    ? data.user.name
+                    : null
+
+            const userEmail =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'email' in data.user &&
+                typeof data.user.email === 'string'
+                    ? data.user.email
+                    : email
+
             // Cập nhật session theo cơ chế SCRUM-19
             startSession(
                 {
@@ -92,6 +110,8 @@ export function LoginPage() {
                 userRole,
                 userId,
                 remember,
+                userName,
+                userEmail,
             )
 
             // Điều hướng người dùng tới trang phù hợp theo role

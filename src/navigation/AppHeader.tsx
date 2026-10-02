@@ -13,18 +13,26 @@ export interface AppHeaderProps {
  */
 export function AppHeader({
     onToggleSidebar,
-    userName,
-    userEmail,
+    userName: propUserName,
+    userEmail: propUserEmail,
 }: AppHeaderProps) {
-    const { hasSession, userId, role, logout, clearSession } = useSession()
+    const {
+        hasSession,
+        userId,
+        userName: contextUserName,
+        userEmail: contextUserEmail,
+        role,
+        logout,
+        clearSession,
+    } = useSession()
 
     if (!hasSession) {
         return null
     }
 
     const displayName = getUserDisplayName({
-        name: userName,
-        email: userEmail,
+        name: propUserName ?? contextUserName,
+        email: propUserEmail ?? contextUserEmail,
         userId,
     })
 

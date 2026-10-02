@@ -29,12 +29,16 @@ type SessionContextValue = {
     isRestoring?: boolean
     endReason: string | null
     userId: string | null
+    userName: string | null
+    userEmail: string | null
     role: string | null
     startSession: (
         tokens: SessionTokens,
         initialRole?: string | null,
         initialUserId?: string | null,
         remember?: boolean,
+        initialUserName?: string | null,
+        initialUserEmail?: string | null,
     ) => void
     clearSession: () => void
     logout: () => Promise<void>
@@ -68,6 +72,8 @@ export function SessionProvider({
     const [isLoading, setIsLoading] = useState<boolean>(() => initialStored !== null)
     const [role, setRole] = useState<string | null>(() => initialStored?.role ?? null)
     const [userId, setUserId] = useState<string | null>(() => initialStored?.userId ?? null)
+    const [userName, setUserName] = useState<string | null>(() => initialStored?.userName ?? null)
+    const [userEmail, setUserEmail] = useState<string | null>(() => initialStored?.userEmail ?? null)
     const [endReason, setEndReason] = useState<string | null>(null)
 
     // Thay đổi khi bắt đầu hoặc kết thúc một phiên ở frontend.
@@ -79,6 +85,8 @@ export function SessionProvider({
         setHasSession(false)
         setIsLoading(false)
         setUserId(null)
+        setUserName(null)
+        setUserEmail(null)
         setEndReason(code)
         setRole(null)
         clearStoredSession()
@@ -144,6 +152,8 @@ export function SessionProvider({
             initialRole?: string | null,
             initialUserId?: string | null,
             remember = false,
+            initialUserName?: string | null,
+            initialUserEmail?: string | null,
         ) => {
             client.setSession(tokens)
 
@@ -151,6 +161,8 @@ export function SessionProvider({
             setHasSession(true)
             setIsLoading(false)
             setUserId(initialUserId ?? null)
+            setUserName(initialUserName ?? null)
+            setUserEmail(initialUserEmail ?? null)
             setEndReason(null)
             setRole(initialRole ?? null)
 
@@ -159,6 +171,8 @@ export function SessionProvider({
                     tokens,
                     role: initialRole ?? null,
                     userId: initialUserId ?? null,
+                    userName: initialUserName ?? null,
+                    userEmail: initialUserEmail ?? null,
                 },
                 remember,
             )
@@ -171,6 +185,8 @@ export function SessionProvider({
         setHasSession(false)
         setIsLoading(false)
         setUserId(null)
+        setUserName(null)
+        setUserEmail(null)
         setEndReason(null)
         setRole(null)
         clearStoredSession()
@@ -216,6 +232,8 @@ export function SessionProvider({
             isRestoring: isLoading,
             endReason,
             userId,
+            userName,
+            userEmail,
             role,
             startSession,
             clearSession,
@@ -229,6 +247,8 @@ export function SessionProvider({
             isLoading,
             endReason,
             userId,
+            userName,
+            userEmail,
             role,
             startSession,
             clearSession,
