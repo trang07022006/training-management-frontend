@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { StrictMode } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 
@@ -67,9 +67,16 @@ async function fillAndSubmitLoginForm(email: string, password: string) {
     fireEvent.click(submitBtn)
 }
 
+beforeEach(() => {
+    window.sessionStorage.clear()
+    window.localStorage.clear()
+})
+
 afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    window.sessionStorage.clear()
+    window.localStorage.clear()
 })
 
 describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', () => {

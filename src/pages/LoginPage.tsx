@@ -13,7 +13,7 @@ export function LoginPage() {
     const [isLoading, setIsLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-    async function handleLogin(email: string, password: string) {
+    async function handleLogin(email: string, password: string, remember = false) {
         setIsLoading(true)
         setErrorMessage(null)
 
@@ -75,6 +75,14 @@ export function LoginPage() {
                     ? data.user.role
                     : null
 
+            const userId =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'id' in data.user
+                    ? String(data.user.id)
+                    : null
+
             // Cập nhật session theo cơ chế SCRUM-19
             startSession(
                 {
@@ -82,6 +90,8 @@ export function LoginPage() {
                     refreshToken: data.refresh_token,
                 },
                 userRole,
+                userId,
+                remember,
             )
 
             // Điều hướng người dùng tới trang phù hợp theo role

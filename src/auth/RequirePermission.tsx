@@ -19,7 +19,12 @@ export function RequirePermission({
     requiredRole,
     fallbackPath,
 }: RequirePermissionProps) {
-    const { hasSession, role } = useSession()
+    const { hasSession, role, isLoading } = useSession()
+
+    // Đang trong quá trình khôi phục phiên: không xử lý chuyển trang vội
+    if (isLoading) {
+        return null
+    }
 
     // 1. Chưa đăng nhập -> Chuyển hướng về trang đăng nhập
     if (!hasSession) {

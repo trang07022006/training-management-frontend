@@ -8,6 +8,7 @@ type SessionTokens = {
 type ClientOptions = {
     apiOrigin: string
     onSessionEnded: (code: string) => void
+    onTokensUpdated?: (tokens: SessionTokens) => void
     fetchImpl?: typeof fetch
 }
 
@@ -141,6 +142,8 @@ export function createSessionClient(options: ClientOptions) {
             ...latest,
             accessToken: body.access_token,
         }
+
+        options.onTokensUpdated?.(tokens)
     }
 
     async function refreshAccess(

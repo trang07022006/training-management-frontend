@@ -23,13 +23,20 @@ export async function readErrorCode(
         // Đọc bản sao để bên gọi vẫn đọc được response gốc.
         const body: unknown = await response.clone().json()
 
-        if (
-            typeof body === 'object' &&
-            body !== null &&
-            'code' in body &&
-            typeof body.code === 'string'
-        ) {
-            return body.code
+        if (typeof body === 'object' && body !== null) {
+            const record = body as Record<string, unknown>
+            if (typeof record.code === 'string') {
+                return record.code
+            }
+            if (typeof record.detail === 'object' && record.detail !== null) {
+                const detailRecord = record.detail as Record<string, unknown>
+                if (typeof detailRecord.code === 'string') {
+                    return detailRecord.code
+                }
+            }
+            if (typeof record.detail === 'string') {
+                return record.detail
+            }
         }
 
         return null
