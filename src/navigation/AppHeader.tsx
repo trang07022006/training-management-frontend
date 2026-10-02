@@ -57,7 +57,10 @@ export function AppHeader({
                     </button>
                 )}
                 <div className="header-title-container">
-                    <span className="header-app-title" data-testid="header-app-title">Hệ thống Quản lý Đào tạo</span>
+                    <span className="header-app-title" data-testid="header-app-title">
+                        <span className="header-title-full">Hệ thống Quản lý Đào tạo</span>
+                        <span className="header-title-short">Hệ thống Đào tạo</span>
+                    </span>
                 </div>
             </div>
 

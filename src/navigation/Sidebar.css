@@ -201,8 +201,26 @@
         transform: translateX(0);
     }
 
+    .sidebar-brand {
+        padding: 16px 14px 14px 14px;
+        gap: 10px;
+    }
+
+    /* Đảm bảo brand "Đào Tạo & RBAC" hiển thị đầy đủ, không bị cắt xấu */
+    .sidebar-brand-title {
+        font-size: 0.98rem;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
     .sidebar-close-btn {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        padding: 0 4px;
     }
 
     .sidebar-backdrop {
@@ -214,3 +232,4 @@
         z-index: 999;
     }
 }
+

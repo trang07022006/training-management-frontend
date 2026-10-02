@@ -52,6 +52,14 @@
     text-overflow: ellipsis;
 }
 
+.header-title-full {
+    display: inline;
+}
+
+.header-title-short {
+    display: none;
+}
+
 .header-right {
     display: flex;
     align-items: center;
@@ -130,7 +138,7 @@
     color: #ef4444;
 }
 
-/* Responsive adjustment for tablet and mobile (768px, 520px, 400px, 375px, 360px) */
+/* Responsive adjustment for tablet (<= 768px) */
 @media (max-width: 768px) {
     .app-header {
         padding: 0 12px;
@@ -152,8 +160,8 @@
     }
 
     .header-app-title {
-        font-size: 0.9rem;
-        max-width: 160px;
+        font-size: 0.95rem;
+        max-width: 220px;
     }
 
     .user-display-name {
@@ -167,16 +175,17 @@
     }
 }
 
-@media (max-width: 520px) {
+/* Mobile viewport adjustment (<= 480px, including 400px, 390px, 375px) */
+@media (max-width: 480px) {
     .app-header {
-        height: 54px;
+        height: 52px;
         padding: 0 10px;
     }
 
     .header-left {
         gap: 8px;
         min-width: 0;
-        flex-shrink: 1;
+        flex: 1;
     }
 
     .header-right {
@@ -184,35 +193,42 @@
         flex-shrink: 0;
     }
 
-    .header-app-title {
-        font-size: 0.82rem;
-        max-width: 110px;
+    .sidebar-toggle-btn {
+        padding: 5px;
     }
 
-    .user-avatar {
-        width: 30px;
-        height: 30px;
-        font-size: 0.85rem;
-    }
-
-    /* Ẩn username đầy đủ trên mobile để không làm tràn header */
-    .user-display-name {
+    /* Hiển thị tiêu đề ngắn gọn "Hệ thống Đào tạo" trên mobile */
+    .header-title-full {
         display: none;
     }
 
-    .user-details {
-        display: flex;
-        flex-direction: column;
+    .header-title-short {
+        display: inline;
     }
 
-    .user-role-badge {
-        font-size: 0.68rem;
-        padding: 1px 6px;
-        max-width: 80px;
+    .header-app-title {
+        font-size: 0.92rem;
+        font-weight: 600;
+        max-width: none;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-top: 0;
+    }
+
+    /* Ẩn hoàn toàn username + role badge khỏi header mobile, xem đầy đủ trong drawer */
+    .user-details {
+        display: none !important;
+    }
+
+    .header-user-profile {
+        gap: 0;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.88rem;
+        flex-shrink: 0;
     }
 
     .header-logout-btn {
@@ -220,10 +236,17 @@
         font-size: 0.78rem;
         gap: 4px;
         flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .header-logout-btn svg {
+        width: 14px;
+        height: 14px;
     }
 }
 
-@media (max-width: 400px) {
+/* Extra small mobile (<= 360px) */
+@media (max-width: 360px) {
     .app-header {
         padding: 0 8px;
     }
@@ -236,65 +259,19 @@
         gap: 6px;
     }
 
-    .sidebar-toggle-btn {
-        padding: 5px;
-    }
-
     .header-app-title {
-        font-size: 0.78rem;
-        max-width: 85px;
-    }
-
-    .user-role-badge {
-        font-size: 0.65rem;
-        padding: 1px 5px;
-        max-width: 70px;
-    }
-
-    .header-logout-btn {
-        padding: 4px 6px;
-        font-size: 0.75rem;
-        gap: 3px;
-    }
-
-    .header-logout-btn svg {
-        width: 14px;
-        height: 14px;
-    }
-}
-
-@media (max-width: 360px) {
-    .app-header {
-        padding: 0 6px;
-    }
-
-    .header-left {
-        gap: 4px;
-    }
-
-    .header-right {
-        gap: 4px;
-    }
-
-    .header-app-title {
-        font-size: 0.72rem;
-        max-width: 70px;
+        font-size: 0.86rem;
     }
 
     .user-avatar {
-        width: 28px;
-        height: 28px;
-        font-size: 0.78rem;
-    }
-
-    .user-role-badge {
-        font-size: 0.62rem;
-        padding: 1px 4px;
-        max-width: 60px;
+        width: 30px;
+        height: 30px;
+        font-size: 0.82rem;
     }
 
     .header-logout-btn {
-        padding: 4px 5px;
-        font-size: 0.72rem;
+        padding: 4px 7px;
+        font-size: 0.75rem;
     }
 }
+
