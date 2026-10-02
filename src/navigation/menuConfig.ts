@@ -46,7 +46,6 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SESSION_REVOKE,
     ],
     trainer: [
-        SYSTEM_PERMISSIONS.USER_VIEW,
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.COURSE_MANAGE,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
@@ -107,6 +106,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         label: 'Quản lý Người dùng',
         path: '/users',
         icon: 'users',
+        requiredRole: 'admin',
         requiredPermission: SYSTEM_PERMISSIONS.USER_VIEW,
     },
     {

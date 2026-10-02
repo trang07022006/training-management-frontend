@@ -76,6 +76,7 @@ function renderAppWithRoute({
                         <Route
                             element={
                                 <RequirePermission
+                                    requiredRole="admin"
                                     requiredPermission={SYSTEM_PERMISSIONS.USER_VIEW}
                                     fallbackPath="/forbidden"
                                 />
@@ -126,29 +127,13 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
             })
         })
 
-        it('2. Trainer vào /users thấy danh sách nhưng không thấy nút thêm/sửa', async () => {
-            const mockCustomRequest = vi.fn().mockResolvedValue({
-                ok: true,
-                status: 200,
-                json: async () => ({
-                    status: 'success',
-                    data: {
-                        items: [mockAdminUser],
-                        users: [mockAdminUser],
-                        page: 1,
-                        page_size: 20,
-                        total: 1,
-                        total_pages: 1,
-                    },
-                }),
-            } as unknown as Response)
-
-            renderAppWithRoute({ role: 'trainer', customRequest: mockCustomRequest })
+        it('2. Trainer truy cập trực tiếp /users bị từ chối 403 và chuyển về /forbidden', async () => {
+            renderAppWithRoute({ role: 'trainer' })
 
             await waitFor(() => {
-                expect(screen.getByTestId('user-table')).toBeDefined()
-                expect(screen.queryByTestId('btn-create-user')).toBeNull()
-                expect(screen.queryByTestId('btn-edit-user-1')).toBeNull()
+                expect(screen.getByTestId('page-forbidden')).toBeDefined()
+                expect(screen.getByText(/403 - Bạn không có quyền truy cập/)).toBeDefined()
+                expect(screen.queryByTestId('user-management-page')).toBeNull()
             })
         })
 

@@ -82,6 +82,7 @@ createRoot(document.getElementById('root')!).render(
               <Route
                 element={
                   <RequirePermission
+                    requiredRole="admin"
                     requiredPermission={SYSTEM_PERMISSIONS.USER_VIEW}
                     fallbackPath="/forbidden"
                   />
