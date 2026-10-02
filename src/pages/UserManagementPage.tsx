@@ -134,6 +134,7 @@ export function UserManagementPage({
     }
 
     const handleCreateSuccess = (_newUser: User) => {
+        setIsCreateOpen(false)
         // Tải lại trang 1 để đưa người dùng mới lên đầu danh sách
         setPage(1)
         void loadUsers({ page: 1 })
