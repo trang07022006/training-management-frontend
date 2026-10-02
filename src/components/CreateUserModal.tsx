@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { createUserApi, type User, type CreateUserData } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import './UserModal.css'
 
 export interface CreateUserModalProps {
@@ -108,11 +109,11 @@ export function CreateUserModal({
             onClose()
         } catch (err: unknown) {
             setIsSubmitting(false)
-            const errorMsg = err instanceof Error ? err.message : 'Tạo người dùng thất bại.'
+            const errorMsg = getErrorMessage(err, 'Tạo người dùng thất bại.')
 
             // Phân loại lỗi đặc thù
             if (errorMsg.includes('DUPLICATE_EMAIL') || errorMsg.includes('đã được sử dụng')) {
-                setErrors({ email: 'Email này đã được sử dụng trong hệ thống.' })
+                setErrors({ email: getErrorMessage('DUPLICATE_EMAIL') })
             } else {
                 setErrors({ general: errorMsg })
             }

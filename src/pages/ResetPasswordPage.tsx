@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { getErrorMessage } from '../utils/errorMessages'
 import './ResetPasswordPage.css'
 
 export interface ResetPasswordPageProps {
@@ -95,15 +96,11 @@ export function ResetPasswordPage({
 
         if (!response.ok) {
           const code = data?.code
-          if (code === 'TOKEN_ALREADY_USED') {
-            setErrorMessage('Liên kết đặt lại mật khẩu này đã được sử dụng. Vui lòng yêu cầu liên kết mới.')
-          } else if (code === 'TOKEN_EXPIRED') {
-            setErrorMessage('Liên kết đặt lại mật khẩu đã hết hạn (30 phút). Vui lòng yêu cầu liên kết mới.')
-          } else if (code === 'INVALID_TOKEN') {
-            setErrorMessage('Mã token không hợp lệ hoặc không tồn tại. Vui lòng kiểm tra lại liên kết.')
-          } else {
-            setErrorMessage(data?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại sau.')
-          }
+          const message = getErrorMessage(
+            { code, message: data?.message },
+            'Không thể đặt lại mật khẩu. Vui lòng thử lại sau.',
+          )
+          setErrorMessage(message)
           return
         }
 
@@ -111,8 +108,8 @@ export function ResetPasswordPage({
         setNewPassword('')
         setConfirmPassword('')
       }
-    } catch {
-      setErrorMessage('Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng kiểm tra lại kết nối mạng.')
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, 'Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng kiểm tra lại kết nối mạng.'))
     } finally {
       setIsLoading(false)
     }
@@ -208,7 +205,7 @@ export function ResetPasswordPage({
               <span className="banner-title">Thành công!</span>
               <span className="banner-text">Mật khẩu đã được đặt lại thành công.</span>
               <p style={{ margin: '8px 0 0', fontSize: '0.875rem' }}>
-                Bây giờ bạn có thể đăng nhập vào hệ thống bằng mật khẩu mới của mình.
+                Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.
               </p>
               <Link
                 to="/login"

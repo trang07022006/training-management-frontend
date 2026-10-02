@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRoleHomePath } from '../auth/roleRouting'
 import { LoginForm } from '../components/LoginForm'
+import { getErrorMessage } from '../utils/errorMessages'
 import './LoginPage.css'
 
 export function LoginPage() {
@@ -31,13 +32,24 @@ export function LoginPage() {
             const data: unknown = await response.json().catch(() => null)
 
             if (!response.ok) {
-                const message =
+                const code =
+                    data &&
+                    typeof data === 'object' &&
+                    'code' in data &&
+                    typeof data.code === 'string'
+                        ? data.code
+                        : null
+                const rawMsg =
                     data &&
                     typeof data === 'object' &&
                     'message' in data &&
                     typeof data.message === 'string'
                         ? data.message
-                        : 'Email hoặc mật khẩu không đúng'
+                        : null
+                const message = getErrorMessage(
+                    { code, message: rawMsg },
+                    'Email hoặc mật khẩu không đúng.',
+                )
                 setErrorMessage(message)
                 return
             }
@@ -75,9 +87,9 @@ export function LoginPage() {
             // Điều hướng người dùng tới trang phù hợp theo role
             const targetPath = getRoleHomePath(userRole)
             navigate(targetPath, { replace: true })
-        } catch {
+        } catch (err: unknown) {
             setErrorMessage(
-                'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.',
+                getErrorMessage(err, 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'),
             )
         } finally {
             setIsLoading(false)

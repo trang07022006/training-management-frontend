@@ -361,7 +361,7 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
 
             await waitFor(() => {
                 expect(screen.getByTestId('error-create-email')).toBeDefined()
-                expect(screen.getByText('Email này đã được sử dụng trong hệ thống.')).toBeDefined()
+                expect(screen.getByText('Email này đã được sử dụng.')).toBeDefined()
             })
         })
     })
@@ -527,7 +527,7 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
 
             await waitFor(() => {
                 expect(screen.getByTestId('user-error-state')).toBeDefined()
-                expect(screen.getByText('Lỗi kết nối máy chủ đào tạo.')).toBeDefined()
+                expect(screen.getByText('Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.')).toBeDefined()
             })
 
             fireEvent.click(screen.getByTestId('btn-retry-users'))

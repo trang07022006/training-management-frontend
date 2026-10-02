@@ -265,7 +265,7 @@ describe('ResetPasswordPage (SCRUM-49)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Liên kết đặt lại mật khẩu đã hết hạn \(30 phút\)/i)
+        screen.getByText(/Liên kết đặt lại mật khẩu đã hết hạn/i)
       ).toBeDefined()
       expect(screen.getByRole('link', { name: /yêu cầu liên kết mới tại đây/i })).toBeDefined()
     })
@@ -329,7 +329,7 @@ describe('ResetPasswordPage (SCRUM-49)', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Mã token không hợp lệ hoặc không tồn tại/i)
+        screen.getByText(/Liên kết đặt lại mật khẩu không hợp lệ/i)
       ).toBeDefined()
     })
   })

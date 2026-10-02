@@ -144,7 +144,7 @@ describe('SCRUM-89: User Management Page', () => {
         await waitFor(() => {
             expect(screen.getByTestId('user-error-state')).toBeDefined()
         })
-        expect(screen.getByText('Lỗi kết nối máy chủ.')).toBeDefined()
+        expect(screen.getByText('Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.')).toBeDefined()
 
         const retryBtn = screen.getByTestId('btn-retry-users')
         expect(retryBtn).toBeDefined()

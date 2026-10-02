@@ -205,7 +205,7 @@ describe('SCRUM-92: Create User Modal Component', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('error-create-email')).toBeDefined()
-            expect(screen.getByText('Email này đã được sử dụng trong hệ thống.')).toBeDefined()
+            expect(screen.getByText('Email này đã được sử dụng.')).toBeDefined()
         })
     })
 

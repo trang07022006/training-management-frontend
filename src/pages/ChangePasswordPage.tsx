@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
+import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import './ChangePasswordPage.css'
 
 export interface ChangePasswordFormData {
@@ -107,28 +108,35 @@ export function ChangePasswordPage({
         const data: unknown = await response.json().catch(() => null)
 
         if (!response.ok) {
-          const message =
+          const code =
+            data &&
+            typeof data === 'object' &&
+            'code' in data &&
+            typeof (data as Record<string, unknown>).code === 'string'
+              ? ((data as Record<string, unknown>).code as string)
+              : null
+          const rawMsg =
             data &&
             typeof data === 'object' &&
             'message' in data &&
-            typeof data.message === 'string'
-              ? data.message
-              : 'Đổi mật khẩu thất bại. Vui lòng thử lại.'
+            typeof (data as Record<string, unknown>).message === 'string'
+              ? ((data as Record<string, unknown>).message as string)
+              : null
+          const message = getErrorMessage(
+            { code, message: rawMsg },
+            'Đổi mật khẩu thất bại. Vui lòng thử lại.',
+          )
           setInternalError(message)
           return
         }
       }
 
-      setInternalSuccess('Đổi mật khẩu thành công.')
+      setInternalSuccess(getSuccessMessage('CHANGE_PASSWORD_SUCCESS', 'Đổi mật khẩu thành công.'))
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Đã có lỗi xảy ra khi đổi mật khẩu'
-      setInternalError(message)
+      setInternalError(getErrorMessage(err, 'Đã có lỗi xảy ra khi đổi mật khẩu'))
     } finally {
       setInternalLoading(false)
     }

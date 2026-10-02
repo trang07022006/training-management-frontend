@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { fetchUsersApi, type User, type UserListParams, type RoleItem } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import { UserFilterBar, type UserFilters } from '../components/UserFilterBar'
 import { UserTable } from '../components/UserTable'
 import { UserPagination } from '../components/UserPagination'
@@ -87,8 +88,7 @@ export function UserManagementPage({
             setUsers(data.items || data.users || [])
             setTotal(data.total || 0)
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Không thể tải danh sách người dùng.'
-            setErrorMessage(msg)
+            setErrorMessage(getErrorMessage(err, 'Không thể tải danh sách người dùng.'))
         } finally {
             setIsLoading(false)
         }
@@ -107,7 +107,7 @@ export function UserManagementPage({
                 })
                 .catch((err: unknown) => {
                     if (isMounted) {
-                        setErrorMessage(err instanceof Error ? err.message : 'Không thể tải danh sách người dùng.')
+                        setErrorMessage(getErrorMessage(err, 'Không thể tải danh sách người dùng.'))
                         setIsLoading(false)
                     }
                 })

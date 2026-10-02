@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { updateUserApi, type User, type UpdateUserData } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import './UserModal.css'
 
 export interface EditUserModalProps {
@@ -96,14 +97,18 @@ function EditUserFormContent({
             onClose()
         } catch (err: unknown) {
             setIsSubmitting(false)
-            const errorMsg = err instanceof Error ? err.message : 'Cập nhật người dùng thất bại.'
+            const errorMsg = getErrorMessage(err, 'Cập nhật người dùng thất bại.')
 
             if (errorMsg.includes('DUPLICATE_EMAIL') || errorMsg.includes('đã được sử dụng')) {
-                setErrors({ email: 'Email này đã được sử dụng trong hệ thống.' })
-            } else if (errorMsg.includes('USER_NOT_FOUND') || errorMsg.includes('không tồn tại')) {
-                setErrors({ general: 'Người dùng không tồn tại hoặc đã bị xóa.' })
+                setErrors({ email: getErrorMessage('DUPLICATE_EMAIL') })
+            } else if (
+                errorMsg.includes('USER_NOT_FOUND') ||
+                errorMsg.includes('không tồn tại') ||
+                errorMsg.includes('Không tìm thấy người dùng')
+            ) {
+                setErrors({ general: getErrorMessage('USER_NOT_FOUND') })
             } else if (errorMsg.includes('FORBIDDEN') || errorMsg.includes('không có quyền')) {
-                setErrors({ general: 'Bạn không có quyền cập nhật người dùng.' })
+                setErrors({ general: getErrorMessage('FORBIDDEN') })
             } else {
                 setErrors({ general: errorMsg })
             }
