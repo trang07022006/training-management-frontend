@@ -24,6 +24,7 @@ export interface UserManagementPageProps {
     roleModalSlot?: ReactNode
     lockModalSlot?: ReactNode
     onOpenCreateModal?: () => void
+    pageSize?: number
 }
 
 /**
@@ -43,6 +44,7 @@ export function UserManagementPage({
     roleModalSlot,
     lockModalSlot,
     onOpenCreateModal,
+    pageSize: initialPageSize = 10,
 }: UserManagementPageProps) {
     const { request: sessionRequest, role } = useSession()
     const requestFn = customRequest ?? sessionRequest
@@ -56,9 +58,9 @@ export function UserManagementPage({
     const [isLoading, setIsLoading] = useState<boolean>(initialUsers === undefined)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-    // Pagination & Filter State (SCRUM-94)
+    // Pagination & Filter State (SCRUM-94, SCRUM-25: 10 người dùng / trang)
     const [page, setPage] = useState<number>(1)
-    const pageSize = 20
+    const pageSize = initialPageSize
     const [filters, setFilters] = useState<UserFilters>({
         search: '',
         role: '',

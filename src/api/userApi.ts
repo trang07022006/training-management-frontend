@@ -113,7 +113,7 @@ export async function fetchUsersApi(
         throw new ApiError(message, code, res.status)
     }
 
-    return body.data ?? { items: [], users: [], page: 1, page_size: 20, total: 0, total_pages: 0 }
+    return body.data ?? { items: [], users: [], page: 1, page_size: 10, total: 0, total_pages: 0 }
 }
 
 /**

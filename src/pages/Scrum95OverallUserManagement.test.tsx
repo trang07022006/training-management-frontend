@@ -424,8 +424,8 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
     // E. Pagination & State Matrix
     // ========================================================
     describe('E. Pagination & State Matrix', () => {
-        it('10. Hiển thị thông số 20 bản ghi/trang và chuyển trang mượt mà', async () => {
-            const page1Data: User[] = Array.from({ length: 20 }, (_, idx) => ({
+        it('10. Hiển thị thông số 10 bản ghi/trang và chuyển trang mượt mà', async () => {
+            const page1Data: User[] = Array.from({ length: 10 }, (_, idx) => ({
                 id: idx + 1,
                 name: `User ${idx + 1}`,
                 email: `user${idx + 1}@tms.local`,
@@ -442,9 +442,9 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
                         items: page1Data,
                         users: page1Data,
                         page: 1,
-                        page_size: 20,
+                        page_size: 10,
                         total: 35,
-                        total_pages: 2,
+                        total_pages: 4,
                     },
                 }),
             } as unknown as Response)
@@ -454,7 +454,7 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
             await waitFor(() => {
                 const infoEl = screen.getByTestId('pagination-info')
                 expect(infoEl).toBeDefined()
-                expect(infoEl.textContent).toContain('Hiển thị 1 - 20 trên tổng số 35 người dùng')
+                expect(infoEl.textContent).toContain('Hiển thị 1 - 10 trên tổng số 35 người dùng')
             })
         })
 
