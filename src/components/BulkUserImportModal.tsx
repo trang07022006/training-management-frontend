@@ -662,7 +662,7 @@ export function BulkUserImportModal({
                                         </table>
                                     </div>
                                 </div>
-                            ) : (
+                            ) : previewData ? (
                                 /* GIAO DIỆN PREVIEW TRƯỚC KHI IMPORT (A6.2) */
                                 <div className="import-preview-container" data-testid="import-preview-content">
                                     {/* Summary counts */}
@@ -848,7 +848,7 @@ export function BulkUserImportModal({
                                         </span>
                                     </div>
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                     </div>
                 </div>
