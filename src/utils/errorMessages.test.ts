@@ -19,9 +19,10 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             expect(getErrorMessage({ code: 'INVALID_CREDENTIALS' })).toBe('Email hoặc mật khẩu không đúng.')
         })
 
-        it('map ACCOUNT_LOCKED và ACCOUNT_DISABLED', () => {
+        it('map ACCOUNT_LOCKED, ACCOUNT_INACTIVE và ACCOUNT_DISABLED', () => {
             expect(getErrorMessage('ACCOUNT_LOCKED')).toBe('Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
-            expect(getErrorMessage('ACCOUNT_DISABLED')).toBe('Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
+            expect(getErrorMessage('ACCOUNT_INACTIVE')).toBe('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
+            expect(getErrorMessage('ACCOUNT_DISABLED')).toBe('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
         })
 
         it('map TEMPORARILY_LOCKED', () => {

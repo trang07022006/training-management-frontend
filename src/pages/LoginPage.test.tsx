@@ -138,4 +138,58 @@ describe('SCRUM-30: Giao diện đăng nhập (LoginPage & LoginForm)', () => {
         expect(brandLogo).not.toBeNull()
         expect(actionsRow).not.toBeNull()
     })
+
+    it('hiển thị thông báo tài khoản hiện không hoạt động khi đăng nhập tài khoản inactive', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({
+                    code: 'ACCOUNT_INACTIVE',
+                    message: 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
+                }),
+                {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' },
+                },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'inactive@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'ValidPassword123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toBe('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
+    })
+
+    it('hiển thị thông báo tài khoản đang bị khóa khi đăng nhập tài khoản locked', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({
+                    code: 'ACCOUNT_LOCKED',
+                    message: 'Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.',
+                }),
+                {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' },
+                },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'locked@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'ValidPassword123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toBe('Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
+    })
 })
