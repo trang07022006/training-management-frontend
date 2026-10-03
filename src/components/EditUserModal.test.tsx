@@ -217,7 +217,7 @@ describe('SCRUM-93: Edit User Modal Component', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('error-edit-email')).toBeDefined()
-            expect(screen.getByText('Email này đã được sử dụng trong hệ thống.')).toBeDefined()
+            expect(screen.getByText('Email này đã được sử dụng.')).toBeDefined()
         })
     })
 
@@ -246,7 +246,7 @@ describe('SCRUM-93: Edit User Modal Component', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('edit-modal-error-banner')).toBeDefined()
-            expect(screen.getByText('Người dùng không tồn tại hoặc đã bị xóa.')).toBeDefined()
+            expect(screen.getByText('Không tìm thấy người dùng.')).toBeDefined()
         })
     })
 

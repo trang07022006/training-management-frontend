@@ -325,4 +325,30 @@ describe('sessionClient', () => {
         expect(fetcher).toHaveBeenCalledTimes(2)
         expect(onSessionEnded).not.toHaveBeenCalled()
     })
+
+    it('logout thu hồi session ở backend và xóa phiên ở client', async () => {
+        const { client, fetcher } = setup()
+        fetcher.mockResolvedValueOnce(new Response(null, { status: 204 }))
+
+        await client.logout()
+
+        expect(fetcher).toHaveBeenCalledTimes(1)
+        expect(String(fetcher.mock.calls[0][0])).toBe('https://api.example.test/api/auth/logout')
+        expect(fetcher.mock.calls[0][1]?.method).toBe('POST')
+        expect(authorization(fetcher.mock.calls[0][1])).toBe('Bearer access-old')
+
+        await expect(client.request('/api/items')).rejects.toMatchObject({
+            code: 'AUTH_REQUIRED',
+        })
+    })
+
+    it('logout không ném lỗi khi backend gặp lỗi mạng', async () => {
+        const { client, fetcher } = setup()
+        fetcher.mockRejectedValueOnce(new Error('Network error'))
+
+        await expect(client.logout()).resolves.toBeUndefined()
+        await expect(client.request('/api/items')).rejects.toMatchObject({
+            code: 'AUTH_REQUIRED',
+        })
+    })
 })

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { useState } from 'react'
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { CreateUserModal } from './CreateUserModal'
@@ -205,7 +206,7 @@ describe('SCRUM-92: Create User Modal Component', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('error-create-email')).toBeDefined()
-            expect(screen.getByText('Email này đã được sử dụng trong hệ thống.')).toBeDefined()
+            expect(screen.getByText('Email này đã được sử dụng.')).toBeDefined()
         })
     })
 
@@ -226,3 +227,220 @@ describe('SCRUM-92: Create User Modal Component', () => {
         expect(handleClose).toHaveBeenCalledTimes(2)
     })
 })
+
+describe('SCRUM-25: Reset Form State trên CreateUserModal', () => {
+    function TestHarness({
+        customRequest,
+        initialOpen = true,
+    }: {
+        customRequest?: (path: string, init?: RequestInit) => Promise<Response>
+        initialOpen?: boolean
+    }) {
+        const [isOpen, setIsOpen] = useState(initialOpen)
+        return (
+            <div>
+                <button data-testid="btn-harness-open" onClick={() => setIsOpen(true)}>
+                    Mở modal
+                </button>
+                <button data-testid="btn-harness-close" onClick={() => setIsOpen(false)}>
+                    Đóng modal
+                </button>
+                <CreateUserModal
+                    isOpen={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    onSuccess={() => setIsOpen(false)}
+                    customRequest={customRequest}
+                />
+            </div>
+        )
+    }
+
+    it('1. form initially empty: form mở lần đầu có các trường trống và giá trị mặc định chuẩn', () => {
+        renderWithProvider(<TestHarness />)
+
+        expect((screen.getByTestId('input-create-name') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-email') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-phone') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('select-create-role') as HTMLSelectElement).value).toBe('user')
+        expect((screen.getByTestId('select-create-status') as HTMLSelectElement).value).toBe('active')
+        expect(screen.queryByTestId('error-create-name')).toBeNull()
+        expect(screen.queryByTestId('error-create-email')).toBeNull()
+        expect(screen.queryByTestId('error-create-password')).toBeNull()
+        expect(screen.queryByTestId('create-modal-error-banner')).toBeNull()
+    })
+
+    it('2. create success resets form: tạo user thành công thì form được reset và xóa toàn bộ dữ liệu nhập', async () => {
+        const handleSuccess = vi.fn()
+        const handleClose = vi.fn()
+        const mockRequest = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 201,
+            json: async () => ({ status: 'success', data: mockCreatedUser }),
+        } as unknown as Response)
+
+        renderWithProvider(
+            <CreateUserModal
+                isOpen={true}
+                onClose={handleClose}
+                onSuccess={handleSuccess}
+                customRequest={mockRequest}
+            />
+        )
+
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'User Success' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'success@tms.local' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'Password123' } })
+        fireEvent.change(screen.getByTestId('input-create-phone'), { target: { value: '0901234567' } })
+        fireEvent.change(screen.getByTestId('select-create-role'), { target: { value: 'trainer' } })
+        fireEvent.change(screen.getByTestId('select-create-status'), { target: { value: 'locked' } })
+
+        fireEvent.click(screen.getByTestId('btn-submit-create'))
+
+        await waitFor(() => {
+            expect(mockRequest).toHaveBeenCalledTimes(1)
+            expect(handleSuccess).toHaveBeenCalledWith(mockCreatedUser)
+            expect(handleClose).toHaveBeenCalledTimes(1)
+        })
+    })
+
+    it('3. reopen after success -> empty: tạo user thành công và mở lại modal thì form hoàn toàn sạch', async () => {
+        const mockRequest = vi.fn().mockResolvedValue({
+            ok: true,
+            status: 201,
+            json: async () => ({ status: 'success', data: mockCreatedUser }),
+        } as unknown as Response)
+
+        renderWithProvider(<TestHarness customRequest={mockRequest} />)
+
+        // Nhập đầy đủ thông tin
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'User Mới' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'user@daotao.edu.vn' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'MatKhau123!' } })
+        fireEvent.change(screen.getByTestId('input-create-phone'), { target: { value: '0912345678' } })
+        fireEvent.change(screen.getByTestId('select-create-role'), { target: { value: 'trainer' } })
+        fireEvent.change(screen.getByTestId('select-create-status'), { target: { value: 'locked' } })
+
+        // Submit form
+        fireEvent.click(screen.getByTestId('btn-submit-create'))
+
+        // Chờ modal đóng sau khi thành công
+        await waitFor(() => {
+            expect(screen.queryByTestId('create-user-modal')).toBeNull()
+        })
+
+        // Mở lại modal lần thứ 2
+        fireEvent.click(screen.getByTestId('btn-harness-open'))
+
+        // Kiểm tra toàn bộ field đã được reset sạch sẽ
+        expect((screen.getByTestId('input-create-name') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-email') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-phone') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('select-create-role') as HTMLSelectElement).value).toBe('user')
+        expect((screen.getByTestId('select-create-status') as HTMLSelectElement).value).toBe('active')
+        expect(screen.queryByTestId('error-create-name')).toBeNull()
+        expect(screen.queryByTestId('error-create-email')).toBeNull()
+        expect(screen.queryByTestId('error-create-password')).toBeNull()
+    })
+
+    it('4. cancel resets form: bấm Hủy bỏ kích hoạt resetForm và đóng modal', () => {
+        const handleClose = vi.fn()
+        renderWithProvider(
+            <CreateUserModal
+                isOpen={true}
+                onClose={handleClose}
+                onSuccess={vi.fn()}
+            />
+        )
+
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'Dang Nhap' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'cancel@tms.local' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'Pass12345' } })
+
+        fireEvent.click(screen.getByTestId('btn-cancel-create'))
+        expect(handleClose).toHaveBeenCalledTimes(1)
+    })
+
+    it('5. reopen after cancel -> empty: bấm Hủy bỏ rồi mở lại thì form hoàn toàn sạch', () => {
+        renderWithProvider(<TestHarness />)
+
+        // Nhập thông tin dang dở
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'Đang Nhập Dở' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'dodo@tms.local' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'UnfinishedPass123' } })
+        fireEvent.change(screen.getByTestId('select-create-role'), { target: { value: 'trainer' } })
+
+        // Bấm nút Hủy bỏ
+        fireEvent.click(screen.getByTestId('btn-cancel-create'))
+
+        expect(screen.queryByTestId('create-user-modal')).toBeNull()
+
+        // Mở lại modal
+        fireEvent.click(screen.getByTestId('btn-harness-open'))
+
+        expect((screen.getByTestId('input-create-name') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-email') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('select-create-role') as HTMLSelectElement).value).toBe('user')
+    })
+
+    it('6. duplicate email error disappears after close/reopen: lỗi email trùng biến mất khi đóng và mở lại', async () => {
+        const mockRequest = vi.fn().mockResolvedValue({
+            ok: false,
+            status: 409,
+            json: async () => ({
+                status: 'error',
+                code: 'DUPLICATE_EMAIL',
+                message: 'Email đã được sử dụng.',
+            }),
+        } as unknown as Response)
+
+        renderWithProvider(<TestHarness customRequest={mockRequest} />)
+
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'Trùng Email' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'duplicate@tms.local' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'Password123' } })
+
+        fireEvent.click(screen.getByTestId('btn-submit-create'))
+
+        await waitFor(() => {
+            expect(screen.getByText('Email này đã được sử dụng.')).toBeDefined()
+        })
+
+        // Đóng modal bằng nút đóng (X)
+        fireEvent.click(screen.getByTestId('btn-close-create-modal'))
+        expect(screen.queryByTestId('create-user-modal')).toBeNull()
+
+        // Mở lại modal
+        fireEvent.click(screen.getByTestId('btn-harness-open'))
+
+        // Lỗi cũ không còn hiển thị và các ô nhập trống
+        expect(screen.queryByText('Email này đã được sử dụng.')).toBeNull()
+        expect(screen.queryByTestId('error-create-email')).toBeNull()
+        expect((screen.getByTestId('input-create-email') as HTMLInputElement).value).toBe('')
+    })
+
+    it('7. password never remains after modal close: mật khẩu không bao giờ được giữ lại sau khi đóng', () => {
+        renderWithProvider(<TestHarness />)
+
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'SecretPassword999!' } })
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('SecretPassword999!')
+
+        // Đóng modal từ bên ngoài (thông qua prop isOpen)
+        fireEvent.click(screen.getByTestId('btn-harness-close'))
+        expect(screen.queryByTestId('create-user-modal')).toBeNull()
+
+        // Mật khẩu không được lưu vào storage
+        expect(localStorage.getItem('password')).toBeNull()
+        expect(sessionStorage.getItem('password')).toBeNull()
+
+        // Mở lại modal
+        fireEvent.click(screen.getByTestId('btn-harness-open'))
+
+        // Password chắc chắn rỗng
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
+        expect(screen.queryByDisplayValue('SecretPassword999!')).toBeNull()
+    })
+})
+

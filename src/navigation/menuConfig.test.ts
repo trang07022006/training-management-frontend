@@ -138,7 +138,7 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
     })
 
     it('9. lọc menu thực tế theo vai trò hệ thống', () => {
-        // Admin: có bảng quản trị, khóa học, tổng quan, đổi mật khẩu
+        // Admin: có bảng quản trị, quản lý người dùng, khóa học, tổng quan, đổi mật khẩu
         const adminMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'admin',
@@ -146,11 +146,25 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
         const adminKeys = adminMenu.map((m) => m.key)
         expect(adminKeys).toContain('overview')
         expect(adminKeys).toContain('admin_dashboard')
+        expect(adminKeys).toContain('users')
         expect(adminKeys).toContain('courses')
         expect(adminKeys).not.toContain('trainer_dashboard')
         expect(adminKeys).not.toContain('trainee_dashboard')
 
-        // Trainee: có góc học viên, khóa học, tổng quan, đổi mật khẩu
+        // Trainer: có không gian giảng viên, khóa học, tổng quan, đổi mật khẩu; KHÔNG có users
+        const trainerMenu = filterMenuItems(APP_MENU_CONFIG, {
+            hasSession: true,
+            role: 'trainer',
+        })
+        const trainerKeys = trainerMenu.map((m) => m.key)
+        expect(trainerKeys).toContain('overview')
+        expect(trainerKeys).toContain('trainer_dashboard')
+        expect(trainerKeys).toContain('courses')
+        expect(trainerKeys).not.toContain('users')
+        expect(trainerKeys).not.toContain('admin_dashboard')
+        expect(trainerKeys).not.toContain('trainee_dashboard')
+
+        // Trainee: có góc học viên, khóa học, tổng quan, đổi mật khẩu; KHÔNG có users
         const traineeMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'trainee',
@@ -159,6 +173,7 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
         expect(traineeKeys).toContain('overview')
         expect(traineeKeys).toContain('trainee_dashboard')
         expect(traineeKeys).toContain('courses')
+        expect(traineeKeys).not.toContain('users')
         expect(traineeKeys).not.toContain('admin_dashboard')
         expect(traineeKeys).not.toContain('trainer_dashboard')
     })

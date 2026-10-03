@@ -8,6 +8,7 @@ type SessionTokens = {
 type ClientOptions = {
     apiOrigin: string
     onSessionEnded: (code: string) => void
+    onTokensUpdated?: (tokens: SessionTokens) => void
     fetchImpl?: typeof fetch
 }
 
@@ -141,6 +142,8 @@ export function createSessionClient(options: ClientOptions) {
             ...latest,
             accessToken: body.access_token,
         }
+
+        options.onTokensUpdated?.(tokens)
     }
 
     async function refreshAccess(
@@ -233,9 +236,30 @@ export function createSessionClient(options: ClientOptions) {
         throw new SessionApiError('RETRY_LIMIT_REACHED')
     }
 
+    async function logout() {
+        const currentAccessToken = tokens?.accessToken
+        clearSession()
+        if (currentAccessToken) {
+            try {
+                await fetcher(buildApiUrl('/api/auth/logout'), {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${currentAccessToken}`,
+                    },
+                    credentials: 'omit',
+                    redirect: 'error',
+                    cache: 'no-store',
+                })
+            } catch {
+                // Nuốt lỗi mạng khi logout để phiên làm việc phía client luôn được xóa an toàn
+            }
+        }
+    }
+
     return {
         setSession,
         clearSession,
+        logout,
         request,
     }
 }

@@ -13,18 +13,26 @@ export interface AppHeaderProps {
  */
 export function AppHeader({
     onToggleSidebar,
-    userName,
-    userEmail,
+    userName: propUserName,
+    userEmail: propUserEmail,
 }: AppHeaderProps) {
-    const { hasSession, userId, role } = useSession()
+    const {
+        hasSession,
+        userId,
+        userName: contextUserName,
+        userEmail: contextUserEmail,
+        role,
+        logout,
+        clearSession,
+    } = useSession()
 
     if (!hasSession) {
         return null
     }
 
     const displayName = getUserDisplayName({
-        name: userName,
-        email: userEmail,
+        name: propUserName ?? contextUserName,
+        email: propUserEmail ?? contextUserEmail,
         userId,
     })
 
@@ -49,13 +57,16 @@ export function AppHeader({
                     </button>
                 )}
                 <div className="header-title-container">
-                    <span className="header-app-title">Hệ thống Quản lý Đào tạo</span>
+                    <span className="header-app-title" data-testid="header-app-title">
+                        <span className="header-title-full">Hệ thống Quản lý Đào tạo</span>
+                        <span className="header-title-short">Hệ thống Đào tạo</span>
+                    </span>
                 </div>
             </div>
 
             <div className="header-right">
                 <div className="header-user-profile" data-testid="user-profile-badge">
-                    <div className="user-avatar" aria-hidden="true">
+                    <div className="user-avatar" data-testid="user-avatar-circle" aria-hidden="true">
                         {displayName.charAt(0).toUpperCase()}
                     </div>
                     <div className="user-details">
@@ -67,6 +78,26 @@ export function AppHeader({
                         </span>
                     </div>
                 </div>
+                <button
+                    type="button"
+                    className="header-logout-btn"
+                    onClick={() => {
+                        if (logout) {
+                            void logout()
+                        } else {
+                            clearSession()
+                        }
+                    }}
+                    title="Đăng xuất khỏi hệ thống"
+                    data-testid="header-logout-button"
+                >
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
+                    </svg>
+                    <span>Đăng xuất</span>
+                </button>
             </div>
         </header>
     )

@@ -52,6 +52,14 @@
     text-overflow: ellipsis;
 }
 
+.header-title-full {
+    display: inline;
+}
+
+.header-title-short {
+    display: none;
+}
+
 .header-right {
     display: flex;
     align-items: center;
@@ -109,10 +117,31 @@
     border: 1px solid #dbeafe;
 }
 
-/* Responsive adjustment for small screens (360px) */
+.header-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.header-logout-btn:hover {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #ef4444;
+}
+
+/* Responsive adjustment for tablet (<= 768px) */
 @media (max-width: 768px) {
     .app-header {
-        padding: 0 14px;
+        padding: 0 12px;
         height: 56px;
     }
 
@@ -120,12 +149,23 @@
         display: flex;
     }
 
+    .header-left {
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .header-right {
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
     .header-app-title {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        max-width: 220px;
     }
 
     .user-display-name {
-        max-width: 110px;
+        max-width: 100px;
         font-size: 0.8rem;
     }
 
@@ -135,16 +175,103 @@
     }
 }
 
-@media (max-width: 360px) {
+/* Mobile viewport adjustment (<= 480px, including 400px, 390px, 375px) */
+@media (max-width: 480px) {
     .app-header {
+        height: 52px;
         padding: 0 10px;
     }
 
-    .header-app-title {
+    .header-left {
+        gap: 8px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .header-right {
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-toggle-btn {
+        padding: 5px;
+    }
+
+    /* Hiển thị tiêu đề ngắn gọn "Hệ thống Đào tạo" trên mobile */
+    .header-title-full {
         display: none;
     }
 
-    .user-display-name {
-        max-width: 90px;
+    .header-title-short {
+        display: inline;
+    }
+
+    .header-app-title {
+        font-size: 0.92rem;
+        font-weight: 600;
+        max-width: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Ẩn hoàn toàn username + role badge khỏi header mobile, xem đầy đủ trong drawer */
+    .user-details {
+        display: none !important;
+    }
+
+    .header-user-profile {
+        gap: 0;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.88rem;
+        flex-shrink: 0;
+    }
+
+    .header-logout-btn {
+        padding: 5px 8px;
+        font-size: 0.78rem;
+        gap: 4px;
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    .header-logout-btn svg {
+        width: 14px;
+        height: 14px;
     }
 }
+
+/* Extra small mobile (<= 360px) */
+@media (max-width: 360px) {
+    .app-header {
+        padding: 0 8px;
+    }
+
+    .header-left {
+        gap: 6px;
+    }
+
+    .header-right {
+        gap: 6px;
+    }
+
+    .header-app-title {
+        font-size: 0.86rem;
+    }
+
+    .user-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 0.82rem;
+    }
+
+    .header-logout-btn {
+        padding: 4px 7px;
+        font-size: 0.75rem;
+    }
+}
+

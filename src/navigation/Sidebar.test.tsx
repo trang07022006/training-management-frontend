@@ -31,9 +31,10 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
             </MemoryRouter>,
         )
 
-        // Admin thấy: Tổng quan, Bảng quản trị, Khóa học, Đổi mật khẩu
+        // Admin thấy: Tổng quan, Bảng quản trị, Quản lý Người dùng, Khóa học, Đổi mật khẩu
         expect(screen.getByTestId('menu-item-overview')).toBeDefined()
         expect(screen.getByTestId('menu-item-admin_dashboard')).toBeDefined()
+        expect(screen.getByTestId('menu-item-users')).toBeDefined()
         expect(screen.getByTestId('menu-item-courses')).toBeDefined()
         expect(screen.getByTestId('menu-item-change_password')).toBeDefined()
 
@@ -42,7 +43,7 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.queryByTestId('menu-item-trainee_dashboard')).toBeNull()
     })
 
-    it('2. role Trainer thấy Không gian Giảng viên, Khóa học và không thấy Bảng quản trị Admin', () => {
+    it('2. role Trainer thấy Không gian Giảng viên, Khóa học và không thấy Bảng quản trị Admin hoặc Quản lý Người dùng', () => {
         render(
             <MemoryRouter initialEntries={['/trainer']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
@@ -58,10 +59,11 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.getByTestId('menu-item-change_password')).toBeDefined()
 
         expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
+        expect(screen.queryByTestId('menu-item-users')).toBeNull()
         expect(screen.queryByTestId('menu-item-trainee_dashboard')).toBeNull()
     })
 
-    it('3. role Trainee thấy Góc Học viên, Khóa học và không thấy menu Admin/Trainer', () => {
+    it('3. role Trainee thấy Góc Học viên, Khóa học và không thấy menu Admin/Trainer hoặc Quản lý Người dùng', () => {
         render(
             <MemoryRouter initialEntries={['/trainee']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
@@ -76,6 +78,7 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.getByTestId('menu-item-courses')).toBeDefined()
 
         expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
+        expect(screen.queryByTestId('menu-item-users')).toBeNull()
         expect(screen.queryByTestId('menu-item-trainer_dashboard')).toBeNull()
     })
 
@@ -92,8 +95,9 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.getByTestId('menu-item-overview')).toBeDefined()
         expect(screen.getByTestId('menu-item-change_password')).toBeDefined()
 
-        // User thông thường không có quyền xem khóa học hay dashboard chuyên biệt
+        // User thông thường không có quyền xem khóa học hay dashboard chuyên biệt hoặc quản lý người dùng
         expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
+        expect(screen.queryByTestId('menu-item-users')).toBeNull()
         expect(screen.queryByTestId('menu-item-trainer_dashboard')).toBeNull()
         expect(screen.queryByTestId('menu-item-trainee_dashboard')).toBeNull()
         expect(screen.queryByTestId('menu-item-courses')).toBeNull()

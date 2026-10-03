@@ -21,19 +21,28 @@
     overflow-y: auto;
 }
 
-/* Responsive breakpoint for <= 768px and specifically 360px */
+/* Responsive breakpoint for <= 768px and mobile viewports (SCRUM-23) */
 @media (max-width: 768px) {
     .app-main-viewport {
         margin-left: 0;
+        width: 100%;
+        max-width: 100vw;
     }
 
     .app-content-body {
-        padding: 16px 12px;
+        padding: 12px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-content-body {
+        padding: 8px 6px;
     }
 }
 
 @media (max-width: 360px) {
     .app-content-body {
-        padding: 12px 8px;
+        padding: 6px 4px;
     }
 }
+

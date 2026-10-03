@@ -1,37 +1,144 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import './ForgotPasswordPage.css'
 
 export interface ForgotPasswordPageProps {
   onSubmit?: (email: string) => Promise<void> | void
+  apiOrigin?: string
 }
 
-export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
+export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPageProps) {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [cooldownSeconds, setCooldownSeconds] = useState<number>(() => {
+    try {
+      const stored = sessionStorage.getItem('forgot_password_cooldown_until')
+      if (stored) {
+        const until = parseInt(stored, 10)
+        const diff = Math.ceil((until - Date.now()) / 1000)
+        if (diff > 0) return diff
+      }
+    } catch {
+      // Bỏ qua lỗi storage
+    }
+    return 0
+  })
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(() => {
+    try {
+      const stored = sessionStorage.getItem('forgot_password_cooldown_until')
+      if (stored) {
+        const until = parseInt(stored, 10)
+        if (until > Date.now()) return true
+      }
+    } catch {
+      // Bỏ qua lỗi storage
+    }
+    return false
+  })
+  const [cooldownError, setCooldownError] = useState<string | null>(null)
 
   const trimmedEmail = email.trim()
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
 
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return
+
+    const timer = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          try {
+            sessionStorage.removeItem('forgot_password_cooldown_until')
+          } catch {
+            // Bỏ qua lỗi storage
+          }
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [cooldownSeconds])
+
+  const triggerCooldown = (seconds: number) => {
+    setCooldownSeconds(seconds)
+    try {
+      sessionStorage.setItem(
+        'forgot_password_cooldown_until',
+        String(Date.now() + seconds * 1000)
+      )
+    } catch {
+      // Bỏ qua lỗi storage
+    }
+  }
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!trimmedEmail || !isValidEmail || isLoading) return
+    if (!trimmedEmail || !isValidEmail || isLoading || cooldownSeconds > 0) return
 
     setIsLoading(true)
+    setCooldownError(null)
 
     try {
       if (onSubmit) {
-        await onSubmit(trimmedEmail)
+        try {
+          await onSubmit(trimmedEmail)
+          setIsSubmitted(true)
+          triggerCooldown(60)
+        } catch (err: unknown) {
+          const errObj = err as { code?: string; status?: number; retry_after_seconds?: number }
+          if (errObj?.code === 'FORGOT_PASSWORD_COOLDOWN' || errObj?.status === 429) {
+            const sec = Number(errObj?.retry_after_seconds) || 60
+            triggerCooldown(sec)
+            setCooldownError('Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng chờ trước khi gửi lại.')
+            setIsSubmitted(true)
+          } else {
+            setIsSubmitted(true)
+            triggerCooldown(60)
+          }
+        }
       } else {
-        // Mô phỏng độ trễ giao diện tự nhiên khi chưa tích hợp API SCRUM-45
-        await new Promise((resolve) => setTimeout(resolve, 600))
+        try {
+          const origin =
+            apiOrigin ||
+            import.meta.env.VITE_API_ORIGIN ||
+            import.meta.env.VITE_API_BASE_URL ||
+            (typeof window !== 'undefined' && window.location.port === '5173'
+              ? `http://${window.location.hostname}:5000`
+              : (typeof window !== 'undefined' ? window.location.origin : ''))
+          const url = new URL('/api/auth/forgot-password', origin || 'http://localhost:5000').href
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: trimmedEmail }),
+          })
+
+          if (res.status === 429) {
+            const data = await res.json().catch(() => null)
+            const retryHeader = res.headers.get('Retry-After')
+            const sec =
+              Number(data?.retry_after_seconds) ||
+              (retryHeader ? parseInt(retryHeader, 10) : 60) ||
+              60
+            triggerCooldown(sec)
+            setCooldownError('Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng chờ trước khi gửi lại.')
+            setIsSubmitted(true)
+          } else {
+            const data = await res.json().catch(() => null)
+            const sec = Number(data?.retry_after_seconds) || 60
+            triggerCooldown(sec)
+            setCooldownError(null)
+            setIsSubmitted(true)
+          }
+        } catch {
+          // Bảo vệ nguyên tắc anti-enumeration khi gặp lỗi kết nối
+          setIsSubmitted(true)
+          triggerCooldown(60)
+        }
       }
-    } catch {
-      // Giữ thông báo đồng nhất để bảo mật chống dò quét tài khoản (SCRUM-50)
     } finally {
       setIsLoading(false)
-      setIsSubmitted(true)
     }
   }
 
@@ -66,8 +173,38 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
           </p>
         </header>
 
+        {cooldownError && (
+          <div
+            id="cooldownErrorBanner"
+            className="cooldown-error-banner"
+            role="alert"
+            aria-live="polite"
+          >
+            <div className="reset-feedback-content">
+              <svg
+                className="feedback-warning-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <div className="feedback-texts">
+                <span className="feedback-heading">Yêu cầu quá nhanh</span>
+                <span className="feedback-body">{cooldownError}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Feedback Banner (SCRUM-50 Anti-Enumeration) */}
-        {isSubmitted && (
+        {isSubmitted && !cooldownError && (
           <div
             id="resetFeedbackBanner"
             className="reset-feedback-banner"
@@ -195,11 +332,40 @@ export function ForgotPasswordPage({ onSubmit }: ForgotPasswordPageProps) {
             </div>
           </div>
 
+          {/* Cooldown Countdown (Section 7) */}
+          {cooldownSeconds > 0 && (
+            <div
+              id="cooldownCountdown"
+              className="cooldown-countdown"
+              role="status"
+              aria-live="polite"
+            >
+              <svg
+                className="cooldown-clock-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>
+                Có thể gửi lại sau{' '}
+                {String(Math.floor(cooldownSeconds / 60)).padStart(2, '0')}:
+                {String(cooldownSeconds % 60).padStart(2, '0')}
+              </span>
+            </div>
+          )}
+
           {/* Submit Button */}
           <button
             id="submitButton"
             type="submit"
-            disabled={isLoading || !trimmedEmail || !isValidEmail}
+            disabled={isLoading || !trimmedEmail || !isValidEmail || cooldownSeconds > 0}
             className="submit-btn"
           >
             <span id="buttonText">

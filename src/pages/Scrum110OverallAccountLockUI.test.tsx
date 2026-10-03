@@ -439,7 +439,7 @@ describe('SCRUM-110: Kiểm thử tổng thể giao diện khóa và mở khóa 
 
             await waitFor(() => {
                 const errorBanner = screen.getByTestId('lock-modal-error')
-                expect(errorBanner.textContent).toContain('yêu cầu quyền user.manage')
+                expect(errorBanner.textContent).toContain('Bạn không có quyền thực hiện thao tác này.')
             })
         })
     })

@@ -3,6 +3,8 @@
  * Tuân thủ tuyệt đối API Contract từ Backend (SCRUM-82 -> SCRUM-88).
  */
 
+import { getErrorMessage } from '../utils/errorMessages'
+
 export interface User {
     id: string | number
     email: string
@@ -106,14 +108,12 @@ export async function fetchUsersApi(
     const body = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi tải danh sách người dùng.',
-            body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tải danh sách người dùng.')
+        throw new ApiError(message, code, res.status)
     }
 
-    return body.data ?? { items: [], users: [], page: 1, page_size: 20, total: 0, total_pages: 0 }
+    return body.data ?? { items: [], users: [], page: 1, page_size: 10, total: 0, total_pages: 0 }
 }
 
 /**
@@ -132,11 +132,9 @@ export async function createUserApi(
     const body = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi tạo người dùng.',
-            body.code || (res.status === 409 ? 'DUPLICATE_EMAIL' : res.status === 403 ? 'FORBIDDEN' : 'VALIDATION_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 409 ? 'DUPLICATE_EMAIL' : res.status === 403 ? 'FORBIDDEN' : 'VALIDATION_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tạo người dùng.')
+        throw new ApiError(message, code, res.status)
     }
 
     return body.data
@@ -159,11 +157,9 @@ export async function updateUserApi(
     const body = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi cập nhật người dùng.',
-            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'DUPLICATE_EMAIL' : res.status === 403 ? 'FORBIDDEN' : 'UPDATE_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'DUPLICATE_EMAIL' : res.status === 403 ? 'FORBIDDEN' : 'UPDATE_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi cập nhật người dùng.')
+        throw new ApiError(message, code, res.status)
     }
 
     return body.data
@@ -193,11 +189,9 @@ export async function fetchUserRolesApi(
     })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi tải vai trò của người dùng.',
-            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'FETCH_ROLES_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'FETCH_ROLES_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tải vai trò của người dùng.')
+        throw new ApiError(message, code, res.status)
     }
     return body.data
 }
@@ -213,11 +207,9 @@ export async function fetchAvailableRolesApi(
     })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi tải danh mục vai trò.',
-            body.code || (res.status === 403 ? 'FORBIDDEN' : 'FETCH_AVAILABLE_ROLES_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : 'FETCH_AVAILABLE_ROLES_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tải danh mục vai trò.')
+        throw new ApiError(message, code, res.status)
     }
     return body.data?.items || []
 }
@@ -237,11 +229,9 @@ export async function assignUserRoleApi(
     })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi phân vai trò cho người dùng.',
-            body.code || (res.status === 409 ? 'DUPLICATE_ROLE_ASSIGNMENT' : res.status === 404 ? 'NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'ASSIGN_ROLE_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 409 ? 'DUPLICATE_ROLE_ASSIGNMENT' : res.status === 404 ? 'ROLE_NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'ASSIGN_ROLE_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi phân vai trò cho người dùng.')
+        throw new ApiError(message, code, res.status)
     }
     return body.data
 }
@@ -259,11 +249,9 @@ export async function revokeUserRoleApi(
     })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi gỡ vai trò khỏi người dùng.',
-            body.code || (res.status === 404 ? 'ROLE_NOT_ASSIGNED' : res.status === 403 ? 'FORBIDDEN' : 'REVOKE_ROLE_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 404 ? 'ROLE_NOT_ASSIGNED' : res.status === 403 ? 'FORBIDDEN' : 'REVOKE_ROLE_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi gỡ vai trò khỏi người dùng.')
+        throw new ApiError(message, code, res.status)
     }
     return body.data
 }
@@ -280,11 +268,9 @@ export async function lockUserApi(
     })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi khóa tài khoản.',
-            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'ALREADY_LOCKED' : res.status === 403 ? 'FORBIDDEN' : 'LOCK_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'ALREADY_LOCKED' : res.status === 403 ? 'FORBIDDEN' : 'LOCK_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi khóa tài khoản.')
+        throw new ApiError(message, code, res.status)
     }
     return body.data
 }
@@ -301,11 +287,9 @@ export async function unlockUserApi(
     })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
-        throw new ApiError(
-            body.message || 'Lỗi khi mở khóa tài khoản.',
-            body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'ALREADY_ACTIVE' : res.status === 403 ? 'FORBIDDEN' : 'UNLOCK_ERROR'),
-            res.status,
-        )
+        const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'ALREADY_ACTIVE' : res.status === 403 ? 'FORBIDDEN' : 'UNLOCK_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi mở khóa tài khoản.')
+        throw new ApiError(message, code, res.status)
     }
     return body.data
 }

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { StrictMode, useState } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     act,
     cleanup,
@@ -123,10 +123,17 @@ async function verifyA() {
     await expectResult('verified:user-a')
 }
 
+beforeEach(() => {
+    window.sessionStorage.clear()
+    window.localStorage.clear()
+})
+
 afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
+    window.sessionStorage.clear()
+    window.localStorage.clear()
 })
 
 describe('Xác minh tài khoản để khôi phục bản nháp', () => {

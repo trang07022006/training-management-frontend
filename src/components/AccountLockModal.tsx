@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { lockUserApi, unlockUserApi, type User, type RequestFunction } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import './UserModal.css'
 
 export interface AccountLockModalProps {
@@ -56,7 +57,7 @@ function AccountLockModalContent({
             }
             onClose()
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Đã có lỗi xảy ra trong quá trình xử lý.'
+            const msg = getErrorMessage(err, 'Đã có lỗi xảy ra trong quá trình xử lý.')
             setErrorMessage(msg)
         } finally {
             setIsLoading(false)

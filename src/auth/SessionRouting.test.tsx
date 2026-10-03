@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { StrictMode, useState } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     cleanup,
     fireEvent,
@@ -133,9 +133,16 @@ async function expectResult(value: string) {
     })
 }
 
+beforeEach(() => {
+    window.sessionStorage.clear()
+    window.localStorage.clear()
+})
+
 afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    window.sessionStorage.clear()
+    window.localStorage.clear()
 })
 
 describe('Điều hướng phiên đăng nhập', () => {

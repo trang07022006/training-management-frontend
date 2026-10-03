@@ -8,6 +8,7 @@ import {
     type User,
     type RoleItem,
 } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import './UserModal.css'
 import './UserRoleModal.css'
 
@@ -57,8 +58,7 @@ function UserRoleModalContent({
             })
             .catch((err: unknown) => {
                 if (isMounted) {
-                    const msg = err instanceof Error ? err.message : 'Không thể tải thông tin vai trò.'
-                    setErrorMessage(msg)
+                    setErrorMessage(getErrorMessage(err, 'Không thể tải thông tin vai trò.'))
                     setIsLoading(false)
                 }
             })
@@ -86,12 +86,7 @@ function UserRoleModalContent({
             setSuccessMessage(`Đã gán vai trò "${newlyAssignedRole.name}" cho người dùng.`)
             onRoleUpdated?.(user, nextRoles)
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Gán vai trò thất bại.'
-            if (msg.includes('DUPLICATE_ROLE_ASSIGNMENT') || msg.includes('đã có vai trò')) {
-                setErrorMessage('Người dùng đã được gán vai trò này.')
-            } else {
-                setErrorMessage(msg)
-            }
+            setErrorMessage(getErrorMessage(err, 'Gán vai trò thất bại.'))
         } finally {
             setIsActionLoading(false)
         }
@@ -112,8 +107,7 @@ function UserRoleModalContent({
             setSuccessMessage(`Đã gỡ vai trò "${role.name}" khỏi người dùng.`)
             onRoleUpdated?.(user, nextRoles)
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Gỡ vai trò thất bại.'
-            setErrorMessage(msg)
+            setErrorMessage(getErrorMessage(err, 'Gỡ vai trò thất bại.'))
         } finally {
             setIsActionLoading(false)
         }

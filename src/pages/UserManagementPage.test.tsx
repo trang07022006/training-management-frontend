@@ -144,7 +144,7 @@ describe('SCRUM-89: User Management Page', () => {
         await waitFor(() => {
             expect(screen.getByTestId('user-error-state')).toBeDefined()
         })
-        expect(screen.getByText('Lỗi kết nối máy chủ.')).toBeDefined()
+        expect(screen.getByText('Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.')).toBeDefined()
 
         const retryBtn = screen.getByTestId('btn-retry-users')
         expect(retryBtn).toBeDefined()
@@ -207,4 +207,102 @@ describe('SCRUM-89: User Management Page', () => {
         })
         expect(screen.getByText('Quản lý vai trò người dùng')).toBeDefined()
     })
+
+    it('8. mở modal tạo người dùng, nhập dữ liệu, đóng modal và mở lại đảm bảo form hoàn toàn sạch', async () => {
+        renderWithSession(
+            <UserManagementPage initialUsers={mockUsers} initialTotal={mockUsers.length} />,
+            { role: 'admin' },
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-create-user')).toBeDefined()
+        })
+
+        // Mở modal tạo người dùng lần 1
+        fireEvent.click(screen.getByTestId('btn-create-user'))
+        expect(screen.getByTestId('create-user-modal')).toBeDefined()
+
+        // Nhập dữ liệu
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'User Thử Nghiệm' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'test@daotao.edu.vn' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'Password123' } })
+
+        // Đóng modal bằng nút Hủy bỏ
+        fireEvent.click(screen.getByTestId('btn-cancel-create'))
+        expect(screen.queryByTestId('create-user-modal')).toBeNull()
+
+        // Mở lại modal lần 2
+        fireEvent.click(screen.getByTestId('btn-create-user'))
+        expect(screen.getByTestId('create-user-modal')).toBeDefined()
+
+        // Form phải hoàn toàn sạch
+        expect((screen.getByTestId('input-create-name') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-email') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
+    })
+
+    it('9. tạo người dùng thành công rồi mở lại modal đảm bảo form sạch và không lưu mật khẩu', async () => {
+        const mockNewUser: User = {
+            id: 'u-99',
+            name: 'Người Dùng Mới',
+            email: 'newuser@daotao.edu.vn',
+            phone: '0909999999',
+            role: 'trainer',
+            status: 'active',
+        }
+
+        const customRequest = vi.fn().mockImplementation((path: string, init?: RequestInit) => {
+            if (init?.method === 'POST' && path === '/api/users') {
+                return Promise.resolve({
+                    ok: true,
+                    status: 201,
+                    json: async () => ({ status: 'success', data: mockNewUser }),
+                } as unknown as Response)
+            }
+            return Promise.resolve({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    data: { items: [...mockUsers, mockNewUser], users: [...mockUsers, mockNewUser], total: 3 },
+                }),
+            } as unknown as Response)
+        })
+
+        renderWithSession(
+            <UserManagementPage initialUsers={mockUsers} initialTotal={mockUsers.length} customRequest={customRequest} />,
+            { role: 'admin' },
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-create-user')).toBeDefined()
+        })
+
+        // Mở modal tạo người dùng
+        fireEvent.click(screen.getByTestId('btn-create-user'))
+        expect(screen.getByTestId('create-user-modal')).toBeDefined()
+
+        // Nhập thông tin
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'Người Dùng Mới' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'newuser@daotao.edu.vn' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'Secret123!' } })
+
+        // Submit
+        fireEvent.click(screen.getByTestId('btn-submit-create'))
+
+        // Modal phải đóng sau khi tạo thành công
+        await waitFor(() => {
+            expect(screen.queryByTestId('create-user-modal')).toBeNull()
+        })
+
+        // Mở lại modal
+        fireEvent.click(screen.getByTestId('btn-create-user'))
+        expect(screen.getByTestId('create-user-modal')).toBeDefined()
+
+        // Kiểm tra form hoàn toàn sạch
+        expect((screen.getByTestId('input-create-name') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-email') as HTMLInputElement).value).toBe('')
+        expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
+    })
 })
+

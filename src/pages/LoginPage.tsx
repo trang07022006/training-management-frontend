@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRoleHomePath } from '../auth/roleRouting'
 import { LoginForm } from '../components/LoginForm'
+import { getErrorMessage } from '../utils/errorMessages'
 import './LoginPage.css'
 
 export function LoginPage() {
@@ -11,8 +12,24 @@ export function LoginPage() {
     const navigate = useNavigate()
     const [isLoading, setIsLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [isLocked, setIsLocked] = useState(false)
+    const [isInactive, setIsInactive] = useState(false)
+    const [tempLockSeconds, setTempLockSeconds] = useState<number | null>(null)
 
-    async function handleLogin(email: string, password: string) {
+    const handleTempLockEnd = () => {
+        setTempLockSeconds(null)
+        setErrorMessage(null)
+    }
+
+    const handleInputChange = () => {
+        if (isLocked || isInactive) {
+            setIsLocked(false)
+            setIsInactive(false)
+            setErrorMessage(null)
+        }
+    }
+
+    async function handleLogin(email: string, password: string, remember = false) {
         setIsLoading(true)
         setErrorMessage(null)
 
@@ -31,14 +48,50 @@ export function LoginPage() {
             const data: unknown = await response.json().catch(() => null)
 
             if (!response.ok) {
-                const message =
-                    data &&
-                    typeof data === 'object' &&
-                    'message' in data &&
-                    typeof data.message === 'string'
-                        ? data.message
-                        : 'Email hoặc mật khẩu không đúng'
-                setErrorMessage(message)
+                const anyData = data && typeof data === 'object' ? (data as Record<string, unknown>) : null
+                const code = anyData && typeof anyData.code === 'string' ? anyData.code : null
+                const rawMsg = anyData && typeof anyData.message === 'string' ? anyData.message : null
+                const lockedUntil = anyData && typeof anyData.locked_until === 'string' ? anyData.locked_until : null
+                const retryAfter = anyData && typeof anyData.retry_after_seconds === 'number' ? anyData.retry_after_seconds : null
+
+                const isTempLock =
+                    code === 'ACCOUNT_TEMP_LOCKED' ||
+                    lockedUntil !== null ||
+                    typeof retryAfter === 'number' ||
+                    (code === 'ACCOUNT_LOCKED' && Boolean(rawMsg && (rawMsg.includes('tạm thời') || rawMsg.includes('15 phút'))))
+
+                if (isTempLock) {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    let seconds = retryAfter
+                    if (seconds === null && lockedUntil) {
+                        seconds = Math.max(1, Math.ceil((new Date(lockedUntil).getTime() - Date.now()) / 1000))
+                    }
+                    if (seconds === null || isNaN(seconds)) {
+                        seconds = 900
+                    }
+                    setTempLockSeconds(seconds)
+                    setErrorMessage(rawMsg || 'Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá số lần cho phép. Vui lòng thử lại sau.')
+                } else if (code === 'ACCOUNT_LOCKED') {
+                    setIsLocked(true)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    setErrorMessage(rawMsg || 'Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
+                } else if (code === 'ACCOUNT_INACTIVE' || code === 'ACCOUNT_DISABLED') {
+                    setIsInactive(true)
+                    setIsLocked(false)
+                    setTempLockSeconds(null)
+                    setErrorMessage(rawMsg || 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
+                } else {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    const message = getErrorMessage(
+                        { code, message: rawMsg },
+                        'Email hoặc mật khẩu không đúng.',
+                    )
+                    setErrorMessage(message)
+                }
                 return
             }
 
@@ -63,21 +116,71 @@ export function LoginPage() {
                     ? data.user.role
                     : null
 
-            // Cập nhật session theo cơ chế SCRUM-19
+            const userRoles =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'roles' in data.user &&
+                Array.isArray(data.user.roles)
+                    ? data.user.roles.filter((r): r is string => typeof r === 'string')
+                    : (userRole ? [userRole] : [])
+
+            const userPermissions =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'permissions' in data.user &&
+                Array.isArray(data.user.permissions)
+                    ? data.user.permissions.filter((p): p is string => typeof p === 'string')
+                    : []
+
+            const userId =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'id' in data.user
+                    ? String(data.user.id)
+                    : null
+
+            const userName =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'name' in data.user &&
+                typeof data.user.name === 'string'
+                    ? data.user.name
+                    : null
+
+            const userEmail =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'email' in data.user &&
+                typeof data.user.email === 'string'
+                    ? data.user.email
+                    : email
+
+            // Cập nhật session theo cơ chế SCRUM-19 và SCRUM-26
             startSession(
                 {
                     accessToken: data.access_token,
                     refreshToken: data.refresh_token,
                 },
                 userRole,
+                userId,
+                remember,
+                userName,
+                userEmail,
+                userRoles,
+                userPermissions,
             )
 
             // Điều hướng người dùng tới trang phù hợp theo role
             const targetPath = getRoleHomePath(userRole)
             navigate(targetPath, { replace: true })
-        } catch {
+        } catch (err: unknown) {
             setErrorMessage(
-                'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.',
+                getErrorMessage(err, 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'),
             )
         } finally {
             setIsLoading(false)
@@ -126,6 +229,11 @@ export function LoginPage() {
                     onSubmit={handleLogin}
                     isLoading={isLoading}
                     errorMessage={errorMessage}
+                    isLocked={isLocked}
+                    isInactive={isInactive}
+                    tempLockSeconds={tempLockSeconds}
+                    onTempLockEnd={handleTempLockEnd}
+                    onInputChange={handleInputChange}
                 />
 
                 <footer className="login-footer">
