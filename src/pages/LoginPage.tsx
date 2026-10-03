@@ -75,6 +75,24 @@ export function LoginPage() {
                     ? data.user.role
                     : null
 
+            const userRoles =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'roles' in data.user &&
+                Array.isArray(data.user.roles)
+                    ? data.user.roles.filter((r): r is string => typeof r === 'string')
+                    : (userRole ? [userRole] : [])
+
+            const userPermissions =
+                'user' in data &&
+                typeof data.user === 'object' &&
+                data.user !== null &&
+                'permissions' in data.user &&
+                Array.isArray(data.user.permissions)
+                    ? data.user.permissions.filter((p): p is string => typeof p === 'string')
+                    : []
+
             const userId =
                 'user' in data &&
                 typeof data.user === 'object' &&
@@ -101,7 +119,7 @@ export function LoginPage() {
                     ? data.user.email
                     : email
 
-            // Cập nhật session theo cơ chế SCRUM-19
+            // Cập nhật session theo cơ chế SCRUM-19 và SCRUM-26
             startSession(
                 {
                     accessToken: data.access_token,
@@ -112,6 +130,8 @@ export function LoginPage() {
                 remember,
                 userName,
                 userEmail,
+                userRoles,
+                userPermissions,
             )
 
             // Điều hướng người dùng tới trang phù hợp theo role

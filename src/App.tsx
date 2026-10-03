@@ -5,9 +5,12 @@ import { getRolePermissions, SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import './App.css'
 
 function App() {
-  const { role, userId, userName, userEmail } = useSession()
+  const { role, roles, permissions: sessionPermissions, userId, userName, userEmail } = useSession()
   const roleLabel = getRoleLabel(role)
-  const permissions = getRolePermissions(role)
+  const permissions =
+    sessionPermissions && sessionPermissions.length > 0
+      ? sessionPermissions
+      : getRolePermissions(roles && roles.length > 0 ? roles : role)
 
   const canViewUsers = permissions.includes(SYSTEM_PERMISSIONS.USER_VIEW)
   const canViewCourses = permissions.includes(SYSTEM_PERMISSIONS.COURSE_VIEW)

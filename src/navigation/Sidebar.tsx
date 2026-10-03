@@ -96,6 +96,8 @@ export function Sidebar({
     const {
         hasSession,
         role,
+        roles,
+        permissions,
         userId,
         userName: contextUserName,
         userEmail: contextUserEmail,
@@ -113,6 +115,8 @@ export function Sidebar({
     const visibleMenuItems = filterMenuItems(menuSource, {
         hasSession,
         role,
+        roles,
+        permissions,
     })
 
     return (

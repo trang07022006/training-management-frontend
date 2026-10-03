@@ -6,6 +6,8 @@ export type StoredSessionTokens = {
 export type StoredSessionData = {
     tokens: StoredSessionTokens
     role: string | null
+    roles?: string[] | null
+    permissions?: string[] | null
     userId: string | null
     userName?: string | null
     userEmail?: string | null
@@ -83,6 +85,12 @@ export function loadStoredSession(): StoredSessionData | null {
             (parsed.tokens as StoredSessionTokens).refreshToken.trim().length > 0
         ) {
             const role = 'role' in parsed && typeof parsed.role === 'string' ? parsed.role : null
+            const roles = 'roles' in parsed && Array.isArray(parsed.roles)
+                ? parsed.roles.filter((r): r is string => typeof r === 'string')
+                : null
+            const permissions = 'permissions' in parsed && Array.isArray(parsed.permissions)
+                ? parsed.permissions.filter((p): p is string => typeof p === 'string')
+                : null
             const userId = 'userId' in parsed && (typeof parsed.userId === 'string' || typeof parsed.userId === 'number')
                 ? String(parsed.userId)
                 : null
@@ -95,6 +103,8 @@ export function loadStoredSession(): StoredSessionData | null {
                     refreshToken: (parsed.tokens as StoredSessionTokens).refreshToken,
                 },
                 role,
+                roles,
+                permissions,
                 userId,
                 userName,
                 userEmail,

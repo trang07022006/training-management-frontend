@@ -19,7 +19,7 @@ export function RequirePermission({
     requiredRole,
     fallbackPath,
 }: RequirePermissionProps) {
-    const { hasSession, role, isLoading } = useSession()
+    const { hasSession, role, roles, permissions, isLoading } = useSession()
 
     // Đang trong quá trình khôi phục phiên: không xử lý chuyển trang vội
     if (isLoading) {
@@ -33,12 +33,22 @@ export function RequirePermission({
 
     const defaultFallback = fallbackPath ?? getRoleHomePath(role)
 
-    // 2. Kiểm tra vai trò nếu route yêu cầu vai trò cụ thể
-    if (requiredRole) {
-        const normalizedUserRole = role?.trim().toLowerCase()
-        const normalizedRequired = requiredRole.trim().toLowerCase()
+    // Tập hợp vai trò chuẩn hóa của người dùng (SCRUM-26 multi-role)
+    const userRoleList: string[] = []
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+        for (const r of roles) {
+            if (typeof r === 'string' && r.trim()) {
+                userRoleList.push(r.trim().toLowerCase())
+            }
+        }
+    } else if (role && typeof role === 'string' && role.trim()) {
+        userRoleList.push(role.trim().toLowerCase())
+    }
 
-        if (!normalizedUserRole || normalizedUserRole !== normalizedRequired) {
+    // 2. Kiểm tra vai trò nếu route yêu cầu vai trò cụ thể: người dùng phải có vai trò đó
+    if (requiredRole) {
+        const normalizedRequired = requiredRole.trim().toLowerCase()
+        if (!userRoleList.includes(normalizedRequired)) {
             return <Navigate to={defaultFallback} replace />
         }
     }
@@ -50,7 +60,14 @@ export function RequirePermission({
             return <Navigate to={defaultFallback} replace />
         }
 
-        const userPerms = getRolePermissions(role)
+        // Ưu tiên permissions từ session, fallback tính union quyền từ userRoleList
+        let userPerms: readonly string[] = []
+        if (permissions && Array.isArray(permissions) && permissions.length > 0) {
+            userPerms = permissions
+        } else {
+            userPerms = getRolePermissions(userRoleList)
+        }
+
         if (!userPerms.includes(requiredPermission)) {
             return <Navigate to={defaultFallback} replace />
         }

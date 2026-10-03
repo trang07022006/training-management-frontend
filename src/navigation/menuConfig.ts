@@ -60,14 +60,30 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
 }
 
 /**
- * Lấy danh sách quyền hạn hợp lệ dựa theo vai trò của người dùng.
+ * Lấy danh sách quyền hạn hợp lệ dựa theo vai trò (hoặc danh sách vai trò) của người dùng.
+ * Nếu truyền vào mảng roles, trả về UNION quyền của tất cả role đó (SCRUM-26).
  * Áp dụng Default Deny: vai trò rỗng hoặc không xác định trả về danh sách rỗng.
  */
-export function getRolePermissions(role?: string | null): readonly string[] {
-    if (!role || typeof role !== 'string') {
+export function getRolePermissions(roleOrRoles?: string | readonly string[] | null): readonly string[] {
+    if (!roleOrRoles) {
         return []
     }
-    const normalized = role.trim().toLowerCase()
+    if (Array.isArray(roleOrRoles)) {
+        const union = new Set<string>()
+        for (const r of roleOrRoles) {
+            if (typeof r === 'string') {
+                const normalized = r.trim().toLowerCase()
+                for (const p of ROLE_PERMISSIONS_MAP[normalized] ?? []) {
+                    union.add(p)
+                }
+            }
+        }
+        return Array.from(union)
+    }
+    if (typeof roleOrRoles !== 'string') {
+        return []
+    }
+    const normalized = roleOrRoles.trim().toLowerCase()
     return ROLE_PERMISSIONS_MAP[normalized] ?? []
 }
 
@@ -145,16 +161,18 @@ export interface FilterMenuOptions {
     hasSession: boolean
     permissions?: readonly string[] | null
     role?: string | null
+    roles?: readonly string[] | null
     isLoading?: boolean
 }
 
 /**
- * Lọc danh sách menu theo quyền hạn và trạng thái phiên làm việc (SCRUM-23).
+ * Lọc danh sách menu theo quyền hạn và trạng thái phiên làm việc (SCRUM-23 & SCRUM-26).
  * Nguyên tắc:
  * 1. Đang tải (isLoading) hoặc chưa đăng nhập (!hasSession) -> Trả về mảng rỗng để chống flash menu.
  * 2. Default Deny: Quyền thiếu hoặc undefined -> không hiển thị menu.
  * 3. Unknown permission -> luôn bị từ chối.
  * 4. Không biến đổi (mutate) mảng cấu hình menu ban đầu.
+ * 5. Hỗ trợ multi-role: nếu user có nhiều role, effective permissions là UNION của các role.
  */
 export function filterMenuItems(
     menuItems: readonly MenuItem[],
@@ -164,19 +182,29 @@ export function filterMenuItems(
         return []
     }
 
-    // Xác định tập quyền hợp lệ
+    // Tập hợp vai trò chuẩn hóa của người dùng
+    const userRoles: string[] = []
+    if (options.roles && Array.isArray(options.roles) && options.roles.length > 0) {
+        for (const r of options.roles) {
+            if (typeof r === 'string' && r.trim()) {
+                userRoles.push(r.trim().toLowerCase())
+            }
+        }
+    } else if (options.role && typeof options.role === 'string' && options.role.trim()) {
+        userRoles.push(options.role.trim().toLowerCase())
+    }
+
+    // Xác định tập quyền hợp lệ (UNION quyền của tất cả role)
     let userPermissions: readonly string[] = []
-    if (options.permissions && Array.isArray(options.permissions)) {
+    if (options.permissions && Array.isArray(options.permissions) && options.permissions.length > 0) {
         userPermissions = options.permissions
-    } else if (options.role) {
-        userPermissions = getRolePermissions(options.role)
+    } else {
+        userPermissions = getRolePermissions(userRoles)
     }
 
     const permissionSet = new Set<string>(
         userPermissions.filter((p) => typeof p === 'string' && isKnownPermission(p)),
     )
-
-    const normalizedRole = options.role?.trim().toLowerCase()
 
     return menuItems.filter((item) => {
         // Menu công khai cho người dùng đã xác thực phiên
@@ -184,9 +212,10 @@ export function filterMenuItems(
             return true
         }
 
-        // Kiểm tra ràng buộc vai trò nếu có
+        // Kiểm tra ràng buộc vai trò nếu có: user sở hữu ít nhất một vai trò phù hợp
         if (item.requiredRole) {
-            if (!normalizedRole || normalizedRole !== item.requiredRole.toLowerCase()) {
+            const req = item.requiredRole.toLowerCase()
+            if (!userRoles.includes(req)) {
                 return false
             }
         }

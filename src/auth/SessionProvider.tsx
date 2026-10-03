@@ -17,6 +17,7 @@ import {
     clearStoredSession,
     updateStoredTokens,
 } from './sessionStorage'
+import { getRolePermissions } from '../navigation/menuConfig'
 
 type SessionTokens = {
     accessToken: string
@@ -32,6 +33,8 @@ type SessionContextValue = {
     userName: string | null
     userEmail: string | null
     role: string | null
+    roles: string[]
+    permissions: string[]
     startSession: (
         tokens: SessionTokens,
         initialRole?: string | null,
@@ -39,6 +42,8 @@ type SessionContextValue = {
         remember?: boolean,
         initialUserName?: string | null,
         initialUserEmail?: string | null,
+        initialRoles?: string[] | null,
+        initialPermissions?: string[] | null,
     ) => void
     clearSession: () => void
     logout: () => Promise<void>
@@ -71,6 +76,18 @@ export function SessionProvider({
     const [hasSession, setHasSession] = useState<boolean>(() => initialStored !== null)
     const [isLoading, setIsLoading] = useState<boolean>(() => initialStored !== null)
     const [role, setRole] = useState<string | null>(() => initialStored?.role ?? null)
+    const [roles, setRoles] = useState<string[]>(() => {
+        if (initialStored?.roles && Array.isArray(initialStored.roles)) {
+            return initialStored.roles
+        }
+        return initialStored?.role ? [initialStored.role] : []
+    })
+    const [permissions, setPermissions] = useState<string[]>(() => {
+        if (initialStored?.permissions && Array.isArray(initialStored.permissions)) {
+            return initialStored.permissions
+        }
+        return initialStored?.role ? [...getRolePermissions(initialStored.role)] : []
+    })
     const [userId, setUserId] = useState<string | null>(() => initialStored?.userId ?? null)
     const [userName, setUserName] = useState<string | null>(() => initialStored?.userName ?? null)
     const [userEmail, setUserEmail] = useState<string | null>(() => initialStored?.userEmail ?? null)
@@ -89,6 +106,8 @@ export function SessionProvider({
         setUserEmail(null)
         setEndReason(code)
         setRole(null)
+        setRoles([])
+        setPermissions([])
         clearStoredSession()
     }
 
@@ -120,13 +139,21 @@ export function SessionProvider({
             .then(async (response) => {
                 const body: unknown = await response.json().catch(() => null)
                 if (isMounted) {
-                    if (
-                        typeof body === 'object' &&
-                        body !== null &&
-                        'user_id' in body &&
-                        typeof body.user_id === 'string'
-                    ) {
-                        setUserId(body.user_id)
+                    if (typeof body === 'object' && body !== null) {
+                        if ('user_id' in body && typeof body.user_id === 'string') {
+                            setUserId(body.user_id)
+                        }
+                        if ('role' in body && typeof body.role === 'string') {
+                            setRole(body.role)
+                        }
+                        if ('roles' in body && Array.isArray(body.roles)) {
+                            const validRoles = body.roles.filter((r): r is string => typeof r === 'string')
+                            setRoles(validRoles)
+                        }
+                        if ('permissions' in body && Array.isArray(body.permissions)) {
+                            const validPerms = body.permissions.filter((p): p is string => typeof p === 'string')
+                            setPermissions(validPerms)
+                        }
                     }
                     setHasSession(true)
                     setIsLoading(false)
@@ -154,6 +181,8 @@ export function SessionProvider({
             remember = false,
             initialUserName?: string | null,
             initialUserEmail?: string | null,
+            initialRoles?: string[] | null,
+            initialPermissions?: string[] | null,
         ) => {
             client.setSession(tokens)
 
@@ -166,10 +195,24 @@ export function SessionProvider({
             setEndReason(null)
             setRole(initialRole ?? null)
 
+            const resolvedRoles: string[] =
+                initialRoles && Array.isArray(initialRoles) && initialRoles.length > 0
+                    ? initialRoles
+                    : (initialRole ? [initialRole] : [])
+            setRoles(resolvedRoles)
+
+            const resolvedPermissions: string[] =
+                initialPermissions && Array.isArray(initialPermissions) && initialPermissions.length > 0
+                    ? initialPermissions
+                    : [...getRolePermissions(resolvedRoles)]
+            setPermissions(resolvedPermissions)
+
             saveStoredSession(
                 {
                     tokens,
                     role: initialRole ?? null,
+                    roles: resolvedRoles,
+                    permissions: resolvedPermissions,
                     userId: initialUserId ?? null,
                     userName: initialUserName ?? null,
                     userEmail: initialUserEmail ?? null,
@@ -189,6 +232,8 @@ export function SessionProvider({
         setUserEmail(null)
         setEndReason(null)
         setRole(null)
+        setRoles([])
+        setPermissions([])
         clearStoredSession()
         await client.logout()
     }, [client])
@@ -235,6 +280,8 @@ export function SessionProvider({
             userName,
             userEmail,
             role,
+            roles,
+            permissions,
             startSession,
             clearSession,
             logout,
@@ -250,6 +297,8 @@ export function SessionProvider({
             userName,
             userEmail,
             role,
+            roles,
+            permissions,
             startSession,
             clearSession,
             logout,
