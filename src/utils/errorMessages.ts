@@ -16,6 +16,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     ACCOUNT_LOCKED: 'Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.',
     ACCOUNT_INACTIVE: 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
     ACCOUNT_DISABLED: 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
+    ACCOUNT_TEMP_LOCKED: 'Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá số lần cho phép. Vui lòng thử lại sau.',
     TEMPORARILY_LOCKED: 'Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau.',
     EMAIL_REQUIRED: 'Email là bắt buộc.',
     PASSWORD_REQUIRED: 'Mật khẩu là bắt buộc.',
@@ -56,6 +57,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     TOKEN_ALREADY_USED: 'Liên kết đặt lại mật khẩu này đã được sử dụng. Vui lòng yêu cầu liên kết mới.',
     TOKEN_REQUIRED: 'Mã token là bắt buộc.',
     FORGOT_PASSWORD_RESPONSE: 'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.',
+    FORGOT_PASSWORD_COOLDOWN: 'Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng chờ trước khi gửi lại.',
 
     // ----------------------------------------------------
     // 5. PHÂN QUYỀN

@@ -12,6 +12,22 @@ export function LoginPage() {
     const navigate = useNavigate()
     const [isLoading, setIsLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [isLocked, setIsLocked] = useState(false)
+    const [isInactive, setIsInactive] = useState(false)
+    const [tempLockSeconds, setTempLockSeconds] = useState<number | null>(null)
+
+    const handleTempLockEnd = () => {
+        setTempLockSeconds(null)
+        setErrorMessage(null)
+    }
+
+    const handleInputChange = () => {
+        if (isLocked || isInactive) {
+            setIsLocked(false)
+            setIsInactive(false)
+            setErrorMessage(null)
+        }
+    }
 
     async function handleLogin(email: string, password: string, remember = false) {
         setIsLoading(true)
@@ -32,25 +48,50 @@ export function LoginPage() {
             const data: unknown = await response.json().catch(() => null)
 
             if (!response.ok) {
-                const code =
-                    data &&
-                    typeof data === 'object' &&
-                    'code' in data &&
-                    typeof data.code === 'string'
-                        ? data.code
-                        : null
-                const rawMsg =
-                    data &&
-                    typeof data === 'object' &&
-                    'message' in data &&
-                    typeof data.message === 'string'
-                        ? data.message
-                        : null
-                const message = getErrorMessage(
-                    { code, message: rawMsg },
-                    'Email hoặc mật khẩu không đúng.',
-                )
-                setErrorMessage(message)
+                const anyData = data && typeof data === 'object' ? (data as Record<string, unknown>) : null
+                const code = anyData && typeof anyData.code === 'string' ? anyData.code : null
+                const rawMsg = anyData && typeof anyData.message === 'string' ? anyData.message : null
+                const lockedUntil = anyData && typeof anyData.locked_until === 'string' ? anyData.locked_until : null
+                const retryAfter = anyData && typeof anyData.retry_after_seconds === 'number' ? anyData.retry_after_seconds : null
+
+                const isTempLock =
+                    code === 'ACCOUNT_TEMP_LOCKED' ||
+                    lockedUntil !== null ||
+                    typeof retryAfter === 'number' ||
+                    (code === 'ACCOUNT_LOCKED' && Boolean(rawMsg && (rawMsg.includes('tạm thời') || rawMsg.includes('15 phút'))))
+
+                if (isTempLock) {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    let seconds = retryAfter
+                    if (seconds === null && lockedUntil) {
+                        seconds = Math.max(1, Math.ceil((new Date(lockedUntil).getTime() - Date.now()) / 1000))
+                    }
+                    if (seconds === null || isNaN(seconds)) {
+                        seconds = 900
+                    }
+                    setTempLockSeconds(seconds)
+                    setErrorMessage(rawMsg || 'Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá số lần cho phép. Vui lòng thử lại sau.')
+                } else if (code === 'ACCOUNT_LOCKED') {
+                    setIsLocked(true)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    setErrorMessage(rawMsg || 'Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
+                } else if (code === 'ACCOUNT_INACTIVE' || code === 'ACCOUNT_DISABLED') {
+                    setIsInactive(true)
+                    setIsLocked(false)
+                    setTempLockSeconds(null)
+                    setErrorMessage(rawMsg || 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
+                } else {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    const message = getErrorMessage(
+                        { code, message: rawMsg },
+                        'Email hoặc mật khẩu không đúng.',
+                    )
+                    setErrorMessage(message)
+                }
                 return
             }
 
@@ -188,6 +229,11 @@ export function LoginPage() {
                     onSubmit={handleLogin}
                     isLoading={isLoading}
                     errorMessage={errorMessage}
+                    isLocked={isLocked}
+                    isInactive={isInactive}
+                    tempLockSeconds={tempLockSeconds}
+                    onTempLockEnd={handleTempLockEnd}
+                    onInputChange={handleInputChange}
                 />
 
                 <footer className="login-footer">

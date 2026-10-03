@@ -1,23 +1,92 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router'
 
 export interface LoginFormProps {
     onSubmit?: (email: string, password: string, remember: boolean) => void
     isLoading?: boolean
     errorMessage?: string | null
+    isLocked?: boolean
+    isInactive?: boolean
+    tempLockSeconds?: number | null
+    onTempLockEnd?: () => void
+    onInputChange?: () => void
 }
 
-export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFormProps) {
+function formatTime(totalSeconds: number): string {
+    const mins = Math.floor(totalSeconds / 60)
+    const secs = totalSeconds % 60
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
+export function LoginForm({
+    onSubmit,
+    isLoading = false,
+    errorMessage,
+    isLocked = false,
+    isInactive = false,
+    tempLockSeconds = null,
+    onTempLockEnd,
+    onInputChange,
+}: LoginFormProps) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [remember, setRemember] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+    const [countdown, setCountdown] = useState<number | null>(() =>
+        typeof tempLockSeconds === 'number' && tempLockSeconds > 0 ? tempLockSeconds : null,
+    )
+    const [prevProp, setPrevProp] = useState<number | null>(tempLockSeconds)
+
+    if (tempLockSeconds !== prevProp) {
+        setPrevProp(tempLockSeconds)
+        setCountdown(typeof tempLockSeconds === 'number' && tempLockSeconds > 0 ? tempLockSeconds : null)
+    }
+
+    useEffect(() => {
+        if (countdown === null || countdown <= 0) {
+            return
+        }
+
+        const timer = setInterval(() => {
+            setCountdown((prev) => {
+                if (prev === null || prev <= 1) {
+                    clearInterval(timer)
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [countdown])
+
+    useEffect(() => {
+        if (countdown === 0) {
+            onTempLockEnd?.()
+        }
+    }, [countdown, onTempLockEnd])
+
+    const isTempLocked = countdown !== null && countdown > 0
+    const shouldHideSubmit = isLocked || isInactive || isTempLocked
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
+        if (shouldHideSubmit || isLoading) {
+            return
+        }
         if (onSubmit) {
             onSubmit(email, password, remember)
         }
+    }
+
+    function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setEmail(e.target.value)
+        onInputChange?.()
+    }
+
+    function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setPassword(e.target.value)
+        onInputChange?.()
     }
 
     return (
@@ -31,7 +100,14 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
                             clipRule="evenodd"
                         />
                     </svg>
-                    <span>{errorMessage}</span>
+                    <div className="alert-content">
+                        <span>{errorMessage}</span>
+                        {isTempLocked && (
+                            <div className="countdown-message" data-testid="temp-lock-countdown" style={{ marginTop: '4px', fontWeight: 600 }}>
+                                Thời gian còn lại: {formatTime(countdown)}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
 
@@ -55,8 +131,8 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
                         className="form-input"
                         placeholder="name@example.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isLoading}
+                        onChange={handleEmailChange}
+                        disabled={isLoading || shouldHideSubmit}
                     />
                 </div>
             </div>
@@ -84,8 +160,8 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
                         className="form-input form-input-password"
                         placeholder="Nhập mật khẩu"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        disabled={isLoading}
+                        onChange={handlePasswordChange}
+                        disabled={isLoading || shouldHideSubmit}
                     />
                     <button
                         type="button"
@@ -126,7 +202,7 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
                         name="remember"
                         checked={remember}
                         onChange={(e) => setRemember(e.target.checked)}
-                        disabled={isLoading}
+                        disabled={isLoading || shouldHideSubmit}
                     />
                     <span className="checkbox-custom" aria-hidden="true" />
                     <span className="checkbox-label">Ghi nhớ đăng nhập</span>
@@ -137,20 +213,22 @@ export function LoginForm({ onSubmit, isLoading = false, errorMessage }: LoginFo
                 </Link>
             </div>
 
-            <button
-                type="submit"
-                className="submit-btn"
-                disabled={isLoading}
-            >
-                {isLoading ? (
-                    <span className="loading-state">
-                        <span className="spinner" aria-hidden="true" />
-                        <span>Đang xử lý...</span>
-                    </span>
-                ) : (
-                    <span>Đăng nhập</span>
-                )}
-            </button>
+            {!shouldHideSubmit && (
+                <button
+                    type="submit"
+                    className="submit-btn"
+                    disabled={isLoading}
+                >
+                    {isLoading ? (
+                        <span className="loading-state">
+                            <span className="spinner" aria-hidden="true" />
+                            <span>Đang xử lý...</span>
+                        </span>
+                    ) : (
+                        <span>Đăng nhập</span>
+                    )}
+                </button>
+            )}
         </form>
     )
 }
