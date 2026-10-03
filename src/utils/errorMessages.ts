@@ -113,6 +113,18 @@ export const ERROR_MESSAGES: Record<string, string> = {
     INVALID_REQUEST: 'Yêu cầu không hợp lệ.',
     INVALID_JSON: 'Dữ liệu yêu cầu không hợp lệ.',
     INVALID_DATA: 'Dữ liệu không hợp lệ.',
+
+    // ----------------------------------------------------
+    // 10. IMPORT NGƯỜI DÙNG TỪ EXCEL (SCRUM-119)
+    // ----------------------------------------------------
+    FILE_REQUIRED: 'Vui lòng chọn file Excel tải lên.',
+    INVALID_FILE_TYPE: 'Chỉ hỗ trợ file Excel định dạng .xlsx.',
+    FILE_EMPTY: 'File tải lên không có dữ liệu.',
+    INVALID_EXCEL_FILE: 'File Excel không hợp lệ hoặc bị hỏng.',
+    MISSING_USERS_SHEET: "File Excel phải có sheet tên là 'Users'.",
+    INVALID_HEADER: 'Cấu trúc cột trong file Excel không đúng chuẩn.',
+    NO_DATA: 'File Excel không có dữ liệu để import.',
+    DUPLICATE_EMAIL_IN_FILE: 'Email bị trùng lặp trong file Excel.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -229,6 +241,13 @@ export function getErrorMessage(
             return rawMessage
         }
         if (code === 'ALREADY_ACTIVE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (
+            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE'].includes(code) &&
+            rawMessage &&
+            isFriendlyVietnamese(rawMessage)
+        ) {
             return rawMessage
         }
         return ERROR_MESSAGES[code]

@@ -312,3 +312,57 @@ export async function downloadUserImportTemplateApi(
     }
     return res.blob()
 }
+
+export interface ImportRowError {
+    field: string
+    code: string
+    message: string
+}
+
+export interface ImportPreviewRow {
+    row_number: number
+    name: string | null
+    email: string | null
+    phone?: string | null
+    role?: string | null
+    status?: string | null
+    password_present: boolean
+    valid: boolean
+    errors: ImportRowError[]
+}
+
+export interface ImportPreviewData {
+    filename: string
+    headers: string[]
+    total_rows: number
+    valid_rows: number
+    invalid_rows: number
+    rows: ImportPreviewRow[]
+}
+
+/**
+ * Gửi file Excel để kiểm tra và xem trước dữ liệu import người dùng (SCRUM-119 Activity A2/A3/A6.2).
+ * POST /api/users/import/preview
+ */
+export async function previewUserImportApi(
+    requestFn: RequestFunction,
+    file: File,
+): Promise<ImportPreviewData> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await requestFn('/api/users/import/preview', {
+        method: 'POST',
+        body: formData,
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi kiểm tra dữ liệu file Excel.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}

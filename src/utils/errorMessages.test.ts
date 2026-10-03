@@ -216,4 +216,25 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             expect(isFriendlyVietnamese('Invalid password')).toBe(false)
         })
     })
+
+    describe('10. Import Người dùng từ Excel (SCRUM-119)', () => {
+        it('map các mã lỗi liên quan đến file Excel và cấu trúc sheet', () => {
+            expect(getErrorMessage('FILE_REQUIRED')).toBe('Vui lòng chọn file Excel tải lên.')
+            expect(getErrorMessage('INVALID_FILE_TYPE')).toBe('Chỉ hỗ trợ file Excel định dạng .xlsx.')
+            expect(getErrorMessage('FILE_EMPTY')).toBe('File tải lên không có dữ liệu.')
+            expect(getErrorMessage('INVALID_EXCEL_FILE')).toBe('File Excel không hợp lệ hoặc bị hỏng.')
+            expect(getErrorMessage('MISSING_USERS_SHEET')).toBe("File Excel phải có sheet tên là 'Users'.")
+            expect(getErrorMessage('INVALID_HEADER')).toBe('Cấu trúc cột trong file Excel không đúng chuẩn.')
+            expect(getErrorMessage('NO_DATA')).toBe('File Excel không có dữ liệu để import.')
+            expect(getErrorMessage('DUPLICATE_EMAIL_IN_FILE')).toBe('Email bị trùng lặp trong file Excel.')
+        })
+
+        it('ưu tiên thông điệp tiếng Việt chi tiết từ backend an toàn', () => {
+            const detailedMsg = "File Excel phải có sheet tên là 'Users'."
+            expect(getErrorMessage({ code: 'MISSING_USERS_SHEET', message: detailedMsg })).toBe(detailedMsg)
+
+            const headerMsg = "Cấu trúc cột không đúng chuẩn: thiếu cột 'email'."
+            expect(getErrorMessage({ code: 'INVALID_HEADER', message: headerMsg })).toBe(headerMsg)
+        })
+    })
 })

@@ -1,8 +1,13 @@
-/* Bulk User Import Modal Styles - SCRUM-119 Activity A6.1 */
+/* Bulk User Import Modal Styles - SCRUM-119 Activity A6.1 & A6.2 */
 
 .import-modal-container {
-    max-width: 620px;
+    max-width: 640px;
     width: 100%;
+    transition: max-width 0.25s ease-in-out;
+}
+
+.import-modal-container.has-preview {
+    max-width: 900px;
 }
 
 .import-modal-description {
@@ -26,13 +31,18 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .import-step-card.active {
     border-color: #3b82f6;
     background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(59, 130, 246, 0.08);
+    box-shadow: 0 1px 4px rgba(59, 130, 246, 0.08);
+}
+
+.import-step-card.completed {
+    border-color: #bbf7d0;
+    background-color: #f0fdf4;
 }
 
 .import-step-card.disabled {
@@ -64,6 +74,10 @@
     background-color: #94a3b8;
 }
 
+.import-step-badge.completed-badge {
+    background-color: #16a34a;
+}
+
 .import-step-title {
     font-size: 0.975rem;
     font-weight: 600;
@@ -85,6 +99,7 @@
     flex-wrap: wrap;
 }
 
+/* Button tải file mẫu */
 .btn-download-template {
     display: inline-flex;
     align-items: center;
@@ -125,7 +140,8 @@
     font-weight: 500;
 }
 
-.import-dropzone-placeholder {
+/* Bước 2: Dropzone & File selection */
+.import-dropzone {
     border: 2px dashed #cbd5e1;
     border-radius: 8px;
     padding: 24px 16px;
@@ -137,10 +153,29 @@
     background-color: #ffffff;
     text-align: center;
     color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.import-dropzone:hover {
+    border-color: #3b82f6;
+    background-color: #f8faff;
+}
+
+.import-dropzone.dragging {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+    transform: scale(1.01);
 }
 
 .import-dropzone-icon {
     color: #94a3b8;
+    transition: color 0.2s ease;
+}
+
+.import-dropzone:hover .import-dropzone-icon,
+.import-dropzone.dragging .import-dropzone-icon {
+    color: #2563eb;
 }
 
 .import-dropzone-text {
@@ -150,12 +185,133 @@
     margin: 0;
 }
 
+.import-dropzone-link {
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
 .import-dropzone-hint {
     font-size: 0.8rem;
     color: #94a3b8;
     margin: 0;
 }
 
+/* Selected File Display */
+.selected-file-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+}
+
+.selected-file-details {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.selected-file-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: #ecfdf5;
+    color: #059669;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.selected-file-meta {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.selected-file-name {
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.selected-file-size {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.btn-remove-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: #dc2626;
+    font-size: 0.825rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.btn-remove-file:hover:not(:disabled) {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+}
+
+.btn-remove-file:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.selected-file-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-top: 4px;
+    border-top: 1px dashed #f1f5f9;
+}
+
+.btn-preview-data {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s ease;
+}
+
+.btn-preview-data:hover:not(:disabled) {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-preview-data:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: #93c5fd;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Bước 3: Preview Container, Summary Cards & Table */
 .import-step-info-box {
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -164,6 +320,244 @@
     font-size: 0.85rem;
     color: #475569;
     line-height: 1.4;
+}
+
+.import-preview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+}
+
+/* Summary Cards */
+.import-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.import-summary-card {
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+}
+
+.import-summary-card.total {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.import-summary-card.valid {
+    border-color: #bbf7d0;
+    background-color: #f0fdf4;
+}
+
+.import-summary-card.invalid {
+    border-color: #fecaca;
+    background-color: #fef2f2;
+}
+
+.summary-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.import-summary-card.valid .summary-title {
+    color: #15803d;
+}
+
+.import-summary-card.invalid .summary-title {
+    color: #b91c1c;
+}
+
+.summary-number {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.import-summary-card.valid .summary-number {
+    color: #16a34a;
+}
+
+.import-summary-card.invalid .summary-number {
+    color: #dc2626;
+}
+
+/* Responsive Table */
+.import-table-responsive-wrapper {
+    width: 100%;
+    max-height: 380px;
+    overflow-x: auto;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.import-preview-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.import-preview-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.import-preview-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+    color: #1e293b;
+}
+
+.import-table-row:last-child td {
+    border-bottom: none;
+}
+
+.import-table-row.is-valid:hover {
+    background-color: #f8fafc;
+}
+
+.import-table-row.is-invalid {
+    background-color: #fffafb;
+}
+
+.import-table-row.is-invalid:hover {
+    background-color: #fff1f2;
+}
+
+.col-row-num {
+    width: 55px;
+    text-align: center;
+}
+
+.row-number-pill {
+    display: inline-block;
+    padding: 2px 7px;
+    background-color: #f1f5f9;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #475569;
+}
+
+.col-email {
+    font-family: monospace;
+    font-size: 0.825rem;
+}
+
+.role-tag,
+.status-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.775rem;
+    font-weight: 500;
+    background-color: #f1f5f9;
+    color: #334155;
+    text-transform: capitalize;
+}
+
+.col-status {
+    min-width: 160px;
+}
+
+.import-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.775rem;
+    font-weight: 600;
+}
+
+.import-status-pill.valid {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.import-status-pill.invalid {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.import-row-error-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.import-row-error-list {
+    margin: 4px 0 0 0;
+    padding: 0;
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.import-error-msg-item {
+    font-size: 0.785rem;
+    color: #dc2626;
+    line-height: 1.35;
+    position: relative;
+    padding-left: 10px;
+}
+
+.import-error-msg-item::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #ef4444;
+}
+
+.import-table-empty {
+    text-align: center;
+    padding: 24px 16px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.import-preview-footer-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.import-preview-footer-note svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #3b82f6;
 }
 
 /* Spinner */
@@ -181,6 +575,21 @@
 }
 
 /* Responsive adjustments */
+@media (max-width: 768px) {
+    .import-modal-container.has-preview {
+        max-width: 95vw;
+    }
+
+    .import-summary-cards {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .summary-number {
+        font-size: 1.2rem;
+    }
+}
+
 @media (max-width: 640px) {
     .import-modal-container {
         max-width: 100%;
@@ -199,6 +608,23 @@
         width: 100%;
         justify-content: center;
     }
+
+    .selected-file-details {
+        flex-wrap: wrap;
+    }
+
+    .selected-file-action-row {
+        width: 100%;
+    }
+
+    .btn-preview-data {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .import-summary-cards {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 360px) {
@@ -212,5 +638,9 @@
 
     .import-step-title {
         font-size: 0.9rem;
+    }
+
+    .selected-file-name {
+        max-width: 160px;
     }
 }
