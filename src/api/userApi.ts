@@ -293,3 +293,22 @@ export async function unlockUserApi(
     }
     return body.data
 }
+
+/**
+ * Tải file Excel mẫu cho import người dùng hàng loạt (SCRUM-119 Activity A1 / A6.1).
+ * GET /api/users/import/template
+ */
+export async function downloadUserImportTemplateApi(
+    requestFn: RequestFunction,
+): Promise<Blob> {
+    const res = await requestFn('/api/users/import/template', {
+        method: 'GET',
+    })
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'DOWNLOAD_TEMPLATE_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Không thể tải file mẫu. Vui lòng thử lại.')
+        throw new ApiError(message, code, res.status)
+    }
+    return res.blob()
+}
