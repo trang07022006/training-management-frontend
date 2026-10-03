@@ -195,6 +195,11 @@ export function UserManagementPage({
         }
     }
 
+    const handleImportSuccess = () => {
+        setPage(1)
+        void loadUsers({ page: 1 })
+    }
+
     return (
         <div className="user-management-page" data-testid="user-management-page">
             {/* Header section */}
@@ -403,6 +408,7 @@ export function UserManagementPage({
                 <BulkUserImportModal
                     isOpen={isImportOpen}
                     onClose={() => setIsImportOpen(false)}
+                    onSuccess={handleImportSuccess}
                     customRequest={customRequest}
                 />
             )}

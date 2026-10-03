@@ -366,3 +366,69 @@ export async function previewUserImportApi(
 
     return body.data
 }
+
+export interface ImportRowResult {
+    row_number: number
+    name: string | null
+    email: string | null
+    phone?: string | null
+    role?: string | null
+    status?: string | null
+    imported: boolean
+    result: 'imported' | 'validation_error' | 'import_error' | string
+    errors: ImportRowError[]
+}
+
+export interface ImportExecuteData {
+    filename: string
+    total_rows: number
+    valid_rows: number
+    invalid_rows: number
+    imported_rows: number
+    skipped_rows: number
+    failed_rows: number
+    summary: {
+        success: number
+        validation_errors: number
+        import_errors: number
+    }
+    error_summary: Record<string, number>
+    rows: ImportRowResult[]
+}
+
+export interface ImportExecuteResult {
+    status?: string
+    message: string
+    data: ImportExecuteData
+}
+
+/**
+ * Thực hiện import người dùng từ file Excel vào hệ thống (SCRUM-119 Activity A4/A5/A6.3).
+ * POST /api/users/import
+ */
+export async function importUsersBulkApi(
+    requestFn: RequestFunction,
+    file: File,
+): Promise<ImportExecuteResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await requestFn('/api/users/import', {
+        method: 'POST',
+        body: formData,
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'IMPORT_FAILED')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi import người dùng từ file Excel.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return {
+        status: body.status ?? 'success',
+        message: body.message ?? 'Hoàn tất import người dùng.',
+        data: body.data,
+    }
+}

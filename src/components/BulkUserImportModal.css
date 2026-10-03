@@ -1,4 +1,4 @@
-/* Bulk User Import Modal Styles - SCRUM-119 Activity A6.1 & A6.2 */
+/* Bulk User Import Modal Styles - SCRUM-119 Activity A6.1, A6.2 & A6.3 */
 
 .import-modal-container {
     max-width: 640px;
@@ -7,7 +7,7 @@
 }
 
 .import-modal-container.has-preview {
-    max-width: 900px;
+    max-width: 920px;
 }
 
 .import-modal-description {
@@ -138,6 +138,27 @@
     color: #15803d;
     font-size: 0.875rem;
     font-weight: 500;
+}
+
+/* Success message banner sau import */
+.import-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #f0fdf4;
+    border: 1.5px solid #86efac;
+    color: #166534;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.925rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.import-success-banner svg {
+    flex-shrink: 0;
+    color: #16a34a;
 }
 
 /* Bước 2: Dropzone & File selection */
@@ -329,11 +350,16 @@
     width: 100%;
 }
 
-/* Summary Cards */
+/* Summary Cards (Preview 3 cols, Post-import 5 cols) */
 .import-summary-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
+}
+
+.import-summary-cards.exec-summary-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
 }
 
 .import-summary-card {
@@ -356,17 +382,44 @@
     background-color: #f0fdf4;
 }
 
+.import-summary-card.warning {
+    border-color: #fed7aa;
+    background-color: #fff7ed;
+}
+
+.import-summary-card.warning .summary-title {
+    color: #c2410c;
+}
+
+.import-summary-card.warning .summary-number {
+    color: #ea580c;
+}
+
 .import-summary-card.invalid {
     border-color: #fecaca;
     background-color: #fef2f2;
 }
 
+.import-summary-card.skipped {
+    border-color: #e2e8f0;
+    background-color: #f1f5f9;
+}
+
+.import-summary-card.skipped .summary-title {
+    color: #475569;
+}
+
+.import-summary-card.skipped .summary-number {
+    color: #334155;
+}
+
 .summary-title {
-    font-size: 0.8rem;
+    font-size: 0.775rem;
     font-weight: 600;
     color: #64748b;
     text-transform: uppercase;
     letter-spacing: 0.025em;
+    white-space: nowrap;
 }
 
 .import-summary-card.valid .summary-title {
@@ -378,7 +431,7 @@
 }
 
 .summary-number {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: #0f172a;
     line-height: 1.2;
@@ -390,6 +443,62 @@
 
 .import-summary-card.invalid .summary-number {
     color: #dc2626;
+}
+
+/* Error Summary Box */
+.import-error-summary-box {
+    background-color: #fffafb;
+    border: 1px solid #fee2e2;
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.error-summary-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #b91c1c;
+    margin: 0;
+}
+
+.error-summary-heading svg {
+    color: #dc2626;
+}
+
+.error-summary-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.error-summary-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #ffffff;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    color: #991b1b;
+}
+
+.error-summary-label {
+    font-weight: 500;
+}
+
+.error-summary-count {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.775rem;
 }
 
 /* Responsive Table */
@@ -492,16 +601,24 @@
     font-weight: 600;
 }
 
-.import-status-pill.valid {
+.import-status-pill.valid,
+.import-status-pill.result-imported {
     background-color: #dcfce7;
     color: #15803d;
     border: 1px solid #bbf7d0;
 }
 
-.import-status-pill.invalid {
+.import-status-pill.invalid,
+.import-status-pill.result-imp-error {
     background-color: #fee2e2;
     color: #b91c1c;
     border: 1px solid #fecaca;
+}
+
+.import-status-pill.result-val-error {
+    background-color: #ffedd5;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
 }
 
 .import-row-error-wrapper {
@@ -541,6 +658,146 @@
     font-style: italic;
 }
 
+/* Confirmation Box */
+.import-confirm-panel {
+    background-color: #eff6ff;
+    border: 1.5px solid #93c5fd;
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.import-confirm-icon {
+    color: #2563eb;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.import-confirm-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.import-confirm-title {
+    margin: 0;
+    font-size: 0.925rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    line-height: 1.4;
+}
+
+.import-confirm-hint {
+    margin: 0;
+    font-size: 0.825rem;
+    color: #3b82f6;
+    line-height: 1.4;
+}
+
+.import-confirm-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.btn-confirm-execute {
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-confirm-execute:hover:not(:disabled) {
+    background-color: #1d4ed8;
+}
+
+.btn-confirm-execute:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.btn-cancel-confirm {
+    background-color: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel-confirm:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
+}
+
+/* Action bar: Button "Import người dùng" */
+.import-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.btn-start-import {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #16a34a;
+    color: #ffffff;
+    border: none;
+    border-radius: 7px;
+    padding: 9px 20px;
+    font-size: 0.925rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.2);
+    transition: all 0.2s ease;
+}
+
+.btn-start-import:hover:not(:disabled) {
+    background-color: #15803d;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(22, 163, 74, 0.25);
+}
+
+.btn-start-import:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background-color: #86efac;
+    transform: none;
+    box-shadow: none;
+}
+
+.import-no-valid-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #fff7ed;
+    border: 1px solid #ffedd5;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #c2410c;
+    font-weight: 500;
+}
+
+.import-no-valid-notice svg {
+    flex-shrink: 0;
+    color: #ea580c;
+}
+
 .import-preview-footer-note {
     display: flex;
     align-items: flex-start;
@@ -558,6 +815,34 @@
     flex-shrink: 0;
     margin-top: 1px;
     color: #3b82f6;
+}
+
+/* Footer post-import buttons */
+.import-footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 100%;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    background-color: #ffffff;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #94a3b8;
 }
 
 /* Spinner */
@@ -583,6 +868,10 @@
     .import-summary-cards {
         grid-template-columns: repeat(3, 1fr);
         gap: 8px;
+    }
+
+    .import-summary-cards.exec-summary-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 
     .summary-number {
@@ -625,6 +914,25 @@
     .import-summary-cards {
         grid-template-columns: 1fr;
     }
+
+    .import-summary-cards.exec-summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-start-import {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .import-footer-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .import-footer-actions button {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 360px) {
@@ -642,5 +950,9 @@
 
     .selected-file-name {
         max-width: 160px;
+    }
+
+    .import-summary-cards.exec-summary-grid {
+        grid-template-columns: 1fr;
     }
 }

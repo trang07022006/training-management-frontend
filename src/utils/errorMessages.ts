@@ -125,6 +125,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
     INVALID_HEADER: 'Cấu trúc cột trong file Excel không đúng chuẩn.',
     NO_DATA: 'File Excel không có dữ liệu để import.',
     DUPLICATE_EMAIL_IN_FILE: 'Email bị trùng lặp trong file Excel.',
+    IMPORT_FAILED: 'Lỗi khi lưu người dùng vào cơ sở dữ liệu.',
+    IMPORT_USERS_ERROR: 'Lỗi khi import người dùng từ file Excel.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -244,7 +246,7 @@ export function getErrorMessage(
             return rawMessage
         }
         if (
-            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE'].includes(code) &&
+            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR'].includes(code) &&
             rawMessage &&
             isFriendlyVietnamese(rawMessage)
         ) {
