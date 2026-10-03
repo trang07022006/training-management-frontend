@@ -115,4 +115,21 @@ describe('SCRUM-23 Phase 3: AppHeader Identity and Role', () => {
         fireEvent.click(toggleBtn)
         expect(handleToggle).toHaveBeenCalledTimes(1)
     })
+
+    it('6. bấm nút Đăng xuất sẽ kích hoạt clearSession', () => {
+        render(
+            <MemoryRouter>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="admin" />
+                    <AppHeader />
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        const logoutBtn = screen.getByTestId('header-logout-button')
+        expect(logoutBtn).toBeDefined()
+        fireEvent.click(logoutBtn)
+        // Sau khi clearSession, hasSession = false -> AppHeader không render
+        expect(screen.queryByTestId('app-header')).toBeNull()
+    })
 })

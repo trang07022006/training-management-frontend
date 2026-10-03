@@ -76,6 +76,7 @@ function renderAppWithRoute({
                         <Route
                             element={
                                 <RequirePermission
+                                    requiredRole="admin"
                                     requiredPermission={SYSTEM_PERMISSIONS.USER_VIEW}
                                     fallbackPath="/forbidden"
                                 />
@@ -126,29 +127,13 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
             })
         })
 
-        it('2. Trainer vào /users thấy danh sách nhưng không thấy nút thêm/sửa', async () => {
-            const mockCustomRequest = vi.fn().mockResolvedValue({
-                ok: true,
-                status: 200,
-                json: async () => ({
-                    status: 'success',
-                    data: {
-                        items: [mockAdminUser],
-                        users: [mockAdminUser],
-                        page: 1,
-                        page_size: 20,
-                        total: 1,
-                        total_pages: 1,
-                    },
-                }),
-            } as unknown as Response)
-
-            renderAppWithRoute({ role: 'trainer', customRequest: mockCustomRequest })
+        it('2. Trainer truy cập trực tiếp /users bị từ chối 403 và chuyển về /forbidden', async () => {
+            renderAppWithRoute({ role: 'trainer' })
 
             await waitFor(() => {
-                expect(screen.getByTestId('user-table')).toBeDefined()
-                expect(screen.queryByTestId('btn-create-user')).toBeNull()
-                expect(screen.queryByTestId('btn-edit-user-1')).toBeNull()
+                expect(screen.getByTestId('page-forbidden')).toBeDefined()
+                expect(screen.getByText(/403 - Bạn không có quyền truy cập/)).toBeDefined()
+                expect(screen.queryByTestId('user-management-page')).toBeNull()
             })
         })
 
@@ -361,7 +346,7 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
 
             await waitFor(() => {
                 expect(screen.getByTestId('error-create-email')).toBeDefined()
-                expect(screen.getByText('Email này đã được sử dụng trong hệ thống.')).toBeDefined()
+                expect(screen.getByText('Email này đã được sử dụng.')).toBeDefined()
             })
         })
     })
@@ -439,8 +424,8 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
     // E. Pagination & State Matrix
     // ========================================================
     describe('E. Pagination & State Matrix', () => {
-        it('10. Hiển thị thông số 20 bản ghi/trang và chuyển trang mượt mà', async () => {
-            const page1Data: User[] = Array.from({ length: 20 }, (_, idx) => ({
+        it('10. Hiển thị thông số 10 bản ghi/trang và chuyển trang mượt mà', async () => {
+            const page1Data: User[] = Array.from({ length: 10 }, (_, idx) => ({
                 id: idx + 1,
                 name: `User ${idx + 1}`,
                 email: `user${idx + 1}@tms.local`,
@@ -457,9 +442,9 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
                         items: page1Data,
                         users: page1Data,
                         page: 1,
-                        page_size: 20,
+                        page_size: 10,
                         total: 35,
-                        total_pages: 2,
+                        total_pages: 4,
                     },
                 }),
             } as unknown as Response)
@@ -469,7 +454,7 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
             await waitFor(() => {
                 const infoEl = screen.getByTestId('pagination-info')
                 expect(infoEl).toBeDefined()
-                expect(infoEl.textContent).toContain('Hiển thị 1 - 20 trên tổng số 35 người dùng')
+                expect(infoEl.textContent).toContain('Hiển thị 1 - 10 trên tổng số 35 người dùng')
             })
         })
 
@@ -527,7 +512,7 @@ describe('SCRUM-95: Test Tổng Thể Giao Diện Quản Trị Người Dùng (O
 
             await waitFor(() => {
                 expect(screen.getByTestId('user-error-state')).toBeDefined()
-                expect(screen.getByText('Lỗi kết nối máy chủ đào tạo.')).toBeDefined()
+                expect(screen.getByText('Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.')).toBeDefined()
             })
 
             fireEvent.click(screen.getByTestId('btn-retry-users'))

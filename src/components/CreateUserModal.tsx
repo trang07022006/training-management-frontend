@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { createUserApi, type User, type CreateUserData } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import './UserModal.css'
 
 export interface CreateUserModalProps {
@@ -38,7 +39,10 @@ export function CreateUserModal({
     const [errors, setErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
 
-    const handleClose = () => {
+    /**
+     * Reset toàn bộ form state, validation errors và mật khẩu về giá trị ban đầu.
+     */
+    const resetForm = useCallback(() => {
         setName('')
         setEmail('')
         setPassword('')
@@ -48,8 +52,48 @@ export function CreateUserModal({
         setStatus('active')
         setErrors({})
         setIsSubmitting(false)
-        onClose()
+    }, [])
+
+    /**
+     * Theo dõi thay đổi isOpen: Khi modal mở hoặc đóng lại,
+     * tự động reset state ngay trong render phase (chuẩn React pattern).
+     */
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+    if (isOpen !== prevIsOpen) {
+        setPrevIsOpen(isOpen)
+        setName('')
+        setEmail('')
+        setPassword('')
+        setShowPassword(false)
+        setPhone('')
+        setRole('user')
+        setStatus('active')
+        setErrors({})
+        setIsSubmitting(false)
     }
+
+    const handleClose = useCallback(() => {
+        resetForm()
+        onClose()
+    }, [resetForm, onClose])
+
+    /**
+     * Hỗ trợ phím Escape đóng modal an toàn và reset form.
+     */
+    useEffect(() => {
+        if (!isOpen) return
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !isSubmitting) {
+                handleClose()
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [isOpen, isSubmitting, handleClose])
 
     if (!isOpen) return null
 
@@ -103,16 +147,16 @@ export function CreateUserModal({
 
         try {
             const created = await createUserApi(requestFn, payload)
-            setIsSubmitting(false)
+            resetForm()
             onSuccess(created)
             onClose()
         } catch (err: unknown) {
             setIsSubmitting(false)
-            const errorMsg = err instanceof Error ? err.message : 'Tạo người dùng thất bại.'
+            const errorMsg = getErrorMessage(err, 'Tạo người dùng thất bại.')
 
             // Phân loại lỗi đặc thù
             if (errorMsg.includes('DUPLICATE_EMAIL') || errorMsg.includes('đã được sử dụng')) {
-                setErrors({ email: 'Email này đã được sử dụng trong hệ thống.' })
+                setErrors({ email: getErrorMessage('DUPLICATE_EMAIL') })
             } else {
                 setErrors({ general: errorMsg })
             }

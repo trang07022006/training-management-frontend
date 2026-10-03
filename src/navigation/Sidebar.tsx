@@ -36,6 +36,15 @@ function getMenuIcon(iconName?: string) {
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
             )
+        case 'users':
+            return (
+                <svg className="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+            )
         case 'chalkboard-teacher':
             return (
                 <svg className="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -81,17 +90,33 @@ export function Sidebar({
     isOpen = false,
     onClose,
     customMenuItems,
-    userName,
-    userEmail,
+    userName: propUserName,
+    userEmail: propUserEmail,
 }: SidebarProps) {
-    const { hasSession, role, userId } = useSession()
+    const {
+        hasSession,
+        role,
+        roles,
+        permissions,
+        userId,
+        userName: contextUserName,
+        userEmail: contextUserEmail,
+    } = useSession()
     const location = useLocation()
+
+    const finalDisplayName = getUserDisplayName({
+        name: propUserName ?? contextUserName,
+        email: propUserEmail ?? contextUserEmail,
+        userId,
+    })
 
     // Lọc menu theo quyền người dùng thực tế
     const menuSource = customMenuItems ?? APP_MENU_CONFIG
     const visibleMenuItems = filterMenuItems(menuSource, {
         hasSession,
         role,
+        roles,
+        permissions,
     })
 
     return (
@@ -161,11 +186,11 @@ export function Sidebar({
                 {hasSession && (
                     <div className="sidebar-user-footer" data-testid="sidebar-user-footer">
                         <div className="sidebar-user-avatar" aria-hidden="true">
-                            {getUserDisplayName({ name: userName, email: userEmail, userId }).charAt(0).toUpperCase()}
+                            {finalDisplayName.charAt(0).toUpperCase()}
                         </div>
                         <div className="sidebar-user-info">
                             <span className="sidebar-user-name" data-testid="sidebar-user-name">
-                                {getUserDisplayName({ name: userName, email: userEmail, userId })}
+                                {finalDisplayName}
                             </span>
                             <span className="sidebar-user-role" data-testid="sidebar-user-role">
                                 {getUserRoleDisplay(role)}

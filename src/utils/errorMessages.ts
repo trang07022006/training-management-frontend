@@ -1,0 +1,258 @@
+/**
+ * Module quản lý và ánh xạ thông báo lỗi, thông báo thành công sang tiếng Việt (Sprint 1).
+ * Tuân thủ tuyệt đối quy tắc:
+ * 1. Không hiển thị trực tiếp bất kỳ mã kỹ thuật nào ra UI (INCORRECT_CURRENT_PASSWORD, SESSION_EXPIRED, FORBIDDEN, etc.).
+ * 2. Bảo toàn API contract / error code ở tầng backend để logic code xử lý.
+ * 3. Hỗ trợ fallback thân thiện khi gặp mã lỗi chưa được định nghĩa hoặc lỗi mạng.
+ */
+
+// 1. Bản đồ ánh xạ mã lỗi kỹ thuật -> thông báo tiếng Việt
+export const ERROR_MESSAGES: Record<string, string> = {
+    // ----------------------------------------------------
+    // 1. ĐĂNG NHẬP
+    // ----------------------------------------------------
+    INVALID_CREDENTIALS: 'Email hoặc mật khẩu không đúng.',
+    EMAIL_OR_PASSWORD_INCORRECT: 'Email hoặc mật khẩu không đúng.',
+    ACCOUNT_LOCKED: 'Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.',
+    ACCOUNT_INACTIVE: 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
+    ACCOUNT_DISABLED: 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
+    ACCOUNT_TEMP_LOCKED: 'Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá số lần cho phép. Vui lòng thử lại sau.',
+    TEMPORARILY_LOCKED: 'Tài khoản tạm thời bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau.',
+    EMAIL_REQUIRED: 'Email là bắt buộc.',
+    PASSWORD_REQUIRED: 'Mật khẩu là bắt buộc.',
+
+    // ----------------------------------------------------
+    // 2. SESSION / PHIÊN ĐĂNG NHẬP
+    // ----------------------------------------------------
+    ACCESS_TOKEN_EXPIRED: 'Phiên làm việc cần được làm mới.',
+    SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.',
+    SESSION_REVOKED: 'Phiên đăng nhập đã được kết thúc. Vui lòng đăng nhập lại.',
+    UNAUTHORIZED: 'Bạn cần đăng nhập để tiếp tục.',
+    AUTH_REQUIRED: 'Bạn cần đăng nhập để tiếp tục.',
+    SESSION_INVALID: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
+    REFRESH_TOKEN_INVALID: 'Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.',
+    TOKEN_INVALID: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
+    SESSION_CHANGED: 'Phiên đăng nhập đã thay đổi. Vui lòng tải lại trang.',
+
+    // ----------------------------------------------------
+    // 3. ĐỔI MẬT KHẨU
+    // ----------------------------------------------------
+    INCORRECT_CURRENT_PASSWORD: 'Mật khẩu hiện tại không đúng.',
+    PASSWORD_TOO_SHORT: 'Mật khẩu mới phải có ít nhất 8 ký tự.',
+    PASSWORD_POLICY_FAILED: 'Mật khẩu mới chưa đáp ứng yêu cầu bảo mật.',
+    PASSWORD_INVALID: 'Mật khẩu mới chưa đáp ứng yêu cầu bảo mật.',
+    PASSWORD_CONFIRMATION_MISMATCH: 'Mật khẩu xác nhận không khớp.',
+    SAME_AS_CURRENT_PASSWORD: 'Mật khẩu mới phải khác mật khẩu hiện tại.',
+    CURRENT_PASSWORD_REQUIRED: 'Mật khẩu hiện tại là bắt buộc.',
+    NEW_PASSWORD_REQUIRED: 'Mật khẩu mới là bắt buộc.',
+
+    // ----------------------------------------------------
+    // 4. QUÊN / ĐẶT LẠI MẬT KHẨU
+    // ----------------------------------------------------
+    INVALID_RESET_TOKEN: 'Liên kết đặt lại mật khẩu không hợp lệ.',
+    INVALID_TOKEN: 'Liên kết đặt lại mật khẩu không hợp lệ.',
+    EXPIRED_RESET_TOKEN: 'Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+    TOKEN_EXPIRED: 'Liên kết đặt lại mật khẩu đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+    USED_RESET_TOKEN: 'Liên kết đặt lại mật khẩu này đã được sử dụng. Vui lòng yêu cầu liên kết mới.',
+    TOKEN_ALREADY_USED: 'Liên kết đặt lại mật khẩu này đã được sử dụng. Vui lòng yêu cầu liên kết mới.',
+    TOKEN_REQUIRED: 'Mã token là bắt buộc.',
+    FORGOT_PASSWORD_RESPONSE: 'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.',
+    FORGOT_PASSWORD_COOLDOWN: 'Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng chờ trước khi gửi lại.',
+
+    // ----------------------------------------------------
+    // 5. PHÂN QUYỀN
+    // ----------------------------------------------------
+    FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
+    PERMISSION_DENIED: 'Bạn không có quyền truy cập chức năng này.',
+
+    // ----------------------------------------------------
+    // 6. QUẢN LÝ NGƯỜI DÙNG
+    // ----------------------------------------------------
+    DUPLICATE_EMAIL: 'Email này đã được sử dụng.',
+    USER_NOT_FOUND: 'Không tìm thấy người dùng.',
+    NOT_FOUND: 'Không tìm thấy dữ liệu yêu cầu.',
+    NAME_REQUIRED: 'Họ và tên là bắt buộc.',
+    INVALID_EMAIL: 'Định dạng email không hợp lệ.',
+    INVALID_PHONE: 'Số điện thoại không đúng định dạng.',
+    INVALID_ROLE: 'Vai trò không hợp lệ.',
+    INVALID_STATUS: 'Trạng thái không hợp lệ.',
+
+    // ----------------------------------------------------
+    // 7. QUẢN LÝ VAI TRÒ
+    // ----------------------------------------------------
+    DUPLICATE_ROLE_ASSIGNMENT: 'Người dùng đã được gán vai trò này.',
+    ROLE_NOT_FOUND: 'Không tìm thấy vai trò.',
+    ROLE_NOT_ASSIGNED: 'Người dùng chưa có vai trò này.',
+
+    // ----------------------------------------------------
+    // 8. KHÓA / MỞ KHÓA TÀI KHOẢN
+    // ----------------------------------------------------
+    ALREADY_LOCKED: 'Tài khoản đã ở trạng thái khóa.',
+    ALREADY_ACTIVE: 'Tài khoản đang hoạt động.',
+
+    // ----------------------------------------------------
+    // 9. LỖI KỸ THUẬT / HỆ THỐNG / DATABASE KHÁC
+    // ----------------------------------------------------
+    SESSION_STORAGE_UNAVAILABLE: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    UNKNOWN_DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    INTERNAL_SERVER_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    INTERNAL_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    UNKNOWN_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    API_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
+    VALIDATION_ERROR: 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.',
+    UPDATE_ERROR: 'Đã xảy ra lỗi khi cập nhật. Vui lòng thử lại.',
+    FETCH_ROLES_ERROR: 'Không thể tải danh sách vai trò. Vui lòng thử lại.',
+    FETCH_AVAILABLE_ROLES_ERROR: 'Không thể tải danh mục vai trò. Vui lòng thử lại.',
+    ASSIGN_ROLE_ERROR: 'Phân vai trò thất bại. Vui lòng thử lại.',
+    REVOKE_ROLE_ERROR: 'Thu hồi vai trò thất bại. Vui lòng thử lại.',
+    LOCK_ERROR: 'Khóa tài khoản thất bại. Vui lòng thử lại.',
+    UNLOCK_ERROR: 'Mở khóa tài khoản thất bại. Vui lòng thử lại.',
+    INVALID_PAGE: 'Số trang không hợp lệ.',
+    INVALID_PAGE_SIZE: 'Kích thước trang không hợp lệ.',
+    INVALID_REQUEST: 'Yêu cầu không hợp lệ.',
+    INVALID_JSON: 'Dữ liệu yêu cầu không hợp lệ.',
+    INVALID_DATA: 'Dữ liệu không hợp lệ.',
+}
+
+// 2. Bản đồ ánh xạ thông báo thành công
+export const SUCCESS_MESSAGES: Record<string, string> = {
+    CHANGE_PASSWORD_SUCCESS: 'Đổi mật khẩu thành công.',
+    RESET_PASSWORD_SUCCESS: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
+    CREATE_USER_SUCCESS: 'Tạo người dùng thành công.',
+    UPDATE_USER_SUCCESS: 'Cập nhật người dùng thành công.',
+    ROLE_ASSIGN_SUCCESS: 'Gán vai trò thành công.',
+    ROLE_REVOKE_SUCCESS: 'Thu hồi vai trò thành công.',
+    LOCK_ACCOUNT_SUCCESS: 'Khóa tài khoản thành công.',
+    UNLOCK_ACCOUNT_SUCCESS: 'Mở khóa tài khoản thành công.',
+    FORGOT_PASSWORD_SUCCESS: 'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.',
+}
+
+export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
+export const NETWORK_ERROR_MESSAGE = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.'
+
+const TECHNICAL_CODE_REGEX = /^[A-Z0-9_]{3,}$/
+const VIETNAMESE_ACCENT_REGEX = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i
+
+/**
+ * Kiểm tra xem chuỗi có phải là mã kỹ thuật dạng CONSTANT_CASE hay không.
+ */
+export function isTechnicalCode(str?: string | null): boolean {
+    if (!str || typeof str !== 'string') return false
+    return TECHNICAL_CODE_REGEX.test(str.trim())
+}
+
+/**
+ * Kiểm tra lỗi mạng từ chuỗi thông báo hoặc error name.
+ */
+export function isNetworkError(text?: string | null): boolean {
+    if (!text || typeof text !== 'string') return false
+    const lower = text.toLowerCase()
+    return (
+        lower.includes('failed to fetch') ||
+        lower.includes('networkerror') ||
+        lower.includes('network error') ||
+        lower.includes('networkrequestfailed') ||
+        lower.includes('load failed') ||
+        lower.includes('econnrefused') ||
+        lower.includes('kết nối mạng') ||
+        lower.includes('kết nối đến máy chủ') ||
+        lower.includes('kết nối máy chủ')
+    )
+}
+
+/**
+ * Kiểm tra xem chuỗi có phải tiếng Việt thân thiện có dấu hay không.
+ */
+export function isFriendlyVietnamese(text?: string | null): boolean {
+    if (!text || typeof text !== 'string') return false
+    const trimmed = text.trim()
+    if (!trimmed) return false
+    if (isTechnicalCode(trimmed)) return false
+    return VIETNAMESE_ACCENT_REGEX.test(trimmed)
+}
+
+/**
+ * Hàm dùng chung ánh xạ error code hoặc error object sang thông báo tiếng Việt thân thiện.
+ */
+export function getErrorMessage(
+    errorOrCode: unknown,
+    fallback?: string,
+): string {
+    if (!errorOrCode) {
+        return fallback || DEFAULT_FALLBACK_ERROR
+    }
+
+    // 1. Trường hợp là chuỗi
+    if (typeof errorOrCode === 'string') {
+        const trimmed = errorOrCode.trim()
+        if (isNetworkError(trimmed)) {
+            return NETWORK_ERROR_MESSAGE
+        }
+        if (trimmed in ERROR_MESSAGES) {
+            return ERROR_MESSAGES[trimmed]
+        }
+        if (isTechnicalCode(trimmed)) {
+            return fallback || DEFAULT_FALLBACK_ERROR
+        }
+        if (isFriendlyVietnamese(trimmed)) {
+            return trimmed
+        }
+        return fallback || DEFAULT_FALLBACK_ERROR
+    }
+
+    // 2. Trường hợp là Error hoặc Object có thuộc tính code / message
+    let code: string | null = null
+    let rawMessage: string | null = null
+
+    if (typeof errorOrCode === 'object' && errorOrCode !== null) {
+        const anyObj = errorOrCode as Record<string, unknown>
+        if ('code' in anyObj && typeof anyObj.code === 'string') {
+            code = anyObj.code.trim()
+        }
+        if ('message' in anyObj && typeof anyObj.message === 'string') {
+            rawMessage = anyObj.message.trim()
+        }
+    }
+
+    // Kiểm tra lỗi mạng
+    if (rawMessage && isNetworkError(rawMessage)) {
+        return NETWORK_ERROR_MESSAGE
+    }
+
+    // Nếu có mã code được định nghĩa trong ERROR_MESSAGES
+    if (code && code in ERROR_MESSAGES) {
+        if (code === 'ACCOUNT_LOCKED' && rawMessage && (rawMessage.includes('15 phút') || rawMessage.includes('tạm thời'))) {
+            return rawMessage
+        }
+        if (code === 'ALREADY_LOCKED' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'ALREADY_ACTIVE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        return ERROR_MESSAGES[code]
+    }
+
+    // Nếu message có trong mapper
+    if (rawMessage) {
+        if (rawMessage in ERROR_MESSAGES) {
+            return ERROR_MESSAGES[rawMessage]
+        }
+        if (isTechnicalCode(rawMessage)) {
+            return fallback || DEFAULT_FALLBACK_ERROR
+        }
+        if (isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+    }
+
+    return fallback || DEFAULT_FALLBACK_ERROR
+}
+
+/**
+ * Hàm lấy thông báo thành công theo key chuẩn.
+ */
+export function getSuccessMessage(key: string, fallback?: string): string {
+    return SUCCESS_MESSAGES[key] || fallback || key
+}

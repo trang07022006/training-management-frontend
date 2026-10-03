@@ -151,3 +151,67 @@
     border-top: 1px solid #f1f5f9;
     padding-top: 16px;
 }
+
+/* Mobile Responsive Breakpoints (SCRUM-23) */
+@media (max-width: 640px) {
+    .role-dashboard-container {
+        padding: 16px 12px;
+    }
+
+    .role-dashboard-card {
+        padding: 24px 16px;
+    }
+
+    .role-heading {
+        font-size: 1.4rem;
+    }
+
+    .role-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .role-action-link {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .role-dashboard-container {
+        padding: 12px 8px;
+    }
+
+    .role-dashboard-card {
+        padding: 20px 14px;
+        border-radius: 12px;
+    }
+
+    .role-heading {
+        font-size: 1.25rem;
+    }
+
+    .role-badge {
+        font-size: 0.75rem;
+        padding: 4px 12px;
+    }
+
+    .role-info-card {
+        padding: 14px 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .role-dashboard-container {
+        padding: 8px 4px;
+    }
+
+    .role-dashboard-card {
+        padding: 16px 10px;
+    }
+
+    .role-heading {
+        font-size: 1.15rem;
+    }
+}
+

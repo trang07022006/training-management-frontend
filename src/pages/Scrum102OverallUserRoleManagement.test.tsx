@@ -74,6 +74,7 @@ function renderAppWithRoute({
                         <Route
                             element={
                                 <RequirePermission
+                                    requiredRole="admin"
                                     requiredPermission={SYSTEM_PERMISSIONS.USER_VIEW}
                                     fallbackPath="/forbidden"
                                 />
@@ -392,27 +393,15 @@ describe('SCRUM-102: Frontend Overall User Role Management Matrix', () => {
         expect(screen.getByText('Đang tải danh sách vai trò...')).toBeDefined()
     })
 
-    // 24. permission guard: Trainer có quyền xem nhưng không có quyền gán/gỡ vai trò (canManage=false)
-    it('24. Trainer không thấy nút Vai trò trong bảng người dùng', async () => {
-        const customRequest = vi.fn().mockImplementation((path: string) => {
-            if (path.includes('/api/users')) {
-                return Promise.resolve(new Response(JSON.stringify({
-                    status: 'success',
-                    data: { items: mockUsers, total: mockUsers.length, page: 1, page_size: 20 },
-                }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
-            }
-            return Promise.reject(new Error(`Unhandled: ${path}`))
-        })
-
-        renderAppWithRoute({ role: 'trainer', customRequest })
+    // 24. permission guard: Trainer không có quyền quản lý người dùng -> truy cập /users bị chuyển về /forbidden (403)
+    it('24. Trainer truy cập trực tiếp /users bị từ chối 403 và chuyển về /forbidden', async () => {
+        renderAppWithRoute({ role: 'trainer' })
 
         await waitFor(() => {
-            expect(screen.getByTestId('user-management-page')).toBeDefined()
+            expect(screen.getByTestId('page-forbidden')).toBeDefined()
+            expect(screen.getByText(/403 - Bạn không có quyền truy cập/)).toBeDefined()
+            expect(screen.queryByTestId('user-management-page')).toBeNull()
         })
-
-        // Trainer chỉ có quyền user.view -> không có cột Thao tác và không có nút Vai trò
-        expect(screen.queryByTestId('btn-manage-role-1')).toBeNull()
-        expect(screen.queryByTestId('btn-manage-role-2')).toBeNull()
     })
 
     // 25. responsive 360px layout

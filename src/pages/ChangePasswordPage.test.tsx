@@ -12,10 +12,11 @@ vi.mock('../auth/SessionProvider', () => ({
   useSession: () => mockUseSession(),
 }))
 
-function renderComponent(props = {}, initialUrl = '/change-password', hasSession = true) {
+function renderComponent(props = {}, initialUrl = '/change-password', hasSession = true, customRequest?: any) {
   mockUseSession.mockReturnValue({
     hasSession,
     userId: hasSession ? 'user-123' : null,
+    request: customRequest,
   })
 
   return render(
@@ -393,6 +394,33 @@ describe('ChangePasswordPage (SCRUM-52)', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeDefined()
       expect(screen.getByText('Lỗi máy chủ khi đổi mật khẩu (500)')).toBeDefined()
+    })
+  })
+
+  it('17. khi không truyền onSubmit (thao tác trực tiếp từ menu), tự động gọi API POST /api/auth/change-password qua session.request', async () => {
+    const mockRequest = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ message: 'Đổi mật khẩu thành công.' }),
+    })
+    renderComponent({}, '/change-password', true, mockRequest)
+
+    const currentInput = screen.getByLabelText(/^mật khẩu hiện tại$/i)
+    const newInput = screen.getByLabelText(/^mật khẩu mới$/i)
+    const confirmInput = screen.getByLabelText(/^xác nhận mật khẩu mới$/i)
+
+    fireEvent.change(currentInput, { target: { value: 'CurrentPass123!' } })
+    fireEvent.change(newInput, { target: { value: 'NewValidPass456!' } })
+    fireEvent.change(confirmInput, { target: { value: 'NewValidPass456!' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi mật khẩu' }))
+
+    await waitFor(() => {
+      expect(mockRequest).toHaveBeenCalledTimes(1)
+      expect(mockRequest.mock.calls[0][0]).toBe('/api/auth/change-password')
+      const body = JSON.parse(mockRequest.mock.calls[0][1]?.body)
+      expect(body.current_password).toBe('CurrentPass123!')
+      expect(body.new_password).toBe('NewValidPass456!')
+      expect(screen.getByText('Đổi mật khẩu thành công.')).toBeDefined()
     })
   })
 })

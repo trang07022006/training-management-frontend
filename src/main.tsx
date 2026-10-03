@@ -19,6 +19,7 @@ import { AppLayout } from './navigation/AppLayout'
 import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { RoleDashboard } from './pages/RoleDashboard'
 import { UserManagementPage } from './pages/UserManagementPage'
+import { CourseManagementPage } from './pages/CourseManagementPage'
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -81,12 +82,23 @@ createRoot(document.getElementById('root')!).render(
               <Route
                 element={
                   <RequirePermission
+                    requiredRole="admin"
                     requiredPermission={SYSTEM_PERMISSIONS.USER_VIEW}
                     fallbackPath="/forbidden"
                   />
                 }
               >
                 <Route path="/users" element={<UserManagementPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_VIEW}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/courses" element={<CourseManagementPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
             </Route>

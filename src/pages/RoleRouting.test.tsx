@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { StrictMode } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 
@@ -67,9 +67,16 @@ async function fillAndSubmitLoginForm(email: string, password: string) {
     fireEvent.click(submitBtn)
 }
 
+beforeEach(() => {
+    window.sessionStorage.clear()
+    window.localStorage.clear()
+})
+
 afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    window.sessionStorage.clear()
+    window.localStorage.clear()
 })
 
 describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', () => {
@@ -255,6 +262,27 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
             'Tài khoản tạm thời bị khóa 15 phút do nhập sai mật khẩu quá 5 lần',
         )
         expect(screen.getByTestId('current-path').textContent).toBe('/login')
+    })
+
+    it('tài khoản không hoạt động (inactive) thì hiển thị thông báo không hoạt động và không điều hướng', async () => {
+        const fetcher = setupTestApp('/login')
+
+        fetcher.mockResolvedValueOnce(
+            jsonResponse(
+                {
+                    code: 'ACCOUNT_INACTIVE',
+                    message: 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.',
+                },
+                403,
+            ),
+        )
+
+        await fillAndSubmitLoginForm('inactive@test.vn', 'AnyPassword123!')
+
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toContain('Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
+        expect(screen.getByTestId('current-path').textContent).toBe('/login')
+        expect(screen.getByTestId('current-session').textContent).toBe('empty')
     })
 
     it('giao diện RoleDashboard không bịa chức năng và có đường dẫn quay về trang tổng quan', async () => {

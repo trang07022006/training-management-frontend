@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { fetchUsersApi, type User, type UserListParams, type RoleItem } from '../api/userApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import { UserFilterBar, type UserFilters } from '../components/UserFilterBar'
 import { UserTable } from '../components/UserTable'
 import { UserPagination } from '../components/UserPagination'
@@ -23,6 +24,7 @@ export interface UserManagementPageProps {
     roleModalSlot?: ReactNode
     lockModalSlot?: ReactNode
     onOpenCreateModal?: () => void
+    pageSize?: number
 }
 
 /**
@@ -42,6 +44,7 @@ export function UserManagementPage({
     roleModalSlot,
     lockModalSlot,
     onOpenCreateModal,
+    pageSize: initialPageSize = 10,
 }: UserManagementPageProps) {
     const { request: sessionRequest, role } = useSession()
     const requestFn = customRequest ?? sessionRequest
@@ -55,9 +58,9 @@ export function UserManagementPage({
     const [isLoading, setIsLoading] = useState<boolean>(initialUsers === undefined)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-    // Pagination & Filter State (SCRUM-94)
+    // Pagination & Filter State (SCRUM-94, SCRUM-25: 10 người dùng / trang)
     const [page, setPage] = useState<number>(1)
-    const pageSize = 20
+    const pageSize = initialPageSize
     const [filters, setFilters] = useState<UserFilters>({
         search: '',
         role: '',
@@ -87,8 +90,7 @@ export function UserManagementPage({
             setUsers(data.items || data.users || [])
             setTotal(data.total || 0)
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : 'Không thể tải danh sách người dùng.'
-            setErrorMessage(msg)
+            setErrorMessage(getErrorMessage(err, 'Không thể tải danh sách người dùng.'))
         } finally {
             setIsLoading(false)
         }
@@ -107,7 +109,7 @@ export function UserManagementPage({
                 })
                 .catch((err: unknown) => {
                     if (isMounted) {
-                        setErrorMessage(err instanceof Error ? err.message : 'Không thể tải danh sách người dùng.')
+                        setErrorMessage(getErrorMessage(err, 'Không thể tải danh sách người dùng.'))
                         setIsLoading(false)
                     }
                 })
@@ -134,6 +136,7 @@ export function UserManagementPage({
     }
 
     const handleCreateSuccess = (_newUser: User) => {
+        setIsCreateOpen(false)
         // Tải lại trang 1 để đưa người dùng mới lên đầu danh sách
         setPage(1)
         void loadUsers({ page: 1 })

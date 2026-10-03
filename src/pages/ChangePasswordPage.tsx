@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
+import { useSession } from '../auth/SessionProvider'
+import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import './ChangePasswordPage.css'
 
 export interface ChangePasswordFormData {
@@ -45,6 +47,9 @@ export function ChangePasswordPage({
   errorMessage: propErrorMessage = null,
   successMessage: propSuccessMessage = null,
 }: ChangePasswordPageProps) {
+  const session = useSession()
+  const request = session?.request
+
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -80,27 +85,60 @@ export function ChangePasswordPage({
       return
     }
 
-    if (onSubmit) {
-      setInternalLoading(true)
-      try {
+    setInternalLoading(true)
+    try {
+      if (onSubmit) {
         await onSubmit({
           currentPassword,
           newPassword,
           confirmPassword,
         })
-        setInternalSuccess('Đổi mật khẩu thành công.')
-        setCurrentPassword('')
-        setNewPassword('')
-        setConfirmPassword('')
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Đã có lỗi xảy ra khi đổi mật khẩu'
-        setInternalError(message)
-      } finally {
-        setInternalLoading(false)
+      } else if (request) {
+        const response = await request('/api/auth/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+          }),
+        })
+
+        const data: unknown = await response.json().catch(() => null)
+
+        if (!response.ok) {
+          const code =
+            data &&
+            typeof data === 'object' &&
+            'code' in data &&
+            typeof (data as Record<string, unknown>).code === 'string'
+              ? ((data as Record<string, unknown>).code as string)
+              : null
+          const rawMsg =
+            data &&
+            typeof data === 'object' &&
+            'message' in data &&
+            typeof (data as Record<string, unknown>).message === 'string'
+              ? ((data as Record<string, unknown>).message as string)
+              : null
+          const message = getErrorMessage(
+            { code, message: rawMsg },
+            'Đổi mật khẩu thất bại. Vui lòng thử lại.',
+          )
+          setInternalError(message)
+          return
+        }
       }
+
+      setInternalSuccess(getSuccessMessage('CHANGE_PASSWORD_SUCCESS', 'Đổi mật khẩu thành công.'))
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (err: unknown) {
+      setInternalError(getErrorMessage(err, 'Đã có lỗi xảy ra khi đổi mật khẩu'))
+    } finally {
+      setInternalLoading(false)
     }
   }
 

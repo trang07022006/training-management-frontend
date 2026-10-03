@@ -2,7 +2,10 @@
 
 .app-sidebar {
     width: 260px;
+    max-width: 85vw;
     height: 100vh;
+    height: 100dvh;
+    box-sizing: border-box;
     background-color: #1e293b;
     color: #f8fafc;
     display: flex;
@@ -139,6 +142,9 @@
     padding: 16px;
     border-top: 1px solid #334155;
     background-color: #0f172a;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .sidebar-user-avatar {
@@ -159,6 +165,8 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
+    flex: 1;
+    overflow: hidden;
 }
 
 .sidebar-user-name {
@@ -168,6 +176,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
 }
 
 .sidebar-user-role {
@@ -176,20 +186,41 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
 }
 
 /* Responsive styles for tablet and mobile (<= 768px, specifically 360px) */
 @media (max-width: 768px) {
     .app-sidebar {
         transform: translateX(-100%);
+        max-width: 85vw;
     }
 
     .app-sidebar.is-open {
         transform: translateX(0);
     }
 
+    .sidebar-brand {
+        padding: 16px 14px 14px 14px;
+        gap: 10px;
+    }
+
+    /* Đảm bảo brand "Đào Tạo & RBAC" hiển thị đầy đủ, không bị cắt xấu */
+    .sidebar-brand-title {
+        font-size: 0.98rem;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
     .sidebar-close-btn {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        padding: 0 4px;
     }
 
     .sidebar-backdrop {
@@ -201,3 +232,4 @@
         z-index: 999;
     }
 }
+
