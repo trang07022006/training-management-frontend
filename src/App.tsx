@@ -150,6 +150,14 @@ function App() {
               <p>Cập nhật mật khẩu định kỳ để nâng cao bảo mật tài khoản người dùng</p>
             </div>
           </Link>
+
+          <Link to="/profile" className="quick-action-card" data-testid="quick-action-profile">
+            <div className="action-card-icon">👤</div>
+            <div className="action-card-content">
+              <h3>Hồ sơ cá nhân</h3>
+              <p>Xem và cập nhật thông tin cá nhân, số điện thoại, ngày sinh và địa chỉ</p>
+            </div>
+          </Link>
         </div>
       </section>
 

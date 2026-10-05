@@ -293,3 +293,81 @@ export async function unlockUserApi(
     }
     return body.data
 }
+
+export interface UserProfileData {
+    id: string | number
+    email: string
+    name: string
+    phone?: string | null
+    date_of_birth?: string | null
+    address?: string | null
+    role: string
+    status?: string
+}
+
+export interface UpdateProfilePayload {
+    name?: string
+    phone?: string | null
+    date_of_birth?: string | null
+    address?: string | null
+}
+
+/**
+ * Lấy hồ sơ cá nhân của chính người dùng đang đăng nhập (SCRUM-120 Activity A2).
+ */
+export async function getUserProfileApi(
+    requestFn: RequestFunction,
+): Promise<UserProfileData> {
+    const res = await requestFn('/api/v1/users/profile', {
+        method: 'GET',
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 401 ? 'UNAUTHORIZED' : res.status === 404 ? 'USER_NOT_FOUND' : 'UNKNOWN_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tải hồ sơ cá nhân.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Cập nhật hồ sơ cá nhân của chính người dùng đang đăng nhập (SCRUM-120 Activity A3, A6).
+ * Payload editable: name, phone, date_of_birth, address.
+ * Tuyệt đối không gửi email, role, id, status, password hay security fields.
+ */
+export async function updateUserProfileApi(
+    requestFn: RequestFunction,
+    payload: UpdateProfilePayload,
+): Promise<UserProfileData> {
+    const cleanPayload: UpdateProfilePayload = {}
+    if ('name' in payload && payload.name !== undefined) {
+        cleanPayload.name = payload.name
+    }
+    if ('phone' in payload && payload.phone !== undefined) {
+        cleanPayload.phone = payload.phone
+    }
+    if ('date_of_birth' in payload && payload.date_of_birth !== undefined) {
+        cleanPayload.date_of_birth = payload.date_of_birth
+    }
+    if ('address' in payload && payload.address !== undefined) {
+        cleanPayload.address = payload.address
+    }
+
+    const res = await requestFn('/api/v1/users/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cleanPayload),
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 400 ? 'VALIDATION_ERROR' : res.status === 404 ? 'USER_NOT_FOUND' : 'UPDATE_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi cập nhật hồ sơ cá nhân.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}

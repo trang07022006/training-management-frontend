@@ -145,6 +145,13 @@
     width: 100%;
     box-sizing: border-box;
     min-width: 0;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.sidebar-user-footer:hover {
+    background-color: #1e293b;
 }
 
 .sidebar-user-avatar {

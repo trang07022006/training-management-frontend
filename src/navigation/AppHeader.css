@@ -71,6 +71,16 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 3px 6px;
+    transition: background-color 0.15s ease;
+}
+
+.header-user-profile:hover {
+    background-color: #f1f5f9;
 }
 
 .user-avatar {
