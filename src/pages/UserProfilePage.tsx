@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { useNavigate, useLocation } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
     getUserProfileApi,
@@ -15,6 +16,8 @@ const VIETNAMESE_PHONE_REGEX = /^0[35789]\d{8}$/
 
 export function UserProfilePage() {
     const { request, role: sessionRole } = useSession()
+    const navigate = useNavigate()
+    const location = useLocation()
 
     // Profile state
     const [profile, setProfile] = useState<UserProfileData | null>(null)
@@ -32,9 +35,33 @@ export function UserProfilePage() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+    const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false)
+
+    // Calculate dirty state by comparing current form fields with backend profile
+    const isDirty = Boolean(
+        profile && (
+            name !== (profile.name ?? '') ||
+            phone !== (profile.phone ?? '') ||
+            dateOfBirth !== (profile.date_of_birth ?? '') ||
+            address !== (profile.address ?? '')
+        )
+    )
 
     // Today's date in YYYY-MM-DD format for max DOB check
     const todayStr = new Date().toISOString().split('T')[0]
+
+    // Navigation back helper with fallback to overview page
+    const handleNavigateBack = useCallback(() => {
+        const hasHistory =
+            (typeof window !== 'undefined' && window.history && (window.history.state?.idx > 0 || window.history.length > 1)) ||
+            location.key !== 'default'
+
+        if (hasHistory) {
+            navigate(-1)
+        } else {
+            navigate('/')
+        }
+    }, [navigate, location.key])
 
     // Load user profile on mount
     useEffect(() => {
@@ -161,16 +188,33 @@ export function UserProfilePage() {
         }
     }
 
-    // Cancel / reset changes
-    const handleCancel = () => {
-        if (!profile) return
-        setName(profile.name || '')
-        setPhone(profile.phone || '')
-        setDateOfBirth(profile.date_of_birth || '')
-        setAddress(profile.address || '')
+    // Click on "Hủy thay đổi" button on form: if dirty, show confirm dialog; else navigate back
+    const handleCancelClick = () => {
+        if (isDirty) {
+            setShowCancelConfirm(true)
+        } else {
+            handleNavigateBack()
+        }
+    }
+
+    // Confirm cancel in modal: discard changes, reset state, and navigate back
+    const handleConfirmCancel = () => {
+        setShowCancelConfirm(false)
+        if (profile) {
+            setName(profile.name || '')
+            setPhone(profile.phone || '')
+            setDateOfBirth(profile.date_of_birth || '')
+            setAddress(profile.address || '')
+        }
         setFieldErrors({})
         setSuccessMessage(null)
         setErrorMessage(null)
+        handleNavigateBack()
+    }
+
+    // Dismiss confirm dialog and stay on profile page with edited data intact
+    const handleStay = () => {
+        setShowCancelConfirm(false)
     }
 
     // Loading State
@@ -423,7 +467,7 @@ export function UserProfilePage() {
                         <button
                             type="button"
                             className="btn-cancel"
-                            onClick={handleCancel}
+                            onClick={handleCancelClick}
                             disabled={isSaving}
                             data-testid="btn-cancel-profile"
                         >
@@ -447,6 +491,49 @@ export function UserProfilePage() {
                     </div>
                 </form>
             </main>
+
+            {/* Confirmation Dialog when canceling with unsaved changes */}
+            {showCancelConfirm && (
+                <div
+                    className="profile-modal-backdrop"
+                    data-testid="cancel-confirm-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="confirm-cancel-title"
+                >
+                    <div className="profile-modal-card">
+                        <div className="profile-modal-header">
+                            <span className="profile-modal-icon" aria-hidden="true">⚠️</span>
+                            <h3 id="confirm-cancel-title" className="profile-modal-title">
+                                Xác nhận hủy thay đổi
+                            </h3>
+                        </div>
+                        <div className="profile-modal-body">
+                            <p className="profile-modal-message" data-testid="cancel-confirm-message">
+                                Bạn có thay đổi chưa được lưu. Bạn có chắc muốn hủy không?
+                            </p>
+                        </div>
+                        <div className="profile-modal-actions">
+                            <button
+                                type="button"
+                                className="btn-modal-stay"
+                                onClick={handleStay}
+                                data-testid="btn-stay"
+                            >
+                                Ở lại
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-modal-confirm-cancel"
+                                onClick={handleConfirmCancel}
+                                data-testid="btn-confirm-cancel"
+                            >
+                                Hủy thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

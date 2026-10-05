@@ -6,13 +6,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { UserProfilePage } from './UserProfilePage'
 import type { UserProfileData } from '../api/userApi'
 
-// Mock useSession hook
+// Mock useSession and useNavigate hooks
 const mockRequest = vi.fn()
 const mockUseSession = vi.fn()
+const mockNavigate = vi.fn()
 
 vi.mock('../auth/SessionProvider', () => ({
     useSession: () => mockUseSession(),
 }))
+
+vi.mock('react-router', async () => {
+    const actual = await vi.importActual<typeof import('react-router')>('react-router')
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+    }
+})
 
 const sampleProfile: UserProfileData = {
     id: 'user-001',
@@ -452,7 +461,7 @@ describe('SCRUM-120: Frontend Hồ sơ cá nhân (Activity A6)', () => {
     })
 
     // 20. cancel reset form
-    it('20. cancel reset form: nút hủy khôi phục dữ liệu ban đầu', async () => {
+    it('20. cancel reset form: khi có thay đổi, bấm Hủy hiện confirm, chọn Hủy thay đổi khôi phục dữ liệu ban đầu', async () => {
         renderProfilePage()
 
         await waitFor(() => {
@@ -466,8 +475,19 @@ describe('SCRUM-120: Frontend Hồ sơ cá nhân (Activity A6)', () => {
         const cancelButton = screen.getByTestId('btn-cancel-profile')
         fireEvent.click(cancelButton)
 
-        // Reset về giá trị gốc từ server
+        // Modal confirm hiển thị
+        expect(screen.getByTestId('cancel-confirm-modal')).toBeDefined()
+        expect(screen.getByTestId('cancel-confirm-message').textContent).toBe(
+            'Bạn có thay đổi chưa được lưu. Bạn có chắc muốn hủy không?',
+        )
+
+        // Bấm Hủy thay đổi trong modal
+        const confirmCancelBtn = screen.getByTestId('btn-confirm-cancel')
+        fireEvent.click(confirmCancelBtn)
+
+        // Reset về giá trị gốc từ server và navigate back
         expect(nameInput.value).toBe('Nguyễn Văn A')
+        expect(mockNavigate).toHaveBeenCalled()
     })
 
     // 21. F5/remount lấy lại profile từ API
@@ -540,5 +560,165 @@ describe('SCRUM-120: Frontend Hồ sơ cá nhân (Activity A6)', () => {
         expect(screen.queryByTestId('input-token')).toBeNull()
         expect(screen.queryByText(/password_hash/i)).toBeNull()
         expect(screen.queryByText(/failed_login_attempts/i)).toBeNull()
+    })
+
+    // 25. chưa sửa gì, click Hủy → navigate back ngay
+    it('25. chưa sửa gì, click Hủy → navigate back ngay, không confirm', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-cancel-profile')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('btn-cancel-profile'))
+
+        // Không mở modal xác nhận
+        expect(screen.queryByTestId('cancel-confirm-modal')).toBeNull()
+        // Gọi navigate back ngay
+        expect(mockNavigate).toHaveBeenCalled()
+    })
+
+    // 26. sửa name, click Hủy → hiện confirm
+    it('26. sửa name, click Hủy → hiện confirm dialog với thông điệp chuẩn và 2 nút lựa chọn', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('input-profile-name')).toBeDefined()
+        })
+
+        fireEvent.change(screen.getByTestId('input-profile-name'), {
+            target: { value: 'Tên Thay Đổi' },
+        })
+
+        fireEvent.click(screen.getByTestId('btn-cancel-profile'))
+
+        expect(screen.getByTestId('cancel-confirm-modal')).toBeDefined()
+        expect(screen.getByTestId('cancel-confirm-message').textContent).toBe(
+            'Bạn có thay đổi chưa được lưu. Bạn có chắc muốn hủy không?',
+        )
+        expect(screen.getByTestId('btn-stay').textContent).toBe('Ở lại')
+        expect(screen.getByTestId('btn-confirm-cancel').textContent).toBe('Hủy thay đổi')
+    })
+
+    // 27. chọn Ở lại → vẫn ở /profile và giữ dữ liệu đã nhập
+    it('27. chọn Ở lại → đóng confirm, vẫn ở /profile và giữ dữ liệu đã nhập', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('input-profile-name')).toBeDefined()
+        })
+
+        const nameInput = screen.getByTestId('input-profile-name') as HTMLInputElement
+        fireEvent.change(nameInput, { target: { value: 'Dữ Liệu Đang Sửa' } })
+
+        fireEvent.click(screen.getByTestId('btn-cancel-profile'))
+        expect(screen.getByTestId('cancel-confirm-modal')).toBeDefined()
+
+        // Click Ở lại
+        fireEvent.click(screen.getByTestId('btn-stay'))
+
+        // Modal đóng
+        expect(screen.queryByTestId('cancel-confirm-modal')).toBeNull()
+        // Dữ liệu nhập vẫn giữ nguyên
+        expect(nameInput.value).toBe('Dữ Liệu Đang Sửa')
+        // Không navigate đi đâu
+        expect(mockNavigate).not.toHaveBeenCalled()
+    })
+
+    // 28. chọn Hủy thay đổi → bỏ dữ liệu và navigate back
+    it('28. chọn Hủy thay đổi → bỏ dữ liệu, không gọi PUT và navigate back', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('input-profile-name')).toBeDefined()
+        })
+
+        const nameInput = screen.getByTestId('input-profile-name') as HTMLInputElement
+        const phoneInput = screen.getByTestId('input-profile-phone') as HTMLInputElement
+        fireEvent.change(nameInput, { target: { value: 'Tên Bị Hủy' } })
+        fireEvent.change(phoneInput, { target: { value: '0987654321' } })
+
+        fireEvent.click(screen.getByTestId('btn-cancel-profile'))
+        expect(screen.getByTestId('cancel-confirm-modal')).toBeDefined()
+
+        // Click Hủy thay đổi trong modal
+        fireEvent.click(screen.getByTestId('btn-confirm-cancel'))
+
+        // Không gọi PUT
+        expect(mockRequest).not.toHaveBeenCalledWith(
+            '/api/v1/users/profile',
+            expect.objectContaining({ method: 'PUT' }),
+        )
+        // Reset về giá trị gốc từ server
+        expect(nameInput.value).toBe('Nguyễn Văn A')
+        expect(phoneInput.value).toBe('0912345678')
+        // Gọi navigate
+        expect(mockNavigate).toHaveBeenCalled()
+    })
+
+    // 29. save thành công → dirty state reset, sau save click Hủy → navigate back ngay
+    it('29. save thành công → dirty state reset, sau save click Hủy → navigate back ngay không confirm', async () => {
+        mockRequest.mockImplementation((path, init) => {
+            if (path === '/api/v1/users/profile' && init?.method === 'PUT') {
+                return Promise.resolve(
+                    mockResponse({
+                        status: 'success',
+                        message: 'Cập nhật hồ sơ thành công.',
+                        data: {
+                            ...sampleProfile,
+                            name: 'Tên Mới Sau Lưu',
+                        },
+                    }),
+                )
+            }
+            return Promise.resolve(mockResponse({ status: 'success', data: sampleProfile }))
+        })
+
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('input-profile-name')).toBeDefined()
+        })
+
+        // Sửa name
+        fireEvent.change(screen.getByTestId('input-profile-name'), {
+            target: { value: 'Tên Mới Sau Lưu' },
+        })
+
+        // Lưu thay đổi
+        fireEvent.click(screen.getByTestId('btn-save-profile'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('profile-success-message')).toBeDefined()
+        })
+
+        // Sau khi lưu thành công, dirty state reset về false
+        // Bấm Hủy thay đổi -> navigate ngay không cần confirm
+        fireEvent.click(screen.getByTestId('btn-cancel-profile'))
+        expect(screen.queryByTestId('cancel-confirm-modal')).toBeNull()
+        expect(mockNavigate).toHaveBeenCalled()
+    })
+
+    // 30. mobile 360px vẫn hiển thị confirm và button đúng
+    it('30. mobile 360px vẫn hiển thị confirm và button đúng cấu trúc modal backdrop và card', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('input-profile-name')).toBeDefined()
+        })
+
+        fireEvent.change(screen.getByTestId('input-profile-name'), {
+            target: { value: 'Mobile Name Edit' },
+        })
+
+        fireEvent.click(screen.getByTestId('btn-cancel-profile'))
+
+        const modalBackdrop = screen.getByTestId('cancel-confirm-modal')
+        expect(modalBackdrop.classList.contains('profile-modal-backdrop')).toBe(true)
+
+        const modalStayBtn = screen.getByTestId('btn-stay')
+        const modalConfirmBtn = screen.getByTestId('btn-confirm-cancel')
+        expect(modalStayBtn.classList.contains('btn-modal-stay')).toBe(true)
+        expect(modalConfirmBtn.classList.contains('btn-modal-confirm-cancel')).toBe(true)
     })
 })
