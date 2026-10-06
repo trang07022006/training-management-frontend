@@ -9,6 +9,7 @@ import {
     ApiError,
 } from '../api/userApi'
 import { getUserRoleDisplay } from '../navigation/userProfileUtils'
+import { ProfileAvatarSection } from '../components/ProfileAvatarSection'
 import { getErrorMessage } from '../utils/errorMessages'
 import './UserProfilePage.css'
 
@@ -269,6 +270,20 @@ export function UserProfilePage() {
                     </p>
                 </div>
             </header>
+
+            {/* Avatar Section (SCRUM-121 A6) - độc lập với form hồ sơ */}
+            {profile && (
+                <ProfileAvatarSection
+                    request={request}
+                    name={profile.name || ''}
+                    email={profile.email || ''}
+                    roleDisplay={roleDisplay}
+                    avatarUrl={profile.avatar_url ?? null}
+                    onAvatarUrlChange={(url) =>
+                        setProfile((prev) => (prev ? { ...prev, avatar_url: url } : prev))
+                    }
+                />
+            )}
 
             {/* Notification Banners */}
             {successMessage && (
