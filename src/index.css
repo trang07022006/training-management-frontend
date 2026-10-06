@@ -1,28 +1,90 @@
 /* =========================================================================
-   UI Design System: Hệ thống Quản lý Đào tạo (Sprint 1 Standard)
-   Tone: Xanh dương (#2563eb), Trắng (#ffffff), Xám nhạt (#f8fafc, #f1f5f9)
+   UI Design System: HỆ THỐNG QUẢN LÝ ĐÀO TẠO - ĐẠI HỌC ICTU THÁI NGUYÊN
+   Brand Colors:
+     - Primary: #0874C9 (ICTU Blue)
+     - Primary Dark: #064B8E
+     - Navy / Brand Deep: #0B2852 (Sidebar & Header brand depth)
+     - Primary Light: #EAF4FF
+     - Background: #F5F8FC
+     - Surface: #FFFFFF
+     - Text Primary: #172B4D
+     - Text Secondary: #64748B
    ========================================================================= */
 
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
-  --primary-border: #bfdbfe;
-  --text-main: #0f172a;
+  /* ICTU Brand Palette */
+  --ictu-primary: #0874c9;
+  --ictu-primary-dark: #064b8e;
+  --ictu-navy: #0b2852;
+  --ictu-navy-dark: #071c3b;
+  --ictu-primary-light: #eaf4ff;
+  --ictu-primary-subtle: #f0f7ff;
+  --ictu-primary-border: #bae0ff;
+
+  /* Backward Compatible Semantic Tokens */
+  --primary: var(--ictu-primary);
+  --primary-hover: var(--ictu-primary-dark);
+  --primary-light: var(--ictu-primary-light);
+  --primary-border: var(--ictu-primary-border);
+
+  /* Neutrals & Surfaces */
+  --text-main: #172b4d;
+  --text-primary: #172b4d;
   --text-muted: #64748b;
-  --bg-main: #f8fafc;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #ffffff;
+
+  --bg-main: #f5f8fc;
   --bg-surface: #ffffff;
+  --bg-surface-alt: #f8fafc;
   --border: #e2e8f0;
-  --border-subtle: #f1f5f9;
+  --border-subtle: #edf2f7;
+  --border-focus: #0874c9;
+
+  /* Feedback Colors */
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --info: #0874c9;
+  --info-bg: #eaf4ff;
+  --info-border: #bae0ff;
+
+  /* Radii */
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --radius-xl: 18px;
+  --radius-pill: 9999px;
 
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Elevation Shadows */
+  --shadow-xs: 0 1px 2px rgba(11, 40, 82, 0.04);
+  --shadow-sm: 0 1px 3px rgba(11, 40, 82, 0.06), 0 1px 2px rgba(11, 40, 82, 0.04);
+  --shadow-md: 0 4px 10px -1px rgba(11, 40, 82, 0.07), 0 2px 5px -2px rgba(11, 40, 82, 0.04);
+  --shadow-lg: 0 10px 25px -4px rgba(11, 40, 82, 0.1), 0 4px 10px -4px rgba(11, 40, 82, 0.04);
+  --shadow-card: 0 2px 8px rgba(11, 40, 82, 0.05);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
 
   font: 16px/150% var(--font-sans);
   color: var(--text-main);

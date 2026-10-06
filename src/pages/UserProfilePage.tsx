@@ -293,174 +293,216 @@ export function UserProfilePage() {
                 </div>
             )}
 
-            {/* Main Profile Form Card */}
-            <main className="profile-card">
-                <form onSubmit={handleSubmit} noValidate className="profile-form" data-testid="profile-form">
-                    <div className="profile-grid">
-                        {/* Name (Editable, Required) */}
-                        <div className="form-group">
-                            <label htmlFor="profile-name" className="form-label">
-                                Họ và tên <span className="required-mark" aria-hidden="true">*</span>
-                            </label>
-                            <input
-                                id="profile-name"
-                                name="name"
-                                type="text"
-                                className={`form-input ${fieldErrors.name ? 'input-error' : ''}`}
-                                value={name}
-                                onChange={(e) => {
-                                    setName(e.target.value)
-                                    if (fieldErrors.name) {
-                                        setFieldErrors((prev) => ({ ...prev, name: '' }))
-                                    }
-                                }}
-                                maxLength={255}
-                                required
-                                placeholder="Nhập họ và tên"
-                                data-testid="input-profile-name"
-                            />
-                            {fieldErrors.name && (
-                                <span className="field-error-text" role="alert" data-testid="error-name">
-                                    {fieldErrors.name}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Email (Read-only, Locked) */}
-                        <div className="form-group">
-                            <label htmlFor="profile-email" className="form-label">
-                                Địa chỉ email
-                            </label>
-                            <div className="readonly-input-wrapper">
-                                <input
-                                    id="profile-email"
-                                    name="email"
-                                    type="email"
-                                    className="form-input form-input-readonly"
-                                    value={profile?.email || ''}
-                                    readOnly
-                                    disabled
-                                    data-testid="input-profile-email"
-                                    title="Email không thể thay đổi tại đây"
-                                />
-                                <span className="lock-icon" aria-hidden="true" title="Đã khóa">
-                                    🔒
-                                </span>
-                            </div>
-                            <span className="field-helper-text" data-testid="email-helper-text">
-                                Email không thể thay đổi tại đây.
-                            </span>
-                        </div>
-
-                        {/* Role (Read-only Badge) */}
-                        <div className="form-group">
-                            <label className="form-label">
-                                Vai trò hệ thống
-                            </label>
-                            <div className="role-display-box" data-testid="profile-role-container">
-                                <span className="role-tag" data-testid="profile-role-badge">
-                                    {roleDisplay}
-                                </span>
-                                <span className="role-code-badge" data-testid="profile-role-code">
-                                    ({currentRole})
-                                </span>
-                            </div>
-                            <span className="field-helper-text">
-                                Vai trò do Quản trị viên phân quyền và quản lý.
-                            </span>
-                        </div>
-
-                        {/* Phone (Editable, Optional) */}
-                        <div className="form-group">
-                            <label htmlFor="profile-phone" className="form-label">
-                                Số điện thoại
-                            </label>
-                            <input
-                                id="profile-phone"
-                                name="phone"
-                                type="tel"
-                                className={`form-input ${fieldErrors.phone ? 'input-error' : ''}`}
-                                value={phone}
-                                onChange={(e) => {
-                                    setPhone(e.target.value)
-                                    if (fieldErrors.phone) {
-                                        setFieldErrors((prev) => ({ ...prev, phone: '' }))
-                                    }
-                                }}
-                                maxLength={20}
-                                placeholder="Ví dụ: 0912345678"
-                                data-testid="input-profile-phone"
-                            />
-                            {fieldErrors.phone && (
-                                <span className="field-error-text" role="alert" data-testid="error-phone">
-                                    {fieldErrors.phone}
-                                </span>
-                            )}
-                            <span className="field-helper-text">
-                                Định dạng di động Việt Nam 10 chữ số (đầu 03, 05, 07, 08, 09).
-                            </span>
-                        </div>
-
-                        {/* Date of Birth (Editable, Optional) */}
-                        <div className="form-group">
-                            <label htmlFor="profile-dob" className="form-label">
-                                Ngày sinh
-                            </label>
-                            <input
-                                id="profile-dob"
-                                name="date_of_birth"
-                                type="date"
-                                className={`form-input ${fieldErrors.date_of_birth ? 'input-error' : ''}`}
-                                value={dateOfBirth}
-                                max={todayStr}
-                                onChange={(e) => {
-                                    setDateOfBirth(e.target.value)
-                                    if (fieldErrors.date_of_birth) {
-                                        setFieldErrors((prev) => ({ ...prev, date_of_birth: '' }))
-                                    }
-                                }}
-                                data-testid="input-profile-dob"
-                            />
-                            {fieldErrors.date_of_birth && (
-                                <span className="field-error-text" role="alert" data-testid="error-dob">
-                                    {fieldErrors.date_of_birth}
-                                </span>
-                            )}
-                        </div>
-
-                        {/* Address (Editable, Optional) */}
-                        <div className="form-group form-group-full">
-                            <div className="label-with-counter">
-                                <label htmlFor="profile-address" className="form-label">
-                                    Địa chỉ liên hệ
-                                </label>
-                                <span className="char-counter" data-testid="address-char-counter">
-                                    {address.length}/255
-                                </span>
-                            </div>
-                            <textarea
-                                id="profile-address"
-                                name="address"
-                                className={`form-textarea ${fieldErrors.address ? 'input-error' : ''}`}
-                                value={address}
-                                onChange={(e) => {
-                                    setAddress(e.target.value)
-                                    if (fieldErrors.address) {
-                                        setFieldErrors((prev) => ({ ...prev, address: '' }))
-                                    }
-                                }}
-                                maxLength={255}
-                                rows={3}
-                                placeholder="Nhập địa chỉ cư trú hoặc nơi làm việc..."
-                                data-testid="input-profile-address"
-                            />
-                            {fieldErrors.address && (
-                                <span className="field-error-text" role="alert" data-testid="error-address">
-                                    {fieldErrors.address}
-                                </span>
-                            )}
-                        </div>
+            {/* User Hero Summary (Avatar mặc định, Họ tên, Vai trò, Email) */}
+            <div className="profile-hero-card">
+                <div className="profile-hero-avatar" aria-hidden="true">
+                    {name ? name.trim().charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div className="profile-hero-info">
+                    <h2 className="profile-hero-name">{name || profile?.name || 'Người dùng'}</h2>
+                    <div className="profile-hero-meta">
+                        <span className="profile-hero-email">{profile?.email}</span>
+                        <span className="profile-hero-role-badge">{roleDisplay}</span>
                     </div>
+                </div>
+            </div>
+
+            {/* Main Profile Form Card */}
+            <main className="profile-main-area">
+                <form onSubmit={handleSubmit} noValidate className="profile-form" data-testid="profile-form">
+                    {/* Card 1: Thông tin cá nhân */}
+                    <section className="profile-section-card">
+                        <div className="profile-section-header">
+                            <h3 className="profile-section-title">
+                                <span className="section-title-icon" aria-hidden="true">📋</span>
+                                Thông tin cá nhân
+                            </h3>
+                            <p className="profile-section-subtitle">
+                                Cập nhật thông tin cơ bản và địa chỉ liên hệ của bạn
+                            </p>
+                        </div>
+
+                        <div className="profile-grid">
+                            {/* Name (Editable, Required) */}
+                            <div className="form-group">
+                                <label htmlFor="profile-name" className="form-label">
+                                    Họ và tên <span className="required-mark" aria-hidden="true">*</span>
+                                </label>
+                                <input
+                                    id="profile-name"
+                                    name="name"
+                                    type="text"
+                                    className={`form-input ${fieldErrors.name ? 'input-error' : ''}`}
+                                    value={name}
+                                    onChange={(e) => {
+                                        setName(e.target.value)
+                                        if (fieldErrors.name) {
+                                            setFieldErrors((prev) => ({ ...prev, name: '' }))
+                                        }
+                                    }}
+                                    maxLength={255}
+                                    required
+                                    placeholder="Nhập họ và tên"
+                                    data-testid="input-profile-name"
+                                />
+                                {fieldErrors.name && (
+                                    <span className="field-error-text" role="alert" data-testid="error-name">
+                                        {fieldErrors.name}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Phone (Editable, Optional) */}
+                            <div className="form-group">
+                                <label htmlFor="profile-phone" className="form-label">
+                                    Số điện thoại
+                                </label>
+                                <input
+                                    id="profile-phone"
+                                    name="phone"
+                                    type="tel"
+                                    className={`form-input ${fieldErrors.phone ? 'input-error' : ''}`}
+                                    value={phone}
+                                    onChange={(e) => {
+                                        setPhone(e.target.value)
+                                        if (fieldErrors.phone) {
+                                            setFieldErrors((prev) => ({ ...prev, phone: '' }))
+                                        }
+                                    }}
+                                    maxLength={20}
+                                    placeholder="Ví dụ: 0912345678"
+                                    data-testid="input-profile-phone"
+                                />
+                                {fieldErrors.phone && (
+                                    <span className="field-error-text" role="alert" data-testid="error-phone">
+                                        {fieldErrors.phone}
+                                    </span>
+                                )}
+                                <span className="field-helper-text">
+                                    Định dạng di động Việt Nam 10 chữ số (đầu 03, 05, 07, 08, 09).
+                                </span>
+                            </div>
+
+                            {/* Date of Birth (Editable, Optional) */}
+                            <div className="form-group">
+                                <label htmlFor="profile-dob" className="form-label">
+                                    Ngày sinh
+                                </label>
+                                <input
+                                    id="profile-dob"
+                                    name="date_of_birth"
+                                    type="date"
+                                    className={`form-input ${fieldErrors.date_of_birth ? 'input-error' : ''}`}
+                                    value={dateOfBirth}
+                                    max={todayStr}
+                                    onChange={(e) => {
+                                        setDateOfBirth(e.target.value)
+                                        if (fieldErrors.date_of_birth) {
+                                            setFieldErrors((prev) => ({ ...prev, date_of_birth: '' }))
+                                        }
+                                    }}
+                                    data-testid="input-profile-dob"
+                                />
+                                {fieldErrors.date_of_birth && (
+                                    <span className="field-error-text" role="alert" data-testid="error-dob">
+                                        {fieldErrors.date_of_birth}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Address (Editable, Optional) */}
+                            <div className="form-group form-group-full">
+                                <div className="label-with-counter">
+                                    <label htmlFor="profile-address" className="form-label">
+                                        Địa chỉ liên hệ
+                                    </label>
+                                    <span className="char-counter" data-testid="address-char-counter">
+                                        {address.length}/255
+                                    </span>
+                                </div>
+                                <textarea
+                                    id="profile-address"
+                                    name="address"
+                                    className={`form-textarea ${fieldErrors.address ? 'input-error' : ''}`}
+                                    value={address}
+                                    onChange={(e) => {
+                                        setAddress(e.target.value)
+                                        if (fieldErrors.address) {
+                                            setFieldErrors((prev) => ({ ...prev, address: '' }))
+                                        }
+                                    }}
+                                    maxLength={255}
+                                    rows={3}
+                                    placeholder="Nhập địa chỉ cư trú hoặc nơi làm việc..."
+                                    data-testid="input-profile-address"
+                                />
+                                {fieldErrors.address && (
+                                    <span className="field-error-text" role="alert" data-testid="error-address">
+                                        {fieldErrors.address}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Card 2: Thông tin tài khoản */}
+                    <section className="profile-section-card">
+                        <div className="profile-section-header">
+                            <h3 className="profile-section-title">
+                                <span className="section-title-icon" aria-hidden="true">🔐</span>
+                                Thông tin tài khoản
+                            </h3>
+                            <p className="profile-section-subtitle">
+                                Thông tin định danh và phân quyền hệ thống (chỉ xem)
+                            </p>
+                        </div>
+
+                        <div className="profile-grid">
+                            {/* Email (Read-only, Locked) */}
+                            <div className="form-group">
+                                <label htmlFor="profile-email" className="form-label">
+                                    Địa chỉ email
+                                </label>
+                                <div className="readonly-input-wrapper">
+                                    <input
+                                        id="profile-email"
+                                        name="email"
+                                        type="email"
+                                        className="form-input form-input-readonly"
+                                        value={profile?.email || ''}
+                                        readOnly
+                                        disabled
+                                        data-testid="input-profile-email"
+                                        title="Email không thể thay đổi tại đây"
+                                    />
+                                    <span className="lock-icon" aria-hidden="true" title="Đã khóa">
+                                        🔒
+                                    </span>
+                                </div>
+                                <span className="field-helper-text" data-testid="email-helper-text">
+                                    Email không thể thay đổi tại đây.
+                                </span>
+                            </div>
+
+                            {/* Role (Read-only Badge) */}
+                            <div className="form-group">
+                                <label className="form-label">
+                                    Vai trò hệ thống
+                                </label>
+                                <div className="role-display-box" data-testid="profile-role-container">
+                                    <span className="role-tag" data-testid="profile-role-badge">
+                                        {roleDisplay}
+                                    </span>
+                                    <span className="role-code-badge" data-testid="profile-role-code">
+                                        ({currentRole})
+                                    </span>
+                                </div>
+                                <span className="field-helper-text">
+                                    Vai trò do Quản trị viên phân quyền và quản lý.
+                                </span>
+                            </div>
+                        </div>
+                    </section>
 
                     {/* Action Buttons */}
                     <div className="profile-actions">

@@ -210,7 +210,7 @@ export function UserManagementPage({
                         {total > 0 && <span className="user-total-badge" data-testid="user-total-badge"> ({total})</span>}
                     </h1>
                     <p className="user-page-description">
-                        Xem danh sách, tìm kiếm, tạo mới và cập nhật tài khoản người dùng trong hệ thống đào tạo.
+                        Quản lý tài khoản và phân quyền trong hệ thống. Xem danh sách, tìm kiếm, tạo mới và cập nhật người dùng.
                     </p>
                 </div>
 
