@@ -303,6 +303,7 @@ export interface UserProfileData {
     address?: string | null
     role: string
     status?: string
+    avatar_url?: string | null
 }
 
 export interface UpdateProfilePayload {
@@ -510,3 +511,24 @@ export async function importUsersBulkApi(
         data: body.data,
     }
 }
+
+// ----------------------------------------------------
+// ẢNH ĐẠI DIỆN NGƯỜI DÙNG (SCRUM-121 Activity A5)
+// ----------------------------------------------------
+export {
+    type AvatarUploadResponseData,
+    type AvatarUploadResult,
+    type AvatarDeleteResult,
+    type AvatarValidationError,
+    validateAvatarFile,
+    getProfileAvatarApi,
+    uploadProfileAvatarApi,
+    deleteProfileAvatarApi,
+    createSafeObjectUrl,
+    revokeSafeObjectUrl,
+    AvatarUrlManager,
+    useAvatarObjectUrl,
+    isAvatarNotFoundError,
+    shouldFallbackAvatar,
+} from './userAvatarApi'
+

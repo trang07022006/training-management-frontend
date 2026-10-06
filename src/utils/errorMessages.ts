@@ -137,6 +137,16 @@ export const ERROR_MESSAGES: Record<string, string> = {
     PROFILE_FIELD_NOT_EDITABLE: 'Email và vai trò không thể thay đổi từ hồ sơ cá nhân.',
     UNKNOWN_FIELD: 'Trường dữ liệu không hợp lệ.',
     EMPTY_UPDATE: 'Dữ liệu cập nhật không được để trống.',
+
+    // ----------------------------------------------------
+    // 12. ẢNH ĐẠI DIỆN (SCRUM-121)
+    // ----------------------------------------------------
+    AVATAR_REQUIRED: 'Vui lòng chọn ảnh đại diện.',
+    AVATAR_TOO_LARGE: 'Ảnh đại diện không được vượt quá 2 MB.',
+    INVALID_AVATAR_TYPE: 'Ảnh đại diện phải là JPG, JPEG, PNG hoặc WEBP.',
+    AVATAR_NOT_FOUND: 'Không tìm thấy ảnh đại diện.',
+    AVATAR_STORAGE_ERROR: 'Lỗi lưu trữ ảnh đại diện. Vui lòng thử lại.',
+    AVATAR_UPLOAD_FAILED: 'Không thể tải lên ảnh đại diện. Vui lòng thử lại.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -151,6 +161,8 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     UNLOCK_ACCOUNT_SUCCESS: 'Mở khóa tài khoản thành công.',
     FORGOT_PASSWORD_SUCCESS: 'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.',
     UPDATE_PROFILE_SUCCESS: 'Cập nhật hồ sơ thành công.',
+    UPLOAD_AVATAR_SUCCESS: 'Cập nhật ảnh đại diện thành công.',
+    DELETE_AVATAR_SUCCESS: 'Xóa ảnh đại diện thành công.',
 }
 
 export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -257,7 +269,7 @@ export function getErrorMessage(
             return rawMessage
         }
         if (
-            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR'].includes(code) &&
+            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR', 'AVATAR_REQUIRED', 'AVATAR_TOO_LARGE', 'INVALID_AVATAR_TYPE', 'AVATAR_NOT_FOUND', 'AVATAR_STORAGE_ERROR', 'AVATAR_UPLOAD_FAILED'].includes(code) &&
             rawMessage &&
             isFriendlyVietnamese(rawMessage)
         ) {

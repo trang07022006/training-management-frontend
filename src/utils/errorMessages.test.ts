@@ -237,4 +237,26 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             expect(getErrorMessage({ code: 'INVALID_HEADER', message: headerMsg })).toBe(headerMsg)
         })
     })
+
+    describe('11. Ảnh đại diện người dùng (SCRUM-121)', () => {
+        it('map các mã lỗi avatar sang tiếng Việt thân thiện', () => {
+            expect(getErrorMessage('AVATAR_REQUIRED')).toBe('Vui lòng chọn ảnh đại diện.')
+            expect(getErrorMessage('AVATAR_TOO_LARGE')).toBe('Ảnh đại diện không được vượt quá 2 MB.')
+            expect(getErrorMessage('INVALID_AVATAR_TYPE')).toBe('Ảnh đại diện phải là JPG, JPEG, PNG hoặc WEBP.')
+            expect(getErrorMessage('AVATAR_NOT_FOUND')).toBe('Không tìm thấy ảnh đại diện.')
+            expect(getErrorMessage('AVATAR_STORAGE_ERROR')).toBe('Lỗi lưu trữ ảnh đại diện. Vui lòng thử lại.')
+            expect(getErrorMessage('AVATAR_UPLOAD_FAILED')).toBe('Không thể tải lên ảnh đại diện. Vui lòng thử lại.')
+        })
+
+        it('map thông báo thành công cho thao tác avatar', () => {
+            expect(getSuccessMessage('UPLOAD_AVATAR_SUCCESS')).toBe('Cập nhật ảnh đại diện thành công.')
+            expect(getSuccessMessage('DELETE_AVATAR_SUCCESS')).toBe('Xóa ảnh đại diện thành công.')
+        })
+
+        it('ưu tiên thông báo tiếng Việt có dấu chi tiết từ backend cho lỗi avatar', () => {
+            const vietnameseMsg = 'Ảnh đại diện không đúng tỷ lệ hợp lệ.'
+            expect(getErrorMessage({ code: 'INVALID_AVATAR_TYPE', message: vietnameseMsg })).toBe(vietnameseMsg)
+        })
+    })
 })
+
