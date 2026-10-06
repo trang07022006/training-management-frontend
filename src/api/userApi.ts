@@ -371,3 +371,142 @@ export async function updateUserProfileApi(
 
     return body.data
 }
+
+/**
+ * Tải file Excel mẫu cho import người dùng hàng loạt (SCRUM-119 Activity A1 / A6.1).
+ * GET /api/users/import/template
+ */
+export async function downloadUserImportTemplateApi(
+    requestFn: RequestFunction,
+): Promise<Blob> {
+    const res = await requestFn('/api/users/import/template', {
+        method: 'GET',
+    })
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'DOWNLOAD_TEMPLATE_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Không thể tải file mẫu. Vui lòng thử lại.')
+        throw new ApiError(message, code, res.status)
+    }
+    return res.blob()
+}
+
+export interface ImportRowError {
+    field: string
+    code: string
+    message: string
+}
+
+export interface ImportPreviewRow {
+    row_number: number
+    name: string | null
+    email: string | null
+    phone?: string | null
+    role?: string | null
+    status?: string | null
+    password_present: boolean
+    valid: boolean
+    errors: ImportRowError[]
+}
+
+export interface ImportPreviewData {
+    filename: string
+    headers: string[]
+    total_rows: number
+    valid_rows: number
+    invalid_rows: number
+    rows: ImportPreviewRow[]
+}
+
+/**
+ * Gửi file Excel để kiểm tra và xem trước dữ liệu import người dùng (SCRUM-119 Activity A2/A3/A6.2).
+ * POST /api/users/import/preview
+ */
+export async function previewUserImportApi(
+    requestFn: RequestFunction,
+    file: File,
+): Promise<ImportPreviewData> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await requestFn('/api/users/import/preview', {
+        method: 'POST',
+        body: formData,
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'UNKNOWN_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi kiểm tra dữ liệu file Excel.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+export interface ImportRowResult {
+    row_number: number
+    name: string | null
+    email: string | null
+    phone?: string | null
+    role?: string | null
+    status?: string | null
+    imported: boolean
+    result: 'imported' | 'validation_error' | 'import_error' | string
+    errors: ImportRowError[]
+}
+
+export interface ImportExecuteData {
+    filename: string
+    total_rows: number
+    valid_rows: number
+    invalid_rows: number
+    imported_rows: number
+    skipped_rows: number
+    failed_rows: number
+    summary: {
+        success: number
+        validation_errors: number
+        import_errors: number
+    }
+    error_summary: Record<string, number>
+    rows: ImportRowResult[]
+}
+
+export interface ImportExecuteResult {
+    status?: string
+    message: string
+    data: ImportExecuteData
+}
+
+/**
+ * Thực hiện import người dùng từ file Excel vào hệ thống (SCRUM-119 Activity A4/A5/A6.3).
+ * POST /api/users/import
+ */
+export async function importUsersBulkApi(
+    requestFn: RequestFunction,
+    file: File,
+): Promise<ImportExecuteResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await requestFn('/api/users/import', {
+        method: 'POST',
+        body: formData,
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 403 ? 'FORBIDDEN' : res.status === 401 ? 'UNAUTHORIZED' : 'IMPORT_FAILED')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi import người dùng từ file Excel.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return {
+        status: body.status ?? 'success',
+        message: body.message ?? 'Hoàn tất import người dùng.',
+        data: body.data,
+    }
+}
