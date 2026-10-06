@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getUserDisplayName, getUserRoleDisplay } from './userProfileUtils'
 import './AppHeader.css'
@@ -65,7 +66,12 @@ export function AppHeader({
             </div>
 
             <div className="header-right">
-                <div className="header-user-profile" data-testid="user-profile-badge">
+                <Link
+                    to="/profile"
+                    className="header-user-profile"
+                    data-testid="user-profile-badge"
+                    title="Hồ sơ cá nhân"
+                >
                     <div className="user-avatar" data-testid="user-avatar-circle" aria-hidden="true">
                         {displayName.charAt(0).toUpperCase()}
                     </div>
@@ -77,7 +83,7 @@ export function AppHeader({
                             {roleLabel}
                         </span>
                     </div>
-                </div>
+                </Link>
                 <button
                     type="button"
                     className="header-logout-btn"

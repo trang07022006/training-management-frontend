@@ -113,6 +113,30 @@ export const ERROR_MESSAGES: Record<string, string> = {
     INVALID_REQUEST: 'Yêu cầu không hợp lệ.',
     INVALID_JSON: 'Dữ liệu yêu cầu không hợp lệ.',
     INVALID_DATA: 'Dữ liệu không hợp lệ.',
+
+    // ----------------------------------------------------
+    // 10. IMPORT NGƯỜI DÙNG TỪ EXCEL (SCRUM-119)
+    // ----------------------------------------------------
+    FILE_REQUIRED: 'Vui lòng chọn file Excel tải lên.',
+    INVALID_FILE_TYPE: 'Chỉ hỗ trợ file Excel định dạng .xlsx.',
+    FILE_EMPTY: 'File tải lên không có dữ liệu.',
+    INVALID_EXCEL_FILE: 'File Excel không hợp lệ hoặc bị hỏng.',
+    MISSING_USERS_SHEET: "File Excel phải có sheet tên là 'Users'.",
+    INVALID_HEADER: 'Cấu trúc cột trong file Excel không đúng chuẩn.',
+    NO_DATA: 'File Excel không có dữ liệu để import.',
+    DUPLICATE_EMAIL_IN_FILE: 'Email bị trùng lặp trong file Excel.',
+    IMPORT_FAILED: 'Lỗi khi lưu người dùng vào cơ sở dữ liệu.',
+    IMPORT_USERS_ERROR: 'Lỗi khi import người dùng từ file Excel.',
+
+    // ----------------------------------------------------
+    // 11. HỒ SƠ CÁ NHÂN (SCRUM-120)
+    // ----------------------------------------------------
+    NAME_TOO_LONG: 'Họ và tên không được vượt quá 255 ký tự.',
+    INVALID_DATE_OF_BIRTH: 'Ngày sinh không hợp lệ.',
+    ADDRESS_TOO_LONG: 'Địa chỉ không được vượt quá 255 ký tự.',
+    PROFILE_FIELD_NOT_EDITABLE: 'Email và vai trò không thể thay đổi từ hồ sơ cá nhân.',
+    UNKNOWN_FIELD: 'Trường dữ liệu không hợp lệ.',
+    EMPTY_UPDATE: 'Dữ liệu cập nhật không được để trống.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -126,6 +150,7 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     LOCK_ACCOUNT_SUCCESS: 'Khóa tài khoản thành công.',
     UNLOCK_ACCOUNT_SUCCESS: 'Mở khóa tài khoản thành công.',
     FORGOT_PASSWORD_SUCCESS: 'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.',
+    UPDATE_PROFILE_SUCCESS: 'Cập nhật hồ sơ thành công.',
 }
 
 export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -229,6 +254,13 @@ export function getErrorMessage(
             return rawMessage
         }
         if (code === 'ALREADY_ACTIVE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (
+            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR'].includes(code) &&
+            rawMessage &&
+            isFriendlyVietnamese(rawMessage)
+        ) {
             return rawMessage
         }
         return ERROR_MESSAGES[code]

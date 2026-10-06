@@ -184,7 +184,13 @@ export function Sidebar({
                 </nav>
 
                 {hasSession && (
-                    <div className="sidebar-user-footer" data-testid="sidebar-user-footer">
+                    <Link
+                        to="/profile"
+                        className="sidebar-user-footer"
+                        data-testid="sidebar-user-footer"
+                        onClick={onClose}
+                        title="Hồ sơ cá nhân"
+                    >
                         <div className="sidebar-user-avatar" aria-hidden="true">
                             {finalDisplayName.charAt(0).toUpperCase()}
                         </div>
@@ -196,7 +202,7 @@ export function Sidebar({
                                 {getUserRoleDisplay(role)}
                             </span>
                         </div>
-                    </div>
+                    </Link>
                 )}
             </aside>
         </>
