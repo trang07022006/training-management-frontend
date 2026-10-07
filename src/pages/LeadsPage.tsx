@@ -4,10 +4,13 @@ import {
     getLeads,
     getLead,
     updateLeadStatus,
+    assignLead,
+    getAssignableUsers,
     getLeadStatusLabel,
     LEAD_STATUS_BADGE_CLASSES,
     type Lead,
     type LeadStatus,
+    type AssignableUser,
 } from '../api/leadApi'
 import './LeadsPage.css'
 
@@ -29,6 +32,13 @@ export function LeadsPage() {
     const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false)
     const [statusError, setStatusError] = useState<string | null>(null)
     const [statusSuccess, setStatusSuccess] = useState<string | null>(null)
+
+    // Phân công Lead (SCRUM-127)
+    const [assignableUsers, setAssignableUsers] = useState<AssignableUser[]>([])
+    const [selectedAssigneeId, setSelectedAssigneeId] = useState<string>('')
+    const [isAssigning, setIsAssigning] = useState<boolean>(false)
+    const [assignmentError, setAssignmentError] = useState<string | null>(null)
+    const [assignmentSuccess, setAssignmentSuccess] = useState<string | null>(null)
 
     useEffect(() => {
         let isMounted = true
@@ -63,11 +73,25 @@ export function LeadsPage() {
     const handleOpenDetail = async (leadId: string) => {
         setStatusError(null)
         setStatusSuccess(null)
+        setAssignmentError(null)
+        setAssignmentSuccess(null)
         try {
             const detail = await getLead(request, leadId)
             setSelectedLead(detail)
             setSelectedStatus(detail.status)
+            setSelectedAssigneeId(detail.assigned_to_user_id || '')
             setIsDetailModalOpen(true)
+
+            // Tải danh sách nhân sự phân công nếu chưa có
+            if (assignableUsers.length === 0) {
+                getAssignableUsers(request)
+                    .then((users) => {
+                        setAssignableUsers(users)
+                    })
+                    .catch(() => {
+                        // Bỏ qua lỗi ngầm khi load danh sách nhân sự
+                    })
+            }
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Không thể tải chi tiết tư vấn.'
@@ -80,6 +104,8 @@ export function LeadsPage() {
         setSelectedLead(null)
         setStatusError(null)
         setStatusSuccess(null)
+        setAssignmentError(null)
+        setAssignmentSuccess(null)
     }
 
     const handleSaveStatus = async () => {
@@ -96,7 +122,6 @@ export function LeadsPage() {
             )
             setSelectedLead(updated)
             setStatusSuccess('Cập nhật trạng thái thành công!')
-            // Cập nhật lại trong danh sách hiển thị
             setLeads((prev) =>
                 prev.map((item) => (item.id === updated.id ? updated : item)),
             )
@@ -106,6 +131,33 @@ export function LeadsPage() {
             setStatusError(message)
         } finally {
             setIsUpdatingStatus(false)
+        }
+    }
+
+    const handleSaveAssignment = async () => {
+        if (!selectedLead) return
+        setIsAssigning(true)
+        setAssignmentError(null)
+        setAssignmentSuccess(null)
+
+        const targetUserId = selectedAssigneeId.trim() || null
+        try {
+            const updated = await assignLead(request, selectedLead.id, targetUserId)
+            setSelectedLead(updated)
+            setAssignmentSuccess(
+                targetUserId
+                    ? 'Phân công nhân sự phụ trách thành công!'
+                    : 'Đã gỡ phân công nhân sự phụ trách!',
+            )
+            setLeads((prev) =>
+                prev.map((item) => (item.id === updated.id ? updated : item)),
+            )
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error ? err.message : 'Không thể cập nhật phân công.'
+            setAssignmentError(message)
+        } finally {
+            setIsAssigning(false)
         }
     }
 
@@ -151,6 +203,7 @@ export function LeadsPage() {
                                 <th>Email</th>
                                 <th>Chương trình quan tâm</th>
                                 <th>Nguồn</th>
+                                <th>Người phụ trách</th>
                                 <th>Trạng thái</th>
                                 <th>Thời gian gửi</th>
                                 <th>Thao tác</th>
@@ -159,13 +212,13 @@ export function LeadsPage() {
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan={8} className="leads-loading-state" data-testid="loading-state">
+                                    <td colSpan={9} className="leads-loading-state" data-testid="loading-state">
                                         Đang tải danh sách tư vấn...
                                     </td>
                                 </tr>
                             ) : leads.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="leads-empty-state" data-testid="empty-state">
+                                    <td colSpan={9} className="leads-empty-state" data-testid="empty-state">
                                         Chưa có yêu cầu tư vấn nào được ghi nhận.
                                     </td>
                                 </tr>
@@ -188,6 +241,17 @@ export function LeadsPage() {
                                             <td>{lead.email || '-'}</td>
                                             <td>{programDisplay}</td>
                                             <td>{lead.source}</td>
+                                            <td data-testid={`assignee-cell-${lead.id}`}>
+                                                {lead.assigned_to_name ? (
+                                                    <span className="lead-assignee-name">
+                                                        {lead.assigned_to_name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-muted" style={{ color: '#94a3b8' }}>
+                                                        Chưa phân công
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td>
                                                 <span
                                                     className={`lead-status-badge ${badgeClass}`}
@@ -251,7 +315,7 @@ export function LeadsPage() {
                 </div>
             </div>
 
-            {/* Modal Chi tiết & Cập nhật trạng thái */}
+            {/* Modal Chi tiết & Cập nhật trạng thái / Phân công */}
             {isDetailModalOpen && selectedLead && (
                 <div
                     className="leads-modal-overlay"
@@ -295,6 +359,24 @@ export function LeadsPage() {
                                 </div>
                             )}
 
+                            {assignmentSuccess && (
+                                <div
+                                    className="leads-alert-success"
+                                    data-testid="assignment-success-alert"
+                                >
+                                    {assignmentSuccess}
+                                </div>
+                            )}
+
+                            {assignmentError && (
+                                <div
+                                    className="leads-alert-error"
+                                    data-testid="assignment-error-alert"
+                                >
+                                    {assignmentError}
+                                </div>
+                            )}
+
                             <div className="detail-row">
                                 <span className="detail-label">Họ và tên:</span>
                                 <span className="detail-value" data-testid="detail-fullname">
@@ -333,6 +415,24 @@ export function LeadsPage() {
                             </div>
 
                             <div className="detail-row">
+                                <span className="detail-label">Người phụ trách:</span>
+                                <span className="detail-value" data-testid="detail-assignee">
+                                    {selectedLead.assigned_to_name
+                                        ? `${selectedLead.assigned_to_name} (${selectedLead.assigned_to_email || ''})`
+                                        : 'Chưa phân công'}
+                                </span>
+                            </div>
+
+                            {selectedLead.assigned_at && (
+                                <div className="detail-row">
+                                    <span className="detail-label">Thời gian phân công:</span>
+                                    <span className="detail-value" data-testid="detail-assigned-at">
+                                        {formatDate(selectedLead.assigned_at)}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="detail-row">
                                 <span className="detail-label">Thời gian gửi:</span>
                                 <span className="detail-value">
                                     {formatDate(selectedLead.created_at)}
@@ -350,6 +450,51 @@ export function LeadsPage() {
                                 <span className="detail-label">Nội dung tư vấn:</span>
                                 <div className="detail-message-box" data-testid="detail-message">
                                     {selectedLead.message || 'Không có ghi chú nội dung tư vấn.'}
+                                </div>
+                            </div>
+
+                            {/* Khu vực phân công nhân sự phụ trách (SCRUM-127) */}
+                            <div className="leads-modal-assign-section">
+                                <label
+                                    htmlFor="assignee-select-input"
+                                    className="detail-label"
+                                    style={{ display: 'block', marginBottom: '0.25rem' }}
+                                >
+                                    Phân công nhân sự phụ trách:
+                                </label>
+                                <div className="assign-form-group">
+                                    <select
+                                        id="assignee-select-input"
+                                        className="assign-select-input"
+                                        data-testid="assignee-select"
+                                        value={selectedAssigneeId}
+                                        onChange={(e) => setSelectedAssigneeId(e.target.value)}
+                                        disabled={isAssigning}
+                                    >
+                                        <option value="">-- Chưa phân công / Gỡ phân công --</option>
+                                        {assignableUsers.map((u) => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.name} ({u.email}) - {u.role === 'admin' ? 'Quản trị viên' : 'Giảng viên'}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <button
+                                        type="button"
+                                        className="btn-save-assign"
+                                        data-testid="save-assignment-btn"
+                                        onClick={() => void handleSaveAssignment()}
+                                        disabled={
+                                            isAssigning ||
+                                            selectedAssigneeId === (selectedLead.assigned_to_user_id || '')
+                                        }
+                                    >
+                                        {isAssigning
+                                            ? 'Đang lưu...'
+                                            : selectedAssigneeId
+                                              ? 'Lưu phân công'
+                                              : 'Gỡ phân công'}
+                                    </button>
                                 </div>
                             </div>
 

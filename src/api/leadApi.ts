@@ -28,9 +28,21 @@ export interface Lead {
     message: string | null
     source: string
     status: LeadStatus
+    assigned_to_user_id?: string | null
+    assigned_at?: string | null
+    assigned_to_name?: string | null
+    assigned_to_email?: string | null
     created_at: string | null
     updated_at: string | null
 }
+
+export interface AssignableUser {
+    id: string
+    name: string
+    email: string
+    role: string
+}
+
 
 export interface LeadListParams {
     page?: number
@@ -188,3 +200,76 @@ export async function updateLeadStatus(
 
     return body.data
 }
+
+/**
+ * Phân công hoặc gỡ phân công Lead (SCRUM-127 - Activity A6).
+ * PATCH /api/v1/leads/<id>/assignment
+ * Yêu cầu quyền: course.manage
+ */
+export async function assignLead(
+    requestFn: RequestFunction,
+    leadId: string,
+    userId: string | null,
+): Promise<Lead> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/assignment`
+
+    const res = await requestFn(path, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId }),
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code =
+            body.code ||
+            (res.status === 404
+                ? 'LEAD_NOT_FOUND'
+                : res.status === 400
+                  ? 'INVALID_PARAMS'
+                  : res.status === 403
+                    ? 'FORBIDDEN'
+                    : res.status === 401
+                      ? 'UNAUTHORIZED'
+                      : 'API_ERROR')
+        const message = getErrorMessage(
+            { code, message: body.message },
+            userId ? 'Không thể phân công Lead.' : 'Không thể gỡ phân công Lead.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Lấy danh sách nhân sự có thể tiếp nhận Lead (SCRUM-127 - Activity A6).
+ * GET /api/v1/leads/assignable-users
+ * Yêu cầu quyền: course.manage
+ */
+export async function getAssignableUsers(
+    requestFn: RequestFunction,
+): Promise<AssignableUser[]> {
+    const path = '/api/v1/leads/assignable-users'
+
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code =
+            body.code ||
+            (res.status === 403
+                ? 'FORBIDDEN'
+                : res.status === 401
+                  ? 'UNAUTHORIZED'
+                  : 'API_ERROR')
+        const message = getErrorMessage(
+            { code, message: body.message },
+            'Không thể tải danh sách nhân sự phụ trách.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data || []
+}
+

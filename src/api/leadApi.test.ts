@@ -5,10 +5,14 @@ import {
     getLeads,
     getLead,
     updateLeadStatus,
+    assignLead,
+    getAssignableUsers,
     getLeadStatusLabel,
     type Lead,
+    type AssignableUser,
     ApiError,
 } from './leadApi'
+
 
 describe('leadApi - API Client (SCRUM-126 Activity A6)', () => {
     const mockLead: Lead = {
@@ -170,4 +174,117 @@ describe('leadApi - API Client (SCRUM-126 Activity A6)', () => {
             ).rejects.toThrow(ApiError)
         })
     })
+
+    describe('assignLead (PATCH /api/v1/leads/<id>/assignment) - SCRUM-127', () => {
+        it('gửi payload user_id khi phân công thành công', async () => {
+            const assignedLead: Lead = {
+                ...mockLead,
+                assigned_to_user_id: 'user-uuid-1',
+                assigned_to_name: 'Minh Trang',
+                assigned_at: '2026-03-01T10:00:00Z',
+            }
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    data: assignedLead,
+                }),
+            })
+
+            const result = await assignLead(mockRequest, mockLead.id, 'user-uuid-1')
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}/assignment`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: 'user-uuid-1' }),
+                },
+            )
+            expect(result.assigned_to_user_id).toBe('user-uuid-1')
+            expect(result.assigned_to_name).toBe('Minh Trang')
+        })
+
+        it('gửi payload user_id: null khi gỡ phân công thành công', async () => {
+            const unassignedLead: Lead = {
+                ...mockLead,
+                assigned_to_user_id: null,
+                assigned_to_name: null,
+                assigned_at: null,
+            }
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    data: unassignedLead,
+                }),
+            })
+
+            const result = await assignLead(mockRequest, mockLead.id, null)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}/assignment`,
+                {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: null }),
+                },
+            )
+            expect(result.assigned_to_user_id).toBeNull()
+        })
+
+        it('ném ApiError khi phân công thất bại (400 INVALID_ASSIGNEE)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 400,
+                json: async () => ({
+                    code: 'INVALID_ASSIGNEE',
+                    message: 'Chỉ có thể phân công cho nhân sự quản lý.',
+                }),
+            })
+
+            await expect(
+                assignLead(mockRequest, mockLead.id, 'trainee-id'),
+            ).rejects.toThrow(ApiError)
+        })
+    })
+
+    describe('getAssignableUsers (GET /api/v1/leads/assignable-users) - SCRUM-127', () => {
+        it('lấy danh sách nhân sự có thể tiếp nhận Lead', async () => {
+            const mockUsers: AssignableUser[] = [
+                { id: 'u1', name: 'Trang Lê', email: 'trang@ictu.edu.vn', role: 'admin' },
+                { id: 'u2', name: 'Giảng viên A', email: 'gva@ictu.edu.vn', role: 'trainer' },
+            ]
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    data: mockUsers,
+                }),
+            })
+
+            const result = await getAssignableUsers(mockRequest)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                '/api/v1/leads/assignable-users',
+                { method: 'GET' },
+            )
+            expect(result).toHaveLength(2)
+            expect(result[0].name).toBe('Trang Lê')
+        })
+
+        it('ném ApiError khi không có quyền (403 FORBIDDEN)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: async () => ({
+                    code: 'FORBIDDEN',
+                    message: 'Không có quyền truy cập.',
+                }),
+            })
+
+            await expect(getAssignableUsers(mockRequest)).rejects.toThrow(ApiError)
+        })
+    })
 })
+

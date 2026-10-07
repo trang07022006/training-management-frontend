@@ -3,8 +3,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
 import { LeadsPage } from './LeadsPage'
-import { getLeads, getLead, updateLeadStatus } from '../api/leadApi'
-import type { Lead, LeadListResponseData } from '../api/leadApi'
+import { getLeads, getLead, updateLeadStatus, assignLead, getAssignableUsers } from '../api/leadApi'
+import type { Lead, LeadListResponseData, AssignableUser } from '../api/leadApi'
 
 // Mock SessionProvider
 const mockRequest = vi.fn()
@@ -25,10 +25,12 @@ vi.mock('../api/leadApi', async (importOriginal) => {
         getLeads: vi.fn(),
         getLead: vi.fn(),
         updateLeadStatus: vi.fn(),
+        assignLead: vi.fn(),
+        getAssignableUsers: vi.fn(),
     }
 })
 
-describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
+describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
     const mockLeads: Lead[] = [
         {
             id: 'lead-uuid-1',
@@ -41,6 +43,10 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
             message: 'Tôi muốn tư vấn học phí và lộ trình.',
             source: 'public_form',
             status: 'new',
+            assigned_to_user_id: 'user-advisor-1',
+            assigned_to_name: 'Trần Văn Tư Vấn',
+            assigned_to_email: 'tuvan@ictu.edu.vn',
+            assigned_at: '2026-03-01T11:00:00Z',
             created_at: '2026-03-01T10:00:00Z',
             updated_at: '2026-03-01T10:00:00Z',
         },
@@ -53,9 +59,18 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
             message: null,
             source: 'public_form',
             status: 'contacted',
+            assigned_to_user_id: null,
+            assigned_to_name: null,
+            assigned_to_email: null,
+            assigned_at: null,
             created_at: '2026-03-02T14:30:00Z',
             updated_at: '2026-03-02T15:00:00Z',
         },
+    ]
+
+    const mockAssignableUsers: AssignableUser[] = [
+        { id: 'user-advisor-1', name: 'Trần Văn Tư Vấn', email: 'tuvan@ictu.edu.vn', role: 'trainer' },
+        { id: 'user-advisor-2', name: 'Lê Quản Trị', email: 'quantri@ictu.edu.vn', role: 'admin' },
     ]
 
     const mockListResponse: LeadListResponseData = {
@@ -68,6 +83,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
+        vi.mocked(getAssignableUsers).mockResolvedValue(mockAssignableUsers)
     })
 
     afterEach(() => {
@@ -91,7 +107,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
         })
     })
 
-    it('2. Hiển thị danh sách Lead với đầy đủ thông tin và badge trạng thái', async () => {
+    it('2. Hiển thị danh sách Lead với đầy đủ thông tin, badge trạng thái và người phụ trách', async () => {
         vi.mocked(getLeads).mockResolvedValue(mockListResponse)
 
         render(<LeadsPage />)
@@ -101,12 +117,18 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
             expect(screen.getByText('0912345678')).toBeDefined()
             expect(screen.getByText('nguyenvana@example.com')).toBeDefined()
             expect(screen.getByText('Công nghệ thông tin')).toBeDefined()
+            expect(screen.getByTestId('assignee-cell-lead-uuid-1').textContent).toContain(
+                'Trần Văn Tư Vấn',
+            )
             expect(screen.getByTestId('status-badge-lead-uuid-1').textContent).toContain(
                 'Mới tiếp nhận',
             )
 
             expect(screen.getByText('Trần Thị B')).toBeDefined()
             expect(screen.getByText('0987654321')).toBeDefined()
+            expect(screen.getByTestId('assignee-cell-lead-uuid-2').textContent).toContain(
+                'Chưa phân công',
+            )
             expect(screen.getByTestId('status-badge-lead-uuid-2').textContent).toContain(
                 'Đã liên hệ',
             )
@@ -130,6 +152,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
             expect(screen.getByTestId('detail-fullname').textContent).toContain('Nguyễn Văn A')
             expect(screen.getByTestId('detail-phone').textContent).toContain('0912345678')
             expect(screen.getByTestId('detail-email').textContent).toContain('nguyenvana@example.com')
+            expect(screen.getByTestId('detail-assignee').textContent).toContain('Trần Văn Tư Vấn')
             expect(screen.getByTestId('detail-message').textContent).toContain(
                 'Tôi muốn tư vấn học phí và lộ trình.',
             )
@@ -178,14 +201,99 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
 
         await waitFor(() => {
             expect(screen.queryByTestId('lead-detail-modal')).toBeNull()
-            // Bảng cập nhật badge mới
             expect(screen.getByTestId('status-badge-lead-uuid-1').textContent).toContain(
                 'Tiềm năng',
             )
         })
     })
 
-    it('5. Hiển thị thông báo khi danh sách trống', async () => {
+    it('5. Phân công nhân sự phụ trách thành công (SCRUM-127)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(mockLeads[1]) // lead 2 chưa phân công
+        const assignedLead: Lead = {
+            ...mockLeads[1],
+            assigned_to_user_id: 'user-advisor-2',
+            assigned_to_name: 'Lê Quản Trị',
+            assigned_to_email: 'quantri@ictu.edu.vn',
+            assigned_at: '2026-03-02T16:00:00Z',
+        }
+        vi.mocked(assignLead).mockResolvedValue(assignedLead)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('view-lead-lead-uuid-2')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('view-lead-lead-uuid-2'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('assignee-select')).toBeDefined()
+        })
+
+        // Chọn nhân sự 'user-advisor-2'
+        fireEvent.change(screen.getByTestId('assignee-select'), {
+            target: { value: 'user-advisor-2' },
+        })
+
+        // Click Lưu phân công
+        fireEvent.click(screen.getByTestId('save-assignment-btn'))
+
+        await waitFor(() => {
+            expect(assignLead).toHaveBeenCalledWith(
+                mockRequest,
+                'lead-uuid-2',
+                'user-advisor-2',
+            )
+            expect(screen.getByTestId('assignment-success-alert').textContent).toContain(
+                'Phân công nhân sự phụ trách thành công!',
+            )
+            expect(screen.getByTestId('detail-assignee').textContent).toContain('Lê Quản Trị')
+        })
+    })
+
+    it('6. Gỡ phân công nhân sự phụ trách thành công (SCRUM-127)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(mockLeads[0]) // lead 1 đã phân công
+        const unassignedLead: Lead = {
+            ...mockLeads[0],
+            assigned_to_user_id: null,
+            assigned_to_name: null,
+            assigned_to_email: null,
+            assigned_at: null,
+        }
+        vi.mocked(assignLead).mockResolvedValue(unassignedLead)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('view-lead-lead-uuid-1')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('view-lead-lead-uuid-1'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('assignee-select')).toBeDefined()
+        })
+
+        // Chọn rỗng (gỡ phân công)
+        fireEvent.change(screen.getByTestId('assignee-select'), {
+            target: { value: '' },
+        })
+
+        // Click Gỡ phân công
+        fireEvent.click(screen.getByTestId('save-assignment-btn'))
+
+        await waitFor(() => {
+            expect(assignLead).toHaveBeenCalledWith(mockRequest, 'lead-uuid-1', null)
+            expect(screen.getByTestId('assignment-success-alert').textContent).toContain(
+                'Đã gỡ phân công nhân sự phụ trách!',
+            )
+            expect(screen.getByTestId('detail-assignee').textContent).toContain('Chưa phân công')
+        })
+    })
+
+    it('7. Hiển thị thông báo khi danh sách trống', async () => {
         vi.mocked(getLeads).mockResolvedValue({
             items: [],
             total: 0,
@@ -203,7 +311,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
         })
     })
 
-    it('6. Hiển thị lỗi khi API thất bại', async () => {
+    it('8. Hiển thị lỗi khi API thất bại', async () => {
         vi.mocked(getLeads).mockRejectedValue(
             new Error('Không thể kết nối đến máy chủ.'),
         )
@@ -217,7 +325,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126 Activity A6)', () => {
         })
     })
 
-    it('7. Điều khiển phân trang chuyển trang đúng', async () => {
+    it('9. Điều khiển phân trang chuyển trang đúng', async () => {
         vi.mocked(getLeads).mockResolvedValue({
             items: mockLeads,
             total: 25,
