@@ -191,10 +191,29 @@ export const ERROR_MESSAGES: Record<string, string> = {
     PHONE_REQUIRED: 'Số điện thoại là bắt buộc.',
     INVALID_PARAMS: 'Dữ liệu cung cấp không hợp lệ.',
     INVALID_PROGRAM: 'Chương trình đào tạo này hiện không mở đăng ký tư vấn.',
+
+    // ----------------------------------------------------
+    // 17. QUẢN LÝ BUỔI HỌC (SCRUM-129)
+    // ----------------------------------------------------
+    SUBJECT_SESSION_NOT_FOUND: 'Không tìm thấy buổi học của môn học.',
+    DUPLICATE_SESSION_NUMBER: 'Số thứ tự buổi học đã tồn tại trong môn học.',
+    TOTAL_SESSIONS_EXCEEDED: 'Số thứ tự buổi học vượt quá tổng số buổi của môn học.',
+    TOTAL_SESSIONS_IN_USE: 'Không thể giảm tổng số buổi xuống thấp hơn số thứ tự buổi học hiện có.',
+    SESSION_NUMBER_REQUIRED: 'Số thứ tự buổi học là bắt buộc.',
+    INVALID_SESSION_NUMBER: 'Số thứ tự buổi học phải là số nguyên dương lớn hơn hoặc bằng 1.',
+    TOPIC_REQUIRED: 'Chủ đề buổi học là bắt buộc.',
+    TOPIC_TOO_LONG: 'Chủ đề buổi học không được vượt quá 255 ký tự.',
+    OBJECTIVE_REQUIRED: 'Mục tiêu buổi học là bắt buộc.',
+    OBJECTIVE_TOO_LONG: 'Mục tiêu buổi học không được vượt quá 5000 ký tự.',
+    REORDER_SESSIONS_FAILED: 'Lỗi khi sắp xếp lại buổi học.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
 export const SUCCESS_MESSAGES: Record<string, string> = {
+    CREATE_SESSION_SUCCESS: 'Thêm buổi học thành công.',
+    UPDATE_SESSION_SUCCESS: 'Cập nhật buổi học thành công.',
+    REORDER_SESSIONS_SUCCESS: 'Sắp xếp lại thứ tự buổi học thành công.',
+    DELETE_SESSION_SUCCESS: 'Xóa buổi học thành công.',
     SUBMIT_CONSULTATION_SUCCESS: 'Yêu cầu tư vấn của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ lại trong thời gian phù hợp.',
     CHANGE_PASSWORD_SUCCESS: 'Đổi mật khẩu thành công.',
     RESET_PASSWORD_SUCCESS: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
