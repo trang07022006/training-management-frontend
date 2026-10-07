@@ -7,7 +7,6 @@ import {
     updateLeadStatus,
     getLeadStatusLabel,
     type Lead,
-    type RequestFunction,
     ApiError,
 } from './leadApi'
 

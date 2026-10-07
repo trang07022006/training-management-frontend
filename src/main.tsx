@@ -26,6 +26,7 @@ import { UserProfilePage } from './pages/UserProfilePage'
 import { ProgramStructurePage } from './pages/ProgramStructurePage'
 import { PublicConsultationPage } from './pages/PublicConsultationPage'
 import { SubjectSessionsPage } from './pages/SubjectSessionsPage'
+import { LeadsPage } from './pages/LeadsPage'
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -110,6 +111,16 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/training-programs/:programId/structure" element={<ProgramStructurePage />} />
                 <Route path="/subjects" element={<SubjectsPage />} />
                 <Route path="/subjects/:subjectId/sessions" element={<SubjectSessionsPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_MANAGE}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/leads" element={<LeadsPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/profile" element={<UserProfilePage />} />

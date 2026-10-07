@@ -163,6 +163,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
     {
+        key: 'leads',
+        label: 'Tư vấn tuyển sinh',
+        path: '/leads',
+        icon: 'users',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_MANAGE,
+    },
+    {
         key: 'change_password',
         label: 'Đổi mật khẩu',
         path: '/change-password',
