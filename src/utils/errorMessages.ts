@@ -157,6 +157,18 @@ export const ERROR_MESSAGES: Record<string, string> = {
     CODE_REQUIRED: 'Mã chương trình là bắt buộc.',
     CODE_TOO_LONG: 'Mã chương trình không được vượt quá 50 ký tự.',
     PROGRAM_NAME_REQUIRED: 'Tên chương trình là bắt buộc.',
+
+    // ----------------------------------------------------
+    // 14. MÔN HỌC / HỌC PHẦN (SCRUM-123)
+    // ----------------------------------------------------
+    SUBJECT_NOT_FOUND: 'Không tìm thấy môn học yêu cầu.',
+    SUBJECT_IN_USE: 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    SUBJECT_NAME_REQUIRED: 'Tên môn học là bắt buộc.',
+    SUBJECT_CODE_REQUIRED: 'Mã môn học là bắt buộc.',
+    SUBJECT_CODE_TOO_LONG: 'Mã môn học không được vượt quá 50 ký tự.',
+    CREDITS_REQUIRED: 'Số tín chỉ là bắt buộc.',
+    INVALID_CREDITS: 'Số tín chỉ phải là số nguyên từ 1 đến 30.',
+    INVALID_TOTAL_SESSIONS: 'Số buổi học phải là số nguyên không âm.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -176,6 +188,9 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     CREATE_PROGRAM_SUCCESS: 'Tạo chương trình đào tạo thành công.',
     UPDATE_PROGRAM_SUCCESS: 'Cập nhật chương trình đào tạo thành công.',
     DELETE_PROGRAM_SUCCESS: 'Xóa chương trình đào tạo thành công.',
+    CREATE_SUBJECT_SUCCESS: 'Tạo môn học thành công.',
+    UPDATE_SUBJECT_SUCCESS: 'Cập nhật môn học thành công.',
+    DELETE_SUBJECT_SUCCESS: 'Xóa môn học thành công.',
 }
 
 export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -281,7 +296,13 @@ export function getErrorMessage(
         if (code === 'ALREADY_ACTIVE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
-        if (code === 'NAME_REQUIRED' && rawMessage && rawMessage.includes('chương trình') && isFriendlyVietnamese(rawMessage)) {
+        if (code === 'DUPLICATE_CODE' && rawMessage && rawMessage.includes('môn học') && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'NAME_REQUIRED' && rawMessage && (rawMessage.includes('chương trình') || rawMessage.includes('môn học')) && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'SUBJECT_IN_USE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
         if (
