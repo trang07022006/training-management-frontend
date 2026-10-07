@@ -54,6 +54,7 @@ function getMenuIcon(iconName?: string) {
                 </svg>
             )
         case 'user-graduate':
+        case 'graduation-cap':
             return (
                 <svg className="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <path d="M22 10v6M2 10l10-5 10 5-10 5z" />

@@ -20,6 +20,7 @@ import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { RoleDashboard } from './pages/RoleDashboard'
 import { UserManagementPage } from './pages/UserManagementPage'
 import { CourseManagementPage } from './pages/CourseManagementPage'
+import { TrainingProgramsPage } from './pages/TrainingProgramsPage'
 import { UserProfilePage } from './pages/UserProfilePage'
 
 const apiOrigin =
@@ -100,6 +101,7 @@ createRoot(document.getElementById('root')!).render(
                 }
               >
                 <Route path="/courses" element={<CourseManagementPage />} />
+                <Route path="/training-programs" element={<TrainingProgramsPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/profile" element={<UserProfilePage />} />
