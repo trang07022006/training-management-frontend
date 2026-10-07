@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -567,6 +568,14 @@ export function SubjectsPage({
                                                 >
                                                     Xem
                                                 </button>
+                                                <Link
+                                                    to={`/subjects/${subj.id}/sessions`}
+                                                    className="btn-action-sessions"
+                                                    data-testid={`btn-sessions-${subj.id}`}
+                                                    aria-label={`Quản lý buổi học môn ${subj.code}`}
+                                                >
+                                                    Buổi học
+                                                </Link>
                                                 {canManage && (
                                                     <>
                                                         <button
