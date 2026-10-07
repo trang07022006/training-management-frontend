@@ -184,10 +184,18 @@ export const ERROR_MESSAGES: Record<string, string> = {
     SUBJECT_ARCHIVED: 'Môn học đã lưu trữ, không thể thêm vào chương trình.',
     INVALID_SEMESTER: 'Học kỳ không hợp lệ.',
     SEMESTER_EXCEEDS_DURATION: 'Học kỳ vượt quá thời gian đào tạo của chương trình.',
+
+    // ----------------------------------------------------
+    // 16. TƯ VẤN CÔNG KHAI (SCRUM-125)
+    // ----------------------------------------------------
+    PHONE_REQUIRED: 'Số điện thoại là bắt buộc.',
+    INVALID_PARAMS: 'Dữ liệu cung cấp không hợp lệ.',
+    INVALID_PROGRAM: 'Chương trình đào tạo này hiện không mở đăng ký tư vấn.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
 export const SUCCESS_MESSAGES: Record<string, string> = {
+    SUBMIT_CONSULTATION_SUCCESS: 'Yêu cầu tư vấn của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ lại trong thời gian phù hợp.',
     CHANGE_PASSWORD_SUCCESS: 'Đổi mật khẩu thành công.',
     RESET_PASSWORD_SUCCESS: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
     CREATE_USER_SUCCESS: 'Tạo người dùng thành công.',
