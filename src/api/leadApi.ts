@@ -47,6 +47,15 @@ export interface AssignableUser {
 export interface LeadListParams {
     page?: number
     page_size?: number
+    search?: string
+    status?: string
+    interested_program_id?: string
+    assigned_to_user_id?: string
+    source?: string
+    date_from?: string
+    date_to?: string
+    sort_by?: string
+    sort_order?: 'ASC' | 'DESC' | 'asc' | 'desc'
 }
 
 export interface LeadListResponseData {
@@ -82,7 +91,7 @@ export function getLeadStatusLabel(status?: string | null): string {
 }
 
 /**
- * Lấy danh sách Lead nội bộ có phân trang.
+ * Lấy danh sách Lead nội bộ có phân trang, tìm kiếm và lọc.
  * GET /api/v1/leads
  * Yêu cầu quyền: course.manage
  */
@@ -93,6 +102,18 @@ export async function getLeads(
     const query = new URLSearchParams()
     if (params.page !== undefined) query.set('page', String(params.page))
     if (params.page_size !== undefined) query.set('page_size', String(params.page_size))
+    if (params.search !== undefined && params.search.trim()) query.set('search', params.search.trim())
+    if (params.status !== undefined && params.status.trim()) query.set('status', params.status.trim())
+    if (params.interested_program_id !== undefined && params.interested_program_id.trim())
+        query.set('interested_program_id', params.interested_program_id.trim())
+    if (params.assigned_to_user_id !== undefined && params.assigned_to_user_id.trim())
+        query.set('assigned_to_user_id', params.assigned_to_user_id.trim())
+    if (params.source !== undefined && params.source.trim()) query.set('source', params.source.trim())
+    if (params.date_from !== undefined && params.date_from.trim()) query.set('date_from', params.date_from.trim())
+    if (params.date_to !== undefined && params.date_to.trim()) query.set('date_to', params.date_to.trim())
+    if (params.sort_by !== undefined && params.sort_by.trim()) query.set('sort_by', params.sort_by.trim())
+    if (params.sort_order !== undefined && params.sort_order.trim())
+        query.set('sort_order', params.sort_order.trim().toUpperCase())
 
     const qs = query.toString()
     const path = `/api/v1/leads${qs ? `?${qs}` : ''}`

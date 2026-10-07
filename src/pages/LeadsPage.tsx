@@ -25,6 +25,14 @@ export function LeadsPage() {
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [pageError, setPageError] = useState<string | null>(null)
 
+    // Filter & Search states (SCRUM-128)
+    const [search, setSearch] = useState<string>('')
+    const [debouncedSearch, setDebouncedSearch] = useState<string>('')
+    const [statusFilter, setStatusFilter] = useState<string>('')
+    const [assigneeFilter, setAssigneeFilter] = useState<string>('')
+    const [dateFrom, setDateFrom] = useState<string>('')
+    const [dateTo, setDateTo] = useState<string>('')
+
     // Modal chi tiết Lead
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
     const [isDetailModalOpen, setIsDetailModalOpen] = useState<boolean>(false)
@@ -40,12 +48,33 @@ export function LeadsPage() {
     const [assignmentError, setAssignmentError] = useState<string | null>(null)
     const [assignmentSuccess, setAssignmentSuccess] = useState<string | null>(null)
 
+    // Debounce search input (300ms)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search)
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [search])
+
+    // Tải trước danh sách nhân sự phụ trách
+    useEffect(() => {
+        getAssignableUsers(request)
+            .then(setAssignableUsers)
+            .catch(() => {})
+    }, [request])
+
+    // Tải danh sách Lead với phân trang, tìm kiếm và lọc
     useEffect(() => {
         let isMounted = true
 
         getLeads(request, {
             page,
             page_size: pageSize,
+            search: debouncedSearch.trim() || undefined,
+            status: statusFilter || undefined,
+            assigned_to_user_id: assigneeFilter || undefined,
+            date_from: dateFrom || undefined,
+            date_to: dateTo || undefined,
         })
             .then((data) => {
                 if (isMounted) {
@@ -68,7 +97,26 @@ export function LeadsPage() {
         return () => {
             isMounted = false
         }
-    }, [request, page, pageSize])
+    }, [
+        request,
+        page,
+        pageSize,
+        debouncedSearch,
+        statusFilter,
+        assigneeFilter,
+        dateFrom,
+        dateTo,
+    ])
+
+    const handleClearFilters = () => {
+        setSearch('')
+        setDebouncedSearch('')
+        setStatusFilter('')
+        setAssigneeFilter('')
+        setDateFrom('')
+        setDateTo('')
+        setPage(1)
+    }
 
     const handleOpenDetail = async (leadId: string) => {
         setStatusError(null)
@@ -81,17 +129,6 @@ export function LeadsPage() {
             setSelectedStatus(detail.status)
             setSelectedAssigneeId(detail.assigned_to_user_id || '')
             setIsDetailModalOpen(true)
-
-            // Tải danh sách nhân sự phân công nếu chưa có
-            if (assignableUsers.length === 0) {
-                getAssignableUsers(request)
-                    .then((users) => {
-                        setAssignableUsers(users)
-                    })
-                    .catch(() => {
-                        // Bỏ qua lỗi ngầm khi load danh sách nhân sự
-                    })
-            }
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Không thể tải chi tiết tư vấn.'
@@ -182,8 +219,8 @@ export function LeadsPage() {
             <header className="leads-header">
                 <h1 className="leads-header-title">Quản lý Tư vấn Tuyển sinh</h1>
                 <p className="leads-header-desc">
-                    Theo dõi và xử lý các yêu cầu đăng ký tư vấn tuyển sinh từ học viên và
-                    khách hàng tiềm năng.
+                    Theo dõi, lọc, tìm kiếm và phân công các yêu cầu đăng ký tư vấn tuyển
+                    sinh từ học viên và khách hàng tiềm năng.
                 </p>
             </header>
 
@@ -192,6 +229,100 @@ export function LeadsPage() {
                     {pageError}
                 </div>
             )}
+
+            {/* Thanh tìm kiếm & Bộ lọc nâng cao (SCRUM-128) */}
+            <div className="leads-filter-bar" data-testid="leads-filter-bar">
+                <input
+                    type="text"
+                    className="leads-search-input"
+                    placeholder="Tìm theo họ tên, số điện thoại, email..."
+                    data-testid="leads-search-input"
+                    value={search}
+                    onChange={(e) => {
+                        setSearch(e.target.value)
+                        setPage(1)
+                    }}
+                />
+
+                <select
+                    className="leads-filter-select"
+                    data-testid="leads-status-filter"
+                    value={statusFilter}
+                    onChange={(e) => {
+                        setStatusFilter(e.target.value)
+                        setPage(1)
+                    }}
+                    aria-label="Lọc theo trạng thái"
+                >
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="new">Mới tiếp nhận</option>
+                    <option value="contacted">Đã liên hệ</option>
+                    <option value="qualified">Tiềm năng</option>
+                    <option value="converted">Đã nhập học</option>
+                    <option value="lost">Không thành công</option>
+                    <option value="cancelled">Đã hủy</option>
+                </select>
+
+                <select
+                    className="leads-filter-select"
+                    data-testid="leads-assignee-filter"
+                    value={assigneeFilter}
+                    onChange={(e) => {
+                        setAssigneeFilter(e.target.value)
+                        setPage(1)
+                    }}
+                    aria-label="Lọc theo người phụ trách"
+                >
+                    <option value="">Tất cả người phụ trách</option>
+                    <option value="unassigned">Chưa phân công</option>
+                    {assignableUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                            {u.name}
+                        </option>
+                    ))}
+                </select>
+
+                <div className="leads-date-group">
+                    <span className="leads-date-label">Từ ngày:</span>
+                    <input
+                        type="date"
+                        className="leads-filter-date"
+                        data-testid="leads-date-from-filter"
+                        value={dateFrom}
+                        onChange={(e) => {
+                            setDateFrom(e.target.value)
+                            setPage(1)
+                        }}
+                        aria-label="Từ ngày"
+                    />
+                </div>
+
+                <div className="leads-date-group">
+                    <span className="leads-date-label">Đến ngày:</span>
+                    <input
+                        type="date"
+                        className="leads-filter-date"
+                        data-testid="leads-date-to-filter"
+                        value={dateTo}
+                        onChange={(e) => {
+                            setDateTo(e.target.value)
+                            setPage(1)
+                        }}
+                        aria-label="Đến ngày"
+                    />
+                </div>
+
+                {(search || statusFilter || assigneeFilter || dateFrom || dateTo) && (
+                    <button
+                        type="button"
+                        className="btn-clear-filters"
+                        data-testid="clear-filters-btn"
+                        onClick={handleClearFilters}
+                    >
+                        Xóa bộ lọc
+                    </button>
+                )}
+            </div>
 
             <div className="leads-card">
                 <div className="leads-table-wrapper">

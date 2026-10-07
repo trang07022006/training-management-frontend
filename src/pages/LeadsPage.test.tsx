@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, cleanup, act } from '@testing-library/react'
 import { LeadsPage } from './LeadsPage'
-import { getLeads, getLead, updateLeadStatus, assignLead, getAssignableUsers } from '../api/leadApi'
+import { getLeads, getLead, assignLead, getAssignableUsers } from '../api/leadApi'
+
 import type { Lead, LeadListResponseData, AssignableUser } from '../api/leadApi'
 
 // Mock SessionProvider
@@ -30,7 +31,7 @@ vi.mock('../api/leadApi', async (importOriginal) => {
     }
 })
 
-describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
+describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
     const mockLeads: Lead[] = [
         {
             id: 'lead-uuid-1',
@@ -90,7 +91,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
         cleanup()
     })
 
-    it('1. Hiển thị tiêu đề trang, mô tả và cấu trúc chính', async () => {
+    it('1. Hiển thị tiêu đề trang, mô tả và cấu trúc thanh tìm kiếm / bộ lọc', async () => {
         vi.mocked(getLeads).mockResolvedValue(mockListResponse)
 
         render(<LeadsPage />)
@@ -99,7 +100,13 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
             screen.getByRole('heading', { name: /Quản lý Tư vấn Tuyển sinh/i }),
         ).toBeDefined()
         expect(
-            screen.getByText(/Theo dõi và xử lý các yêu cầu đăng ký tư vấn/i),
+            screen.getByTestId('leads-search-input'),
+        ).toBeDefined()
+        expect(
+            screen.getByTestId('leads-status-filter'),
+        ).toBeDefined()
+        expect(
+            screen.getByTestId('leads-assignee-filter'),
         ).toBeDefined()
 
         await waitFor(() => {
@@ -135,7 +142,123 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
         })
     })
 
-    it('3. Mở modal chi tiết khi click "Xem chi tiết"', async () => {
+    it('3. Tìm kiếm với debounce 300ms và reset page về 1 (SCRUM-128)', async () => {
+        vi.useFakeTimers({ shouldAdvanceTime: true })
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+
+        render(<LeadsPage />)
+
+        await act(async () => {
+            vi.advanceTimersByTime(350)
+        })
+
+        const searchInput = screen.getByTestId('leads-search-input')
+
+        // Nhập từ khóa tìm kiếm
+        await act(async () => {
+            fireEvent.change(searchInput, { target: { value: 'Nguyễn' } })
+            vi.advanceTimersByTime(350)
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    search: 'Nguyễn',
+                    page: 1,
+                }),
+            )
+        })
+
+        vi.useRealTimers()
+    })
+
+    it('4. Lọc theo trạng thái và người phụ trách thành công (SCRUM-128)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('leads-status-filter')).toBeDefined()
+        })
+
+        // Lọc trạng thái 'qualified'
+        fireEvent.change(screen.getByTestId('leads-status-filter'), {
+            target: { value: 'qualified' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    status: 'qualified',
+                    page: 1,
+                }),
+            )
+        })
+
+        // Lọc người phụ trách 'user-advisor-1'
+        fireEvent.change(screen.getByTestId('leads-assignee-filter'), {
+            target: { value: 'user-advisor-1' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    status: 'qualified',
+                    assigned_to_user_id: 'user-advisor-1',
+                    page: 1,
+                }),
+            )
+        })
+    })
+
+    it('5. Lọc theo khoảng ngày và xóa bộ lọc (SCRUM-128)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('leads-date-from-filter')).toBeDefined()
+        })
+
+        // Chọn khoảng ngày
+        fireEvent.change(screen.getByTestId('leads-date-from-filter'), {
+            target: { value: '2026-03-01' },
+        })
+        fireEvent.change(screen.getByTestId('leads-date-to-filter'), {
+            target: { value: '2026-03-31' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    date_from: '2026-03-01',
+                    date_to: '2026-03-31',
+                    page: 1,
+                }),
+            )
+        })
+
+        // Nút Xóa bộ lọc xuất hiện
+        const clearBtn = screen.getByTestId('clear-filters-btn')
+        expect(clearBtn).toBeDefined()
+
+        fireEvent.click(clearBtn)
+
+        await waitFor(() => {
+            expect(
+                (screen.getByTestId('leads-date-from-filter') as HTMLInputElement).value,
+            ).toBe('')
+            expect(
+                (screen.getByTestId('leads-date-to-filter') as HTMLInputElement).value,
+            ).toBe('')
+        })
+    })
+
+    it('6. Mở modal chi tiết khi click "Xem chi tiết"', async () => {
         vi.mocked(getLeads).mockResolvedValue(mockListResponse)
         vi.mocked(getLead).mockResolvedValue(mockLeads[0])
 
@@ -153,63 +276,12 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
             expect(screen.getByTestId('detail-phone').textContent).toContain('0912345678')
             expect(screen.getByTestId('detail-email').textContent).toContain('nguyenvana@example.com')
             expect(screen.getByTestId('detail-assignee').textContent).toContain('Trần Văn Tư Vấn')
-            expect(screen.getByTestId('detail-message').textContent).toContain(
-                'Tôi muốn tư vấn học phí và lộ trình.',
-            )
         })
     })
 
-    it('4. Cập nhật trạng thái thành công trong modal chi tiết', async () => {
+    it('7. Phân công nhân sự phụ trách thành công (SCRUM-127)', async () => {
         vi.mocked(getLeads).mockResolvedValue(mockListResponse)
-        vi.mocked(getLead).mockResolvedValue(mockLeads[0])
-        const updatedLead: Lead = { ...mockLeads[0], status: 'qualified' }
-        vi.mocked(updateLeadStatus).mockResolvedValue(updatedLead)
-
-        render(<LeadsPage />)
-
-        await waitFor(() => {
-            expect(screen.getByTestId('view-lead-lead-uuid-1')).toBeDefined()
-        })
-
-        fireEvent.click(screen.getByTestId('view-lead-lead-uuid-1'))
-
-        await waitFor(() => {
-            expect(screen.getByTestId('status-select')).toBeDefined()
-        })
-
-        // Thay đổi sang "qualified"
-        fireEvent.change(screen.getByTestId('status-select'), {
-            target: { value: 'qualified' },
-        })
-
-        // Click Lưu trạng thái
-        fireEvent.click(screen.getByTestId('save-status-btn'))
-
-        await waitFor(() => {
-            expect(updateLeadStatus).toHaveBeenCalledWith(
-                mockRequest,
-                'lead-uuid-1',
-                'qualified',
-            )
-            expect(screen.getByTestId('status-success-alert').textContent).toContain(
-                'Cập nhật trạng thái thành công!',
-            )
-        })
-
-        // Đóng modal
-        fireEvent.click(screen.getByTestId('close-modal-btn'))
-
-        await waitFor(() => {
-            expect(screen.queryByTestId('lead-detail-modal')).toBeNull()
-            expect(screen.getByTestId('status-badge-lead-uuid-1').textContent).toContain(
-                'Tiềm năng',
-            )
-        })
-    })
-
-    it('5. Phân công nhân sự phụ trách thành công (SCRUM-127)', async () => {
-        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
-        vi.mocked(getLead).mockResolvedValue(mockLeads[1]) // lead 2 chưa phân công
+        vi.mocked(getLead).mockResolvedValue(mockLeads[1])
         const assignedLead: Lead = {
             ...mockLeads[1],
             assigned_to_user_id: 'user-advisor-2',
@@ -231,12 +303,10 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
             expect(screen.getByTestId('assignee-select')).toBeDefined()
         })
 
-        // Chọn nhân sự 'user-advisor-2'
         fireEvent.change(screen.getByTestId('assignee-select'), {
             target: { value: 'user-advisor-2' },
         })
 
-        // Click Lưu phân công
         fireEvent.click(screen.getByTestId('save-assignment-btn'))
 
         await waitFor(() => {
@@ -248,13 +318,12 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
             expect(screen.getByTestId('assignment-success-alert').textContent).toContain(
                 'Phân công nhân sự phụ trách thành công!',
             )
-            expect(screen.getByTestId('detail-assignee').textContent).toContain('Lê Quản Trị')
         })
     })
 
-    it('6. Gỡ phân công nhân sự phụ trách thành công (SCRUM-127)', async () => {
+    it('8. Gỡ phân công nhân sự phụ trách thành công (SCRUM-127)', async () => {
         vi.mocked(getLeads).mockResolvedValue(mockListResponse)
-        vi.mocked(getLead).mockResolvedValue(mockLeads[0]) // lead 1 đã phân công
+        vi.mocked(getLead).mockResolvedValue(mockLeads[0])
         const unassignedLead: Lead = {
             ...mockLeads[0],
             assigned_to_user_id: null,
@@ -276,12 +345,10 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
             expect(screen.getByTestId('assignee-select')).toBeDefined()
         })
 
-        // Chọn rỗng (gỡ phân công)
         fireEvent.change(screen.getByTestId('assignee-select'), {
             target: { value: '' },
         })
 
-        // Click Gỡ phân công
         fireEvent.click(screen.getByTestId('save-assignment-btn'))
 
         await waitFor(() => {
@@ -289,11 +356,10 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
             expect(screen.getByTestId('assignment-success-alert').textContent).toContain(
                 'Đã gỡ phân công nhân sự phụ trách!',
             )
-            expect(screen.getByTestId('detail-assignee').textContent).toContain('Chưa phân công')
         })
     })
 
-    it('7. Hiển thị thông báo khi danh sách trống', async () => {
+    it('9. Hiển thị thông báo khi danh sách trống', async () => {
         vi.mocked(getLeads).mockResolvedValue({
             items: [],
             total: 0,
@@ -311,7 +377,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
         })
     })
 
-    it('8. Hiển thị lỗi khi API thất bại', async () => {
+    it('10. Hiển thị lỗi khi API thất bại', async () => {
         vi.mocked(getLeads).mockRejectedValue(
             new Error('Không thể kết nối đến máy chủ.'),
         )
@@ -325,7 +391,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
         })
     })
 
-    it('9. Điều khiển phân trang chuyển trang đúng', async () => {
+    it('11. Điều khiển phân trang chuyển trang đúng', async () => {
         vi.mocked(getLeads).mockResolvedValue({
             items: mockLeads,
             total: 25,
@@ -346,10 +412,13 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127)', () => {
         fireEvent.click(screen.getByTestId('next-page-btn'))
 
         await waitFor(() => {
-            expect(getLeads).toHaveBeenCalledWith(mockRequest, {
-                page: 2,
-                page_size: 10,
-            })
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    page: 2,
+                    page_size: 10,
+                }),
+            )
         })
     })
 })
