@@ -24,6 +24,7 @@ import { TrainingProgramsPage } from './pages/TrainingProgramsPage'
 import { SubjectsPage } from './pages/SubjectsPage'
 import { UserProfilePage } from './pages/UserProfilePage'
 import { ProgramStructurePage } from './pages/ProgramStructurePage'
+import { PublicConsultationPage } from './pages/PublicConsultationPage'
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -42,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/consultation" element={<PublicConsultationPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/401" element={<UnauthorizedPage />} />
 

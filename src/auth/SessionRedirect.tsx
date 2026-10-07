@@ -8,8 +8,16 @@ export function SessionRedirect() {
     const matchUnauthorized = useMatch('/unauthorized')
     const match401 = useMatch('/401')
     const isUnauthorizedPage = matchUnauthorized !== null || match401 !== null
+    const isConsultationPage = useMatch('/consultation') !== null
 
-    if (isLoading || hasSession || endReason === null || isLoginPage || isUnauthorizedPage) {
+    if (
+        isLoading ||
+        hasSession ||
+        endReason === null ||
+        isLoginPage ||
+        isUnauthorizedPage ||
+        isConsultationPage
+    ) {
         return null
     }
 
