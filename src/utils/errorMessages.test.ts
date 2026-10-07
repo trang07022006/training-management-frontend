@@ -258,5 +258,29 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             expect(getErrorMessage({ code: 'INVALID_AVATAR_TYPE', message: vietnameseMsg })).toBe(vietnameseMsg)
         })
     })
+
+    describe('12. Quản lý chương trình đào tạo (SCRUM-122)', () => {
+        it('map các mã lỗi chương trình đào tạo sang tiếng Việt chuẩn', () => {
+            expect(getErrorMessage('DUPLICATE_CODE')).toBe('Mã chương trình đào tạo đã tồn tại.')
+            expect(getErrorMessage('PROGRAM_NOT_FOUND')).toBe('Không tìm thấy chương trình đào tạo.')
+            expect(getErrorMessage('PROGRAM_IN_USE')).toBe(
+                'Không thể xóa chương trình vì đang có dữ liệu liên quan. Hãy chuyển chương trình sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
+            )
+            expect(getErrorMessage('CODE_REQUIRED')).toBe('Mã chương trình là bắt buộc.')
+            expect(getErrorMessage('CODE_TOO_LONG')).toBe('Mã chương trình không được vượt quá 50 ký tự.')
+        })
+
+        it('map thông báo thành công cho chương trình đào tạo', () => {
+            expect(getSuccessMessage('CREATE_PROGRAM_SUCCESS')).toBe('Tạo chương trình đào tạo thành công.')
+            expect(getSuccessMessage('UPDATE_PROGRAM_SUCCESS')).toBe('Cập nhật chương trình đào tạo thành công.')
+            expect(getSuccessMessage('DELETE_PROGRAM_SUCCESS')).toBe('Xóa chương trình đào tạo thành công.')
+        })
+
+        it('xử lý lỗi NAME_REQUIRED khi liên quan đến tên chương trình đào tạo', () => {
+            const backendMsg = 'Tên chương trình đào tạo không được để trống.'
+            expect(getErrorMessage({ code: 'NAME_REQUIRED', message: backendMsg })).toBe(backendMsg)
+        })
+    })
 })
+
 

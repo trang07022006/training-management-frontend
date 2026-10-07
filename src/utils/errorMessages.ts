@@ -147,6 +147,16 @@ export const ERROR_MESSAGES: Record<string, string> = {
     AVATAR_NOT_FOUND: 'Không tìm thấy ảnh đại diện.',
     AVATAR_STORAGE_ERROR: 'Lỗi lưu trữ ảnh đại diện. Vui lòng thử lại.',
     AVATAR_UPLOAD_FAILED: 'Không thể tải lên ảnh đại diện. Vui lòng thử lại.',
+
+    // ----------------------------------------------------
+    // 13. CHƯƠNG TRÌNH ĐÀO TẠO (SCRUM-122)
+    // ----------------------------------------------------
+    DUPLICATE_CODE: 'Mã chương trình đào tạo đã tồn tại.',
+    PROGRAM_NOT_FOUND: 'Không tìm thấy chương trình đào tạo.',
+    PROGRAM_IN_USE: 'Không thể xóa chương trình vì đang có dữ liệu liên quan. Hãy chuyển chương trình sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    CODE_REQUIRED: 'Mã chương trình là bắt buộc.',
+    CODE_TOO_LONG: 'Mã chương trình không được vượt quá 50 ký tự.',
+    PROGRAM_NAME_REQUIRED: 'Tên chương trình là bắt buộc.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -163,6 +173,9 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     UPDATE_PROFILE_SUCCESS: 'Cập nhật hồ sơ thành công.',
     UPLOAD_AVATAR_SUCCESS: 'Cập nhật ảnh đại diện thành công.',
     DELETE_AVATAR_SUCCESS: 'Xóa ảnh đại diện thành công.',
+    CREATE_PROGRAM_SUCCESS: 'Tạo chương trình đào tạo thành công.',
+    UPDATE_PROGRAM_SUCCESS: 'Cập nhật chương trình đào tạo thành công.',
+    DELETE_PROGRAM_SUCCESS: 'Xóa chương trình đào tạo thành công.',
 }
 
 export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -266,6 +279,9 @@ export function getErrorMessage(
             return rawMessage
         }
         if (code === 'ALREADY_ACTIVE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'NAME_REQUIRED' && rawMessage && rawMessage.includes('chương trình') && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
         if (
