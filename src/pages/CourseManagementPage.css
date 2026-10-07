@@ -19,45 +19,48 @@
 .courses-badge {
     display: inline-block;
     padding: 4px 10px;
-    background-color: #dbeafe;
-    color: #1e40af;
+    background-color: var(--color-primary-light, #eaf4ff);
+    color: var(--color-primary-dark, #064b8e);
+    border: 1px solid #bae0ff;
     font-size: 0.78rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-radius: 6px;
+    border-radius: var(--radius-sm, 6px);
     margin-bottom: 8px;
 }
 
 .courses-title {
     font-size: 1.75rem;
     font-weight: 800;
-    color: #0f172a;
+    color: var(--color-navy, #0b2852);
     margin: 0 0 6px 0;
     letter-spacing: -0.02em;
 }
 
 .courses-subtitle {
     font-size: 0.95rem;
-    color: #64748b;
+    color: var(--color-text-secondary, #64748b);
     margin: 0;
 }
 
 .btn-create-course {
     padding: 10px 18px;
-    background-color: #2563eb;
+    background: linear-gradient(135deg, var(--color-primary, #0874c9) 0%, var(--color-primary-dark, #064b8e) 100%);
     color: #ffffff;
     font-weight: 600;
     font-size: 0.9rem;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-    transition: background-color 0.15s ease;
+    box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
+    transition: all 0.15s ease;
 }
 
 .btn-create-course:hover {
-    background-color: #1d4ed8;
+    background: linear-gradient(135deg, #0765b0 0%, #053f78 100%);
+    box-shadow: 0 4px 12px rgba(8, 116, 201, 0.35);
+    transform: translateY(-1px);
 }
 
 .courses-sprint-notice {

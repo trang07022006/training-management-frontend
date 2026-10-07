@@ -191,55 +191,103 @@ export function LoginPage() {
 
     return (
         <main className="login-page-container">
-            <div className="login-card">
-                <header className="login-header">
-                    <div className="login-brand-logo" aria-hidden="true">
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            width="30"
-                            height="30"
-                        >
-                            {/* Graduation cap / Education Icon */}
-                            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
-                        </svg>
+            <div className="login-split-card login-card">
+                {/* Left Panel: ICTU Branding Hero (Desktop) */}
+                <section className="login-brand-panel" aria-label="Giới thiệu ICTU">
+                    <div className="login-brand-bg-image-wrapper">
+                        <img
+                            src="/branding/ictu/building.png"
+                            alt="Tòa nhà ICTU"
+                            className="login-brand-bg-img"
+                        />
+                        <div className="login-brand-overlay" />
                     </div>
-                    <div className="system-title">Hệ thống Quản lý Đào tạo</div>
-                    <h1 className="login-heading">Đăng nhập</h1>
-                    <p className="login-subtitle">
-                        Đăng nhập để tiếp tục sử dụng hệ thống.
-                    </p>
-                </header>
+                    <div className="login-brand-content">
+                        <div className="login-brand-badge">
+                            <div className="login-brand-logo-circle">
+                                <img
+                                    src="/branding/ictu/logo.png"
+                                    alt="Logo ICTU"
+                                    className="login-brand-logo-img"
+                                />
+                            </div>
+                            <div className="login-brand-unit-names">
+                                <span className="unit-parent">ĐẠI HỌC THÁI NGUYÊN</span>
+                                <span className="unit-name">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN & TRUYỀN THÔNG</span>
+                            </div>
+                        </div>
 
-                {hasSession && (
-                    <div className="active-session-banner" role="status">
-                        <span>Bạn đang có phiên làm việc hợp lệ.</span>
-                        <Link to={continuePath} className="continue-session-link">
-                            Tiếp tục vào hệ thống
-                        </Link>
+                        <div className="login-brand-hero-text">
+                            <h2 className="login-brand-app-title">HỆ THỐNG QUẢN LÝ ĐÀO TẠO</h2>
+                            <p className="login-brand-desc">
+                                Nền tảng số hóa quản lý đào tạo, quản trị người dùng và hỗ trợ giảng dạy trực tuyến dành cho cán bộ, giảng viên và sinh viên ICTU.
+                            </p>
+                        </div>
+
+                        <div className="login-brand-features">
+                            <div className="login-feature-item">
+                                <span className="feature-check-icon">✓</span>
+                                <span>Bảo mật JWT an toàn & kiểm soát phiên tự động</span>
+                            </div>
+                            <div className="login-feature-item">
+                                <span className="feature-check-icon">✓</span>
+                                <span>Phân quyền RBAC chuẩn hóa cho Admin, Trainer & Trainee</span>
+                            </div>
+                            <div className="login-feature-item">
+                                <span className="feature-check-icon">✓</span>
+                                <span>Hỗ trợ quản lý chương trình, môn học và hồ sơ đào tạo</span>
+                            </div>
+                        </div>
+
+                        <div className="login-brand-footer-note">
+                            <span>ictu.edu.vn • Đổi mới - Sáng tạo - Hội nhập</span>
+                        </div>
                     </div>
-                )}
+                </section>
 
-                <LoginForm
-                    onSubmit={handleLogin}
-                    isLoading={isLoading}
-                    errorMessage={errorMessage}
-                    isLocked={isLocked}
-                    isInactive={isInactive}
-                    tempLockSeconds={tempLockSeconds}
-                    onTempLockEnd={handleTempLockEnd}
-                    onInputChange={handleInputChange}
-                />
+                {/* Right Panel: Login Form */}
+                <section className="login-form-panel">
+                    <header className="login-header">
+                        <div className="login-brand-logo" aria-hidden="true">
+                            <img
+                                src="/branding/ictu/logo.png"
+                                alt="Logo ICTU"
+                                className="login-header-logo-img"
+                            />
+                        </div>
 
-                <footer className="login-footer">
-                    <p>Hệ thống Quản lý Đào tạo • Phiên bản 1.0</p>
-                    <p>Hỗ trợ kỹ thuật: support@daotao.edu.vn</p>
-                </footer>
+                        <div className="system-title">Hệ thống Quản lý Đào tạo</div>
+                        <h1 className="login-heading">Đăng nhập</h1>
+                        <p className="login-subtitle">
+                            Đăng nhập để tiếp tục sử dụng hệ thống.
+                        </p>
+                    </header>
+
+                    {hasSession && (
+                        <div className="active-session-banner" role="status">
+                            <span>Bạn đang có phiên làm việc hợp lệ.</span>
+                            <Link to={continuePath} className="continue-session-link">
+                                Tiếp tục vào hệ thống
+                            </Link>
+                        </div>
+                    )}
+
+                    <LoginForm
+                        onSubmit={handleLogin}
+                        isLoading={isLoading}
+                        errorMessage={errorMessage}
+                        isLocked={isLocked}
+                        isInactive={isInactive}
+                        tempLockSeconds={tempLockSeconds}
+                        onTempLockEnd={handleTempLockEnd}
+                        onInputChange={handleInputChange}
+                    />
+
+                    <footer className="login-footer">
+                        <p>Hệ thống Quản lý Đào tạo • Phiên bản 1.0</p>
+                        <p>Hỗ trợ kỹ thuật: support@daotao.edu.vn</p>
+                    </footer>
+                </section>
             </div>
         </main>
     )

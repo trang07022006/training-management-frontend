@@ -22,11 +22,25 @@ function App() {
     <div className="overview-dashboard">
       {/* Welcome Banner */}
       <section className="welcome-banner" data-testid="welcome-banner">
+        <div className="welcome-banner-bg" aria-hidden="true">
+          <img src="/branding/ictu/campus-banner.jpg" alt="" className="banner-bg-img" />
+          <div className="banner-bg-overlay" />
+        </div>
         <div className="welcome-content">
-          <div className="welcome-tag" data-testid="welcome-tag">Phiên bản Sprint 1 • Sẵn sàng Nghiệm thu</div>
-          <h1 className="welcome-title" data-testid="welcome-title">Hệ thống Quản lý Đào tạo & Phân quyền</h1>
+          <div className="welcome-tag" data-testid="welcome-tag">
+            TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN VÀ TRUYỀN THÔNG • Phiên bản Sprint 1 • Sẵn sàng Nghiệm thu
+          </div>
+          <div className="welcome-brand-header">
+            <div className="welcome-logo-circle" aria-hidden="true">
+              <img src="/branding/ictu/logo.png" alt="ICTU" className="welcome-logo-img" />
+            </div>
+            <div className="welcome-titles-wrapper">
+              <span className="welcome-subtitle">ĐẠI HỌC THÁI NGUYÊN • ICTU</span>
+              <h1 className="welcome-title" data-testid="welcome-title">Hệ thống Quản lý Đào tạo & Phân quyền</h1>
+            </div>
+          </div>
           <p className="welcome-desc">
-            Không gian làm việc hợp nhất phục vụ đào tạo, phân quyền vai trò (RBAC) và quản trị tài khoản người dùng.
+            Nền tảng hỗ trợ quản lý đào tạo, người dùng và các hoạt động học tập chính quy của Trường Đại học Công nghệ Thông tin và Truyền thông.
           </p>
           <div className="user-welcome-badge">
             <span className="badge-indicator" />
