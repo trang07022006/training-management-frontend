@@ -268,12 +268,11 @@ export function TrainingProgramsPage({
             void loadPrograms(1, search, statusFilter)
             setPage(1)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                if (err.code === 'DUPLICATE_CODE') {
-                    setFormErrors({ code: 'Mã chương trình đào tạo đã tồn tại.' })
-                } else {
-                    setFormErrors({ general: err.message })
-                }
+            const apiCode = (err && typeof err === 'object' && 'code' in err) ? String((err as { code: unknown }).code) : undefined
+            if (apiCode === 'DUPLICATE_CODE') {
+                setFormErrors({ code: 'Mã chương trình đào tạo đã tồn tại.' })
+            } else if (err instanceof ApiError) {
+                setFormErrors({ general: err.message })
             } else {
                 setFormErrors({ general: getErrorMessage(err, 'Lỗi khi tạo chương trình đào tạo.') })
             }
@@ -304,12 +303,11 @@ export function TrainingProgramsPage({
             setSuccessMessage(getSuccessMessage('UPDATE_PROGRAM_SUCCESS', 'Cập nhật chương trình đào tạo thành công.'))
             void loadPrograms(page, search, statusFilter)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                if (err.code === 'DUPLICATE_CODE') {
-                    setFormErrors({ code: 'Mã chương trình đào tạo đã tồn tại.' })
-                } else {
-                    setFormErrors({ general: err.message })
-                }
+            const apiCode = (err && typeof err === 'object' && 'code' in err) ? String((err as { code: unknown }).code) : undefined
+            if (apiCode === 'DUPLICATE_CODE') {
+                setFormErrors({ code: 'Mã chương trình đào tạo đã tồn tại.' })
+            } else if (err instanceof ApiError) {
+                setFormErrors({ general: err.message })
             } else {
                 setFormErrors({ general: getErrorMessage(err, 'Lỗi khi cập nhật chương trình đào tạo.') })
             }
@@ -628,7 +626,7 @@ export function TrainingProgramsPage({
                         <form onSubmit={handleCreateSubmit} noValidate>
                             <div className="programs-modal-body">
                                 {formErrors.general && (
-                                    <div className="programs-banner programs-banner-error" role="alert">
+                                    <div className="programs-banner programs-banner-error" data-testid="form-error-general" role="alert">
                                         <p className="programs-banner-message">{formErrors.general}</p>
                                     </div>
                                 )}
@@ -789,7 +787,7 @@ export function TrainingProgramsPage({
                         <form onSubmit={handleEditSubmit} noValidate>
                             <div className="programs-modal-body">
                                 {formErrors.general && (
-                                    <div className="programs-banner programs-banner-error" role="alert">
+                                    <div className="programs-banner programs-banner-error" data-testid="form-error-general" role="alert">
                                         <p className="programs-banner-message">{formErrors.general}</p>
                                     </div>
                                 )}
