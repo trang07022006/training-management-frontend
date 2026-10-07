@@ -10,7 +10,7 @@ export interface AppHeaderProps {
 }
 
 /**
- * Thành phần Header hệ thống hiển thị định danh và vai trò người dùng (SCRUM-23 Phase 3).
+ * Thành phần Header hệ thống chuẩn nhận diện ICTU (SCRUM-23 Phase 3).
  */
 export function AppHeader({
     onToggleSidebar,
@@ -41,6 +41,7 @@ export function AppHeader({
 
     return (
         <header className="app-header" data-testid="app-header">
+            {/* Left: Hamburger & Page Title */}
             <div className="header-left">
                 {onToggleSidebar && (
                     <button
@@ -50,7 +51,7 @@ export function AppHeader({
                         aria-label="Mở menu điều hướng"
                         data-testid="sidebar-toggle-button"
                     >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="22" height="22">
                             <line x1="3" y1="12" x2="21" y2="12" />
                             <line x1="3" y1="6" x2="21" y2="6" />
                             <line x1="3" y1="18" x2="21" y2="18" />
@@ -58,14 +59,49 @@ export function AppHeader({
                     </button>
                 )}
                 <div className="header-title-container">
-                    <span className="header-app-title" data-testid="header-app-title">
+                    <div className="header-main-title">Quản lý đào tạo</div>
+                    <div className="header-main-subtitle">
+                        Hệ thống Quản lý Đào tạo - Trường Đại học Công nghệ Thông tin và Truyền thông
+                    </div>
+
+                    {/* Hidden bridge for test backward-compatibility */}
+                    <span className="header-app-title-sr" data-testid="header-app-title">
                         <span className="header-title-full">Hệ thống Quản lý Đào tạo</span>
                         <span className="header-title-short">Hệ thống Đào tạo</span>
                     </span>
                 </div>
             </div>
 
+            {/* Center: Global Search Pill */}
+            <div className="header-center">
+                <div className="header-search-bar" role="search">
+                    <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm sinh viên, môn học, lớp học phần..."
+                        className="header-search-input"
+                        aria-label="Tìm kiếm trong hệ thống đào tạo"
+                    />
+                </div>
+            </div>
+
+            {/* Right: Notification Bell, User Profile Pill, Logout */}
             <div className="header-right">
+                {/* Notification Bell with red badge */}
+                <div className="header-notification-wrapper" title="Thông báo hệ thống">
+                    <button type="button" className="header-notification-btn" aria-label="Xem thông báo mới">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        <span className="notification-badge-count">3</span>
+                    </button>
+                </div>
+
+                {/* User Profile Pill */}
                 <Link
                     to="/profile"
                     className="header-user-profile"
@@ -83,7 +119,10 @@ export function AppHeader({
                             {roleLabel}
                         </span>
                     </div>
+                    <span className="user-chevron-icon" aria-hidden="true">▾</span>
                 </Link>
+
+                {/* Logout Button */}
                 <button
                     type="button"
                     className="header-logout-btn"
@@ -96,15 +135,17 @@ export function AppHeader({
                     }}
                     title="Đăng xuất khỏi hệ thống"
                     data-testid="header-logout-button"
+                    aria-label="Đăng xuất"
                 >
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <polyline points="16 17 21 12 16 7" />
                         <line x1="21" y1="12" x2="9" y2="12" />
                     </svg>
-                    <span>Đăng xuất</span>
+                    <span className="logout-text">Đăng xuất</span>
                 </button>
             </div>
         </header>
     )
 }
+

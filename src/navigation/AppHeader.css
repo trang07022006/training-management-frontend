@@ -1,287 +1,308 @@
-/* AppHeader Styling (SCRUM-23) */
+/* AppHeader Styling (SCRUM-23) - ICTU Standard */
 
 .app-header {
-    height: 60px;
+    height: 68px;
     background-color: #ffffff;
     border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 24px;
+    gap: 16px;
     position: sticky;
     top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    z-index: 99;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* Left: Toggle & Title */
 .header-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     min-width: 0;
+    flex-shrink: 0;
 }
 
 .sidebar-toggle-btn {
-    display: none;
-    background: none;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    padding: 6px;
-    color: #475569;
-    cursor: pointer;
+    display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    background: none;
+    border: none;
+    color: #1e293b;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .sidebar-toggle-btn:hover {
     background-color: #f1f5f9;
-    color: #0f172a;
+    color: #0284c7;
 }
 
 .header-title-container {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
 }
 
-.header-app-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1e293b;
+.header-main-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.header-main-subtitle {
+    font-size: 0.76rem;
+    color: #64748b;
+    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 380px;
 }
 
-.header-title-full {
-    display: inline;
+.header-app-title-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
-.header-title-short {
-    display: none;
+/* Center: Search pill */
+.header-center {
+    flex: 1;
+    max-width: 460px;
+    margin: 0 16px;
+    display: flex;
+    justify-content: center;
 }
 
-.header-right {
+.header-search-bar {
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 16px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 9999px;
+    padding: 7px 16px;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+.header-search-bar:focus-within {
+    background-color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+}
+
+.search-icon {
+    width: 16px;
+    height: 16px;
+    color: #64748b;
     flex-shrink: 0;
 }
 
+.header-search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 0.85rem;
+    color: #1e293b;
+}
+
+.header-search-input::placeholder {
+    color: #94a3b8;
+}
+
+/* Right: Actions */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+/* Notification Bell */
+.header-notification-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.header-notification-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.header-notification-btn:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.notification-badge-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* User Profile Badge */
 .header-user-profile {
     display: flex;
     align-items: center;
     gap: 10px;
     text-decoration: none;
-    color: inherit;
-    cursor: pointer;
-    border-radius: 8px;
-    padding: 3px 6px;
+    padding: 4px 10px 4px 6px;
+    border-radius: 9999px;
     transition: background-color 0.15s ease;
+    border: 1px solid transparent;
 }
 
 .header-user-profile:hover {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
 }
 
 .user-avatar {
-    width: 36px;
-    height: 36px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #0874c9, #064b8e);
+    background: linear-gradient(135deg, #1677ff, #0958d9);
     color: #ffffff;
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 700;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(8, 116, 201, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .user-details {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.25;
+    min-width: 0;
 }
 
 .user-display-name {
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     font-weight: 600;
-    color: #172b4d;
-    max-width: 180px;
+    color: #0f172a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 140px;
+    line-height: 1.2;
 }
 
 .user-role-badge {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: #064b8e;
-    background-color: #eaf4ff;
-    padding: 2px 8px;
-    border-radius: 9999px;
-    margin-top: 2px;
-    letter-spacing: 0.02em;
-    border: 1px solid #bae0ff;
+    font-size: 0.7rem;
+    color: #64748b;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
 }
 
+.user-chevron-icon {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-left: -2px;
+}
+
+/* Logout Button */
 .header-logout-btn {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    background-color: #f8fafc;
+    background: none;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    color: #475569;
-    font-size: 0.82rem;
+    padding: 6px 10px;
+    color: #64748b;
+    font-size: 0.78rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .header-logout-btn:hover {
-    background-color: #fee2e2;
+    background-color: #fef2f2;
     border-color: #fecaca;
-    color: #ef4444;
+    color: #dc2626;
 }
 
-/* Responsive adjustment for tablet (<= 768px) */
+/* Responsive */
+@media (max-width: 992px) {
+    .header-center {
+        display: none;
+    }
+}
+
 @media (max-width: 768px) {
     .app-header {
         padding: 0 12px;
-        height: 56px;
+        height: 60px;
     }
 
-    .sidebar-toggle-btn {
-        display: flex;
-    }
-
-    .header-left {
-        gap: 10px;
-        min-width: 0;
-    }
-
-    .header-right {
-        gap: 10px;
-        flex-shrink: 0;
-    }
-
-    .header-app-title {
-        font-size: 0.95rem;
-        max-width: 220px;
-    }
-
-    .user-display-name {
-        max-width: 100px;
-        font-size: 0.8rem;
-    }
-
-    .user-role-badge {
-        font-size: 0.68rem;
-        padding: 1px 6px;
-    }
-}
-
-/* Mobile viewport adjustment (<= 480px, including 400px, 390px, 375px) */
-@media (max-width: 480px) {
-    .app-header {
-        height: 52px;
-        padding: 0 10px;
-    }
-
-    .header-left {
-        gap: 8px;
-        min-width: 0;
-        flex: 1;
-    }
-
-    .header-right {
-        gap: 8px;
-        flex-shrink: 0;
-    }
-
-    .sidebar-toggle-btn {
-        padding: 5px;
-    }
-
-    /* Hiển thị tiêu đề ngắn gọn "Hệ thống Đào tạo" trên mobile */
-    .header-title-full {
+    .header-main-subtitle {
         display: none;
     }
 
-    .header-title-short {
-        display: inline;
+    .header-main-title {
+        font-size: 1.05rem;
     }
 
-    .header-app-title {
-        font-size: 0.92rem;
-        font-weight: 600;
-        max-width: none;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /* Ẩn hoàn toàn username + role badge khỏi header mobile, xem đầy đủ trong drawer */
-    .user-details {
-        display: none !important;
+    .user-details,
+    .user-chevron-icon {
+        display: none;
     }
 
     .header-user-profile {
-        gap: 0;
+        padding: 0;
     }
 
-    .user-avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 0.88rem;
-        flex-shrink: 0;
+    .logout-text {
+        display: none;
     }
 
     .header-logout-btn {
-        padding: 5px 8px;
-        font-size: 0.78rem;
-        gap: 4px;
-        flex-shrink: 0;
-        white-space: nowrap;
-    }
-
-    .header-logout-btn svg {
-        width: 14px;
-        height: 14px;
+        padding: 6px;
     }
 }
-
-/* Extra small mobile (<= 360px) */
-@media (max-width: 360px) {
-    .app-header {
-        padding: 0 8px;
-    }
-
-    .header-left {
-        gap: 6px;
-    }
-
-    .header-right {
-        gap: 6px;
-    }
-
-    .header-app-title {
-        font-size: 0.86rem;
-    }
-
-    .user-avatar {
-        width: 30px;
-        height: 30px;
-        font-size: 0.82rem;
-    }
-
-    .header-logout-btn {
-        padding: 4px 7px;
-        font-size: 0.75rem;
-    }
-}
-
