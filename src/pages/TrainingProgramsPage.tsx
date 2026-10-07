@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -528,6 +529,14 @@ export function TrainingProgramsPage({
                                         {canManage && (
                                             <td>
                                                 <div className="program-actions-group">
+                                                    <Link
+                                                        to={`/training-programs/${prog.id}/structure`}
+                                                        className="btn-action-structure"
+                                                        data-testid={`btn-structure-${prog.id}`}
+                                                        aria-label={`Quản lý cấu trúc chương trình ${prog.code}`}
+                                                    >
+                                                        Cấu trúc
+                                                    </Link>
                                                     <button
                                                         type="button"
                                                         className="btn-action-edit"

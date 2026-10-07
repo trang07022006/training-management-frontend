@@ -23,6 +23,7 @@ import { CourseManagementPage } from './pages/CourseManagementPage'
 import { TrainingProgramsPage } from './pages/TrainingProgramsPage'
 import { SubjectsPage } from './pages/SubjectsPage'
 import { UserProfilePage } from './pages/UserProfilePage'
+import { ProgramStructurePage } from './pages/ProgramStructurePage'
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -103,6 +104,7 @@ createRoot(document.getElementById('root')!).render(
               >
                 <Route path="/courses" element={<CourseManagementPage />} />
                 <Route path="/training-programs" element={<TrainingProgramsPage />} />
+                <Route path="/training-programs/:programId/structure" element={<ProgramStructurePage />} />
                 <Route path="/subjects" element={<SubjectsPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />

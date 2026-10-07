@@ -281,6 +281,22 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             expect(getErrorMessage({ code: 'NAME_REQUIRED', message: backendMsg })).toBe(backendMsg)
         })
     })
+
+    describe('14. Cấu trúc chương trình & môn tiên quyết (SCRUM-124)', () => {
+        it('map các mã lỗi cấu trúc môn học và tiên quyết sang tiếng Việt', () => {
+            expect(getErrorMessage('SUBJECT_ALREADY_IN_PROGRAM')).toBe('Môn học đã tồn tại trong chương trình đào tạo.')
+            expect(getErrorMessage('PROGRAM_SUBJECT_NOT_FOUND')).toBe('Không tìm thấy môn học trong chương trình đào tạo.')
+            expect(getErrorMessage('PROGRAM_SUBJECT_IN_USE')).toBe(
+                'Môn học đang là điều kiện tiên quyết của môn khác. Hãy gỡ ràng buộc tiên quyết trước.'
+            )
+            expect(getErrorMessage('PREREQUISITE_CYCLE')).toBe(
+                'Không thể thêm môn tiên quyết vì tạo vòng lặp phụ thuộc (chu trình).'
+            )
+            expect(getErrorMessage('INVALID_PREREQUISITE_ORDER')).toBe(
+                'Môn tiên quyết phải được xếp trước môn học phụ thuộc theo học kỳ hoặc thứ tự học.'
+            )
+        })
+    })
 })
 
 

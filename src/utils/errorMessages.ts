@@ -169,6 +169,21 @@ export const ERROR_MESSAGES: Record<string, string> = {
     CREDITS_REQUIRED: 'Số tín chỉ là bắt buộc.',
     INVALID_CREDITS: 'Số tín chỉ phải là số nguyên từ 1 đến 30.',
     INVALID_TOTAL_SESSIONS: 'Số buổi học phải là số nguyên không âm.',
+
+    // ----------------------------------------------------
+    // 15. CẤU TRÚC CHƯƠNG TRÌNH & MÔN TIÊN QUYẾT (SCRUM-124)
+    // ----------------------------------------------------
+    SUBJECT_ALREADY_IN_PROGRAM: 'Môn học đã tồn tại trong chương trình đào tạo.',
+    PROGRAM_SUBJECT_NOT_FOUND: 'Không tìm thấy môn học trong chương trình đào tạo.',
+    PROGRAM_SUBJECT_IN_USE: 'Môn học đang là điều kiện tiên quyết của môn khác. Hãy gỡ ràng buộc tiên quyết trước.',
+    PREREQUISITE_CYCLE: 'Không thể thêm môn tiên quyết vì tạo vòng lặp phụ thuộc (chu trình).',
+    INVALID_PREREQUISITE_ORDER: 'Môn tiên quyết phải được xếp trước môn học phụ thuộc theo học kỳ hoặc thứ tự học.',
+    PREREQUISITE_ALREADY_EXISTS: 'Môn tiên quyết này đã được thiết lập.',
+    CANNOT_PREREQUISITE_SELF: 'Môn học không thể làm điều kiện tiên quyết của chính nó.',
+    PROGRAM_ARCHIVED: 'Chương trình đào tạo đã lưu trữ, không thể chỉnh sửa cấu trúc.',
+    SUBJECT_ARCHIVED: 'Môn học đã lưu trữ, không thể thêm vào chương trình.',
+    INVALID_SEMESTER: 'Học kỳ không hợp lệ.',
+    SEMESTER_EXCEEDS_DURATION: 'Học kỳ vượt quá thời gian đào tạo của chương trình.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
