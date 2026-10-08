@@ -67,14 +67,15 @@
 .login-brand-panel {
     flex: 1.1;
     position: relative;
-    background: linear-gradient(135deg, #0b2852 0%, #071c3b 100%);
-    color: #ffffff;
+    background: #f8fafc;
+    color: #0b2852;
     padding: 40px 36px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
     box-sizing: border-box;
+    border-right: 1px solid rgba(226, 232, 240, 0.85);
 }
 
 .login-brand-bg-image-wrapper {
@@ -84,21 +85,25 @@
     height: 100%;
     z-index: 1;
     pointer-events: none;
+    overflow: hidden;
 }
 
 .login-brand-bg-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 35%;
-    opacity: 0.22;
-    filter: saturate(1.2);
+    object-position: center 25%;
+    opacity: 0.95;
+    filter: blur(2px);
+    transform: scale(1.04);
 }
 
 .login-brand-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(11, 40, 82, 0.95) 0%, rgba(7, 28, 59, 0.92) 100%);
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
 .login-brand-content {
@@ -124,7 +129,8 @@
     border-radius: 50%;
     padding: 3px;
     box-sizing: border-box;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(11, 40, 82, 0.12);
+    border: 1px solid rgba(226, 232, 240, 0.8);
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -147,14 +153,14 @@
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: #93c5fd;
+    color: #0284c7;
     text-transform: uppercase;
 }
 
 .unit-name {
     font-size: 0.85rem;
     font-weight: 800;
-    color: #ffffff;
+    color: #0b2852;
     line-height: 1.25;
 }
 
@@ -165,16 +171,17 @@
 .login-brand-app-title {
     font-size: 1.55rem;
     font-weight: 800;
-    color: #ffffff;
+    color: #0b2852;
     margin: 0 0 10px 0;
     letter-spacing: -0.01em;
 }
 
 .login-brand-desc {
     font-size: 0.92rem;
-    color: #cbd5e1;
+    color: #334155;
     line-height: 1.55;
     margin: 0;
+    font-weight: 500;
 }
 
 .login-brand-features {
@@ -188,29 +195,31 @@
     align-items: center;
     gap: 10px;
     font-size: 0.85rem;
-    color: #e2e8f0;
+    color: #1e293b;
+    font-weight: 600;
 }
 
 .feature-check-icon {
     width: 18px;
     height: 18px;
-    background: rgba(8, 116, 201, 0.35);
-    border: 1px solid rgba(186, 224, 255, 0.4);
+    background: #0874c9;
+    border: 1px solid #064b8e;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.7rem;
-    color: #93c5fd;
+    color: #ffffff;
     font-weight: 800;
     flex-shrink: 0;
 }
 
 .login-brand-footer-note {
     font-size: 0.78rem;
-    color: #94a3b8;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #64748b;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
     padding-top: 14px;
+    font-weight: 500;
 }
 
 /* Right Form Panel */
