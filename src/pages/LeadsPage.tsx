@@ -25,6 +25,8 @@ export function LeadsPage() {
     const [totalPages, setTotalPages] = useState<number>(0)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [pageError, setPageError] = useState<string | null>(null)
+    const [pageSuccess, setPageSuccess] = useState<string | null>(null)
+    const [copyFallbackLink, setCopyFallbackLink] = useState<string | null>(null)
 
     // Filter & Search states (SCRUM-128)
     const [search, setSearch] = useState<string>('')
@@ -227,20 +229,83 @@ export function LeadsPage() {
         }
     }
 
+    const handleCopyLink = async () => {
+        const link = new URL('/consultation', window.location.origin).href
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(link)
+                setPageSuccess('Đã sao chép liên kết đăng ký tư vấn')
+                setCopyFallbackLink(null)
+            } else {
+                setCopyFallbackLink(link)
+                setPageSuccess(null)
+            }
+        } catch (err) {
+            setCopyFallbackLink(link)
+            setPageSuccess(null)
+        }
+        
+        setTimeout(() => setPageSuccess(null), 3000)
+    }
+
     return (
         <div className="leads-page-container">
             <Breadcrumb items={[{ label: 'Tư vấn tuyển sinh' }]} />
             <header className="leads-header">
-                <h1 className="leads-header-title">Quản lý Tư vấn Tuyển sinh</h1>
-                <p className="leads-header-desc">
-                    Theo dõi, lọc, tìm kiếm và phân công các yêu cầu đăng ký tư vấn tuyển
-                    sinh từ học viên và khách hàng tiềm năng.
-                </p>
+                <div className="leads-header-top">
+                    <div>
+                        <h1 className="leads-header-title">Quản lý Tư vấn Tuyển sinh</h1>
+                        <p className="leads-header-desc">
+                            Theo dõi, lọc, tìm kiếm và phân công các yêu cầu đăng ký tư vấn tuyển
+                            sinh từ học viên và khách hàng tiềm năng.
+                        </p>
+                    </div>
+                    <div className="leads-actions">
+                        <button
+                            type="button"
+                            className="leads-btn-action"
+                            onClick={handleCopyLink}
+                            data-testid="btn-copy-link"
+                        >
+                            Sao chép liên kết
+                        </button>
+                        <a
+                            href="/consultation"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="leads-btn-action leads-btn-action-primary"
+                            data-testid="btn-open-form"
+                        >
+                            Mở form đăng ký
+                        </a>
+                    </div>
+                </div>
             </header>
 
             {pageError && (
                 <div className="leads-alert-error" role="alert" data-testid="page-error">
                     {pageError}
+                </div>
+            )}
+
+            {pageSuccess && (
+                <div className="leads-alert-success" role="status" data-testid="page-success">
+                    {pageSuccess}
+                </div>
+            )}
+
+            {copyFallbackLink && (
+                <div className="copy-fallback-box" data-testid="copy-fallback">
+                    <input
+                        type="text"
+                        readOnly
+                        value={copyFallbackLink}
+                        className="copy-fallback-input"
+                        onFocus={(e) => e.target.select()}
+                    />
+                    <button type="button" className="leads-btn-action" onClick={() => setCopyFallbackLink(null)}>
+                        Đóng
+                    </button>
                 </div>
             )}
 

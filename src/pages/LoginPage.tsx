@@ -289,6 +289,13 @@ export function LoginPage() {
                         onInputChange={handleInputChange}
                     />
 
+                    <div className="login-public-links">
+                        <span>Bạn cần tư vấn chương trình đào tạo? </span>
+                        <Link to="/consultation" className="login-public-link">
+                            Đăng ký tư vấn
+                        </Link>
+                    </div>
+
                     <footer className="login-footer">
                         <p>Hệ thống Quản lý Đào tạo • Phiên bản 1.0</p>
                         <p>Hỗ trợ kỹ thuật: support@daotao.edu.vn</p>

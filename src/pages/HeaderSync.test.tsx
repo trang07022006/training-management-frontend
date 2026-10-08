@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 
-import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { SessionProvider, useSession } from '../auth/SessionProvider'
+import { SessionProvider } from '../auth/SessionProvider'
 import { AppLayout } from '../navigation/AppLayout'
 import { UserProfilePage } from './UserProfilePage'
 
@@ -15,7 +14,6 @@ vi.mock('../api/userAvatarApi', () => ({
     ALLOWED_AVATAR_MIME_TYPES: ['image/jpeg', 'image/png'],
 }))
 
-const mockRequest = vi.fn()
 const mockFetch = vi.fn()
 
 vi.stubGlobal('fetch', mockFetch)

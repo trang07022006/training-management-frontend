@@ -688,3 +688,23 @@
         padding: 20px 12px;
     }
 }
+
+.login-public-links {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 0.92rem;
+    color: #475569;
+}
+
+.login-public-link {
+    color: var(--color-primary, #0874c9);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.login-public-link:hover {
+    color: var(--color-navy, #0b2852);
+    text-decoration: underline;
+}
+
