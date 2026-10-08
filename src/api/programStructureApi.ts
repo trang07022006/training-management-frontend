@@ -198,7 +198,7 @@ export async function getProgramStructure(
         total_credits:
             typeof body.total_credits === 'number'
                 ? body.total_credits
-                : mappedItems.reduce((acc, curr) => acc + (curr.credits || 0), 0),
+                : mappedItems.reduce((acc: number, curr: ProgramSubject) => acc + (curr.credits || 0), 0),
         items: mappedItems,
     }
 }

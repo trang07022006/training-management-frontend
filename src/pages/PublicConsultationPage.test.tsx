@@ -281,4 +281,16 @@ describe('PublicConsultationPage (SCRUM-125)', () => {
             expect(screen.getByText('Gửi yêu cầu thành công!')).toBeDefined()
         })
     })
+
+    it('12. Hiển thị thông báo và disable dropdown khi không có chương trình nào mở đăng ký', async () => {
+        vi.spyOn(publicConsultationApi, 'getPublicProgramOptions').mockResolvedValue([])
+
+        renderPage()
+
+        await waitFor(() => {
+            const select = screen.getByLabelText(/chương trình đào tạo quan tâm/i) as HTMLSelectElement
+            expect(select.disabled).toBe(true)
+            expect(screen.getByText('-- Hiện chưa có chương trình mở đăng ký --')).toBeDefined()
+        })
+    })
 })

@@ -403,12 +403,14 @@ export function PublicConsultationPage({
                                 className="form-select"
                                 value={formData.interested_program_id || ''}
                                 onChange={handleInputChange}
-                                disabled={isSubmitting || isLoadingPrograms}
+                                disabled={isSubmitting || isLoadingPrograms || programOptions.length === 0}
                             >
                                 <option value="">
                                     {isLoadingPrograms
                                         ? 'Đang tải danh sách chương trình...'
-                                        : '-- Chọn chương trình quan tâm (nếu có) --'}
+                                        : programOptions.length === 0
+                                          ? '-- Hiện chưa có chương trình mở đăng ký --'
+                                          : '-- Chọn chương trình quan tâm (nếu có) --'}
                                 </option>
                                 {programOptions.map((prog) => (
                                     <option key={prog.id} value={prog.id}>
