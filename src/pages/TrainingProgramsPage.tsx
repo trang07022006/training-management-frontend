@@ -16,6 +16,7 @@ import {
     ApiError,
 } from '../api/trainingProgramApi'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './TrainingProgramsPage.css'
 
 export interface TrainingProgramsPageProps {
@@ -360,6 +361,7 @@ export function TrainingProgramsPage({
 
     return (
         <main className="training-programs-page" data-testid="training-programs-page">
+            <Breadcrumb items={[{ label: 'Chương trình đào tạo' }]} />
             {/* Header */}
             <header className="programs-header">
                 <div className="programs-header-left">
