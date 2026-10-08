@@ -1,23 +1,57 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import {
-  DASHBOARD_KPIS_MOCK,
-  DASHBOARD_CHART_MOCK,
-  DASHBOARD_NOTIFICATIONS_MOCK,
-  DASHBOARD_SCHEDULE_MOCK,
-  DASHBOARD_CLASS_SECTIONS_MOCK,
-} from './mocks/dashboardMockData'
+import { useSession } from './auth/SessionProvider'
+import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
+import { getTrainingPrograms } from './api/trainingProgramApi'
 import './App.css'
 
 export function App() {
   const [selectedYear, setSelectedYear] = useState('2024 - 2025')
   const [activeCalendarDay, setActiveCalendarDay] = useState(12)
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null)
+  const [totalPrograms, setTotalPrograms] = useState<number | null>(null)
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false)
 
-  const chartData = DASHBOARD_CHART_MOCK
-  const notifications = DASHBOARD_NOTIFICATIONS_MOCK
-  const schedules = DASHBOARD_SCHEDULE_MOCK
-  const classSections = DASHBOARD_CLASS_SECTIONS_MOCK
+  let session: ReturnType<typeof useSession> | null = null
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    session = useSession()
+  } catch {
+    session = null
+  }
+
+  const request = session?.request
+  const hasSession = session?.hasSession
+  const permissions = session?.permissions
+
+  useEffect(() => {
+    if (!hasSession || !request || !permissions?.includes(SYSTEM_PERMISSIONS.COURSE_VIEW)) {
+      return
+    }
+
+    let isMounted = true
+    setIsLoadingPrograms(true)
+
+    getTrainingPrograms(request, { page: 1, page_size: 1 })
+      .then((data) => {
+        if (isMounted) {
+          setTotalPrograms(data.total)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setTotalPrograms(null)
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingPrograms(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [hasSession, request, permissions])
 
   return (
     <div className="ictu-dashboard-container">
@@ -62,68 +96,77 @@ export function App() {
         </div>
       </section>
 
-      {/* Development Mock Indicator */}
-      <div className="dashboard-mock-disclaimer" role="note" aria-label="Ghi chú dữ liệu phát triển">
-        <span className="disclaimer-badge">DỮ LIỆU MINH HỌA</span>
-        <span className="disclaimer-text">
-          Chỉ số thống kê trên bảng điều khiển đang sử dụng dữ liệu mô phỏng cho giao diện (Development Only).
-        </span>
-      </div>
-
       {/* 2. 4 KPI Stat Summary Cards */}
       <section className="ictu-kpi-grid" aria-label="Thống kê đào tạo">
-        {DASHBOARD_KPIS_MOCK.map((kpi) => {
-          const iconClass =
-            kpi.id === 'students'
-              ? 'kpi-blue'
-              : kpi.id === 'trainers'
-              ? 'kpi-green'
-              : kpi.id === 'programs'
-              ? 'kpi-purple'
-              : 'kpi-orange'
+        {/* KPI 1: Tổng sinh viên */}
+        <div className="kpi-card">
+          <div className="kpi-icon-box kpi-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <div className="kpi-details">
+            <span className="kpi-label">Tổng sinh viên</span>
+            <span className="kpi-value">--</span>
+            <span className="kpi-subtext-empty">Chưa có dữ liệu</span>
+          </div>
+        </div>
 
-          return (
-            <div key={kpi.id} className="kpi-card">
-              <div className={`kpi-icon-box ${iconClass}`}>
-                {kpi.id === 'students' && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                )}
-                {kpi.id === 'trainers' && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                )}
-                {kpi.id === 'programs' && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                  </svg>
-                )}
-                {kpi.id === 'classes' && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
-                  </svg>
-                )}
-              </div>
-              <div className="kpi-details">
-                <span className="kpi-label">{kpi.label}</span>
-                <span className="kpi-value">{kpi.value}</span>
-                <div className={`kpi-trend trend-${kpi.trendType}`}>
-                  <span className="trend-arrow">{kpi.trendType === 'up' ? '▲' : '↑'}</span>
-                  <span>{kpi.trend}</span>
-                  <span className="trend-text">{kpi.trendLabel}</span>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {/* KPI 2: Giảng viên */}
+        <div className="kpi-card">
+          <div className="kpi-icon-box kpi-green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="kpi-details">
+            <span className="kpi-label">Giảng viên</span>
+            <span className="kpi-value">--</span>
+            <span className="kpi-subtext-empty">Chưa có dữ liệu</span>
+          </div>
+        </div>
+
+        {/* KPI 3: Chương trình đào tạo */}
+        <div className="kpi-card">
+          <div className="kpi-icon-box kpi-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+            </svg>
+          </div>
+          <div className="kpi-details">
+            <span className="kpi-label">Chương trình đào tạo</span>
+            <span className="kpi-value">
+              {isLoadingPrograms ? '...' : totalPrograms !== null ? totalPrograms : '--'}
+            </span>
+            {totalPrograms !== null ? (
+              <span className="kpi-subtext-real">Chương trình đang quản lý</span>
+            ) : (
+              <span className="kpi-subtext-empty">
+                {isLoadingPrograms ? 'Đang tải...' : 'Chưa có dữ liệu'}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* KPI 4: Lớp đang mở */}
+        <div className="kpi-card">
+          <div className="kpi-icon-box kpi-orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+              <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
+            </svg>
+          </div>
+          <div className="kpi-details">
+            <span className="kpi-label">Lớp đang mở</span>
+            <span className="kpi-value">--</span>
+            <span className="kpi-subtext-empty">Chưa có dữ liệu</span>
+          </div>
+        </div>
       </section>
 
       {/* 3. Middle Section: Chart + Notifications + Work Calendar */}
@@ -154,113 +197,19 @@ export function App() {
             </div>
           </div>
 
-          <div className="chart-legend">
-            <div className="legend-item">
-              <span className="legend-color-dot bar-color" />
-              <span>Số sinh viên</span>
+          {/* Empty State for Chart (No Fake Series / Bars) */}
+          <div className="chart-wrapper chart-empty-wrapper">
+            <div className="chart-empty-state">
+              <svg className="chart-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+                <circle cx="12" cy="12" r="10" />
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+              </svg>
+              <div className="chart-empty-title">Chưa có dữ liệu thống kê</div>
+              <div className="chart-empty-desc">Cần API thống kê để hiển thị biểu đồ</div>
             </div>
-            <div className="legend-item">
-              <span className="legend-color-dot line-color" />
-              <span>Tỷ lệ học tập chuyên cần (%)</span>
-            </div>
-          </div>
-
-          {/* SVG Dual-Axis Chart */}
-          <div className="chart-wrapper">
-            <svg viewBox="0 0 520 220" className="interactive-chart-svg" preserveAspectRatio="none">
-              {/* Dashed Horizontal Grid Lines */}
-              <line x1="45" y1="30" x2="475" y2="30" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
-              <line x1="45" y1="65" x2="475" y2="65" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
-              <line x1="45" y1="100" x2="475" y2="100" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
-              <line x1="45" y1="135" x2="475" y2="135" stroke="#f1f5f9" strokeDasharray="4 4" strokeWidth="1" />
-              <line x1="45" y1="170" x2="475" y2="170" stroke="#e2e8f0" strokeWidth="1" />
-
-              {/* Left Y-axis labels (0 to 2500) */}
-              <text x="40" y="34" className="axis-text" textAnchor="end">2.500</text>
-              <text x="40" y="69" className="axis-text" textAnchor="end">2.000</text>
-              <text x="40" y="104" className="axis-text" textAnchor="end">1.500</text>
-              <text x="40" y="139" className="axis-text" textAnchor="end">1.000</text>
-              <text x="40" y="174" className="axis-text" textAnchor="end">0</text>
-
-              {/* Right Y-axis labels (60% to 100%) */}
-              <text x="480" y="34" className="axis-text" textAnchor="start">100%</text>
-              <text x="480" y="69" className="axis-text" textAnchor="start">90%</text>
-              <text x="480" y="104" className="axis-text" textAnchor="start">80%</text>
-              <text x="480" y="139" className="axis-text" textAnchor="start">70%</text>
-              <text x="480" y="174" className="axis-text" textAnchor="start">60%</text>
-
-              {/* Bars: X locations: 80, 165, 250, 335, 420 */}
-              {chartData.map((item, idx) => {
-                const x = 75 + idx * 85
-                const maxVal = 2500
-                const barHeight = (item.students / maxVal) * 140
-                const y = 170 - barHeight
-                const isHovered = hoveredBar === idx
-
-                return (
-                  <g
-                    key={item.term}
-                    onMouseEnter={() => setHoveredBar(idx)}
-                    onMouseLeave={() => setHoveredBar(null)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <rect
-                      x={x}
-                      y={y}
-                      width="26"
-                      height={barHeight}
-                      rx="4"
-                      fill={isHovered ? '#0284c7' : '#38bdf8'}
-                      className="chart-bar"
-                    />
-                    {isHovered && (
-                      <text x={x + 13} y={y - 6} textAnchor="middle" className="bar-hover-text">
-                        {item.students.toLocaleString()} SV
-                      </text>
-                    )}
-                  </g>
-                )
-              })}
-
-              {/* Spline line for Attendance Rate */}
-              {/* Coordinates:
-                  idx 0: (88, 170 - ((78-60)/40)*140) = (88, 107)
-                  idx 1: (173, 170 - ((85-60)/40)*140) = (173, 82.5)
-                  idx 2: (258, 170 - ((82-60)/40)*140) = (258, 93)
-                  idx 3: (343, 170 - ((88-60)/40)*140) = (343, 72)
-                  idx 4: (428, 170 - ((91-60)/40)*140) = (428, 61.5)
-              */}
-              <polyline
-                fill="none"
-                stroke="#1d4ed8"
-                strokeWidth="2.5"
-                points="88,107 173,82.5 258,93 343,72 428,61.5"
-              />
-
-              {/* Line Node Points */}
-              <circle cx="88" cy="107" r="4.5" fill="#1d4ed8" stroke="#ffffff" strokeWidth="2" />
-              <circle cx="173" cy="82.5" r="4.5" fill="#1d4ed8" stroke="#ffffff" strokeWidth="2" />
-              <circle cx="258" cy="93" r="4.5" fill="#1d4ed8" stroke="#ffffff" strokeWidth="2" />
-              <circle cx="343" cy="72" r="4.5" fill="#1d4ed8" stroke="#ffffff" strokeWidth="2" />
-              <circle cx="428" cy="61.5" r="4.5" fill="#1d4ed8" stroke="#ffffff" strokeWidth="2" />
-
-              {/* X-axis Term Labels */}
-              <text x="88" y="195" className="axis-text axis-term-text" textAnchor="middle">
-                Học kỳ 1 2024
-              </text>
-              <text x="173" y="195" className="axis-text axis-term-text" textAnchor="middle">
-                Học kỳ 2 2024
-              </text>
-              <text x="258" y="195" className="axis-text axis-term-text" textAnchor="middle">
-                Học kỳ hè 2024
-              </text>
-              <text x="343" y="195" className="axis-text axis-term-text" textAnchor="middle">
-                Học kỳ 1 2025
-              </text>
-              <text x="428" y="195" className="axis-text axis-term-text" textAnchor="middle">
-                Học kỳ 2 2025
-              </text>
-            </svg>
           </div>
         </div>
 
@@ -281,23 +230,16 @@ export function App() {
             </Link>
           </div>
 
-          <div className="notification-list">
-            {notifications.map((item) => (
-              <div key={item.id} className="notification-item">
-                <div className="notif-badge-row">
-                  <span className={`notif-type-tag tag-${item.typeColor}`}>
-                    {item.type}
-                  </span>
-                  {item.unread && <span className="notif-unread-dot" />}
-                </div>
-                <div className="notif-title-row">
-                  <a href="#notif" className="notif-item-title" onClick={(e) => e.preventDefault()}>
-                    {item.title}
-                  </a>
-                </div>
-                <div className="notif-date-row">{item.date}</div>
-              </div>
-            ))}
+          {/* Empty State for Notifications (No Hardcoded Announcements) */}
+          <div className="notification-list notification-empty-list">
+            <div className="ictu-empty-state" style={{ padding: '36px 16px' }}>
+              <svg className="ictu-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '40px', height: '40px', margin: '0 auto 10px auto' }}>
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              <p className="ictu-empty-title" style={{ fontSize: '0.95rem' }}>Chưa có thông báo</p>
+              <p className="ictu-empty-desc" style={{ fontSize: '0.8rem', margin: 0 }}>Hiện tại chưa có thông báo mới nào từ hệ thống đào tạo.</p>
+            </div>
           </div>
         </div>
 
@@ -384,20 +326,12 @@ export function App() {
             </div>
           </div>
 
-          {/* Schedule list */}
-          <div className="cal-schedule-items">
-            {schedules.map((item) => (
-              <div key={item.id} className="schedule-item">
-                <div className="sched-bullet" style={{ backgroundColor: item.color }} />
-                <div className="sched-body">
-                  <div className="sched-time" style={{ color: item.color }}>
-                    {item.time}
-                  </div>
-                  <div className="sched-title">{item.title}</div>
-                  <div className="sched-location">📍 {item.location}</div>
-                </div>
-              </div>
-            ))}
+          {/* Empty State for Schedule items (No Hardcoded Events) */}
+          <div className="cal-schedule-items cal-schedule-empty">
+            <div className="ictu-empty-state" style={{ padding: '24px 12px' }}>
+              <p className="ictu-empty-title" style={{ fontSize: '0.9rem' }}>Chưa có lịch công tác</p>
+              <p className="ictu-empty-desc" style={{ fontSize: '0.78rem', margin: 0 }}>Không có sự kiện hoặc lịch làm việc nào trong ngày.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -436,35 +370,15 @@ export function App() {
               </tr>
             </thead>
             <tbody>
-              {classSections.map((row) => (
-                <tr key={row.stt}>
-                  <td className="cell-muted">{row.stt}</td>
-                  <td className="cell-code">{row.code}</td>
-                  <td className="cell-highlight">{row.name}</td>
-                  <td>
-                    <span className="program-badge">{row.program}</span>
-                  </td>
-                  <td>{row.instructor}</td>
-                  <td className="cell-num">{row.students}</td>
-                  <td className="cell-schedule">{row.schedule}</td>
-                  <td className="cell-room">{row.room}</td>
-                  <td>
-                    <span className="status-pill status-open">
-                      <span className="status-dot" />
-                      {row.status}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button
-                      type="button"
-                      className="table-action-menu-btn"
-                      aria-label="Tùy chọn thao tác"
-                    >
-                      ⋮
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {/* Empty State Table Row (No Fake Class Sections) */}
+              <tr>
+                <td colSpan={10} style={{ textAlign: 'center', padding: '36px 16px', color: '#64748b' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#334155' }}>Chưa có lớp học phần đang mở</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Dữ liệu lớp học phần sẽ hiển thị khi có kỳ học mới được kích hoạt.</span>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
