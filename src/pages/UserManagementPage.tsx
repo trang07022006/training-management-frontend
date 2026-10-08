@@ -11,6 +11,7 @@ import { EditUserModal } from '../components/EditUserModal'
 import { UserRoleModal } from '../components/UserRoleModal'
 import { AccountLockModal } from '../components/AccountLockModal'
 import { BulkUserImportModal } from '../components/BulkUserImportModal'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './UserManagementPage.css'
 
 export interface UserManagementPageProps {
@@ -202,6 +203,7 @@ export function UserManagementPage({
 
     return (
         <div className="user-management-page" data-testid="user-management-page">
+            <Breadcrumb items={[{ label: 'Người dùng' }]} />
             {/* Header section */}
             <header className="user-page-header">
                 <div className="user-page-header-text">

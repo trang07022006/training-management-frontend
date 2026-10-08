@@ -257,7 +257,7 @@ export function UserProfilePage() {
 
     return (
         <div className="profile-page-container" data-testid="user-profile-page">
-            <Breadcrumb items={[{ label: 'Hồ sơ cá nhân' }]} />
+            <Breadcrumb items={[{ label: 'Thông tin cá nhân' }]} />
             {/* Header Section */}
             <header className="profile-header">
                 <div className="profile-badge-icon" aria-hidden="true">
