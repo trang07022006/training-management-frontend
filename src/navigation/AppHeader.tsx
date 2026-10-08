@@ -22,6 +22,7 @@ export function AppHeader({
         userId,
         userName: contextUserName,
         userEmail: contextUserEmail,
+        avatarBlobUrl,
         role,
         logout,
         clearSession,
@@ -93,7 +94,11 @@ export function AppHeader({
                     title="Hồ sơ cá nhân"
                 >
                     <div className="user-avatar" data-testid="user-avatar-circle" aria-hidden="true">
-                        {displayName.charAt(0).toUpperCase()}
+                        {avatarBlobUrl ? (
+                            <img src={avatarBlobUrl} alt={displayName} className="user-avatar-img" />
+                        ) : (
+                            displayName.charAt(0).toUpperCase()
+                        )}
                     </div>
                     <div className="user-details">
                         <span className="user-display-name" data-testid="user-display-name">

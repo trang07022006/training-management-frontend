@@ -56,10 +56,10 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    rgba(224, 242, 254, 0.94) 0%,
-    rgba(240, 249, 255, 0.88) 35%,
-    rgba(255, 255, 255, 0.4) 65%,
-    rgba(224, 242, 254, 0.6) 100%
+    var(--ictu-primary-dark) 0%,
+    rgba(11, 31, 58, 0.88) 35%,
+    rgba(11, 31, 58, 0.6) 65%,
+    rgba(11, 31, 58, 0.3) 100%
   );
 }
 
@@ -84,7 +84,7 @@
 .ictu-hero-sub-title {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #0d3875;
+  color: var(--ictu-teal, #0F766E);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -92,7 +92,7 @@
 .ictu-hero-main-title {
   font-size: 2.1rem;
   font-weight: 800;
-  color: #002b66;
+  color: var(--text-inverse, #FFFFFF);
   margin: 0;
   letter-spacing: -0.02em;
   line-height: 1.18;
@@ -101,7 +101,7 @@
 .ictu-hero-tagline {
   font-size: 0.92rem;
   font-weight: 500;
-  color: #1e3a5f;
+  color: rgba(255, 255, 255, 0.85);
   margin: 2px 0 0 0;
 }
 
@@ -116,11 +116,11 @@
   flex-direction: column;
   align-items: flex-end;
   font-family: 'Dancing Script', 'Caveat', 'Segoe Script', cursive;
-  color: #0d3875;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1.65rem;
   line-height: 1.25;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
 .calligraphy-line1 {

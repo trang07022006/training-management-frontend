@@ -11,6 +11,7 @@ export type StoredSessionData = {
     userId: string | null
     userName?: string | null
     userEmail?: string | null
+    userAvatar?: string | null
 }
 
 export const SESSION_STORAGE_KEY = 'tms_session_data'
@@ -41,8 +42,10 @@ export function saveStoredSession(data: StoredSessionData, remember = false): bo
             window.sessionStorage.setItem(SESSION_STORAGE_KEY, serialized)
         }
 
-        if (remember && isStorageAvailable(window.localStorage)) {
-            window.localStorage.setItem(SESSION_STORAGE_KEY, serialized)
+        if (isStorageAvailable(window.localStorage)) {
+            if (remember || window.localStorage.getItem(SESSION_STORAGE_KEY) !== null) {
+                window.localStorage.setItem(SESSION_STORAGE_KEY, serialized)
+            }
         }
 
         return true
@@ -96,6 +99,7 @@ export function loadStoredSession(): StoredSessionData | null {
                 : null
             const userName = 'userName' in parsed && typeof parsed.userName === 'string' ? parsed.userName : null
             const userEmail = 'userEmail' in parsed && typeof parsed.userEmail === 'string' ? parsed.userEmail : null
+            const userAvatar = 'userAvatar' in parsed && typeof parsed.userAvatar === 'string' ? parsed.userAvatar : null
 
             return {
                 tokens: {
@@ -108,6 +112,7 @@ export function loadStoredSession(): StoredSessionData | null {
                 userId,
                 userName,
                 userEmail,
+                userAvatar,
             }
         }
 

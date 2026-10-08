@@ -203,10 +203,17 @@ export async function deleteProfileAvatarApi(
  * Tạo Object URL an toàn từ Blob (SCRUM-121 Activity A5).
  */
 export function createSafeObjectUrl(blob: Blob): string {
-    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-        return URL.createObjectURL(blob)
+    if (!blob || !(blob instanceof Blob)) {
+        return `blob:fallback-${Math.random().toString(36).substring(2)}`
     }
-    return `blob:${Math.random().toString(36).substring(2)}`
+    if (typeof window !== 'undefined' && typeof window.URL !== 'undefined' && typeof window.URL.createObjectURL === 'function') {
+        try {
+            return window.URL.createObjectURL(blob)
+        } catch {
+            return `blob:fallback-${Math.random().toString(36).substring(2)}`
+        }
+    }
+    return `blob:fallback-${Math.random().toString(36).substring(2)}`
 }
 
 /**

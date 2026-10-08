@@ -6,8 +6,11 @@ import { getTrainingPrograms } from './api/trainingProgramApi'
 import './App.css'
 
 export function App() {
-  const [selectedYear, setSelectedYear] = useState('2024 - 2025')
-  const [activeCalendarDay, setActiveCalendarDay] = useState(12)
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+  const today = new Date().getDate()
+  const [selectedYear, setSelectedYear] = useState(`${currentYear} - ${currentYear + 1}`)
+  const [activeCalendarDay, setActiveCalendarDay] = useState(today)
   const [totalPrograms, setTotalPrograms] = useState<number | null>(null)
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(false)
 
@@ -191,8 +194,8 @@ export function App() {
                 onChange={(e) => setSelectedYear(e.target.value)}
                 aria-label="Chọn năm học"
               >
-                <option value="2024 - 2025">Năm học 2024 - 2025</option>
-                <option value="2023 - 2024">Năm học 2023 - 2024</option>
+                <option value={`${currentYear} - ${currentYear + 1}`}>Năm học {currentYear} - {currentYear + 1}</option>
+                <option value={`${currentYear - 1} - ${currentYear}`}>Năm học {currentYear - 1} - {currentYear}</option>
               </select>
             </div>
           </div>
@@ -208,7 +211,7 @@ export function App() {
                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
               </svg>
               <div className="chart-empty-title">Chưa có dữ liệu thống kê</div>
-              <div className="chart-empty-desc">Cần API thống kê để hiển thị biểu đồ</div>
+              <div className="chart-empty-desc">Chưa có dữ liệu thống kê cho kỳ này</div>
             </div>
           </div>
         </div>
@@ -262,7 +265,7 @@ export function App() {
           {/* Mini Calendar */}
           <div className="mini-calendar-widget">
             <div className="cal-month-nav">
-              <span className="cal-month-name">Tháng 3, 2025</span>
+              <span className="cal-month-name">Tháng {currentMonth}, {currentYear}</span>
               <div className="cal-nav-buttons">
                 <button type="button" className="cal-nav-btn" aria-label="Tháng trước">‹</button>
                 <button type="button" className="cal-nav-btn" aria-label="Tháng sau">›</button>
@@ -281,48 +284,24 @@ export function App() {
 
             <div className="cal-days-grid">
               {/* Prev month days */}
-              <span className="cal-day day-faded">24</span>
-              <span className="cal-day day-faded">25</span>
-              <span className="cal-day day-faded">26</span>
-              <span className="cal-day day-faded">27</span>
-              <span className="cal-day day-faded">28</span>
+              {Array.from({ length: new Date(currentYear, currentMonth - 1, 1).getDay() === 0 ? 6 : new Date(currentYear, currentMonth - 1, 1).getDay() - 1 }).map((_, i) => {
+                const prevDays = new Date(currentYear, currentMonth - 1, 0).getDate();
+                return <span key={`prev-${i}`} className="cal-day day-faded">{prevDays - i}</span>
+              }).reverse()}
+              
               {/* Current month days */}
-              <span className="cal-day">1</span>
-              <span className="cal-day">2</span>
-              <span className="cal-day">3</span>
-              <span className="cal-day">4</span>
-              <span className="cal-day">5</span>
-              <span className="cal-day">6</span>
-              <span className="cal-day">7</span>
-              <span className="cal-day">8</span>
-              <span className="cal-day">9</span>
-              <span className="cal-day">10</span>
-              <span className="cal-day">11</span>
-              <span
-                className={`cal-day ${activeCalendarDay === 12 ? 'day-active' : ''}`}
-                onClick={() => setActiveCalendarDay(12)}
-              >
-                12
-              </span>
-              <span className="cal-day">13</span>
-              <span className="cal-day">14</span>
-              <span className="cal-day">15</span>
-              <span className="cal-day">16</span>
-              <span className="cal-day">17</span>
-              <span className="cal-day">18</span>
-              <span className="cal-day">19</span>
-              <span className="cal-day">20</span>
-              <span className="cal-day">21</span>
-              <span className="cal-day">22</span>
-              <span className="cal-day">23</span>
-              <span className="cal-day">24</span>
-              <span className="cal-day">25</span>
-              <span className="cal-day">26</span>
-              <span className="cal-day">27</span>
-              <span className="cal-day">28</span>
-              <span className="cal-day">29</span>
-              <span className="cal-day">30</span>
-              <span className="cal-day">31</span>
+              {Array.from({ length: new Date(currentYear, currentMonth, 0).getDate() }).map((_, i) => {
+                const day = i + 1;
+                return (
+                  <span
+                    key={`curr-${day}`}
+                    className={`cal-day ${activeCalendarDay === day ? 'day-active' : ''}`}
+                    onClick={() => setActiveCalendarDay(day)}
+                  >
+                    {day}
+                  </span>
+                )
+              })}
             </div>
           </div>
 

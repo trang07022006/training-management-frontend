@@ -11,6 +11,7 @@ import {
 import type { ReactNode } from 'react'
 
 import { createSessionClient, SessionApiError } from './sessionClient'
+import { getProfileAvatarApi, createSafeObjectUrl, revokeSafeObjectUrl } from '../api/userAvatarApi'
 import {
     loadStoredSession,
     saveStoredSession,
@@ -32,6 +33,8 @@ type SessionContextValue = {
     userId: string | null
     userName: string | null
     userEmail: string | null
+    userAvatar: string | null
+    avatarBlobUrl: string | null
     role: string | null
     roles: string[]
     permissions: string[]
@@ -44,7 +47,10 @@ type SessionContextValue = {
         initialUserEmail?: string | null,
         initialRoles?: string[] | null,
         initialPermissions?: string[] | null,
+        initialUserAvatar?: string | null,
     ) => void
+    updateSessionUser: (name?: string | null, avatar?: string | null) => void
+    reloadAvatar: () => Promise<void>
     clearSession: () => void
     logout: () => Promise<void>
     verifySessionUser: () => Promise<string>
@@ -91,6 +97,8 @@ export function SessionProvider({
     const [userId, setUserId] = useState<string | null>(() => initialStored?.userId ?? null)
     const [userName, setUserName] = useState<string | null>(() => initialStored?.userName ?? null)
     const [userEmail, setUserEmail] = useState<string | null>(() => initialStored?.userEmail ?? null)
+    const [userAvatar, setUserAvatar] = useState<string | null>(() => initialStored?.userAvatar ?? null)
+    const [avatarBlobUrl, setAvatarBlobUrl] = useState<string | null>(null)
     const [endReason, setEndReason] = useState<string | null>(null)
 
     // Thay đổi khi bắt đầu hoặc kết thúc một phiên ở frontend.
@@ -104,6 +112,11 @@ export function SessionProvider({
         setUserId(null)
         setUserName(null)
         setUserEmail(null)
+        setUserAvatar(null)
+        if (avatarBlobUrl) {
+            revokeSafeObjectUrl(avatarBlobUrl)
+        }
+        setAvatarBlobUrl(null)
         setEndReason(code)
         setRole(null)
         setRoles([])
@@ -183,6 +196,7 @@ export function SessionProvider({
             initialUserEmail?: string | null,
             initialRoles?: string[] | null,
             initialPermissions?: string[] | null,
+            initialUserAvatar?: string | null,
         ) => {
             client.setSession(tokens)
 
@@ -192,6 +206,7 @@ export function SessionProvider({
             setUserId(initialUserId ?? null)
             setUserName(initialUserName ?? null)
             setUserEmail(initialUserEmail ?? null)
+            setUserAvatar(initialUserAvatar ?? null)
             setEndReason(null)
             setRole(initialRole ?? null)
 
@@ -216,6 +231,7 @@ export function SessionProvider({
                     userId: initialUserId ?? null,
                     userName: initialUserName ?? null,
                     userEmail: initialUserEmail ?? null,
+                    userAvatar: initialUserAvatar ?? null,
                 },
                 remember,
             )
@@ -241,6 +257,42 @@ export function SessionProvider({
     const clearSession = useCallback(() => {
         void logout()
     }, [logout])
+
+    const updateSessionUser = useCallback((name?: string | null, avatar?: string | null) => {
+        if (name !== undefined) setUserName(name)
+        if (avatar !== undefined) setUserAvatar(avatar)
+        
+        const existing = loadStoredSession()
+        if (existing) {
+            saveStoredSession({
+                ...existing,
+                userName: name !== undefined ? name : existing.userName,
+                userAvatar: avatar !== undefined ? avatar : existing.userAvatar,
+            })
+        }
+    }, [])
+
+    const reloadAvatar = useCallback(async () => {
+        try {
+            const blob = await getProfileAvatarApi(client.request)
+            setAvatarBlobUrl((prev) => {
+                if (prev) revokeSafeObjectUrl(prev)
+                return createSafeObjectUrl(blob)
+            })
+        } catch {
+            setAvatarBlobUrl((prev) => {
+                if (prev) revokeSafeObjectUrl(prev)
+                return null
+            })
+        }
+    }, [client])
+
+    // Load avatar khi session bắt đầu hoặc restore thành công và đã có userId
+    useEffect(() => {
+        if (hasSession && userId) {
+            void reloadAvatar()
+        }
+    }, [hasSession, userId, reloadAvatar])
 
     const verifySessionUser = useCallback(async (): Promise<string> => {
         const expectedVersion = sessionVersion.current
@@ -279,10 +331,14 @@ export function SessionProvider({
             userId,
             userName,
             userEmail,
+            userAvatar,
+            avatarBlobUrl,
             role,
             roles,
             permissions,
             startSession,
+            updateSessionUser,
+            reloadAvatar,
             clearSession,
             logout,
             verifySessionUser,
@@ -296,10 +352,14 @@ export function SessionProvider({
             userId,
             userName,
             userEmail,
+            userAvatar,
+            avatarBlobUrl,
             role,
             roles,
             permissions,
             startSession,
+            updateSessionUser,
+            reloadAvatar,
             clearSession,
             logout,
             verifySessionUser,

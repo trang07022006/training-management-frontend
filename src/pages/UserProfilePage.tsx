@@ -17,7 +17,7 @@ import './UserProfilePage.css'
 const VIETNAMESE_PHONE_REGEX = /^0[35789]\d{8}$/
 
 export function UserProfilePage() {
-    const { request, role: sessionRole } = useSession()
+    const { request, role: sessionRole, updateSessionUser, reloadAvatar } = useSession()
     const navigate = useNavigate()
     const location = useLocation()
 
@@ -178,6 +178,7 @@ export function UserProfilePage() {
             setAddress(updated.address || '')
             setFieldErrors({})
             setSuccessMessage('Cập nhật hồ sơ thành công.')
+            updateSessionUser(updated.name)
         } catch (err) {
             if (err instanceof ApiError) {
                 setErrorMessage(err.message)
@@ -281,9 +282,10 @@ export function UserProfilePage() {
                     email={profile.email || ''}
                     roleDisplay={roleDisplay}
                     avatarUrl={profile.avatar_url ?? null}
-                    onAvatarUrlChange={(url) =>
+                    onAvatarUrlChange={(url) => {
                         setProfile((prev) => (prev ? { ...prev, avatar_url: url } : prev))
-                    }
+                        void reloadAvatar()
+                    }}
                 />
             )}
 

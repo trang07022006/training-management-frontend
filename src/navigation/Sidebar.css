@@ -6,11 +6,11 @@
     height: 100vh;
     height: 100dvh;
     box-sizing: border-box;
-    background: linear-gradient(180deg, #0d2850 0%, #0a2042 100%);
-    color: #f8fafc;
+    background: var(--ictu-primary-dark, #0B1F3A);
+    color: var(--bg-surface-alt, #F8FAFC);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
     position: fixed;
     top: 0;
     left: 0;
@@ -137,7 +137,7 @@
     font-size: 0.88rem;
     font-weight: 500;
     border-radius: 8px;
-    transition: all 0.18s ease-in-out;
+    transition: all 0.2s ease-in-out;
     position: relative;
 }
 
@@ -148,10 +148,10 @@
 
 /* Active style matching screenshot: bright electric blue rounded pill */
 .sidebar-nav-link.is-active {
-    background: #1677ff;
-    color: #ffffff;
+    background: var(--ictu-action, #2563EB);
+    color: var(--text-inverse, #ffffff);
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.35);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 .menu-icon {
@@ -183,8 +183,8 @@
     height: 82px;
     display: flex;
     align-items: flex-end;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: #081a33;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-watermark-bg {
@@ -262,7 +262,7 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #1677ff, #0958d9);
+    background: linear-gradient(135deg, var(--ictu-action, #2563EB), var(--ictu-action-hover, #1D4ED8));
     color: #ffffff;
     font-weight: 600;
     font-size: 0.85rem;
@@ -271,6 +271,13 @@
     justify-content: center;
     flex-shrink: 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.user-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .sidebar-user-info {

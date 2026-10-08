@@ -90,7 +90,7 @@ let createSpy: ReturnType<typeof vi.fn>
 let revokeSpy: ReturnType<typeof vi.fn>
 
 function renderPage() {
-    mockUseSession.mockReturnValue({ hasSession: true, userId: 'user-001', role: 'trainer', request: mockRequest })
+    mockUseSession.mockReturnValue({ hasSession: true, userId: 'user-001', role: 'trainer', request: mockRequest, reloadAvatar: vi.fn(), updateSessionUser: vi.fn() })
     return render(
         <MemoryRouter>
             <UserProfilePage />

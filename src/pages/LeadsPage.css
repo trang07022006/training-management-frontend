@@ -67,11 +67,11 @@
 }
 
 .leads-table th {
-  background: #f8fafc;
-  color: #475569;
-  font-weight: 600;
+  background: var(--bg-surface-alt, #f8fafc);
+  color: var(--ictu-primary-dark, #0B1F3A);
+  font-weight: 700;
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border, #DCE4EF);
   white-space: nowrap;
 }
 
@@ -83,7 +83,7 @@
 }
 
 .leads-table tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--primary-light, #eff6ff);
 }
 
 /* Status Badges */
@@ -140,9 +140,9 @@
   padding: 0.35rem 0.65rem;
   border-radius: 4px;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.18s ease;
 }
 
 .btn-action-view:hover {
@@ -180,6 +180,7 @@
 .btn-pagination:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transition: all 0.18s ease;
 }
 
 .btn-pagination:not(:disabled):hover {

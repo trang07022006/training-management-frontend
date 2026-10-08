@@ -142,6 +142,7 @@ export function Sidebar({
         userId,
         userName: contextUserName,
         userEmail: contextUserEmail,
+        avatarBlobUrl,
     } = useSession()
     const location = useLocation()
 
@@ -265,7 +266,11 @@ export function Sidebar({
                         title="Hồ sơ cá nhân"
                     >
                         <div className="sidebar-user-avatar" aria-hidden="true">
-                            {finalDisplayName.charAt(0).toUpperCase()}
+                            {avatarBlobUrl ? (
+                                <img src={avatarBlobUrl} alt={finalDisplayName} className="user-avatar-img" />
+                            ) : (
+                                finalDisplayName.charAt(0).toUpperCase()
+                            )}
                         </div>
                         <div className="sidebar-user-info">
                             <span className="sidebar-user-name" data-testid="sidebar-user-name">
