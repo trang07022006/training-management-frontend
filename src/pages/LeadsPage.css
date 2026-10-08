@@ -606,6 +606,8 @@
 .leads-search-input {
   flex: 1 1 240px;
   min-width: 200px;
+  height: 38px;
+  box-sizing: border-box;
   padding: 0.5rem 0.85rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
@@ -622,7 +624,9 @@
 
 .leads-filter-select,
 .leads-filter-date {
-  padding: 0.5rem 0.75rem;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0.4rem 0.75rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -645,10 +649,15 @@
 }
 
 .btn-clear-filters {
+  height: 38px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: #f1f5f9;
   color: #475569;
   border: 1px solid #cbd5e1;
-  padding: 0.5rem 0.85rem;
+  padding: 0.4rem 0.85rem;
   border-radius: 6px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -666,18 +675,44 @@
   .leads-filter-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.625rem;
+    padding: 0.875rem;
   }
 
-  .leads-search-input,
+  .leads-search-input {
+    flex: 0 0 auto;
+    width: 100%;
+    height: 38px;
+    min-height: 38px;
+    max-height: 38px;
+    min-width: 0;
+  }
+
   .leads-filter-select,
-  .leads-filter-date,
+  .leads-filter-date {
+    width: 100%;
+    height: 38px;
+    min-height: 38px;
+    min-width: 0;
+  }
+
   .btn-clear-filters {
     width: 100%;
+    height: 38px;
+    min-height: 38px;
   }
 
   .leads-date-group {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.25rem;
+    width: 100%;
+  }
+
+  .leads-date-label {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
   }
 }
 
