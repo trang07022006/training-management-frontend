@@ -85,19 +85,24 @@
 }
 
 .sidebar-close-btn {
-    display: none;
-    background: none;
-    border: none;
-    color: #94a3b8;
-    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #93c5fd;
     cursor: pointer;
     margin-left: auto;
-    padding: 0 4px;
+    padding: 6px;
     line-height: 1;
+    transition: all 0.15s ease;
 }
 
 .sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .sidebar-nav {
@@ -326,8 +331,6 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
-        padding: 0 4px;
     }
 
     .sidebar-backdrop {

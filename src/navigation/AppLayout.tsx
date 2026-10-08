@@ -23,12 +23,18 @@ export function AppLayout() {
         setSidebarOpen(false)
     }
 
+    const handleCollapseSidebar = () => {
+        setSidebarOpen(false)
+        setIsSidebarCollapsed(true)
+    }
+
     return (
         <div className="app-layout-container" data-testid="app-layout">
             <Sidebar
                 isOpen={sidebarOpen}
                 isCollapsed={isSidebarCollapsed}
                 onClose={handleCloseSidebar}
+                onToggleCollapse={handleCollapseSidebar}
             />
 
             <div className={`app-main-viewport ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>

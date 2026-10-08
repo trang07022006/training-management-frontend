@@ -44,6 +44,13 @@
     color: #0284c7;
 }
 
+/* Khi sidebar đang mở trên desktop, ẩn nút toggle trên header vì nút 3 gạch đã nằm ở góc phải bên trong sidebar */
+@media (min-width: 769px) {
+    .app-main-viewport:not(.sidebar-collapsed) .sidebar-toggle-btn {
+        display: none;
+    }
+}
+
 .header-title-container {
     display: flex;
     flex-direction: column;

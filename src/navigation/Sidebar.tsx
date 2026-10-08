@@ -12,6 +12,7 @@ export interface SidebarProps {
     isOpen?: boolean
     isCollapsed?: boolean
     onClose?: () => void
+    onToggleCollapse?: () => void
     customMenuItems?: readonly MenuItem[]
     userName?: string | null
     userEmail?: string | null
@@ -128,6 +129,7 @@ export function Sidebar({
     isOpen = false,
     isCollapsed = false,
     onClose,
+    onToggleCollapse,
     customMenuItems,
     userName: propUserName,
     userEmail: propUserEmail,
@@ -189,16 +191,21 @@ export function Sidebar({
                         <span className="sidebar-brand-title">QUẢN LÝ ĐÀO TẠO</span>
                     </div>
 
-                    {/* Nút đóng sidebar trên màn hình di động */}
-                    {onClose && (
+                    {/* Nút 3 gạch thu gọn / ẩn thanh menu ở góc bên phải của sidebar */}
+                    {(onToggleCollapse || onClose) && (
                         <button
                             type="button"
                             className="sidebar-close-btn"
-                            onClick={onClose}
-                            aria-label="Đóng thanh điều hướng"
+                            onClick={onToggleCollapse || onClose}
+                            aria-label="Thu gọn thanh điều hướng"
+                            title="Thu gọn thanh điều hướng"
                             data-testid="sidebar-close-button"
                         >
-                            &times;
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+                                <line x1="3" y1="12" x2="21" y2="12" />
+                                <line x1="3" y1="6" x2="21" y2="6" />
+                                <line x1="3" y1="18" x2="21" y2="18" />
+                            </svg>
                         </button>
                     )}
                 </div>
