@@ -728,12 +728,12 @@ export function ProgramStructurePage({
 
                                                         {/* Code */}
                                                         <td className="cell-subject-code" data-testid={`subject-code-${item.program_subject_id}`}>
-                                                            {item.code}
+                                                            {item.code || (item as any).subject_code}
                                                         </td>
 
                                                         {/* Name */}
                                                         <td className="cell-subject-name" data-testid={`subject-name-${item.program_subject_id}`}>
-                                                            {item.name}
+                                                            {item.name || (item as any).subject_name}
                                                         </td>
 
                                                         {/* Credits */}
@@ -763,10 +763,10 @@ export function ProgramStructurePage({
                                                                         <span
                                                                             key={p.id}
                                                                             className="prereq-badge"
-                                                                            title={p.name}
+                                                                            title={p.name || (p as any).prerequisite_subject_name || (p as any).prerequisite_name}
                                                                             data-testid={`prereq-badge-${p.id}`}
                                                                         >
-                                                                            🔗 {p.code || 'Môn tiên quyết'}
+                                                                            🔗 {p.code || (p as any).prerequisite_subject_code || (p as any).prerequisite_code || 'Môn tiên quyết'}
                                                                         </span>
                                                                     ))
                                                                 )}
@@ -1180,8 +1180,10 @@ export function ProgramStructurePage({
                                             data-testid={`prereq-item-${prereq.id}`}
                                         >
                                             <span className="prereq-item-info">
-                                                🔗 {prereq.prerequisite_code || 'Môn học'}{' '}
-                                                {prereq.prerequisite_name ? `- ${prereq.prerequisite_name}` : ''}
+                                                🔗 {prereq.prerequisite_code || (prereq as any).prerequisite_subject_code || (prereq as any).code || 'Môn học'}{' '}
+                                                {(prereq.prerequisite_name || (prereq as any).prerequisite_subject_name || (prereq as any).name)
+                                                    ? `- ${prereq.prerequisite_name || (prereq as any).prerequisite_subject_name || (prereq as any).name}`
+                                                    : ''}
                                             </span>
                                             <button
                                                 type="button"
@@ -1222,7 +1224,7 @@ export function ProgramStructurePage({
                                                     key={opt.program_subject_id}
                                                     value={opt.program_subject_id}
                                                 >
-                                                    {opt.code} - {opt.name}{' '}
+                                                    {opt.code || (opt as any).subject_code} - {opt.name || (opt as any).subject_name}{' '}
                                                     {opt.semester ? `(Kỳ ${opt.semester})` : ''}
                                                 </option>
                                             ))}

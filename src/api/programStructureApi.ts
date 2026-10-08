@@ -89,6 +89,62 @@ export interface ProgramStructureFilterParams {
 }
 
 /**
+ * Chuẩn hóa đối tượng ProgramSubject từ backend payload (hỗ trợ cả subject_code/subject_name và code/name).
+ */
+export function normalizeProgramSubject(item: any, defaultProgramId?: string): ProgramSubject {
+    if (!item) {
+        return {
+            program_subject_id: '',
+            program_id: defaultProgramId || '',
+            subject_id: '',
+            code: '',
+            name: '',
+            credits: 0,
+            total_sessions: null,
+            status: 'draft',
+            semester: null,
+            is_mandatory: true,
+            order_index: 1,
+            prerequisites: [],
+        }
+    }
+
+    const rawPrereqs = Array.isArray(item.prerequisites) ? item.prerequisites : []
+    const mappedPrereqs: ProgramSubjectPrerequisiteItem[] = rawPrereqs.map((p: any) => ({
+        id: String(p.id || ''),
+        prerequisite_program_subject_id: String(p.prerequisite_program_subject_id || ''),
+        code: p.code || p.prerequisite_subject_code || p.prerequisite_code || '',
+        name: p.name || p.prerequisite_subject_name || p.prerequisite_name || '',
+        credits: typeof p.credits === 'number' ? p.credits : undefined,
+    }))
+
+    return {
+        program_subject_id: String(item.program_subject_id || item.id || ''),
+        program_id: String(item.program_id || defaultProgramId || ''),
+        subject_id: String(item.subject_id || ''),
+        code: String(item.code || item.subject_code || ''),
+        name: String(item.name || item.subject_name || ''),
+        credits:
+            typeof item.credits === 'number'
+                ? item.credits
+                : typeof item.subject_credits === 'number'
+                  ? item.subject_credits
+                  : 0,
+        total_sessions:
+            item.total_sessions !== undefined && item.total_sessions !== null
+                ? Number(item.total_sessions)
+                : item.subject_total_sessions !== undefined && item.subject_total_sessions !== null
+                  ? Number(item.subject_total_sessions)
+                  : null,
+        status: String(item.status || item.subject_status || 'draft'),
+        semester: item.semester !== undefined && item.semester !== null ? Number(item.semester) : null,
+        is_mandatory: typeof item.is_mandatory === 'boolean' ? item.is_mandatory : Boolean(item.is_mandatory),
+        order_index: typeof item.order_index === 'number' ? item.order_index : Number(item.order_index || 1),
+        prerequisites: mappedPrereqs,
+    }
+}
+
+/**
  * Xem cấu trúc môn học của một chương trình đào tạo.
  * GET /api/v1/training-programs/<program_id>/subjects
  * Quyền: course.view
@@ -126,7 +182,25 @@ export async function getProgramStructure(
         throw new ApiError(message, code, res.status)
     }
 
-    return body
+    const rawItems = Array.isArray(body.items) ? body.items : []
+    const mappedItems = rawItems.map((it: any) => normalizeProgramSubject(it, programId))
+
+    return {
+        program: body.program || {
+            id: programId,
+            code: '',
+            name: '',
+            description: null,
+            duration_semesters: null,
+            status: 'active',
+        },
+        total_subjects: typeof body.total_subjects === 'number' ? body.total_subjects : mappedItems.length,
+        total_credits:
+            typeof body.total_credits === 'number'
+                ? body.total_credits
+                : mappedItems.reduce((acc, curr) => acc + (curr.credits || 0), 0),
+        items: mappedItems,
+    }
 }
 
 /**
@@ -163,7 +237,8 @@ export async function addSubjectToProgram(
         throw new ApiError(message, code, res.status)
     }
 
-    return body.item || body
+    const raw = body.item || body
+    return normalizeProgramSubject(raw, programId)
 }
 
 /**
@@ -200,7 +275,8 @@ export async function updateProgramSubject(
         throw new ApiError(message, code, res.status)
     }
 
-    return body.item || body
+    const raw = body.item || body
+    return normalizeProgramSubject(raw, programId)
 }
 
 /**
@@ -301,7 +377,23 @@ export async function getPrerequisites(
         throw new ApiError(message, code, res.status)
     }
 
-    return body.prerequisites ?? []
+    const rawList = Array.isArray(body)
+        ? body
+        : Array.isArray(body.prerequisites)
+          ? body.prerequisites
+          : Array.isArray(body.data)
+            ? body.data
+            : []
+
+    return rawList.map((p: any) => ({
+        id: String(p.id || ''),
+        program_id: String(p.program_id || programId),
+        program_subject_id: String(p.program_subject_id || programSubjectId),
+        prerequisite_program_subject_id: String(p.prerequisite_program_subject_id || ''),
+        created_at: p.created_at,
+        prerequisite_code: p.prerequisite_code || p.prerequisite_subject_code || p.code || '',
+        prerequisite_name: p.prerequisite_name || p.prerequisite_subject_name || p.name || '',
+    }))
 }
 
 /**
@@ -339,7 +431,16 @@ export async function addPrerequisite(
         throw new ApiError(message, code, res.status)
     }
 
-    return body.prerequisite || body
+    const raw = body.prerequisite || body
+    return {
+        id: String(raw.id || ''),
+        program_id: String(raw.program_id || programId),
+        program_subject_id: String(raw.program_subject_id || programSubjectId),
+        prerequisite_program_subject_id: String(raw.prerequisite_program_subject_id || prerequisiteProgramSubjectId),
+        created_at: raw.created_at,
+        prerequisite_code: raw.prerequisite_code || raw.prerequisite_subject_code || raw.code || '',
+        prerequisite_name: raw.prerequisite_name || raw.prerequisite_subject_name || raw.name || '',
+    }
 }
 
 /**

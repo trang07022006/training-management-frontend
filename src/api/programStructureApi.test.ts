@@ -290,5 +290,77 @@ describe('programStructureApi - API Client (SCRUM-124 Activity A6)', () => {
             )
             expect(res.message).toBeDefined()
         })
+
+        it('getPrerequisites xử lý chính xác khi backend trả về mảng trực tiếp [ ... ] (SCRUM-124 fix)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => [
+                    {
+                        id: 'prereq-real-1',
+                        program_id: 'prog-111',
+                        program_subject_id: 'ps-2',
+                        prerequisite_program_subject_id: 'ps-1',
+                        prerequisite_subject_code: 'QA-0810-M1',
+                        prerequisite_subject_name: 'Môn tiên quyết thực tế',
+                    },
+                ],
+            }) as unknown as RequestFunction
+
+            const res = await getPrerequisites(mockRequest, 'prog-111', 'ps-2')
+            expect(res.length).toBe(1)
+            expect(res[0].prerequisite_code).toBe('QA-0810-M1')
+            expect(res[0].prerequisite_name).toBe('Môn tiên quyết thực tế')
+        })
+
+        it('getProgramStructure chuẩn hóa đúng subject_code/subject_name từ backend thực tế (SCRUM-124 fix)', async () => {
+            const realBackendPayload = {
+                program: {
+                    id: 'b2b3f9c8-acdf-485a-899d-dc76e639470a',
+                    code: 'QA-0810-CT',
+                    name: 'Chương trình QA',
+                    status: 'active',
+                    duration_semesters: 2,
+                },
+                total_subjects: 1,
+                total_credits: 3,
+                items: [
+                    {
+                        program_subject_id: 'ps-real-1',
+                        subject_id: 'sub-real-1',
+                        subject_code: 'QA-0810-M1',
+                        subject_name: 'Thiết kế học liệu',
+                        credits: 3,
+                        total_sessions: 30,
+                        subject_status: 'active',
+                        semester: 1,
+                        is_mandatory: true,
+                        order_index: 1,
+                        prerequisites: [
+                            {
+                                id: 'prereq-item-1',
+                                prerequisite_program_subject_id: 'ps-prereq-1',
+                                prerequisite_subject_code: 'LIVE-S1-b45466b9',
+                                prerequisite_subject_name: 'Môn nền tảng',
+                            },
+                        ],
+                    },
+                ],
+            }
+
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => realBackendPayload,
+            }) as unknown as RequestFunction
+
+            const res = await getProgramStructure(mockRequest, 'b2b3f9c8-acdf-485a-899d-dc76e639470a')
+            expect(res.items.length).toBe(1)
+            expect(res.items[0].code).toBe('QA-0810-M1')
+            expect(res.items[0].name).toBe('Thiết kế học liệu')
+            expect(res.items[0].status).toBe('active')
+            expect(res.items[0].prerequisites.length).toBe(1)
+            expect(res.items[0].prerequisites[0].code).toBe('LIVE-S1-b45466b9')
+            expect(res.items[0].prerequisites[0].name).toBe('Môn nền tảng')
+        })
     })
 })
