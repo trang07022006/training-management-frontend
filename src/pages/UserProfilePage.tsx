@@ -17,7 +17,7 @@ import './UserProfilePage.css'
 const VIETNAMESE_PHONE_REGEX = /^0[35789]\d{8}$/
 
 export function UserProfilePage() {
-    const { request, role: sessionRole, updateSessionUser, reloadAvatar } = useSession()
+    const { request, role: sessionRole, updateSessionUser, reloadAvatar, avatarBlobUrl } = useSession()
     const navigate = useNavigate()
     const location = useLocation()
 
@@ -315,7 +315,11 @@ export function UserProfilePage() {
             {/* User Hero Summary (Avatar mặc định, Họ tên, Vai trò, Email) */}
             <div className="profile-hero-card">
                 <div className="profile-hero-avatar" aria-hidden="true">
-                    {name ? name.trim().charAt(0).toUpperCase() : 'U'}
+                    {avatarBlobUrl ? (
+                        <img src={avatarBlobUrl} alt={name} className="user-avatar-img" />
+                    ) : (
+                        name ? name.trim().charAt(0).toUpperCase() : 'U'
+                    )}
                 </div>
                 <div className="profile-hero-info">
                     <h2 className="profile-hero-name">{name || profile?.name || 'Người dùng'}</h2>
