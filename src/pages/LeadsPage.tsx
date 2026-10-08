@@ -12,6 +12,7 @@ import {
     type LeadStatus,
     type AssignableUser,
 } from '../api/leadApi'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './LeadsPage.css'
 
 export function LeadsPage() {
@@ -216,6 +217,7 @@ export function LeadsPage() {
 
     return (
         <div className="leads-page-container">
+            <Breadcrumb items={[{ label: 'Tư vấn tuyển sinh' }]} />
             <header className="leads-header">
                 <h1 className="leads-header-title">Quản lý Tư vấn Tuyển sinh</h1>
                 <p className="leads-header-desc">
