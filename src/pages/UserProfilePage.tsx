@@ -17,7 +17,7 @@ import './UserProfilePage.css'
 const VIETNAMESE_PHONE_REGEX = /^0[35789]\d{8}$/
 
 export function UserProfilePage() {
-    const { request, role: sessionRole, updateSessionUser, reloadAvatar, avatarBlobUrl } = useSession()
+    const { request, role: sessionRole, updateSessionUser, reloadAvatar } = useSession()
     const navigate = useNavigate()
     const location = useLocation()
 
@@ -259,6 +259,7 @@ export function UserProfilePage() {
     return (
         <div className="profile-page-container" data-testid="user-profile-page">
             <Breadcrumb items={[{ label: 'Thông tin cá nhân' }]} />
+
             {/* Header Section */}
             <header className="profile-header">
                 <div className="profile-badge-icon" aria-hidden="true">
@@ -273,21 +274,6 @@ export function UserProfilePage() {
                     </p>
                 </div>
             </header>
-
-            {/* Avatar Section (SCRUM-121 A6) - độc lập với form hồ sơ */}
-            {profile && (
-                <ProfileAvatarSection
-                    request={request}
-                    name={profile.name || ''}
-                    email={profile.email || ''}
-                    roleDisplay={roleDisplay}
-                    avatarUrl={profile.avatar_url ?? null}
-                    onAvatarUrlChange={(url) => {
-                        setProfile((prev) => (prev ? { ...prev, avatar_url: url } : prev))
-                        void reloadAvatar()
-                    }}
-                />
-            )}
 
             {/* Notification Banners */}
             {successMessage && (
@@ -312,250 +298,294 @@ export function UserProfilePage() {
                 </div>
             )}
 
-            {/* User Hero Summary (Avatar mặc định, Họ tên, Vai trò, Email) */}
-            <div className="profile-hero-card">
-                <div className="profile-hero-avatar" aria-hidden="true">
-                    {avatarBlobUrl ? (
-                        <img src={avatarBlobUrl} alt={name} className="user-avatar-img" />
-                    ) : (
-                        name ? name.trim().charAt(0).toUpperCase() : 'U'
-                    )}
-                </div>
-                <div className="profile-hero-info">
-                    <h2 className="profile-hero-name">{name || profile?.name || 'Người dùng'}</h2>
-                    <div className="profile-hero-meta">
-                        <span className="profile-hero-email">{profile?.email}</span>
-                        <span className="profile-hero-role-badge">{roleDisplay}</span>
+            {/* Bố cục 2 Cột Desktop (>= 1024px) / 1 Cột Tablet & Mobile */}
+            <div className="profile-layout-wrapper">
+                {/* CỘT TRÁI: Profile Sidebar Card (280-320px) */}
+                <aside className="profile-sidebar-column">
+                    <div className="profile-sidebar-card">
+                        {profile && (
+                            <ProfileAvatarSection
+                                request={request}
+                                name={profile.name || name || ''}
+                                email={profile.email || ''}
+                                roleDisplay={roleDisplay}
+                                avatarUrl={profile.avatar_url ?? null}
+                                onAvatarUrlChange={(url) => {
+                                    setProfile((prev) => (prev ? { ...prev, avatar_url: url } : prev))
+                                    void reloadAvatar()
+                                }}
+                            />
+                        )}
+
+                        {/* Profile Side Navigation */}
+                        <nav className="profile-side-nav" aria-label="Điều hướng hồ sơ">
+                            <a
+                                href="#personal-info"
+                                className="side-nav-item active"
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    const el = document.getElementById('profile-name')
+                                    if (el) el.focus()
+                                }}
+                            >
+                                <svg className="side-nav-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                </svg>
+                                <span>Thông tin cá nhân</span>
+                            </a>
+                            <button
+                                type="button"
+                                className="side-nav-item"
+                                onClick={() => {
+                                    document.getElementById('profile-avatar-input')?.click()
+                                }}
+                            >
+                                <svg className="side-nav-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                                </svg>
+                                <span>Đổi ảnh đại diện</span>
+                            </button>
+                            <button
+                                type="button"
+                                className="side-nav-item"
+                                onClick={() => navigate('/change-password')}
+                            >
+                                <svg className="side-nav-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                </svg>
+                                <span>Đổi mật khẩu</span>
+                            </button>
+                        </nav>
                     </div>
-                </div>
-            </div>
+                </aside>
 
-            {/* Main Profile Form Card */}
-            <main className="profile-main-area">
-                <form onSubmit={handleSubmit} noValidate className="profile-form" data-testid="profile-form">
-                    {/* Card 1: Thông tin cá nhân */}
-                    <section className="profile-section-card">
-                        <div className="profile-section-header">
-                            <h3 className="profile-section-title">
-                                <span className="section-title-icon" aria-hidden="true">📋</span>
-                                Thông tin cá nhân
-                            </h3>
-                            <p className="profile-section-subtitle">
-                                Cập nhật thông tin cơ bản và địa chỉ liên hệ của bạn
-                            </p>
-                        </div>
-
-                        <div className="profile-grid">
-                            {/* Name (Editable, Required) */}
-                            <div className="form-group">
-                                <label htmlFor="profile-name" className="form-label">
-                                    Họ và tên <span className="required-mark" aria-hidden="true">*</span>
-                                </label>
-                                <input
-                                    id="profile-name"
-                                    name="name"
-                                    type="text"
-                                    className={`form-input ${fieldErrors.name ? 'input-error' : ''}`}
-                                    value={name}
-                                    onChange={(e) => {
-                                        setName(e.target.value)
-                                        if (fieldErrors.name) {
-                                            setFieldErrors((prev) => ({ ...prev, name: '' }))
-                                        }
-                                    }}
-                                    maxLength={255}
-                                    required
-                                    placeholder="Nhập họ và tên"
-                                    data-testid="input-profile-name"
-                                />
-                                {fieldErrors.name && (
-                                    <span className="field-error-text" role="alert" data-testid="error-name">
-                                        {fieldErrors.name}
-                                    </span>
-                                )}
+                {/* CỘT PHẢI: Main Profile Area (flex: 1) */}
+                <main className="profile-main-area">
+                    <form onSubmit={handleSubmit} noValidate className="profile-form" data-testid="profile-form">
+                        {/* Card 1: Thông tin cá nhân */}
+                        <section className="profile-section-card" id="personal-info">
+                            <div className="profile-section-header">
+                                <h2 className="profile-section-title">
+                                    <span className="section-title-icon" aria-hidden="true">📋</span>
+                                    Thông tin cá nhân
+                                </h2>
+                                <p className="profile-section-subtitle">
+                                    Cập nhật thông tin cơ bản và địa chỉ liên hệ của bạn
+                                </p>
                             </div>
 
-                            {/* Phone (Editable, Optional) */}
-                            <div className="form-group">
-                                <label htmlFor="profile-phone" className="form-label">
-                                    Số điện thoại
-                                </label>
-                                <input
-                                    id="profile-phone"
-                                    name="phone"
-                                    type="tel"
-                                    className={`form-input ${fieldErrors.phone ? 'input-error' : ''}`}
-                                    value={phone}
-                                    onChange={(e) => {
-                                        setPhone(e.target.value)
-                                        if (fieldErrors.phone) {
-                                            setFieldErrors((prev) => ({ ...prev, phone: '' }))
-                                        }
-                                    }}
-                                    maxLength={20}
-                                    placeholder="Ví dụ: 0912345678"
-                                    data-testid="input-profile-phone"
-                                />
-                                {fieldErrors.phone && (
-                                    <span className="field-error-text" role="alert" data-testid="error-phone">
-                                        {fieldErrors.phone}
-                                    </span>
-                                )}
-                                <span className="field-helper-text">
-                                    Định dạng di động Việt Nam 10 chữ số (đầu 03, 05, 07, 08, 09).
-                                </span>
-                            </div>
-
-                            {/* Date of Birth (Editable, Optional) */}
-                            <div className="form-group">
-                                <label htmlFor="profile-dob" className="form-label">
-                                    Ngày sinh
-                                </label>
-                                <input
-                                    id="profile-dob"
-                                    name="date_of_birth"
-                                    type="date"
-                                    className={`form-input ${fieldErrors.date_of_birth ? 'input-error' : ''}`}
-                                    value={dateOfBirth}
-                                    max={todayStr}
-                                    onChange={(e) => {
-                                        setDateOfBirth(e.target.value)
-                                        if (fieldErrors.date_of_birth) {
-                                            setFieldErrors((prev) => ({ ...prev, date_of_birth: '' }))
-                                        }
-                                    }}
-                                    data-testid="input-profile-dob"
-                                />
-                                {fieldErrors.date_of_birth && (
-                                    <span className="field-error-text" role="alert" data-testid="error-dob">
-                                        {fieldErrors.date_of_birth}
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Address (Editable, Optional) */}
-                            <div className="form-group form-group-full">
-                                <div className="label-with-counter">
-                                    <label htmlFor="profile-address" className="form-label">
-                                        Địa chỉ liên hệ
+                            <div className="profile-grid">
+                                {/* Name (Editable, Required) */}
+                                <div className="form-group">
+                                    <label htmlFor="profile-name" className="form-label">
+                                        Họ và tên <span className="required-mark" aria-hidden="true">*</span>
                                     </label>
-                                    <span className="char-counter" data-testid="address-char-counter">
-                                        {address.length}/255
-                                    </span>
-                                </div>
-                                <textarea
-                                    id="profile-address"
-                                    name="address"
-                                    className={`form-textarea ${fieldErrors.address ? 'input-error' : ''}`}
-                                    value={address}
-                                    onChange={(e) => {
-                                        setAddress(e.target.value)
-                                        if (fieldErrors.address) {
-                                            setFieldErrors((prev) => ({ ...prev, address: '' }))
-                                        }
-                                    }}
-                                    maxLength={255}
-                                    rows={3}
-                                    placeholder="Nhập địa chỉ cư trú hoặc nơi làm việc..."
-                                    data-testid="input-profile-address"
-                                />
-                                {fieldErrors.address && (
-                                    <span className="field-error-text" role="alert" data-testid="error-address">
-                                        {fieldErrors.address}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Card 2: Thông tin tài khoản */}
-                    <section className="profile-section-card">
-                        <div className="profile-section-header">
-                            <h3 className="profile-section-title">
-                                <span className="section-title-icon" aria-hidden="true">🔐</span>
-                                Thông tin tài khoản
-                            </h3>
-                            <p className="profile-section-subtitle">
-                                Thông tin định danh và phân quyền hệ thống (chỉ xem)
-                            </p>
-                        </div>
-
-                        <div className="profile-grid">
-                            {/* Email (Read-only, Locked) */}
-                            <div className="form-group">
-                                <label htmlFor="profile-email" className="form-label">
-                                    Địa chỉ email
-                                </label>
-                                <div className="readonly-input-wrapper">
                                     <input
-                                        id="profile-email"
-                                        name="email"
-                                        type="email"
-                                        className="form-input form-input-readonly"
-                                        value={profile?.email || ''}
-                                        readOnly
-                                        disabled
-                                        data-testid="input-profile-email"
-                                        title="Email không thể thay đổi tại đây"
+                                        id="profile-name"
+                                        name="name"
+                                        type="text"
+                                        className={`form-input ${fieldErrors.name ? 'input-error' : ''}`}
+                                        value={name}
+                                        onChange={(e) => {
+                                            setName(e.target.value)
+                                            if (fieldErrors.name) {
+                                                setFieldErrors((prev) => ({ ...prev, name: '' }))
+                                            }
+                                        }}
+                                        maxLength={255}
+                                        required
+                                        placeholder="Nhập họ và tên"
+                                        data-testid="input-profile-name"
                                     />
-                                    <span className="lock-icon" aria-hidden="true" title="Đã khóa">
-                                        🔒
+                                    {fieldErrors.name && (
+                                        <span className="field-error-text" role="alert" data-testid="error-name">
+                                            {fieldErrors.name}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Phone (Editable, Optional) */}
+                                <div className="form-group">
+                                    <label htmlFor="profile-phone" className="form-label">
+                                        Số điện thoại
+                                    </label>
+                                    <input
+                                        id="profile-phone"
+                                        name="phone"
+                                        type="tel"
+                                        className={`form-input ${fieldErrors.phone ? 'input-error' : ''}`}
+                                        value={phone}
+                                        onChange={(e) => {
+                                            setPhone(e.target.value)
+                                            if (fieldErrors.phone) {
+                                                setFieldErrors((prev) => ({ ...prev, phone: '' }))
+                                            }
+                                        }}
+                                        maxLength={20}
+                                        placeholder="Ví dụ: 0912345678"
+                                        data-testid="input-profile-phone"
+                                    />
+                                    {fieldErrors.phone && (
+                                        <span className="field-error-text" role="alert" data-testid="error-phone">
+                                            {fieldErrors.phone}
+                                        </span>
+                                    )}
+                                    <span className="field-helper-text">
+                                        Định dạng di động Việt Nam 10 chữ số (đầu 03, 05, 07, 08, 09).
                                     </span>
                                 </div>
-                                <span className="field-helper-text" data-testid="email-helper-text">
-                                    Email không thể thay đổi tại đây.
-                                </span>
+
+                                {/* Date of Birth (Editable, Optional) */}
+                                <div className="form-group">
+                                    <label htmlFor="profile-dob" className="form-label">
+                                        Ngày sinh
+                                    </label>
+                                    <input
+                                        id="profile-dob"
+                                        name="date_of_birth"
+                                        type="date"
+                                        className={`form-input ${fieldErrors.date_of_birth ? 'input-error' : ''}`}
+                                        value={dateOfBirth}
+                                        max={todayStr}
+                                        onChange={(e) => {
+                                            setDateOfBirth(e.target.value)
+                                            if (fieldErrors.date_of_birth) {
+                                                setFieldErrors((prev) => ({ ...prev, date_of_birth: '' }))
+                                            }
+                                        }}
+                                        data-testid="input-profile-dob"
+                                    />
+                                    {fieldErrors.date_of_birth && (
+                                        <span className="field-error-text" role="alert" data-testid="error-dob">
+                                            {fieldErrors.date_of_birth}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Address (Editable, Optional - Full Width) */}
+                                <div className="form-group form-group-full">
+                                    <div className="label-with-counter">
+                                        <label htmlFor="profile-address" className="form-label">
+                                            Địa chỉ liên hệ
+                                        </label>
+                                        <span className="char-counter" data-testid="address-char-counter">
+                                            {address.length}/255
+                                        </span>
+                                    </div>
+                                    <textarea
+                                        id="profile-address"
+                                        name="address"
+                                        className={`form-textarea ${fieldErrors.address ? 'input-error' : ''}`}
+                                        value={address}
+                                        onChange={(e) => {
+                                            setAddress(e.target.value)
+                                            if (fieldErrors.address) {
+                                                setFieldErrors((prev) => ({ ...prev, address: '' }))
+                                            }
+                                        }}
+                                        maxLength={255}
+                                        rows={3}
+                                        placeholder="Nhập địa chỉ cư trú hoặc nơi làm việc..."
+                                        data-testid="input-profile-address"
+                                    />
+                                    {fieldErrors.address && (
+                                        <span className="field-error-text" role="alert" data-testid="error-address">
+                                            {fieldErrors.address}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Role (Read-only Badge) */}
-                            <div className="form-group">
-                                <label className="form-label">
-                                    Vai trò hệ thống
-                                </label>
-                                <div className="role-display-box" data-testid="profile-role-container">
-                                    <span className="role-tag" data-testid="profile-role-badge">
-                                        {roleDisplay}
-                                    </span>
-                                    <span className="role-code-badge" data-testid="profile-role-code">
-                                        ({currentRole})
+                            {/* Action Buttons: Đặt ngay cuối Personal Information card */}
+                            <div className="profile-actions">
+                                <button
+                                    type="button"
+                                    className="btn-cancel"
+                                    onClick={handleCancelClick}
+                                    disabled={isSaving}
+                                    data-testid="btn-cancel-profile"
+                                >
+                                    Hủy thay đổi
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-save"
+                                    disabled={isSaving}
+                                    data-testid="btn-save-profile"
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <span className="btn-spinner" aria-hidden="true" />
+                                            <span>Đang lưu...</span>
+                                        </>
+                                    ) : (
+                                        'Lưu thay đổi'
+                                    )}
+                                </button>
+                            </div>
+                        </section>
+
+                        {/* Card 2: Thông tin tài khoản */}
+                        <section className="profile-section-card" id="account-info">
+                            <div className="profile-section-header">
+                                <h2 className="profile-section-title">
+                                    <span className="section-title-icon" aria-hidden="true">🔐</span>
+                                    Thông tin tài khoản
+                                </h2>
+                                <p className="profile-section-subtitle">
+                                    Thông tin định danh và phân quyền hệ thống (chỉ xem)
+                                </p>
+                            </div>
+
+                            <div className="profile-grid">
+                                {/* Email (Read-only, Locked) */}
+                                <div className="form-group">
+                                    <label htmlFor="profile-email" className="form-label">
+                                        Địa chỉ email
+                                    </label>
+                                    <div className="readonly-input-wrapper">
+                                        <input
+                                            id="profile-email"
+                                            name="email"
+                                            type="email"
+                                            className="form-input form-input-readonly"
+                                            value={profile?.email || ''}
+                                            readOnly
+                                            disabled
+                                            data-testid="input-profile-email"
+                                            title="Email không thể thay đổi tại đây"
+                                        />
+                                        <span className="lock-icon" aria-hidden="true" title="Đã khóa">
+                                            🔒
+                                        </span>
+                                    </div>
+                                    <span className="field-helper-text" data-testid="email-helper-text">
+                                        Email không thể thay đổi tại đây.
                                     </span>
                                 </div>
-                                <span className="field-helper-text">
-                                    Vai trò do Quản trị viên phân quyền và quản lý.
-                                </span>
-                            </div>
-                        </div>
-                    </section>
 
-                    {/* Action Buttons */}
-                    <div className="profile-actions">
-                        <button
-                            type="button"
-                            className="btn-cancel"
-                            onClick={handleCancelClick}
-                            disabled={isSaving}
-                            data-testid="btn-cancel-profile"
-                        >
-                            Hủy thay đổi
-                        </button>
-                        <button
-                            type="submit"
-                            className="btn-save"
-                            disabled={isSaving}
-                            data-testid="btn-save-profile"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <span className="btn-spinner" aria-hidden="true" />
-                                    <span>Đang lưu...</span>
-                                </>
-                            ) : (
-                                'Lưu thay đổi'
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </main>
+                                {/* Role (Read-only Badge) */}
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Vai trò hệ thống
+                                    </label>
+                                    <div className="role-display-box" data-testid="profile-role-container">
+                                        <span className="role-tag" data-testid="profile-role-badge">
+                                            {roleDisplay}
+                                        </span>
+                                        <span className="role-code-badge" data-testid="profile-role-code">
+                                            ({currentRole})
+                                        </span>
+                                    </div>
+                                    <span className="field-helper-text">
+                                        Vai trò do Quản trị viên phân quyền và quản lý.
+                                    </span>
+                                </div>
+                            </div>
+                        </section>
+                    </form>
+                </main>
+            </div>
 
             {/* Confirmation Dialog when canceling with unsaved changes */}
             {showCancelConfirm && (

@@ -18,12 +18,12 @@
 
 .profile-avatar-frame {
     position: relative;
-    width: 112px;
-    height: 112px;
+    width: 104px;
+    height: 104px;
     border-radius: 50%;
     flex-shrink: 0;
     border: 3px solid #e0e7ff;
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
     overflow: hidden;
     background: #eef2ff;
     transition: border-color 0.2s ease, transform 0.2s ease;
