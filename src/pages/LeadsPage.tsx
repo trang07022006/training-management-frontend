@@ -459,9 +459,17 @@ export function LeadsPage() {
                 >
                     <div className="leads-modal-card">
                         <header className="leads-modal-header">
-                            <h2 id="modal-title" className="leads-modal-title">
-                                Chi tiết Yêu cầu Tư vấn
-                            </h2>
+                            <div className="leads-modal-header-title-wrap">
+                                <h2 id="modal-title" className="leads-modal-title">
+                                    Chi tiết Yêu cầu Tư vấn
+                                </h2>
+                                <span
+                                    className={`lead-status-badge ${LEAD_STATUS_BADGE_CLASSES[selectedLead.status]}`}
+                                    data-testid={`modal-status-badge-${selectedLead.id}`}
+                                >
+                                    {getLeadStatusLabel(selectedLead.status)}
+                                </span>
+                            </div>
                             <button
                                 type="button"
                                 className="leads-modal-close-btn"
@@ -469,7 +477,10 @@ export function LeadsPage() {
                                 onClick={handleCloseModal}
                                 aria-label="Đóng"
                             >
-                                &times;
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
                             </button>
                         </header>
 
@@ -510,76 +521,78 @@ export function LeadsPage() {
                                 </div>
                             )}
 
-                            <div className="detail-row">
-                                <span className="detail-label">Họ và tên:</span>
-                                <span className="detail-value" data-testid="detail-fullname">
-                                    {selectedLead.full_name}
-                                </span>
-                            </div>
-
-                            <div className="detail-row">
-                                <span className="detail-label">Số điện thoại:</span>
-                                <span className="detail-value" data-testid="detail-phone">
-                                    {selectedLead.phone}
-                                </span>
-                            </div>
-
-                            <div className="detail-row">
-                                <span className="detail-label">Email:</span>
-                                <span className="detail-value" data-testid="detail-email">
-                                    {selectedLead.email || 'Không cung cấp'}
-                                </span>
-                            </div>
-
-                            <div className="detail-row">
-                                <span className="detail-label">Chương trình:</span>
-                                <span className="detail-value" data-testid="detail-program">
-                                    {selectedLead.interested_program_name ||
-                                        selectedLead.interested_program_code ||
-                                        'Chưa xác định'}
-                                </span>
-                            </div>
-
-                            <div className="detail-row">
-                                <span className="detail-label">Nguồn tiếp nhận:</span>
-                                <span className="detail-value" data-testid="detail-source">
-                                    {selectedLead.source}
-                                </span>
-                            </div>
-
-                            <div className="detail-row">
-                                <span className="detail-label">Người phụ trách:</span>
-                                <span className="detail-value" data-testid="detail-assignee">
-                                    {selectedLead.assigned_to_name
-                                        ? `${selectedLead.assigned_to_name} (${selectedLead.assigned_to_email || ''})`
-                                        : 'Chưa phân công'}
-                                </span>
-                            </div>
-
-                            {selectedLead.assigned_at && (
+                            <div className="detail-info-grid">
                                 <div className="detail-row">
-                                    <span className="detail-label">Thời gian phân công:</span>
-                                    <span className="detail-value" data-testid="detail-assigned-at">
-                                        {formatDate(selectedLead.assigned_at)}
+                                    <span className="detail-label">Họ và tên:</span>
+                                    <span className="detail-value" data-testid="detail-fullname">
+                                        {selectedLead.full_name}
                                     </span>
                                 </div>
-                            )}
 
-                            <div className="detail-row">
-                                <span className="detail-label">Thời gian gửi:</span>
-                                <span className="detail-value">
-                                    {formatDate(selectedLead.created_at)}
-                                </span>
+                                <div className="detail-row">
+                                    <span className="detail-label">Số điện thoại:</span>
+                                    <span className="detail-value" data-testid="detail-phone">
+                                        {selectedLead.phone}
+                                    </span>
+                                </div>
+
+                                <div className="detail-row">
+                                    <span className="detail-label">Email:</span>
+                                    <span className="detail-value" data-testid="detail-email">
+                                        {selectedLead.email || 'Không cung cấp'}
+                                    </span>
+                                </div>
+
+                                <div className="detail-row">
+                                    <span className="detail-label">Chương trình:</span>
+                                    <span className="detail-value" data-testid="detail-program">
+                                        {selectedLead.interested_program_name ||
+                                            selectedLead.interested_program_code ||
+                                            'Chưa xác định'}
+                                    </span>
+                                </div>
+
+                                <div className="detail-row">
+                                    <span className="detail-label">Nguồn tiếp nhận:</span>
+                                    <span className="detail-value" data-testid="detail-source">
+                                        {selectedLead.source}
+                                    </span>
+                                </div>
+
+                                <div className="detail-row">
+                                    <span className="detail-label">Người phụ trách:</span>
+                                    <span className="detail-value" data-testid="detail-assignee">
+                                        {selectedLead.assigned_to_name
+                                            ? `${selectedLead.assigned_to_name} (${selectedLead.assigned_to_email || ''})`
+                                            : 'Chưa phân công'}
+                                    </span>
+                                </div>
+
+                                {selectedLead.assigned_at && (
+                                    <div className="detail-row">
+                                        <span className="detail-label">Thời gian phân công:</span>
+                                        <span className="detail-value" data-testid="detail-assigned-at">
+                                            {formatDate(selectedLead.assigned_at)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="detail-row">
+                                    <span className="detail-label">Thời gian gửi:</span>
+                                    <span className="detail-value">
+                                        {formatDate(selectedLead.created_at)}
+                                    </span>
+                                </div>
+
+                                <div className="detail-row">
+                                    <span className="detail-label">Cập nhật gần nhất:</span>
+                                    <span className="detail-value">
+                                        {formatDate(selectedLead.updated_at)}
+                                    </span>
+                                </div>
                             </div>
 
-                            <div className="detail-row">
-                                <span className="detail-label">Cập nhật gần nhất:</span>
-                                <span className="detail-value">
-                                    {formatDate(selectedLead.updated_at)}
-                                </span>
-                            </div>
-
-                            <div className="detail-row" style={{ flexDirection: 'column' }}>
+                            <div className="detail-message-section">
                                 <span className="detail-label">Nội dung tư vấn:</span>
                                 <div className="detail-message-box" data-testid="detail-message">
                                     {selectedLead.message || 'Không có ghi chú nội dung tư vấn.'}
@@ -590,8 +603,7 @@ export function LeadsPage() {
                             <div className="leads-modal-assign-section">
                                 <label
                                     htmlFor="assignee-select-input"
-                                    className="detail-label"
-                                    style={{ display: 'block', marginBottom: '0.25rem' }}
+                                    className="section-subheading-label"
                                 >
                                     Phân công nhân sự phụ trách:
                                 </label>
@@ -614,7 +626,7 @@ export function LeadsPage() {
 
                                     <button
                                         type="button"
-                                        className="btn-save-assign"
+                                        className={`btn-save-assign ${!selectedAssigneeId && selectedLead.assigned_to_user_id ? 'btn-unassign' : ''}`}
                                         data-testid="save-assignment-btn"
                                         onClick={() => void handleSaveAssignment()}
                                         disabled={
@@ -635,8 +647,7 @@ export function LeadsPage() {
                             <div className="leads-modal-status-section">
                                 <label
                                     htmlFor="status-select-input"
-                                    className="detail-label"
-                                    style={{ display: 'block', marginBottom: '0.25rem' }}
+                                    className="section-subheading-label"
                                 >
                                     Cập nhật trạng thái xử lý:
                                 </label>
