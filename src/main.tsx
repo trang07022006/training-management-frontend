@@ -6,6 +6,13 @@ import './index.css'
 import App from './App.tsx'
 import { SessionProvider } from './auth/SessionProvider.tsx'
 import { SessionNotice } from './auth/SessionNotice.tsx'
+import { PublicLayout } from './layouts/PublicLayout'
+import { HomePage } from './pages/HomePage'
+import { AboutPage } from './pages/AboutPage'
+import { PublicProgramsPage } from './pages/PublicProgramsPage'
+import { PublicProgramDetailPage } from './pages/PublicProgramDetailPage'
+import { AdmissionsPage } from './pages/AdmissionsPage'
+import { ContactPage } from './pages/ContactPage'
 import { LoginPage } from './pages/LoginPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
@@ -42,16 +49,28 @@ createRoot(document.getElementById('root')!).render(
         <SessionNotice />
 
         <Routes>
+          {/* Public Website Routes (Không yêu cầu đăng nhập) */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/programs" element={<PublicProgramsPage />} />
+            <Route path="/programs/:id" element={<PublicProgramDetailPage />} />
+            <Route path="/admissions" element={<AdmissionsPage />} />
+            <Route path="/consultation" element={<PublicConsultationPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+          </Route>
+
+          {/* Standalone Public Auth Pages */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/consultation" element={<PublicConsultationPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/401" element={<UnauthorizedPage />} />
 
+          {/* Protected Internal Routes */}
           <Route element={<RequireSession />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<App />} />
+              <Route path="/dashboard" element={<App />} />
               <Route path="/forbidden" element={<ForbiddenPage />} />
               <Route path="/403" element={<ForbiddenPage />} />
               <Route
