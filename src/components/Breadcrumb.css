@@ -1,0 +1,46 @@
+.ictu-breadcrumb {
+  margin-bottom: 12px;
+}
+
+.ictu-breadcrumb-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+}
+
+.ictu-breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ictu-breadcrumb-link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #0284c7;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.ictu-breadcrumb-link:hover {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.ictu-breadcrumb-separator {
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.ictu-breadcrumb-current {
+  color: #0f172a;
+  font-weight: 600;
+}

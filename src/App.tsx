@@ -1,5 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
+import {
+  DASHBOARD_KPIS_MOCK,
+  DASHBOARD_CHART_MOCK,
+  DASHBOARD_NOTIFICATIONS_MOCK,
+  DASHBOARD_SCHEDULE_MOCK,
+  DASHBOARD_CLASS_SECTIONS_MOCK,
+} from './mocks/dashboardMockData'
 import './App.css'
 
 export function App() {
@@ -7,134 +14,10 @@ export function App() {
   const [activeCalendarDay, setActiveCalendarDay] = useState(12)
   const [hoveredBar, setHoveredBar] = useState<number | null>(null)
 
-  // Dữ liệu biểu đồ tuyển sinh & học tập
-  const chartData = [
-    { term: 'Học kỳ 1 2024', students: 1750, attendance: 78 },
-    { term: 'Học kỳ 2 2024', students: 1450, attendance: 85 },
-    { term: 'Học kỳ hè 2024', students: 1000, attendance: 82 },
-    { term: 'Học kỳ 1 2025', students: 2150, attendance: 88 },
-    { term: 'Học kỳ 2 2025', students: 1500, attendance: 91 },
-  ]
-
-  // Dữ liệu thông báo
-  const notifications = [
-    {
-      id: 1,
-      type: 'Quan trọng',
-      typeColor: 'danger',
-      title: 'Thông báo đăng ký học phần học kỳ 2 năm 2025',
-      date: '12/03/2025',
-      unread: true,
-    },
-    {
-      id: 2,
-      type: 'Thông báo',
-      typeColor: 'primary',
-      title: 'Kế hoạch tổ chức thi kết thúc học phần',
-      date: '10/03/2025',
-      unread: true,
-    },
-    {
-      id: 3,
-      type: 'Thông báo',
-      typeColor: 'success',
-      title: 'Danh sách sinh viên đủ điều kiện tốt nghiệp',
-      date: '08/03/2025',
-      unread: true,
-    },
-    {
-      id: 4,
-      type: 'Tin tức',
-      typeColor: 'info',
-      title: 'Hội thảo khoa học sinh viên năm 2025',
-      date: '05/03/2025',
-      unread: false,
-    },
-  ]
-
-  // Lịch công tác
-  const schedules = [
-    {
-      id: 1,
-      time: '08:00 - 10:00',
-      title: 'Họp Hội đồng đào tạo',
-      location: 'Phòng họp A1',
-      color: '#2563eb',
-    },
-    {
-      id: 2,
-      time: '13:30 - 15:30',
-      title: 'Tập huấn công tác cố vấn học tập',
-      location: 'Hội trường lớn',
-      color: '#9333ea',
-    },
-    {
-      id: 3,
-      time: '14:00 - 16:00',
-      title: 'Họp khoa Công nghệ thông tin',
-      location: 'Phòng họp B1',
-      color: '#ea580c',
-    },
-  ]
-
-  // Danh sách lớp học phần đang mở
-  const classSections = [
-    {
-      stt: 1,
-      code: 'IT301',
-      name: 'Lập trình hướng đối tượng',
-      program: 'CNTT',
-      instructor: 'TS. Trần Văn Minh',
-      students: '52/60',
-      schedule: 'T2, T4 (07:30 - 09:10)',
-      room: 'A1-101',
-      status: 'Đang mở',
-    },
-    {
-      stt: 2,
-      code: 'IT305',
-      name: 'Cơ sở dữ liệu',
-      program: 'CNTT',
-      instructor: 'ThS. Nguyễn Thu Hà',
-      students: '48/50',
-      schedule: 'T3, T5 (09:30 - 11:10)',
-      room: 'A2-203',
-      status: 'Đang mở',
-    },
-    {
-      stt: 3,
-      code: 'BUS101',
-      name: 'Kinh tế số',
-      program: 'QTKD',
-      instructor: 'PGS.TS. Lê Văn Nam',
-      students: '45/50',
-      schedule: 'T2, T4 (13:30 - 15:10)',
-      room: 'B1-301',
-      status: 'Đang mở',
-    },
-    {
-      stt: 4,
-      code: 'ENG102',
-      name: 'Tiếng Anh chuyên ngành',
-      program: 'Cơ bản',
-      instructor: 'ThS. Phạm Thị Mai',
-      students: '60/60',
-      schedule: 'T3, T5 (07:30 - 09:10)',
-      room: 'A3-102',
-      status: 'Đang mở',
-    },
-    {
-      stt: 5,
-      code: 'PRJ301',
-      name: 'Đồ án tốt nghiệp',
-      program: 'CNTT',
-      instructor: 'TS. Hoàng Quốc Việt',
-      students: '28/30',
-      schedule: 'T6 (13:30 - 17:00)',
-      room: 'Lab 3',
-      status: 'Đang mở',
-    },
-  ]
+  const chartData = DASHBOARD_CHART_MOCK
+  const notifications = DASHBOARD_NOTIFICATIONS_MOCK
+  const schedules = DASHBOARD_SCHEDULE_MOCK
+  const classSections = DASHBOARD_CLASS_SECTIONS_MOCK
 
   return (
     <div className="ictu-dashboard-container">
@@ -179,85 +62,68 @@ export function App() {
         </div>
       </section>
 
+      {/* Development Mock Indicator */}
+      <div className="dashboard-mock-disclaimer" role="note" aria-label="Ghi chú dữ liệu phát triển">
+        <span className="disclaimer-badge">DỮ LIỆU MINH HỌA</span>
+        <span className="disclaimer-text">
+          Chỉ số thống kê trên bảng điều khiển đang sử dụng dữ liệu mô phỏng cho giao diện (Development Only).
+        </span>
+      </div>
+
       {/* 2. 4 KPI Stat Summary Cards */}
       <section className="ictu-kpi-grid" aria-label="Thống kê đào tạo">
-        {/* KPI 1: Tổng sinh viên */}
-        <div className="kpi-card">
-          <div className="kpi-icon-box kpi-blue">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
-          <div className="kpi-details">
-            <span className="kpi-label">Tổng sinh viên</span>
-            <span className="kpi-value">7.842</span>
-            <div className="kpi-trend trend-up">
-              <span className="trend-arrow">▲</span>
-              <span>12%</span>
-              <span className="trend-text">So với học kỳ trước</span>
-            </div>
-          </div>
-        </div>
+        {DASHBOARD_KPIS_MOCK.map((kpi) => {
+          const iconClass =
+            kpi.id === 'students'
+              ? 'kpi-blue'
+              : kpi.id === 'trainers'
+              ? 'kpi-green'
+              : kpi.id === 'programs'
+              ? 'kpi-purple'
+              : 'kpi-orange'
 
-        {/* KPI 2: Giảng viên */}
-        <div className="kpi-card">
-          <div className="kpi-icon-box kpi-green">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </div>
-          <div className="kpi-details">
-            <span className="kpi-label">Giảng viên</span>
-            <span className="kpi-value">412</span>
-            <div className="kpi-trend trend-up">
-              <span className="trend-arrow">▲</span>
-              <span>5%</span>
-              <span className="trend-text">So với học kỳ trước</span>
+          return (
+            <div key={kpi.id} className="kpi-card">
+              <div className={`kpi-icon-box ${iconClass}`}>
+                {kpi.id === 'students' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                )}
+                {kpi.id === 'trainers' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                )}
+                {kpi.id === 'programs' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                  </svg>
+                )}
+                {kpi.id === 'classes' && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
+                  </svg>
+                )}
+              </div>
+              <div className="kpi-details">
+                <span className="kpi-label">{kpi.label}</span>
+                <span className="kpi-value">{kpi.value}</span>
+                <div className={`kpi-trend trend-${kpi.trendType}`}>
+                  <span className="trend-arrow">{kpi.trendType === 'up' ? '▲' : '↑'}</span>
+                  <span>{kpi.trend}</span>
+                  <span className="trend-text">{kpi.trendLabel}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* KPI 3: Chương trình đào tạo */}
-        <div className="kpi-card">
-          <div className="kpi-icon-box kpi-purple">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
-          </div>
-          <div className="kpi-details">
-            <span className="kpi-label">Chương trình đào tạo</span>
-            <span className="kpi-value">28</span>
-            <div className="kpi-trend trend-neutral">
-              <span className="trend-arrow">↑</span>
-              <span>0%</span>
-              <span className="trend-text">Không đổi</span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 4: Lớp đang mở */}
-        <div className="kpi-card">
-          <div className="kpi-icon-box kpi-orange">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="24" height="24" aria-hidden="true">
-              <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-              <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" />
-            </svg>
-          </div>
-          <div className="kpi-details">
-            <span className="kpi-label">Lớp đang mở</span>
-            <span className="kpi-value">356</span>
-            <div className="kpi-trend trend-up">
-              <span className="trend-arrow">▲</span>
-              <span>8%</span>
-              <span className="trend-text">So với học kỳ trước</span>
-            </div>
-          </div>
-        </div>
+          )
+        })}
       </section>
 
       {/* 3. Middle Section: Chart + Notifications + Work Calendar */}

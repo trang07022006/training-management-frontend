@@ -81,9 +81,11 @@ export function AppHeader({
                     </svg>
                     <input
                         type="text"
-                        placeholder="Tìm kiếm sinh viên, môn học, lớp học phần..."
+                        placeholder="Tìm kiếm sinh viên, môn học, lớp học phần... (Đang phát triển)"
                         className="header-search-input"
-                        aria-label="Tìm kiếm trong hệ thống đào tạo"
+                        aria-label="Tìm kiếm trong hệ thống đào tạo (Đang phát triển)"
+                        title="Tính năng tìm kiếm toàn hệ thống đang phát triển"
+                        readOnly
                     />
                 </div>
             </div>

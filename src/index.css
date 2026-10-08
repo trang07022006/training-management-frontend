@@ -188,3 +188,182 @@ a:hover {
 button {
   font-family: inherit;
 }
+
+/* =========================================================================
+   Standardized ICTU UI Design System Components & Utilities
+   ========================================================================= */
+
+/* Standard Card */
+.ictu-card {
+  background-color: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(11, 40, 82, 0.04);
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+/* Standard Buttons */
+.ictu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease-in-out;
+  text-decoration: none;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.ictu-btn-primary {
+  background: linear-gradient(135deg, #0874c9 0%, #065ca3 100%);
+  color: #ffffff;
+  border-color: #0874c9;
+  box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
+}
+
+.ictu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0984e3 0%, #0874c9 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(8, 116, 201, 0.35);
+  transform: translateY(-1px);
+}
+
+.ictu-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ictu-btn-secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.ictu-btn-secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.ictu-btn-outline {
+  background-color: transparent;
+  color: #0874c9;
+  border-color: #0874c9;
+}
+
+.ictu-btn-outline:hover:not(:disabled) {
+  background-color: #eaf4ff;
+  color: #064b8e;
+}
+
+.ictu-btn-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
+}
+
+.ictu-btn-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
+}
+
+/* Standard Badges */
+.ictu-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
+
+.ictu-badge-success {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.ictu-badge-danger {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.ictu-badge-warning {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.ictu-badge-info {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.ictu-badge-neutral {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* Standard Empty State */
+.ictu-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.ictu-empty-icon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  color: #94a3b8;
+  opacity: 0.7;
+}
+
+.ictu-empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.ictu-empty-desc {
+  font-size: 0.86rem;
+  color: #64748b;
+  max-width: 420px;
+  margin: 0 0 16px 0;
+  line-height: 1.45;
+}
+
+/* Standard Loading Box */
+.ictu-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 42px 20px;
+  gap: 12px;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.ictu-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0874c9;
+  border-radius: 50%;
+  animation: session-spin 0.75s linear infinite;
+}
+
