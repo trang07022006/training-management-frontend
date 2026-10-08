@@ -496,7 +496,66 @@ export function UserProfilePage() {
                                 </div>
                             </div>
 
-                            {/* Action Buttons: Đặt ngay cuối Personal Information card */}
+                            {/* Phân đoạn: Thông tin tài khoản (gộp trực tiếp vào thẻ thông tin cá nhân) */}
+                            <div className="profile-subgroup" id="account-info">
+                                <div className="profile-subgroup-header">
+                                    <h3 className="profile-subgroup-title">
+                                        <span className="section-title-icon" aria-hidden="true">🔐</span>
+                                        Thông tin tài khoản
+                                    </h3>
+                                    <p className="profile-subgroup-subtitle">
+                                        Thông tin định danh và phân quyền hệ thống (chỉ xem)
+                                    </p>
+                                </div>
+
+                                <div className="profile-grid">
+                                    {/* Email (Read-only, Locked) */}
+                                    <div className="form-group">
+                                        <label htmlFor="profile-email" className="form-label">
+                                            Địa chỉ email
+                                        </label>
+                                        <div className="readonly-input-wrapper">
+                                            <input
+                                                id="profile-email"
+                                                name="email"
+                                                type="email"
+                                                className="form-input form-input-readonly"
+                                                value={profile?.email || ''}
+                                                readOnly
+                                                disabled
+                                                data-testid="input-profile-email"
+                                                title="Email không thể thay đổi tại đây"
+                                            />
+                                            <span className="lock-icon" aria-hidden="true" title="Đã khóa">
+                                                🔒
+                                            </span>
+                                        </div>
+                                        <span className="field-helper-text" data-testid="email-helper-text">
+                                            Email không thể thay đổi tại đây.
+                                        </span>
+                                    </div>
+
+                                    {/* Role (Read-only Badge) */}
+                                    <div className="form-group">
+                                        <label className="form-label">
+                                            Vai trò hệ thống
+                                        </label>
+                                        <div className="role-display-box" data-testid="profile-role-container">
+                                            <span className="role-tag" data-testid="profile-role-badge">
+                                                {roleDisplay}
+                                            </span>
+                                            <span className="role-code-badge" data-testid="profile-role-code">
+                                                ({currentRole})
+                                            </span>
+                                        </div>
+                                        <span className="field-helper-text">
+                                            Vai trò do Quản trị viên phân quyền và quản lý.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons: Đặt ở cuối thẻ duy nhất */}
                             <div className="profile-actions">
                                 <button
                                     type="button"
@@ -522,65 +581,6 @@ export function UserProfilePage() {
                                         'Lưu thay đổi'
                                     )}
                                 </button>
-                            </div>
-                        </section>
-
-                        {/* Card 2: Thông tin tài khoản */}
-                        <section className="profile-section-card" id="account-info">
-                            <div className="profile-section-header">
-                                <h2 className="profile-section-title">
-                                    <span className="section-title-icon" aria-hidden="true">🔐</span>
-                                    Thông tin tài khoản
-                                </h2>
-                                <p className="profile-section-subtitle">
-                                    Thông tin định danh và phân quyền hệ thống (chỉ xem)
-                                </p>
-                            </div>
-
-                            <div className="profile-grid">
-                                {/* Email (Read-only, Locked) */}
-                                <div className="form-group">
-                                    <label htmlFor="profile-email" className="form-label">
-                                        Địa chỉ email
-                                    </label>
-                                    <div className="readonly-input-wrapper">
-                                        <input
-                                            id="profile-email"
-                                            name="email"
-                                            type="email"
-                                            className="form-input form-input-readonly"
-                                            value={profile?.email || ''}
-                                            readOnly
-                                            disabled
-                                            data-testid="input-profile-email"
-                                            title="Email không thể thay đổi tại đây"
-                                        />
-                                        <span className="lock-icon" aria-hidden="true" title="Đã khóa">
-                                            🔒
-                                        </span>
-                                    </div>
-                                    <span className="field-helper-text" data-testid="email-helper-text">
-                                        Email không thể thay đổi tại đây.
-                                    </span>
-                                </div>
-
-                                {/* Role (Read-only Badge) */}
-                                <div className="form-group">
-                                    <label className="form-label">
-                                        Vai trò hệ thống
-                                    </label>
-                                    <div className="role-display-box" data-testid="profile-role-container">
-                                        <span className="role-tag" data-testid="profile-role-badge">
-                                            {roleDisplay}
-                                        </span>
-                                        <span className="role-code-badge" data-testid="profile-role-code">
-                                            ({currentRole})
-                                        </span>
-                                    </div>
-                                    <span className="field-helper-text">
-                                        Vai trò do Quản trị viên phân quyền và quản lý.
-                                    </span>
-                                </div>
                             </div>
                         </section>
                     </form>
