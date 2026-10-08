@@ -1,33 +1,33 @@
 /* UserProfilePage.css - SCRUM-120 User Profile Redesign V2 */
 
 .profile-page-container {
-    max-width: 1160px;
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 24px 20px 48px;
+    padding: 12px 20px 24px;
     box-sizing: border-box;
     width: 100%;
     background-color: transparent;
 }
 
-/* Header Section - Gọn gàng, không quá cao */
+/* Header Section - Gọn gàng, giảm khoảng trống */
 .profile-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-bottom: 20px;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .profile-badge-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
     background: linear-gradient(135deg, #0b2852, #0874c9);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     color: #ffffff;
-    box-shadow: 0 3px 10px rgba(8, 116, 201, 0.22);
+    box-shadow: 0 2px 8px rgba(8, 116, 201, 0.2);
     flex-shrink: 0;
 }
 
@@ -36,7 +36,7 @@
 }
 
 .profile-page-title {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: #0b2852;
     margin: 0 0 2px 0;
@@ -45,10 +45,10 @@
 }
 
 .profile-page-subtitle {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: #64748b;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.35;
 }
 
 /* ==========================================================================
@@ -56,16 +56,16 @@
    ========================================================================== */
 .profile-layout-wrapper {
     display: flex;
-    gap: 24px;
+    gap: 16px;
     align-items: flex-start;
     width: 100%;
     box-sizing: border-box;
 }
 
-/* CỘT TRÁI: SIDEBAR PROFILE CARD (280-320px) */
+/* CỘT TRÁI: SIDEBAR PROFILE CARD (280px) */
 .profile-sidebar-column {
-    flex: 0 0 300px;
-    width: 300px;
+    flex: 0 0 280px;
+    width: 280px;
     min-width: 0;
     box-sizing: border-box;
 }
@@ -73,8 +73,8 @@
 .profile-sidebar-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 22px 18px 18px;
+    border-radius: 12px;
+    padding: 16px 14px 14px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.02);
     box-sizing: border-box;
     display: flex;
@@ -95,18 +95,18 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid #f1f5f9;
 }
 
 .side-nav-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 0.84rem;
     font-weight: 500;
     color: #475569;
     text-decoration: none;
@@ -131,8 +131,8 @@
 }
 
 .side-nav-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
     fill: currentColor;
 }
@@ -149,30 +149,30 @@
 .profile-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
 }
 
 /* Card Sections */
 .profile-section-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 22px 24px;
+    border-radius: 12px;
+    padding: 16px 20px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.02);
     box-sizing: border-box;
 }
 
 .profile-section-header {
-    margin-bottom: 18px;
-    padding-bottom: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #f1f5f9;
 }
 
 .profile-section-title {
-    font-size: 1.0625rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #0b2852;
-    margin: 0 0 3px 0;
+    margin: 0 0 2px 0;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -180,27 +180,33 @@
 }
 
 .section-title-icon {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
 }
 
 .profile-section-subtitle {
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
     color: #64748b;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.35;
 }
 
-/* Form Grid Layout: 2 cột desktop */
+/* Form Grid Layout: Lưới 3 cột trên Desktop */
 .profile-grid {
     display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 14px;
+}
+
+.profile-two-col-grid {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px 18px;
+    gap: 12px 14px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     min-width: 0;
 }
 
@@ -233,14 +239,14 @@
     color: #94a3b8;
 }
 
-/* Field Design: Chiều cao 44-46px, Textarea 90-110px, radius 8px */
+/* Field Design: Chiều cao chuẩn 40-42px, Textarea 56-62px, radius 8px */
 .form-input {
     width: 100%;
-    height: 2.75rem; /* 44px */
-    padding: 8px 12px;
+    height: 2.5rem; /* 40px */
+    padding: 7px 11px;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    border-radius: 7px;
+    font-size: 0.85rem;
     color: #0f172a;
     background-color: #ffffff;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -251,13 +257,13 @@
 
 .form-textarea {
     width: 100%;
-    min-height: 90px;
-    height: 96px; /* 90-110px */
-    max-height: 160px;
-    padding: 8px 12px;
+    min-height: 52px;
+    height: 56px; /* Khoảng 2 dòng */
+    max-height: 120px;
+    padding: 7px 11px;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    border-radius: 7px;
+    font-size: 0.85rem;
     color: #0f172a;
     background-color: #ffffff;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -265,6 +271,7 @@
     font-family: inherit;
     resize: vertical;
     outline: none;
+    line-height: 1.4;
 }
 
 .form-input:focus,
@@ -282,6 +289,62 @@
 .form-input.input-error:focus,
 .form-textarea.input-error:focus {
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Password Toggle Wrapper */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper .form-input {
+    padding-right: 38px;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border-radius: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
+}
+
+.profile-password-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profile-password-hints {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+    font-size: 0.77rem;
+    color: #059669;
+    font-weight: 500;
+}
+
+.hint-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* Read-only & Disabled Input (Email) */
@@ -307,35 +370,6 @@
     pointer-events: none;
 }
 
-/* Role Display Box (Vai trò) */
-.role-display-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background-color: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    box-sizing: border-box;
-    min-height: 2.75rem;
-}
-
-.role-tag {
-    background-color: #e0f2fe;
-    color: #0369a1;
-    font-weight: 600;
-    font-size: 0.8125rem;
-    padding: 2px 9px;
-    border-radius: 9999px;
-    border: 1px solid #bae6fd;
-}
-
-.role-code-badge {
-    font-size: 0.75rem;
-    color: #64748b;
-    font-family: monospace;
-}
-
 /* Helper & Error Texts */
 .field-helper-text {
     font-size: 0.75rem;
@@ -349,45 +383,16 @@
     font-weight: 500;
 }
 
-/* Subgroup: Thông tin tài khoản gộp bên trong thẻ */
-.profile-subgroup {
-    margin-top: 22px;
-    padding-top: 18px;
-    border-top: 1px dashed #e2e8f0;
-}
-
-.profile-subgroup-header {
-    margin-bottom: 14px;
-}
-
-.profile-subgroup-title {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: #0b2852;
-    margin: 0 0 2px 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1.3;
-}
-
-.profile-subgroup-subtitle {
-    font-size: 0.8125rem;
-    color: #64748b;
-    margin: 0;
-    line-height: 1.4;
-}
-
 /* ==========================================================================
-   ACTION BUTTONS: Đặt ngay cuối Personal Information card, căn phải
+   ACTION BUTTONS: Đặt ngay cuối form, căn phải
    ========================================================================== */
 .profile-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 18px;
-    padding-top: 16px;
+    margin-top: 14px;
+    padding-top: 12px;
     border-top: 1px solid #f1f5f9;
 }
 
@@ -395,13 +400,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 9px 22px;
+    gap: 6px;
+    padding: 8px 18px;
     background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    border-radius: 7px;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -410,7 +415,7 @@
 
 .btn-save:hover:not(:disabled) {
     background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.32);
     transform: translateY(-1px);
 }
 
@@ -425,12 +430,12 @@
 }
 
 .btn-cancel {
-    padding: 9px 18px;
+    padding: 8px 16px;
     background-color: #ffffff;
     color: #334155;
     border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    border-radius: 7px;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -448,8 +453,8 @@
 }
 
 .btn-spinner {
-    width: 14px;
-    height: 14px;
+    width: 13px;
+    height: 13px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: #ffffff;
     border-radius: 50%;
@@ -462,12 +467,12 @@
 .profile-alert {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 0.875rem;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    font-size: 0.84rem;
     font-weight: 500;
-    margin-bottom: 18px;
+    margin-bottom: 12px;
     box-sizing: border-box;
 }
 
@@ -485,7 +490,7 @@
 
 .alert-icon {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.95rem;
     flex-shrink: 0;
 }
 
@@ -495,8 +500,8 @@
 .profile-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 28px 24px;
+    border-radius: 12px;
+    padding: 24px 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     box-sizing: border-box;
 }
@@ -506,14 +511,14 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    padding: 50px 20px;
     color: #64748b;
-    gap: 16px;
+    gap: 14px;
 }
 
 .loading-spinner {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border: 3px solid #e2e8f0;
     border-top-color: #0284c7;
     border-radius: 50%;
@@ -526,21 +531,21 @@
 
 .profile-error-card {
     text-align: center;
-    padding: 40px 20px;
+    padding: 36px 20px;
 }
 
 .error-icon {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
 }
 
 .error-description {
     color: #dc2626;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .btn-retry {
-    padding: 8px 20px;
+    padding: 7px 18px;
     background-color: #0284c7;
     color: #ffffff;
     border: none;
@@ -573,8 +578,8 @@
 .profile-modal-card {
     background: #ffffff;
     border-radius: 12px;
-    padding: 24px;
-    max-width: 440px;
+    padding: 20px;
+    max-width: 420px;
     width: 100%;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     box-sizing: border-box;
@@ -584,28 +589,28 @@
 .profile-modal-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .profile-modal-icon {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     flex-shrink: 0;
 }
 
 .profile-modal-title {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #0f172a;
     margin: 0;
 }
 
 .profile-modal-body {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .profile-modal-message {
-    font-size: 0.9375rem;
+    font-size: 0.9rem;
     color: #475569;
     margin: 0;
     line-height: 1.5;
@@ -618,12 +623,12 @@
 }
 
 .btn-modal-stay {
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 7px 15px;
+    border-radius: 7px;
     border: 1px solid #cbd5e1;
     background: #ffffff;
     color: #334155;
-    font-size: 0.875rem;
+    font-size: 0.84rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -635,12 +640,12 @@
 }
 
 .btn-modal-confirm-cancel {
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 7px 15px;
+    border-radius: 7px;
     border: none;
     background: #dc2626;
     color: #ffffff;
-    font-size: 0.875rem;
+    font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -651,14 +656,14 @@
 }
 
 /* ==========================================================================
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN (Không dùng overflow: hidden hay ép cứng cắt nội dung)
    ========================================================================== */
 
-/* Tablet 768-1024px: Sidebar chuyển lên trên, nav thành hàng ngang */
-@media (max-width: 1024px) {
+/* Tablet <= 992px: Sidebar xếp dọc hoặc lên trên */
+@media (max-width: 992px) {
     .profile-layout-wrapper {
         flex-direction: column;
-        gap: 20px;
+        gap: 16px;
     }
 
     .profile-sidebar-column {
@@ -680,39 +685,50 @@
     }
 }
 
-/* Tablet nhỏ <= 768px: Form grid 1 cột */
+/* Tablet nhỏ <= 768px: Lưới 3 cột thu về 1 cột */
 @media (max-width: 768px) {
     .profile-grid {
         grid-template-columns: 1fr;
-        gap: 14px;
+        gap: 12px;
+    }
+
+    .profile-two-col-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .profile-password-hints {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
     }
 }
 
-/* Mobile <= 600px: Gọn gàng, không overflow */
+/* Mobile <= 600px: Gọn gàng, cho phép cuộn tự nhiên */
 @media (max-width: 600px) {
     .profile-page-container {
-        padding: 16px 12px 36px;
+        padding: 10px 10px 28px;
     }
 
     .profile-header {
-        gap: 10px;
-        margin-bottom: 16px;
+        gap: 8px;
+        margin-bottom: 12px;
     }
 
     .profile-badge-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 1.15rem;
+        width: 34px;
+        height: 34px;
+        font-size: 1.05rem;
     }
 
     .profile-page-title {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
     }
 
     .profile-sidebar-card,
     .profile-section-card {
-        padding: 16px 14px;
-        border-radius: 12px;
+        padding: 14px 12px;
+        border-radius: 10px;
     }
 
     .profile-actions {
@@ -725,11 +741,11 @@
     .btn-cancel {
         width: 100%;
         justify-content: center;
-        padding: 11px;
+        padding: 9px;
     }
 
     .profile-modal-card {
-        padding: 18px 14px;
+        padding: 16px 12px;
         border-radius: 10px;
     }
 
@@ -743,6 +759,6 @@
     .btn-modal-confirm-cancel {
         width: 100%;
         text-align: center;
-        padding: 10px;
+        padding: 9px;
     }
 }

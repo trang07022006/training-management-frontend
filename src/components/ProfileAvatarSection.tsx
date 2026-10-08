@@ -19,6 +19,7 @@ export interface ProfileAvatarSectionProps {
     name: string
     email: string
     roleDisplay: string
+    roleCode?: string
     avatarUrl: string | null | undefined
     onAvatarUrlChange?: (avatarUrl: string | null) => void
 }
@@ -28,6 +29,7 @@ export function ProfileAvatarSection({
     name,
     email,
     roleDisplay,
+    roleCode,
     avatarUrl,
     onAvatarUrlChange,
 }: ProfileAvatarSectionProps) {
@@ -215,7 +217,14 @@ export function ProfileAvatarSection({
             <div className="profile-avatar-identity">
                 <h2 className="profile-avatar-name" data-testid="avatar-identity-name">{name || email}</h2>
                 <p className="profile-avatar-email">{email}</p>
-                <span className="profile-avatar-role">{roleDisplay}</span>
+                <div className="profile-avatar-role-wrap">
+                    <span className="profile-avatar-role" data-testid="profile-role-badge">{roleDisplay}</span>
+                    {roleCode && (
+                        <span className="profile-avatar-role-code" data-testid="profile-role-code" style={{ display: 'none' }}>
+                            ({roleCode})
+                        </span>
+                    )}
+                </div>
             </div>
 
             <input

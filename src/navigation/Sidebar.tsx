@@ -217,9 +217,14 @@ export function Sidebar({
                         {visibleMenuItems.map((item) => {
                             const isActive = location.pathname === item.path
                             const isExpandable = item.key === 'training_programs' || item.key === 'courses'
+                            const isHidden = item.key === 'change_password'
 
                             return (
-                                <li key={item.key} className="sidebar-menu-item">
+                                <li
+                                    key={item.key}
+                                    className="sidebar-menu-item"
+                                    style={isHidden ? { display: 'none' } : undefined}
+                                >
                                     <Link
                                         to={item.path}
                                         className={`sidebar-nav-link ${isActive ? 'is-active' : ''}`}
