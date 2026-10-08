@@ -202,8 +202,8 @@ export function LoginPage() {
                 <section className="login-brand-panel" aria-label="Giới thiệu ICTU">
                     <div className="login-brand-bg-image-wrapper">
                         <img
-                            src="/branding/ictu/sinh-vien-ictu.jpg"
-                            alt="Sinh viên ICTU"
+                            src="/branding/ictu/building.png"
+                            alt="Tòa nhà ICTU"
                             className="login-brand-bg-img"
                         />
                         <div className="login-brand-overlay" />

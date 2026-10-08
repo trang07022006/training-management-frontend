@@ -30,6 +30,12 @@ export function AppLayout() {
 
     return (
         <div className="app-layout-container" data-testid="app-layout">
+            {/* Background ICTU Campus with frosted white overlay for authenticated area */}
+            <div className="app-main-bg" aria-hidden="true">
+                <div className="app-main-bg-img" />
+                <div className="app-main-bg-overlay" />
+            </div>
+
             <Sidebar
                 isOpen={sidebarOpen}
                 isCollapsed={isSidebarCollapsed}

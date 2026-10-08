@@ -1,25 +1,27 @@
 /* UI Standard: Blue (#2563eb), White, Gray (#f8fafc, #f1f5f9), soft rounded card (14px) */
 .role-dashboard-container {
-    min-height: 100vh;
+    min-height: calc(100vh - 130px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    background: transparent;
     padding: 24px;
     font-family: inherit;
     color: #1e293b;
 }
 
 .role-dashboard-card {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     width: 100%;
     max-width: 600px;
     border-radius: 14px;
     box-shadow:
-        0 10px 25px -5px rgba(37, 99, 235, 0.08),
-        0 8px 10px -6px rgba(0, 0, 0, 0.04);
-    border: 1px solid #e2e8f0;
+        0 16px 40px rgba(11, 40, 82, 0.1),
+        0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(226, 232, 240, 0.85);
     padding: 40px;
     box-sizing: border-box;
     text-align: center;
