@@ -367,3 +367,32 @@ button {
   animation: session-spin 0.75s linear infinite;
 }
 
+/* =========================================================================
+   Accessibility & Responsive Baseline (A9)
+   ========================================================================= */
+:focus-visible {
+  outline: 2px solid var(--color-ictu-blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .ictu-card {
+    padding: 16px;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    font-size: 13px;
+  }
+  .ictu-btn {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+  }
+  .ictu-card {
+    padding: 12px;
+  }
+}
+
+

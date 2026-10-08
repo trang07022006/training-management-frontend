@@ -770,3 +770,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 480px) {
+  .ictu-dashboard-container {
+    gap: 12px;
+    padding: 4px;
+  }
+  .ictu-hero-main-title {
+    font-size: 1.35rem;
+  }
+  .ictu-kpi-card {
+    padding: 14px;
+  }
+  .chart-card,
+  .calendar-card,
+  .ictu-table-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+  .ictu-table th,
+  .ictu-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+}
