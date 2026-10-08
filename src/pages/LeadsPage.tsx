@@ -60,7 +60,10 @@ export function LeadsPage() {
     // Tải trước danh sách nhân sự phụ trách
     useEffect(() => {
         getAssignableUsers(request)
-            .then(setAssignableUsers)
+            .then((users) => {
+                const validUsers = users.filter((u) => u.id && !u.id.startsWith('demo-'))
+                setAssignableUsers(validUsers)
+            })
             .catch(() => {})
     }, [request])
 

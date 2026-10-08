@@ -421,4 +421,20 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             )
         })
     })
+
+    it('12. Loại trừ tài khoản demo khỏi danh sách người phụ trách (SCRUM-127)', async () => {
+        vi.mocked(getAssignableUsers).mockResolvedValue([
+            { id: 'real-user-1', name: 'Giảng viên Thật', email: 'real@ictu.edu.vn', role: 'trainer' },
+            { id: 'demo-user-trainer', name: 'Giảng viên Demo', email: 'demo@ictu.edu.vn', role: 'trainer' },
+        ])
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.queryByText('Giảng viên Demo')).toBeNull()
+            expect(screen.getByText('Giảng viên Thật')).toBeDefined()
+        })
+    })
 })
+
