@@ -1,4 +1,4 @@
-/* PublicConsultationPage.css - Premium Modern Design (SCRUM-125) */
+/* PublicConsultationPage.css - ICTU Modern Academic Redesign V2 (SCRUM-125) */
 
 .consultation-container {
   position: relative;
@@ -9,6 +9,7 @@
   justify-content: center;
   padding: 2.5rem 1rem;
   background: radial-gradient(circle at 50% 0%, #f0fdfa 0%, #f8fafc 50%, #f1f5f9 100%);
+  font-family: var(--font-sans, inherit);
   overflow-x: hidden;
   box-sizing: border-box;
 }
