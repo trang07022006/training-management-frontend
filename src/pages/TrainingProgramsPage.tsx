@@ -31,6 +31,7 @@ interface FormErrors {
     code?: string
     name?: string
     duration_semesters?: string
+    standard_tuition_fee?: string
     general?: string
 }
 
@@ -76,6 +77,7 @@ export function TrainingProgramsPage({
     const [formName, setFormName] = useState<string>('')
     const [formDescription, setFormDescription] = useState<string>('')
     const [formDuration, setFormDuration] = useState<string>('')
+    const [formTuitionFee, setFormTuitionFee] = useState<string>('')
     const [formStatus, setFormStatus] = useState<TrainingProgramStatus>('draft')
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -174,6 +176,7 @@ export function TrainingProgramsPage({
         setFormName('')
         setFormDescription('')
         setFormDuration('')
+        setFormTuitionFee('')
         setFormStatus('draft')
         setFormErrors({})
         setIsSubmitting(false)
@@ -193,6 +196,7 @@ export function TrainingProgramsPage({
         setFormName(prog.name)
         setFormDescription(prog.description ?? '')
         setFormDuration(prog.duration_semesters !== null ? String(prog.duration_semesters) : '')
+        setFormTuitionFee(prog.standard_tuition_fee !== null && prog.standard_tuition_fee !== undefined ? String(prog.standard_tuition_fee) : '')
         setFormStatus(prog.status)
         setFormErrors({})
         setIsSubmitting(false)
@@ -260,6 +264,7 @@ export function TrainingProgramsPage({
             name: formName.trim(),
             description: formDescription.trim() ? formDescription.trim() : null,
             duration_semesters: formDuration.trim() ? Number(formDuration.trim()) : null,
+            standard_tuition_fee: formTuitionFee.trim() ? parseInt(formTuitionFee.replace(/\D/g, ''), 10) : null,
             status: formStatus,
         }
 
@@ -296,6 +301,7 @@ export function TrainingProgramsPage({
             name: formName.trim(),
             description: formDescription.trim() ? formDescription.trim() : null,
             duration_semesters: formDuration.trim() ? Number(formDuration.trim()) : null,
+            standard_tuition_fee: formTuitionFee.trim() ? parseInt(formTuitionFee.replace(/\D/g, ''), 10) : null,
             status: formStatus,
         }
 
@@ -487,6 +493,7 @@ export function TrainingProgramsPage({
                                     <th scope="col">Mã chương trình</th>
                                     <th scope="col">Tên chương trình</th>
                                     <th scope="col">Thời lượng</th>
+                                    <th scope="col">Học phí chuẩn</th>
                                     <th scope="col">Trạng thái</th>
                                     <th scope="col">Cập nhật gần nhất</th>
                                     {canManage && <th scope="col" style={{ textAlign: 'right' }}>Thao tác</th>}
@@ -509,6 +516,11 @@ export function TrainingProgramsPage({
                                         <td className="program-cell-duration">
                                             {prog.duration_semesters !== null && prog.duration_semesters !== undefined
                                                 ? `${prog.duration_semesters} học kỳ`
+                                                : '—'}
+                                        </td>
+                                        <td className="program-cell-tuition">
+                                            {prog.standard_tuition_fee !== null && prog.standard_tuition_fee !== undefined
+                                                ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(prog.standard_tuition_fee)
                                                 : '—'}
                                         </td>
                                         <td>
@@ -728,6 +740,23 @@ export function TrainingProgramsPage({
                                 </div>
 
                                 <div className="programs-form-group">
+                                    <label htmlFor="create-input-tuition" className="programs-form-label">
+                                        Học phí chuẩn (VNĐ)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="create-input-tuition"
+                                        data-testid="create-input-tuition"
+                                        className="programs-form-input"
+                                        placeholder="Ví dụ: 15000000"
+                                        min={0}
+                                        value={formTuitionFee}
+                                        onChange={(e) => setFormTuitionFee(e.target.value)}
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+
+                                <div className="programs-form-group">
                                     <label htmlFor="create-select-status" className="programs-form-label">
                                         Trạng thái
                                     </label>
@@ -882,6 +911,23 @@ export function TrainingProgramsPage({
                                             {formErrors.duration_semesters}
                                         </span>
                                     )}
+                                </div>
+
+                                <div className="programs-form-group">
+                                    <label htmlFor="edit-input-tuition" className="programs-form-label">
+                                        Học phí chuẩn (VNĐ)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="edit-input-tuition"
+                                        data-testid="edit-input-tuition"
+                                        className="programs-form-input"
+                                        placeholder="Ví dụ: 15000000"
+                                        min={0}
+                                        value={formTuitionFee}
+                                        onChange={(e) => setFormTuitionFee(e.target.value)}
+                                        disabled={isSubmitting}
+                                    />
                                 </div>
 
                                 <div className="programs-form-group">

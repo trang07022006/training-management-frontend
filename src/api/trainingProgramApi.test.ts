@@ -21,6 +21,7 @@ describe('trainingProgramApi - API Client (SCRUM-122 Activity A6)', () => {
         name: 'Công nghệ thông tin K21',
         description: 'Chương trình chuẩn',
         duration_semesters: 8,
+        standard_tuition_fee: null,
         status: 'active',
         created_at: '2026-03-01T00:00:00Z',
         updated_at: '2026-03-01T00:00:00Z',

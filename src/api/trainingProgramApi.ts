@@ -17,6 +17,7 @@ export interface TrainingProgram {
     name: string
     description: string | null
     duration_semesters: number | null
+    standard_tuition_fee: number | null
     status: TrainingProgramStatus
     created_at: string
     updated_at: string
@@ -27,6 +28,7 @@ export interface CreateTrainingProgramInput {
     name: string
     description?: string | null
     duration_semesters?: number | null
+    standard_tuition_fee?: number | null
     status?: TrainingProgramStatus
 }
 
@@ -35,6 +37,7 @@ export interface UpdateTrainingProgramInput {
     name: string
     description?: string | null
     duration_semesters?: number | null
+    standard_tuition_fee?: number | null
     status?: TrainingProgramStatus
 }
 
@@ -43,6 +46,7 @@ export interface PatchTrainingProgramInput {
     name?: string
     description?: string | null
     duration_semesters?: number | null
+    standard_tuition_fee?: number | null
     status?: TrainingProgramStatus
 }
 
