@@ -187,7 +187,7 @@ export function LoginPage() {
         }
     }
 
-    const continuePath = role ? getRoleHomePath(role) : '/'
+    const continuePath = role ? getRoleHomePath(role) : '/dashboard'
 
     return (
         <main className="login-page-container">

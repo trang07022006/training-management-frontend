@@ -180,17 +180,24 @@ export function Sidebar({
             >
                 {/* Brand Header */}
                 <div className="sidebar-brand">
-                    <div className="sidebar-logo-icon" aria-hidden="true">
-                        <img
-                            src="/branding/ictu/logo.png"
-                            alt="Logo ICTU"
-                            className="sidebar-brand-img"
-                        />
-                    </div>
-                    <div className="sidebar-brand-text">
-                        <span className="sidebar-brand-acronym">ICTU</span>
-                        <span className="sidebar-brand-title">QUẢN LÝ ĐÀO TẠO</span>
-                    </div>
+                    <Link
+                        to="/"
+                        className="sidebar-brand-link"
+                        title="Website công khai ICTU"
+                        data-testid="sidebar-public-link"
+                    >
+                        <div className="sidebar-logo-icon" aria-hidden="true">
+                            <img
+                                src="/branding/ictu/logo.png"
+                                alt="Logo ICTU"
+                                className="sidebar-brand-img"
+                            />
+                        </div>
+                        <div className="sidebar-brand-text">
+                            <span className="sidebar-brand-acronym">ICTU</span>
+                            <span className="sidebar-brand-title">QUẢN LÝ ĐÀO TẠO</span>
+                        </div>
+                    </Link>
 
                     {/* Nút 3 gạch thu gọn / ẩn thanh menu ở góc bên phải của sidebar */}
                     {(onToggleCollapse || onClose) && (

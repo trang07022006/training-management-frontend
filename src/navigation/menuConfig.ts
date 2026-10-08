@@ -105,7 +105,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
     {
         key: 'overview',
         label: 'Tổng quan',
-        path: '/',
+        path: '/dashboard',
         icon: 'dashboard',
         isPublic: true,
     },

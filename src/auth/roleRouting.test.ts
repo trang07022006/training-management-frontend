@@ -19,7 +19,7 @@ describe('roleRouting', () => {
         expect(getRoleHomePath('admin')).toBe('/admin')
         expect(getRoleHomePath('trainer')).toBe('/trainer')
         expect(getRoleHomePath('trainee')).toBe('/trainee')
-        expect(getRoleHomePath('user')).toBe('/')
+        expect(getRoleHomePath('user')).toBe('/dashboard')
     })
 
     it('xử lý chuẩn hóa chữ hoa, khoảng trắng', () => {
@@ -28,12 +28,12 @@ describe('roleRouting', () => {
         expect(getRoleHomePath('TRAINEE')).toBe('/trainee')
     })
 
-    it('fallback về / đối với vai trò rỗng hoặc không xác định', () => {
-        expect(getRoleHomePath(null)).toBe('/')
-        expect(getRoleHomePath(undefined)).toBe('/')
-        expect(getRoleHomePath('')).toBe('/')
-        expect(getRoleHomePath('unknown_role')).toBe('/')
-        expect(getRoleHomePath('guest')).toBe('/')
+    it('fallback về /dashboard đối với vai trò rỗng hoặc không xác định', () => {
+        expect(getRoleHomePath(null)).toBe('/dashboard')
+        expect(getRoleHomePath(undefined)).toBe('/dashboard')
+        expect(getRoleHomePath('')).toBe('/dashboard')
+        expect(getRoleHomePath('unknown_role')).toBe('/dashboard')
+        expect(getRoleHomePath('guest')).toBe('/dashboard')
     })
 
     it('trả về đúng nhãn hiển thị tiếng Việt cho vai trò', () => {

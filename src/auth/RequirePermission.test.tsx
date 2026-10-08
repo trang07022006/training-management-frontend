@@ -108,7 +108,7 @@ describe('SCRUM-23 Phase 4: Route / Menu Consistency (RequirePermission)', () =>
                 <SessionProvider apiOrigin="http://localhost:5000">
                     <TestAppWrapper role="user">
                         <Routes>
-                            <Route path="/" element={<h1>Trang chủ</h1>} />
+                            <Route path="/dashboard" element={<h1>Trang chủ</h1>} />
                             <Route
                                 element={
                                     <RequirePermission
@@ -126,7 +126,7 @@ describe('SCRUM-23 Phase 4: Route / Menu Consistency (RequirePermission)', () =>
         )
 
         expect(screen.queryByText('Nội dung Giảng viên')).toBeNull()
-        expect(screen.getByTestId('location-display').textContent).toBe('/')
+        expect(screen.getByTestId('location-display').textContent).toBe('/dashboard')
     })
 
     it('4. unauthenticated -> chuyển hướng về /login', () => {

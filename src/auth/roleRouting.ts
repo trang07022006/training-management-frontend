@@ -20,7 +20,7 @@ export const ROLE_HOME_PATHS: Record<string, string> = {
     [APP_ROLES.ADMIN]: '/admin',
     [APP_ROLES.TRAINER]: '/trainer',
     [APP_ROLES.TRAINEE]: '/trainee',
-    [APP_ROLES.USER]: '/',
+    [APP_ROLES.USER]: '/dashboard',
 }
 
 export const ROLE_LABELS: Record<string, string> = {
@@ -32,15 +32,15 @@ export const ROLE_LABELS: Record<string, string> = {
 
 /**
  * Trả về đường dẫn trang chủ phù hợp theo vai trò (role).
- * Nếu không có vai trò hoặc vai trò không xác định, sử dụng route mặc định/fallback là '/'.
+ * Nếu không có vai trò hoặc vai trò không xác định, sử dụng route mặc định/fallback là '/dashboard'.
  */
 export function getRoleHomePath(role?: string | null): string {
     if (!role || typeof role !== 'string') {
-        return '/'
+        return '/dashboard'
     }
 
     const normalized = role.trim().toLowerCase()
-    return ROLE_HOME_PATHS[normalized] ?? '/'
+    return ROLE_HOME_PATHS[normalized] ?? '/dashboard'
 }
 
 /**

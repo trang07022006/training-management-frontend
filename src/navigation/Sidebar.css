@@ -35,6 +35,21 @@
     background: rgba(0, 0, 0, 0.15);
 }
 
+.sidebar-brand-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+    min-width: 0;
+    transition: opacity 0.15s ease;
+}
+
+.sidebar-brand-link:hover {
+    opacity: 0.9;
+}
+
 .sidebar-logo-icon {
     display: flex;
     align-items: center;

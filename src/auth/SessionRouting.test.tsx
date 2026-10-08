@@ -100,7 +100,7 @@ function setup(initialPath = '/login') {
 
                         <Route element={<RequireSession />}>
                             <Route
-                                path="/"
+                                path="/dashboard"
                                 element={<h1>Trang nghiệp vụ</h1>}
                             />
                         </Route>
@@ -153,7 +153,7 @@ afterEach(() => {
 
 describe('Điều hướng phiên đăng nhập', () => {
     it('chưa có phiên thì chuyển trang được bảo vệ về login', async () => {
-        const fetcher = setup('/')
+        const fetcher = setup('/dashboard')
 
         await screen.findByRole('heading', { name: 'Đăng nhập' })
 
@@ -169,7 +169,7 @@ describe('Điều hướng phiên đăng nhập', () => {
 
         await enterSystem()
 
-        expect(screen.getByTestId('path').textContent).toBe('/')
+        expect(screen.getByTestId('path').textContent).toBe('/dashboard')
         expect(screen.getByTestId('session').textContent).toBe('active')
     })
 
@@ -224,7 +224,7 @@ describe('Điều hướng phiên đăng nhập', () => {
         callApi()
         await expectResult('200')
 
-        expect(screen.getByTestId('path').textContent).toBe('/')
+        expect(screen.getByTestId('path').textContent).toBe('/dashboard')
         expect(screen.getByTestId('session').textContent).toBe('active')
         expect(screen.queryByRole('alert')).toBeNull()
         expect(fetcher).toHaveBeenCalledTimes(3)
@@ -238,7 +238,7 @@ describe('Điều hướng phiên đăng nhập', () => {
         callApi()
         await expectResult('NETWORK_ERROR')
 
-        expect(screen.getByTestId('path').textContent).toBe('/')
+        expect(screen.getByTestId('path').textContent).toBe('/dashboard')
         expect(screen.getByTestId('session').textContent).toBe('active')
         expect(screen.queryByRole('alert')).toBeNull()
     })
@@ -257,7 +257,7 @@ describe('Điều hướng phiên đăng nhập', () => {
         callApi()
         await expectResult('SESSION_STORAGE_UNAVAILABLE')
 
-        expect(screen.getByTestId('path').textContent).toBe('/')
+        expect(screen.getByTestId('path').textContent).toBe('/dashboard')
         expect(screen.getByTestId('session').textContent).toBe('active')
         expect(screen.queryByRole('alert')).toBeNull()
     })

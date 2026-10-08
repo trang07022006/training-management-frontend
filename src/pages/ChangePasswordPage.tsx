@@ -390,7 +390,7 @@ export function ChangePasswordPage({
         </form>
 
         <footer className="change-password-footer">
-          <Link to="/" className="back-link">
+          <Link to="/dashboard" className="back-link">
             <svg
               className="back-icon"
               viewBox="0 0 24 24"
