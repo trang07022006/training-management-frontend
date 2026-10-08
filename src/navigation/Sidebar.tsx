@@ -10,6 +10,7 @@ import './Sidebar.css'
 
 export interface SidebarProps {
     isOpen?: boolean
+    isCollapsed?: boolean
     onClose?: () => void
     customMenuItems?: readonly MenuItem[]
     userName?: string | null
@@ -125,6 +126,7 @@ function getMenuIcon(iconName?: string) {
  */
 export function Sidebar({
     isOpen = false,
+    isCollapsed = false,
     onClose,
     customMenuItems,
     userName: propUserName,
@@ -169,7 +171,7 @@ export function Sidebar({
             )}
 
             <aside
-                className={`app-sidebar ${isOpen ? 'is-open' : ''}`}
+                className={`app-sidebar ${isOpen ? 'is-open' : ''} ${isCollapsed ? 'is-collapsed' : ''}`}
                 aria-label="Thanh điều hướng chính"
                 data-testid="app-sidebar"
             >

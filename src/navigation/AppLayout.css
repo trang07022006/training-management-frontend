@@ -21,6 +21,12 @@
     overflow-y: auto;
 }
 
+@media (min-width: 769px) {
+    .app-main-viewport.sidebar-collapsed {
+        margin-left: 0;
+    }
+}
+
 /* Responsive breakpoint for <= 768px and mobile viewports (SCRUM-23) */
 @media (max-width: 768px) {
     .app-main-viewport {

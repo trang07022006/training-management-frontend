@@ -10,17 +10,30 @@ import './AppLayout.css'
  */
 export function AppLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
+    const handleToggleSidebar = () => {
+        // Toggle mobile drawer
+        setSidebarOpen((prev) => !prev)
+        // Toggle desktop collapse state
+        setIsSidebarCollapsed((prev) => !prev)
+    }
+
+    const handleCloseSidebar = () => {
+        setSidebarOpen(false)
+    }
 
     return (
         <div className="app-layout-container" data-testid="app-layout">
             <Sidebar
                 isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
+                isCollapsed={isSidebarCollapsed}
+                onClose={handleCloseSidebar}
             />
 
-            <div className="app-main-viewport">
+            <div className={`app-main-viewport ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
                 <AppHeader
-                    onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+                    onToggleSidebar={handleToggleSidebar}
                 />
                 <main className="app-content-body" data-testid="app-content-body">
                     <Outlet />

@@ -72,24 +72,6 @@ export function AppHeader({
                 </div>
             </div>
 
-            {/* Center: Global Search Pill */}
-            <div className="header-center">
-                <div className="header-search-bar" role="search">
-                    <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm sinh viên, môn học, lớp học phần... (Đang phát triển)"
-                        className="header-search-input"
-                        aria-label="Tìm kiếm trong hệ thống đào tạo (Đang phát triển)"
-                        title="Tính năng tìm kiếm toàn hệ thống đang phát triển"
-                        readOnly
-                    />
-                </div>
-            </div>
-
             {/* Right: Notification Bell, User Profile Pill, Logout */}
             <div className="header-right">
                 {/* Notification Bell with red badge */}
