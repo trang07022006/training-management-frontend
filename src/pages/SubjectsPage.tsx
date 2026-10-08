@@ -16,6 +16,7 @@ import {
     ApiError,
 } from '../api/subjectApi'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './SubjectsPage.css'
 
 export interface SubjectsPageProps {
@@ -387,6 +388,7 @@ export function SubjectsPage({
 
     return (
         <main className="subjects-page" data-testid="subjects-page">
+            <Breadcrumb items={[{ label: 'Môn học' }]} />
             {/* Header */}
             <header className="subjects-header">
                 <div className="subjects-header-left">

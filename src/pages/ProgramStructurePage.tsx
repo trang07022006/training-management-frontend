@@ -30,6 +30,7 @@ import {
 } from '../api/programStructureApi'
 import { getSubjects, type Subject } from '../api/subjectApi'
 import { getProgramStatusLabel } from '../api/trainingProgramApi'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './ProgramStructurePage.css'
 
 export interface ProgramStructurePageProps {
@@ -507,6 +508,12 @@ export function ProgramStructurePage({
 
     return (
         <div className="program-structure-page" data-testid="program-structure-page">
+            <Breadcrumb
+                items={[
+                    { label: 'Chương trình đào tạo', path: '/training-programs' },
+                    { label: 'Cấu trúc chương trình' },
+                ]}
+            />
             {/* Navigation back */}
             <nav aria-label="Điều hướng">
                 <Link to="/training-programs" className="structure-back-link">
