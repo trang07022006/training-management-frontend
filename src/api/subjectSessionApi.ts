@@ -29,6 +29,7 @@ export interface SubjectSummary {
     id: string
     code: string
     name: string
+    status?: string | null
     total_sessions: number | null
 }
 

@@ -448,4 +448,65 @@ describe('SubjectSessionsPage - Test Suite SCRUM-129 Activity A6', () => {
         expect(backLink).toBeDefined()
         expect(backLink.getAttribute('href')).toBe('/subjects')
     })
+
+    it('14. Vô hiệu hóa nút Thêm, Sửa, Xóa, Sắp xếp khi môn học đã lưu trữ (SCRUM-129 A8)', async () => {
+        const archivedSubject: SubjectSummary = {
+            ...mockSubjectSummary,
+            status: 'archived',
+        }
+
+        renderSubjectSessionsPage({
+            initialSubject: archivedSubject,
+            initialSessions: mockSessionsData,
+            canManageOverride: true,
+        })
+
+        // Banner cảnh báo lưu trữ hiển thị
+        expect(screen.getByTestId('banner-archived')).toBeDefined()
+        expect(screen.getByTestId('banner-archived').textContent).toContain('Đã lưu trữ')
+
+        // Nút Thêm buổi học bị disable
+        const addBtn = screen.getByTestId('btn-add-session') as HTMLButtonElement
+        expect(addBtn.disabled).toBe(true)
+        expect(addBtn.getAttribute('title')).toContain('Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.')
+
+        // Các nút thao tác trên từng hàng buổi học bị disable
+        const editBtn = screen.getByTestId('btn-edit-sess-1') as HTMLButtonElement
+        expect(editBtn.disabled).toBe(true)
+        expect(editBtn.getAttribute('title')).toContain('Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.')
+
+        const deleteBtn = screen.getByTestId('btn-delete-sess-1') as HTMLButtonElement
+        expect(deleteBtn.disabled).toBe(true)
+        expect(deleteBtn.getAttribute('title')).toContain('Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.')
+
+        const moveUpBtn = screen.getByTestId('btn-move-up-sess-2') as HTMLButtonElement
+        expect(moveUpBtn.disabled).toBe(true)
+        expect(moveUpBtn.getAttribute('title')).toContain('Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.')
+
+        const moveDownBtn = screen.getByTestId('btn-move-down-sess-1') as HTMLButtonElement
+        expect(moveDownBtn.disabled).toBe(true)
+        expect(moveDownBtn.getAttribute('title')).toContain('Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.')
+    })
+
+    it('15. Không cho phép mở modal tạo hoặc sửa khi môn học đã lưu trữ (SCRUM-129 A8)', async () => {
+        const archivedSubject: SubjectSummary = {
+            ...mockSubjectSummary,
+            status: 'archived',
+        }
+
+        renderSubjectSessionsPage({
+            initialSubject: archivedSubject,
+            initialSessions: mockSessionsData,
+            canManageOverride: true,
+        })
+
+        // Click nút Thêm buổi học
+        fireEvent.click(screen.getByTestId('btn-add-session'))
+        expect(screen.queryByText('Thêm buổi học mới')).toBeNull()
+
+        // Click nút Sửa buổi học
+        fireEvent.click(screen.getByTestId('btn-edit-sess-1'))
+        expect(screen.queryByText('Chỉnh sửa buổi học')).toBeNull()
+    })
 })
+

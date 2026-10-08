@@ -61,7 +61,7 @@ export function SubjectSessionsPage({
 
     // Data State
     const [subject, setSubject] = useState<SubjectSummary | null>(initialSubject || null)
-    const [subjectStatus, setSubjectStatus] = useState<string>('active')
+    const [subjectStatus, setSubjectStatus] = useState<string>(initialSubject?.status || 'active')
     const [sessions, setSessions] = useState<SubjectSession[]>(initialSessions || [])
     const [loading, setLoading] = useState<boolean>(!initialSessions && Boolean(subjectId))
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -90,19 +90,22 @@ export function SubjectSessionsPage({
     // Load data function
     const loadData = useCallback(async () => {
         if (!subjectId) return
-        setLoading(true)
-        setErrorMessage(null)
 
         try {
             // Lấy danh sách sessions
             const res = await getSubjectSessions(requestFn, subjectId)
             setSubject(res.subject)
+            if (res.subject.status) {
+                setSubjectStatus(res.subject.status)
+            }
             setSessions(res.items.sort((a, b) => a.session_number - b.session_number))
 
             // Kiểm tra trạng thái môn học
             try {
                 const subjDetail = await getSubject(requestFn, subjectId)
-                setSubjectStatus(subjDetail.status)
+                if (subjDetail.status) {
+                    setSubjectStatus(subjDetail.status)
+                }
             } catch {
                 // Nếu getSubject lỗi thì giữ nguyên status mặc định
             }
@@ -119,11 +122,23 @@ export function SubjectSessionsPage({
         if (!subjectId || initialSessions) return
 
         getSubjectSessions(requestFn, subjectId)
-            .then((res) => {
+            .then(async (res) => {
                 if (isMounted) {
                     setSubject(res.subject)
+                    if (res.subject.status) {
+                        setSubjectStatus(res.subject.status)
+                    }
                     setSessions(res.items.sort((a, b) => a.session_number - b.session_number))
                     setLoading(false)
+
+                    try {
+                        const subjDetail = await getSubject(requestFn, subjectId)
+                        if (isMounted && subjDetail.status) {
+                            setSubjectStatus(subjDetail.status)
+                        }
+                    } catch {
+                        // ignore
+                    }
                 }
             })
             .catch((err: unknown) => {
@@ -153,6 +168,7 @@ export function SubjectSessionsPage({
 
     // Open Create Modal
     const handleOpenCreateModal = () => {
+        if (isArchived) return
         const nextNum = sessions.length > 0 ? Math.max(...sessions.map((s) => s.session_number)) + 1 : 1
         setCreateNumber(String(nextNum))
         setCreateTopic('')
@@ -164,6 +180,7 @@ export function SubjectSessionsPage({
     // Submit Create Session
     const handleCreateSubmit = async (e: FormEvent) => {
         e.preventDefault()
+        if (isArchived) return
         setCreateError(null)
 
         const num = Number.parseInt(createNumber, 10)
@@ -218,6 +235,7 @@ export function SubjectSessionsPage({
 
     // Open Edit Modal
     const handleOpenEditModal = (sess: SubjectSession) => {
+        if (isArchived) return
         setEditingSession(sess)
         setEditTopic(sess.topic)
         setEditObjective(sess.objective)
@@ -227,7 +245,7 @@ export function SubjectSessionsPage({
     // Submit Edit Session
     const handleEditSubmit = async (e: FormEvent) => {
         e.preventDefault()
-        if (!editingSession) return
+        if (!editingSession || isArchived) return
         setEditError(null)
 
         const trimmedTopic = editTopic.trim()
@@ -268,6 +286,7 @@ export function SubjectSessionsPage({
 
     // Reorder Handlers (Move Up / Down)
     const handleMoveSession = async (index: number, direction: 'up' | 'down') => {
+        if (isArchived) return
         const targetIndex = direction === 'up' ? index - 1 : index + 1
         if (targetIndex < 0 || targetIndex >= sessions.length) return
 
@@ -298,7 +317,7 @@ export function SubjectSessionsPage({
 
     // Delete Session Submit
     const handleDeleteSubmit = async () => {
-        if (!deletingSession) return
+        if (!deletingSession || isArchived) return
         setDeleteError(null)
         setIsDeleting(true)
 
@@ -349,11 +368,13 @@ export function SubjectSessionsPage({
                         </div>
                     </div>
 
-                    {canManage && !isArchived && (
+                    {canManage && (
                         <button
                             type="button"
                             className="btn-add-session"
                             data-testid="btn-add-session"
+                            disabled={isArchived}
+                            title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
                             onClick={handleOpenCreateModal}
                         >
                             + Thêm buổi học
@@ -412,11 +433,13 @@ export function SubjectSessionsPage({
                 <div className="sessions-empty-state" data-testid="empty-state">
                     <h3>Chưa có buổi học nào</h3>
                     <p>Môn học này hiện chưa được thiết lập bất kỳ buổi học nào trong chương trình.</p>
-                    {canManage && !isArchived && (
+                    {canManage && (
                         <button
                             type="button"
                             className="btn-add-session"
                             data-testid="btn-empty-add-session"
+                            disabled={isArchived}
+                            title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
                             onClick={handleOpenCreateModal}
                         >
                             + Thêm buổi học đầu tiên
@@ -432,7 +455,7 @@ export function SubjectSessionsPage({
                                 <th scope="col">Buổi / STT</th>
                                 <th scope="col">Chủ đề</th>
                                 <th scope="col">Mục tiêu buổi học</th>
-                                {canManage && !isArchived && <th scope="col" style={{ textAlign: 'right' }}>Thao tác</th>}
+                                {canManage && <th scope="col" style={{ textAlign: 'right' }}>Thao tác</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -449,7 +472,7 @@ export function SubjectSessionsPage({
                                     <td className="cell-objective" data-testid={`session-objective-${sess.id}`}>
                                         {sess.objective}
                                     </td>
-                                    {canManage && !isArchived && (
+                                    {canManage && (
                                         <td className="cell-actions">
                                             <div className="actions-group">
                                                 <button
@@ -457,9 +480,9 @@ export function SubjectSessionsPage({
                                                     className="btn-action-icon"
                                                     data-testid={`btn-move-up-${sess.id}`}
                                                     aria-label={`Di chuyển Buổi ${sess.session_number} lên trên`}
-                                                    title="Di chuyển lên"
-                                                    disabled={idx === 0}
-                                                    onClick={() => handleMoveSession(idx, 'up')}
+                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : 'Di chuyển lên'}
+                                                    disabled={isArchived || idx === 0}
+                                                    onClick={() => void handleMoveSession(idx, 'up')}
                                                 >
                                                     ↑
                                                 </button>
@@ -468,9 +491,9 @@ export function SubjectSessionsPage({
                                                     className="btn-action-icon"
                                                     data-testid={`btn-move-down-${sess.id}`}
                                                     aria-label={`Di chuyển Buổi ${sess.session_number} xuống dưới`}
-                                                    title="Di chuyển xuống"
-                                                    disabled={idx === sessions.length - 1}
-                                                    onClick={() => handleMoveSession(idx, 'down')}
+                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : 'Di chuyển xuống'}
+                                                    disabled={isArchived || idx === sessions.length - 1}
+                                                    onClick={() => void handleMoveSession(idx, 'down')}
                                                 >
                                                     ↓
                                                 </button>
@@ -479,6 +502,8 @@ export function SubjectSessionsPage({
                                                     className="btn-action-edit"
                                                     data-testid={`btn-edit-${sess.id}`}
                                                     aria-label={`Sửa Buổi ${sess.session_number}`}
+                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                                    disabled={isArchived}
                                                     onClick={() => handleOpenEditModal(sess)}
                                                 >
                                                     Sửa
@@ -488,7 +513,10 @@ export function SubjectSessionsPage({
                                                     className="btn-action-delete"
                                                     data-testid={`btn-delete-${sess.id}`}
                                                     aria-label={`Xóa Buổi ${sess.session_number}`}
+                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                                    disabled={isArchived}
                                                     onClick={() => {
+                                                        if (isArchived) return
                                                         setDeletingSession(sess)
                                                         setDeleteError(null)
                                                     }}

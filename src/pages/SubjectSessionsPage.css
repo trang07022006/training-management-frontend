@@ -511,3 +511,13 @@
         flex-wrap: wrap;
     }
 }
+
+.btn-add-session:disabled,
+.btn-action-edit:disabled,
+.btn-action-delete:disabled,
+.btn-action-icon:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+

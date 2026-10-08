@@ -181,7 +181,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     PREREQUISITE_ALREADY_EXISTS: 'Môn tiên quyết này đã được thiết lập.',
     CANNOT_PREREQUISITE_SELF: 'Môn học không thể làm điều kiện tiên quyết của chính nó.',
     PROGRAM_ARCHIVED: 'Chương trình đào tạo đã lưu trữ, không thể chỉnh sửa cấu trúc.',
-    SUBJECT_ARCHIVED: 'Môn học đã lưu trữ, không thể thêm vào chương trình.',
+    SUBJECT_ARCHIVED: 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.',
     INVALID_SEMESTER: 'Học kỳ không hợp lệ.',
     SEMESTER_EXCEEDS_DURATION: 'Học kỳ vượt quá thời gian đào tạo của chương trình.',
 
@@ -345,6 +345,9 @@ export function getErrorMessage(
             return rawMessage
         }
         if (code === 'SUBJECT_IN_USE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'SUBJECT_ARCHIVED' && rawMessage && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
         if (

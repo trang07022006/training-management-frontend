@@ -297,6 +297,21 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             )
         })
     })
+
+    describe('15. Buổi học môn học (SCRUM-129)', () => {
+        it('map mã SUBJECT_ARCHIVED sang thông báo rõ ràng tiếng Việt', () => {
+            expect(getErrorMessage('SUBJECT_ARCHIVED')).toBe(
+                'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.'
+            )
+            expect(
+                getErrorMessage({
+                    code: 'SUBJECT_ARCHIVED',
+                    message: 'Môn học đã lưu trữ, không thể chỉnh sửa buổi học.',
+                })
+            ).toBe('Môn học đã lưu trữ, không thể chỉnh sửa buổi học.')
+        })
+    })
 })
+
 
 
