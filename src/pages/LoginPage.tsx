@@ -191,6 +191,12 @@ export function LoginPage() {
 
     return (
         <main className="login-page-container">
+            {/* Background ICTU Campus with frosted white overlay */}
+            <div className="login-page-bg" aria-hidden="true">
+                <div className="login-page-bg-img" />
+                <div className="login-page-bg-overlay" />
+            </div>
+
             <div className="login-split-card login-card">
                 {/* Left Panel: ICTU Branding Hero (Desktop) */}
                 <section className="login-brand-panel" aria-label="Giới thiệu ICTU">
