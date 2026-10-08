@@ -25,6 +25,7 @@ import {
     ApiError,
 } from '../api/subjectSessionApi'
 import { getSubject } from '../api/subjectApi'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './SubjectSessionsPage.css'
 
 export interface SubjectSessionsPageProps {
@@ -315,6 +316,12 @@ export function SubjectSessionsPage({
 
     return (
         <div className="subject-sessions-container" data-testid="subject-sessions-page">
+            <Breadcrumb
+                items={[
+                    { label: 'Môn học', path: '/subjects' },
+                    { label: subject ? `Buổi học - ${subject.code}` : 'Buổi học' },
+                ]}
+            />
             {/* Header & Meta */}
             <header className="subject-sessions-header">
                 <Link to="/subjects" className="subject-sessions-back-link" data-testid="link-back-subjects">
