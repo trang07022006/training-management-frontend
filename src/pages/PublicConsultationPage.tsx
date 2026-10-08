@@ -5,7 +5,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
     getPublicProgramOptions,
     submitPublicConsultation,
@@ -19,6 +19,7 @@ import './PublicConsultationPage.css'
 export interface PublicConsultationPageProps {
     apiOrigin?: string
     requestFn?: RequestFunction
+    initialProgramId?: string
     onSuccess?: (response: PublicConsultationResponse) => void
 }
 
@@ -28,8 +29,20 @@ const EMAIL_REGEX = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/
 export function PublicConsultationPage({
     apiOrigin,
     requestFn,
+    initialProgramId,
     onSuccess,
 }: PublicConsultationPageProps) {
+    let queryProgramId: string | null = null
+    try {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const [searchParams] = useSearchParams()
+        queryProgramId = searchParams.get('program')
+    } catch {
+        queryProgramId = null
+    }
+
+    const targetProgramId = initialProgramId || queryProgramId
+
     const [formData, setFormData] = useState<PublicConsultationInput>({
         full_name: '',
         phone: '',
@@ -57,6 +70,17 @@ export function PublicConsultationPage({
                 if (isMounted) {
                     setProgramOptions(programs)
                     setIsLoadingPrograms(false)
+
+                    // Tiền chọn chương trình nếu query ?program=<valid-id> hợp lệ
+                    if (targetProgramId) {
+                        const matched = programs.find((p) => String(p.id) === String(targetProgramId))
+                        if (matched) {
+                            setFormData((prev) => ({
+                                ...prev,
+                                interested_program_id: matched.id,
+                            }))
+                        }
+                    }
                 }
             })
             .catch(() => {
@@ -72,7 +96,7 @@ export function PublicConsultationPage({
         return () => {
             isMounted = false
         }
-    }, [requestFn, apiOrigin])
+    }, [requestFn, apiOrigin, targetProgramId])
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,

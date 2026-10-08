@@ -83,19 +83,26 @@ export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPagePr
     try {
       if (onSubmit) {
         try {
-          await onSubmit(trimmedEmail)
+          const result: unknown = await onSubmit(trimmedEmail)
           setIsSubmitted(true)
-          triggerCooldown(60)
+          // Nếu có trả về cooldown từ onSubmit (nếu onSubmit được cấu hình trả về object)
+          const retrySec =
+            result && typeof result === 'object' && 'retry_after_seconds' in result
+              ? Number((result as { retry_after_seconds?: number }).retry_after_seconds)
+              : 0
+          if (retrySec > 0) {
+              triggerCooldown(retrySec)
+              setCooldownError('Bạn đã gửi 3 yêu cầu liên tiếp. Vui lòng thử lại sau')
+          }
         } catch (err: unknown) {
           const errObj = err as { code?: string; status?: number; retry_after_seconds?: number }
           if (errObj?.code === 'FORGOT_PASSWORD_COOLDOWN' || errObj?.status === 429) {
-            const sec = Number(errObj?.retry_after_seconds) || 60
+            const sec = Number(errObj?.retry_after_seconds) || 30
             triggerCooldown(sec)
-            setCooldownError('Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng chờ trước khi gửi lại.')
+            setCooldownError('Bạn đã gửi 3 yêu cầu liên tiếp. Vui lòng thử lại sau')
             setIsSubmitted(true)
           } else {
             setIsSubmitted(true)
-            triggerCooldown(60)
           }
         }
       } else {
@@ -119,10 +126,10 @@ export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPagePr
             const retryHeader = res.headers.get('Retry-After')
             const sec =
               Number(data?.retry_after_seconds) ||
-              (retryHeader ? parseInt(retryHeader, 10) : 60) ||
-              60
+              (retryHeader ? parseInt(retryHeader, 10) : 30) ||
+              30
             triggerCooldown(sec)
-            setCooldownError('Bạn vừa yêu cầu đặt lại mật khẩu. Vui lòng chờ trước khi gửi lại.')
+            setCooldownError(data?.message || 'Bạn đã gửi 3 yêu cầu liên tiếp. Vui lòng thử lại sau')
             setIsSubmitted(true)
           } else {
             const data = await res.json().catch(() => null)
@@ -134,7 +141,6 @@ export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPagePr
         } catch {
           // Bảo vệ nguyên tắc anti-enumeration khi gặp lỗi kết nối
           setIsSubmitted(true)
-          triggerCooldown(60)
         }
       }
     } finally {
@@ -197,7 +203,10 @@ export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPagePr
               </svg>
               <div className="feedback-texts">
                 <span className="feedback-heading">Yêu cầu quá nhanh</span>
-                <span className="feedback-body">{cooldownError}</span>
+                <span className="feedback-body">
+                  <span>{cooldownError}</span>
+                  {cooldownSeconds > 0 && ` 00:${cooldownSeconds.toString().padStart(2, '0')}`}
+                </span>
               </div>
             </div>
           </div>
