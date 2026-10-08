@@ -49,6 +49,9 @@ export function LeadsPage() {
     const [assignmentError, setAssignmentError] = useState<string | null>(null)
     const [assignmentSuccess, setAssignmentSuccess] = useState<string | null>(null)
 
+    // Trigger refetch để đồng bộ danh sách sau mutations khi đang có bộ lọc (SCRUM-128)
+    const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
+
     // Debounce search input (300ms)
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -86,7 +89,13 @@ export function LeadsPage() {
                     setTotal(data.total)
                     setPage(data.page)
                     setTotalPages(data.total_pages)
+                    setPageError(null)
                     setIsLoading(false)
+
+                    // Nếu page > 1 trở thành rỗng sau mutation, lùi về trang trước
+                    if (data.items.length === 0 && data.total > 0 && page > 1) {
+                        setPage((p) => Math.max(1, p - 1))
+                    }
                 }
             })
             .catch((err: unknown) => {
@@ -94,6 +103,7 @@ export function LeadsPage() {
                     const message =
                         err instanceof Error ? err.message : 'Lỗi khi tải danh sách tư vấn.'
                     setPageError(message)
+                    setLeads([])
                     setIsLoading(false)
                 }
             })
@@ -110,6 +120,7 @@ export function LeadsPage() {
         assigneeFilter,
         dateFrom,
         dateTo,
+        refreshTrigger,
     ])
 
     const handleClearFilters = () => {
@@ -163,9 +174,8 @@ export function LeadsPage() {
             )
             setSelectedLead(updated)
             setStatusSuccess('Cập nhật trạng thái thành công!')
-            setLeads((prev) =>
-                prev.map((item) => (item.id === updated.id ? updated : item)),
-            )
+            // Trigger refetch đồng bộ dữ liệu theo đúng bộ lọc hiện tại
+            setRefreshTrigger((prev) => prev + 1)
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Không thể cập nhật trạng thái.'
@@ -190,9 +200,8 @@ export function LeadsPage() {
                     ? 'Phân công nhân sự phụ trách thành công!'
                     : 'Đã gỡ phân công nhân sự phụ trách!',
             )
-            setLeads((prev) =>
-                prev.map((item) => (item.id === updated.id ? updated : item)),
-            )
+            // Trigger refetch đồng bộ dữ liệu theo đúng bộ lọc hiện tại
+            setRefreshTrigger((prev) => prev + 1)
         } catch (err: unknown) {
             const message =
                 err instanceof Error ? err.message : 'Không thể cập nhật phân công.'

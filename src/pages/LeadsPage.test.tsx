@@ -3,7 +3,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, cleanup, act } from '@testing-library/react'
 import { LeadsPage } from './LeadsPage'
-import { getLeads, getLead, assignLead, getAssignableUsers } from '../api/leadApi'
+import { getLeads, getLead, updateLeadStatus, assignLead, getAssignableUsers } from '../api/leadApi'
 
 import type { Lead, LeadListResponseData, AssignableUser } from '../api/leadApi'
 
@@ -436,5 +436,111 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             expect(screen.getByText('Giảng viên Thật')).toBeDefined()
         })
     })
+
+    it('13. Tự động refetch và giữ nguyên filter sau khi cập nhật trạng thái (SCRUM-128 A5)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(mockLeads[0])
+        const updatedLead: Lead = { ...mockLeads[0], status: 'contacted' }
+        vi.mocked(updateLeadStatus).mockResolvedValue(updatedLead)
+
+        render(<LeadsPage />)
+
+        // Thiết lập bộ lọc trạng thái 'new'
+        fireEvent.change(screen.getByTestId('leads-status-filter'), {
+            target: { value: 'new' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({ status: 'new' }),
+            )
+            expect(screen.getByTestId('view-lead-lead-uuid-1')).toBeDefined()
+        })
+
+        // Mở chi tiết và đổi trạng thái
+        fireEvent.click(screen.getByTestId('view-lead-lead-uuid-1'))
+        await waitFor(() => {
+            expect(screen.getByTestId('status-select')).toBeDefined()
+        })
+
+        fireEvent.change(screen.getByTestId('status-select'), {
+            target: { value: 'contacted' },
+        })
+        fireEvent.click(screen.getByTestId('save-status-btn'))
+
+        await waitFor(() => {
+            expect(updateLeadStatus).toHaveBeenCalledWith(mockRequest, 'lead-uuid-1', 'contacted')
+            // getLeads phải được gọi lại để đồng bộ kết quả với bộ lọc hiện tại
+            expect(getLeads).toHaveBeenLastCalledWith(
+                mockRequest,
+                expect.objectContaining({ status: 'new' }),
+            )
+        })
+    })
+
+    it('14. Tự động refetch và giữ nguyên filter sau khi phân công nhân sự (SCRUM-128 A5)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(mockLeads[1])
+        const assignedLead: Lead = { ...mockLeads[1], assigned_to_user_id: 'user-advisor-1' }
+        vi.mocked(assignLead).mockResolvedValue(assignedLead)
+
+        render(<LeadsPage />)
+
+        // Thiết lập bộ lọc người phụ trách 'unassigned'
+        fireEvent.change(screen.getByTestId('leads-assignee-filter'), {
+            target: { value: 'unassigned' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({ assigned_to_user_id: 'unassigned' }),
+            )
+            expect(screen.getByTestId('view-lead-lead-uuid-2')).toBeDefined()
+        })
+
+        // Mở chi tiết và phân công
+        fireEvent.click(screen.getByTestId('view-lead-lead-uuid-2'))
+        await waitFor(() => {
+            expect(screen.getByTestId('assignee-select')).toBeDefined()
+        })
+
+        fireEvent.change(screen.getByTestId('assignee-select'), {
+            target: { value: 'user-advisor-1' },
+        })
+        fireEvent.click(screen.getByTestId('save-assignment-btn'))
+
+        await waitFor(() => {
+            expect(assignLead).toHaveBeenCalledWith(mockRequest, 'lead-uuid-2', 'user-advisor-1')
+            // getLeads phải được gọi lại để đồng bộ danh sách đã lọc
+            expect(getLeads).toHaveBeenLastCalledWith(
+                mockRequest,
+                expect.objectContaining({ assigned_to_user_id: 'unassigned' }),
+            )
+        })
+    })
+
+    it('15. Hiển thị thông báo lỗi khi khoảng ngày không hợp lệ (SCRUM-128 A6)', async () => {
+        vi.mocked(getLeads).mockRejectedValue(
+            new Error("Ngày bắt đầu 'date_from' không được lớn hơn ngày kết thúc 'date_to'."),
+        )
+
+        render(<LeadsPage />)
+
+        fireEvent.change(screen.getByTestId('leads-date-from-filter'), {
+            target: { value: '2026-03-20' },
+        })
+        fireEvent.change(screen.getByTestId('leads-date-to-filter'), {
+            target: { value: '2026-03-10' },
+        })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('page-error').textContent).toContain(
+                "Ngày bắt đầu 'date_from' không được lớn hơn ngày kết thúc 'date_to'.",
+            )
+        })
+    })
 })
+
 
