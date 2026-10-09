@@ -221,7 +221,19 @@ export function LoginForm({
                 >
                     {isLoading ? (
                         <span className="loading-state">
-                            <span className="spinner" aria-hidden="true" />
+                            <span className="spinner" aria-hidden="true">
+                                <svg
+                                    className="spinner-svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                                    <path d="M12 2a10 10 0 0 1 10 10" />
+                                </svg>
+                            </span>
                             <span>Đang xử lý...</span>
                         </span>
                     ) : (
