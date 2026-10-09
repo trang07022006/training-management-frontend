@@ -574,4 +574,60 @@ describe('ProgramStructurePage - Test Matrix SCRUM-124 Activity A6', () => {
             expect(screen.queryByTestId('btn-remove-ps-1')).toBeNull()
         })
     })
+
+    it('16. Field Môn học bắt buộc trong modal Thêm môn học hiển thị đúng label, mô tả phụ và hỗ trợ toggle khi click label', async () => {
+        const mockRequest = vi.fn().mockImplementation((path: string) => {
+            if (path.includes('/available-subjects')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            items: [
+                                { id: 'subj-avail-1', code: 'CS999', name: 'Môn thử nghiệm', credits: 3 },
+                            ],
+                        },
+                    }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockStructureData,
+            })
+        })
+
+        renderProgramStructurePage({ role: 'admin', customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-open-add-subject')).toBeDefined()
+        })
+
+        // Mở modal Thêm môn học vào chương trình
+        fireEvent.click(screen.getByTestId('btn-open-add-subject'))
+
+        await waitFor(() => {
+            expect(screen.getByText('Thêm môn học vào chương trình')).toBeDefined()
+        })
+
+        // Kiểm tra checkbox và các nhãn
+        const checkbox = screen.getByTestId('add-mandatory-checkbox') as HTMLInputElement
+        expect(checkbox).toBeDefined()
+        expect(checkbox.checked).toBe(true)
+
+        // Kiểm tra label ngắn gọn "Môn học bắt buộc"
+        expect(screen.getByText('Môn học bắt buộc')).toBeDefined()
+
+        // Kiểm tra mô tả phụ "Bỏ chọn nếu đây là môn tự chọn"
+        const subtitle = screen.getByText('Bỏ chọn nếu đây là môn tự chọn')
+        expect(subtitle).toBeDefined()
+
+        // Click vào label toggle checkbox sang unchecked
+        fireEvent.click(screen.getByText('Môn học bắt buộc'))
+        expect(checkbox.checked).toBe(false)
+
+        // Click vào mô tả phụ toggle checkbox trở lại checked
+        fireEvent.click(subtitle)
+        expect(checkbox.checked).toBe(true)
+    })
 })
+
