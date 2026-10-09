@@ -221,7 +221,7 @@ export function LoginForm({
                 >
                     {isLoading ? (
                         <span className="loading-state">
-                            <span className="spinner" aria-hidden="true">
+                            <span className="login-btn-spinner spinner" aria-hidden="true">
                                 <svg
                                     className="spinner-svg"
                                     viewBox="0 0 24 24"

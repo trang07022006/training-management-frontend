@@ -174,7 +174,7 @@
     margin: 0 0 1.5rem 0;
 }
 
-.spinner {
+.sessions-loading-state .spinner {
     width: 2.5rem;
     height: 2.5rem;
     border: 3px solid #e2e8f0;
