@@ -626,27 +626,53 @@
 
 .required-subject-option,
 .form-checkbox-label {
-    display: inline-flex;
+    display: flex;
     align-items: flex-start;
     gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #ffffff;
     cursor: pointer;
     user-select: none;
-    border: none;
-    border-top: none;
-    outline: none;
-    background: transparent;
-    padding: 0;
-    margin: 0;
-    width: auto;
+    transition: all 0.15s ease-in-out;
+}
+
+.required-subject-option:hover,
+.form-checkbox-label:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+
+.required-subject-option.is-checked,
+.required-subject-option:has(input[type="checkbox"]:checked),
+.form-checkbox-label:has(input[type="checkbox"]:checked) {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.required-subject-option.is-checked:hover,
+.required-subject-option:has(input[type="checkbox"]:checked):hover,
+.form-checkbox-label:has(input[type="checkbox"]:checked):hover {
+    border-color: #1d4ed8;
+    background-color: #e8f2fe;
+}
+
+.required-subject-option:focus-within,
+.form-checkbox-label:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .required-subject-option input[type="checkbox"],
 .form-checkbox-label input[type="checkbox"],
 .structure-modal input[type="checkbox"] {
-    width: 16px !important;
-    height: 16px !important;
-    min-width: 16px !important;
-    max-width: 16px !important;
+    width: 17px !important;
+    height: 17px !important;
+    min-width: 17px !important;
+    max-width: 17px !important;
     padding: 0 !important;
     margin: 2px 0 0 0 !important;
     border: initial !important;
@@ -669,6 +695,7 @@
 .form-checkbox-text {
     display: flex;
     flex-direction: column;
+    gap: 2px;
 }
 
 .required-subject-option strong,
@@ -680,15 +707,25 @@
     transition: color 0.15s ease;
 }
 
+.required-subject-option.is-checked strong,
+.required-subject-option:has(input[type="checkbox"]:checked) strong {
+    color: #1e40af;
+}
+
 .required-subject-option:hover strong,
 .form-checkbox-label:hover .form-checkbox-title {
     color: #0f172a;
 }
 
+.required-subject-option.is-checked:hover strong,
+.required-subject-option:has(input[type="checkbox"]:checked):hover strong {
+    color: #172554;
+}
+
 .required-subject-option small,
 .form-checkbox-description {
     display: block;
-    margin-top: 3px;
+    margin-top: 2px;
     font-size: 0.8rem;
     color: #64748b;
     line-height: 1.35;

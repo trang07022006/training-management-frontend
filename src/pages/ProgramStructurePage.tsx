@@ -901,7 +901,10 @@ export function ProgramStructurePage({
                                 </div>
 
                                 <div className="form-group form-group-checkbox">
-                                    <label htmlFor="add-mandatory-checkbox" className="required-subject-option">
+                                    <label
+                                        htmlFor="add-mandatory-checkbox"
+                                        className={`required-subject-option ${addIsMandatory ? 'is-checked' : ''}`}
+                                    >
                                         <input
                                             type="checkbox"
                                             id="add-mandatory-checkbox"
@@ -1012,7 +1015,10 @@ export function ProgramStructurePage({
                                 </div>
 
                                 <div className="form-group form-group-checkbox">
-                                    <label htmlFor="edit-mandatory-checkbox" className="required-subject-option">
+                                    <label
+                                        htmlFor="edit-mandatory-checkbox"
+                                        className={`required-subject-option ${editIsMandatory ? 'is-checked' : ''}`}
+                                    >
                                         <input
                                             type="checkbox"
                                             id="edit-mandatory-checkbox"

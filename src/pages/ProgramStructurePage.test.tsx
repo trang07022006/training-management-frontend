@@ -621,13 +621,20 @@ describe('ProgramStructurePage - Test Matrix SCRUM-124 Activity A6', () => {
         const subtitle = screen.getByText('Bỏ chọn nếu đây là môn tự chọn')
         expect(subtitle).toBeDefined()
 
+        // Kiểm tra option card và class is-checked
+        const optionCard = checkbox.closest('.required-subject-option')
+        expect(optionCard).not.toBeNull()
+        expect(optionCard?.className).toContain('is-checked')
+
         // Click vào label toggle checkbox sang unchecked
         fireEvent.click(screen.getByText('Môn học bắt buộc'))
         expect(checkbox.checked).toBe(false)
+        expect(optionCard?.className).not.toContain('is-checked')
 
         // Click vào mô tả phụ toggle checkbox trở lại checked
         fireEvent.click(subtitle)
         expect(checkbox.checked).toBe(true)
+        expect(optionCard?.className).toContain('is-checked')
     })
 })
 
