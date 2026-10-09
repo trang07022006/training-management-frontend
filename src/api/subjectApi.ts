@@ -18,6 +18,8 @@ export interface Subject {
     description: string | null
     credits: number
     total_sessions: number | null
+    weight?: number | null
+    learning_outcomes?: string | null
     status: SubjectStatus
     created_at: string
     updated_at: string
@@ -29,6 +31,8 @@ export interface CreateSubjectInput {
     credits: number
     description?: string | null
     total_sessions?: number | null
+    weight?: number | null
+    learning_outcomes?: string | null
     status?: SubjectStatus
 }
 
@@ -38,6 +42,8 @@ export interface UpdateSubjectInput {
     credits: number
     description?: string | null
     total_sessions?: number | null
+    weight?: number | null
+    learning_outcomes?: string | null
     status?: SubjectStatus
 }
 
@@ -47,6 +53,8 @@ export interface PatchSubjectInput {
     credits?: number
     description?: string | null
     total_sessions?: number | null
+    weight?: number | null
+    learning_outcomes?: string | null
     status?: SubjectStatus
 }
 

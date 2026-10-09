@@ -32,6 +32,8 @@ interface FormErrors {
     name?: string
     credits?: string
     total_sessions?: string
+    weight?: string
+    learning_outcomes?: string
     general?: string
 }
 
@@ -78,6 +80,8 @@ export function SubjectsPage({
     const [formName, setFormName] = useState<string>('')
     const [formCredits, setFormCredits] = useState<string>('3')
     const [formSessions, setFormSessions] = useState<string>('')
+    const [formWeight, setFormWeight] = useState<string>('')
+    const [formLearningOutcomes, setFormLearningOutcomes] = useState<string>('')
     const [formDescription, setFormDescription] = useState<string>('')
     const [formStatus, setFormStatus] = useState<SubjectStatus>('draft')
     const [formErrors, setFormErrors] = useState<FormErrors>({})
@@ -177,6 +181,8 @@ export function SubjectsPage({
         setFormName('')
         setFormCredits('3')
         setFormSessions('')
+        setFormWeight('')
+        setFormLearningOutcomes('')
         setFormDescription('')
         setFormStatus('draft')
         setFormErrors({})
@@ -196,7 +202,9 @@ export function SubjectsPage({
         setFormCode(subj.code)
         setFormName(subj.name)
         setFormCredits(String(subj.credits))
-        setFormSessions(subj.total_sessions !== null ? String(subj.total_sessions) : '')
+        setFormSessions(subj.total_sessions !== null && subj.total_sessions !== undefined ? String(subj.total_sessions) : '')
+        setFormWeight(subj.weight !== null && subj.weight !== undefined ? String(subj.weight) : '')
+        setFormLearningOutcomes(subj.learning_outcomes ?? '')
         setFormDescription(subj.description ?? '')
         setFormStatus(subj.status)
         setFormErrors({})
@@ -238,6 +246,7 @@ export function SubjectsPage({
         const trimmedName = formName.trim()
         const trimmedCredits = formCredits.trim()
         const trimmedSessions = formSessions.trim()
+        const trimmedWeight = formWeight.trim()
 
         if (!trimmedCode) {
             errors.code = 'Mã môn học là bắt buộc.'
@@ -267,6 +276,13 @@ export function SubjectsPage({
             }
         }
 
+        if (trimmedWeight !== '') {
+            const parsedWeight = Number(trimmedWeight)
+            if (Number.isNaN(parsedWeight)) {
+                errors.weight = 'Trọng số phải là số hợp lệ.'
+            }
+        }
+
         setFormErrors(errors)
         return Object.keys(errors).length === 0
     }
@@ -285,6 +301,8 @@ export function SubjectsPage({
             credits: Number(formCredits.trim()),
             description: formDescription.trim() ? formDescription.trim() : null,
             total_sessions: formSessions.trim() ? Number(formSessions.trim()) : null,
+            weight: formWeight.trim() ? Number(formWeight.trim()) : null,
+            learning_outcomes: formLearningOutcomes.trim() ? formLearningOutcomes.trim() : null,
             status: formStatus,
         }
 
@@ -322,6 +340,8 @@ export function SubjectsPage({
             credits: Number(formCredits.trim()),
             description: formDescription.trim() ? formDescription.trim() : null,
             total_sessions: formSessions.trim() ? Number(formSessions.trim()) : null,
+            weight: formWeight.trim() ? Number(formWeight.trim()) : null,
+            learning_outcomes: formLearningOutcomes.trim() ? formLearningOutcomes.trim() : null,
             status: formStatus,
         }
 
@@ -732,6 +752,53 @@ export function SubjectsPage({
 
                                 <div className="subjects-form-row">
                                     <div className="subjects-form-group">
+                                        <label htmlFor="create-input-sessions" className="subjects-form-label">
+                                            Tổng số buổi <span className="subjects-form-required">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="create-input-sessions"
+                                            data-testid="create-input-sessions"
+                                            className={`subjects-form-input ${formErrors.total_sessions ? 'has-error' : ''}`}
+                                            placeholder="Ví dụ: 45"
+                                            min={0}
+                                            max={65535}
+                                            value={formSessions}
+                                            onChange={(e) => setFormSessions(e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                        {formErrors.total_sessions && (
+                                            <span className="subjects-field-error" data-testid="error-sessions">
+                                                {formErrors.total_sessions}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="subjects-form-group">
+                                        <label htmlFor="create-input-weight" className="subjects-form-label">
+                                            Trọng số <span className="subjects-form-required">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            id="create-input-weight"
+                                            data-testid="create-input-weight"
+                                            className={`subjects-form-input ${formErrors.weight ? 'has-error' : ''}`}
+                                            placeholder="Ví dụ: 1.5 hoặc 30"
+                                            value={formWeight}
+                                            onChange={(e) => setFormWeight(e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                        {formErrors.weight && (
+                                            <span className="subjects-field-error" data-testid="error-weight">
+                                                {formErrors.weight}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="subjects-form-row">
+                                    <div className="subjects-form-group">
                                         <label htmlFor="create-input-credits" className="subjects-form-label">
                                             Số tín chỉ <span className="subjects-form-required">*</span>
                                         </label>
@@ -756,61 +823,54 @@ export function SubjectsPage({
                                     </div>
 
                                     <div className="subjects-form-group">
-                                        <label htmlFor="create-input-sessions" className="subjects-form-label">
-                                            Tổng số buổi
+                                        <label htmlFor="create-select-status" className="subjects-form-label">
+                                            Trạng thái
                                         </label>
-                                        <input
-                                            type="number"
-                                            id="create-input-sessions"
-                                            data-testid="create-input-sessions"
-                                            className={`subjects-form-input ${formErrors.total_sessions ? 'has-error' : ''}`}
-                                            placeholder="Ví dụ: 45"
-                                            min={0}
-                                            max={65535}
-                                            value={formSessions}
-                                            onChange={(e) => setFormSessions(e.target.value)}
+                                        <select
+                                            id="create-select-status"
+                                            data-testid="create-select-status"
+                                            className="subjects-form-select"
+                                            value={formStatus}
+                                            onChange={(e) => setFormStatus(e.target.value as SubjectStatus)}
                                             disabled={isSubmitting}
-                                        />
-                                        {formErrors.total_sessions && (
-                                            <span className="subjects-field-error" data-testid="error-sessions">
-                                                {formErrors.total_sessions}
-                                            </span>
-                                        )}
+                                        >
+                                            <option value="draft">Bản nháp</option>
+                                            <option value="active">Đang hoạt động</option>
+                                            <option value="archived">Đã lưu trữ</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div className="subjects-form-group">
-                                    <label htmlFor="create-input-description" className="subjects-form-label">
-                                        Mô tả
+                                    <label htmlFor="create-input-learning-outcomes" className="subjects-form-label">
+                                        Mô tả chuẩn đầu ra
                                     </label>
                                     <textarea
-                                        id="create-input-description"
-                                        data-testid="create-input-description"
+                                        id="create-input-learning-outcomes"
+                                        data-testid="create-input-learning-outcomes"
                                         className="subjects-form-textarea"
                                         rows={3}
-                                        placeholder="Mô tả mục tiêu và nội dung môn học..."
-                                        value={formDescription}
-                                        onChange={(e) => setFormDescription(e.target.value)}
+                                        placeholder="Mô tả các chuẩn đầu ra cần đạt được của người học..."
+                                        value={formLearningOutcomes}
+                                        onChange={(e) => setFormLearningOutcomes(e.target.value)}
                                         disabled={isSubmitting}
                                     />
                                 </div>
 
                                 <div className="subjects-form-group">
-                                    <label htmlFor="create-select-status" className="subjects-form-label">
-                                        Trạng thái
+                                    <label htmlFor="create-input-description" className="subjects-form-label">
+                                        Mô tả môn học
                                     </label>
-                                    <select
-                                        id="create-select-status"
-                                        data-testid="create-select-status"
-                                        className="subjects-form-select"
-                                        value={formStatus}
-                                        onChange={(e) => setFormStatus(e.target.value as SubjectStatus)}
+                                    <textarea
+                                        id="create-input-description"
+                                        data-testid="create-input-description"
+                                        className="subjects-form-textarea"
+                                        rows={2}
+                                        placeholder="Mô tả mục tiêu và nội dung tổng quan môn học..."
+                                        value={formDescription}
+                                        onChange={(e) => setFormDescription(e.target.value)}
                                         disabled={isSubmitting}
-                                    >
-                                        <option value="draft">Bản nháp</option>
-                                        <option value="active">Đang hoạt động</option>
-                                        <option value="archived">Đã lưu trữ</option>
-                                    </select>
+                                    />
                                 </div>
                             </div>
 
@@ -917,6 +977,52 @@ export function SubjectsPage({
 
                                 <div className="subjects-form-row">
                                     <div className="subjects-form-group">
+                                        <label htmlFor="edit-input-sessions" className="subjects-form-label">
+                                            Tổng số buổi <span className="subjects-form-required">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="edit-input-sessions"
+                                            data-testid="edit-input-sessions"
+                                            className={`subjects-form-input ${formErrors.total_sessions ? 'has-error' : ''}`}
+                                            min={0}
+                                            max={65535}
+                                            value={formSessions}
+                                            onChange={(e) => setFormSessions(e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                        {formErrors.total_sessions && (
+                                            <span className="subjects-field-error" data-testid="error-edit-sessions">
+                                                {formErrors.total_sessions}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="subjects-form-group">
+                                        <label htmlFor="edit-input-weight" className="subjects-form-label">
+                                            Trọng số <span className="subjects-form-required">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            id="edit-input-weight"
+                                            data-testid="edit-input-weight"
+                                            className={`subjects-form-input ${formErrors.weight ? 'has-error' : ''}`}
+                                            placeholder="Ví dụ: 1.5 hoặc 30"
+                                            value={formWeight}
+                                            onChange={(e) => setFormWeight(e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                        {formErrors.weight && (
+                                            <span className="subjects-field-error" data-testid="error-edit-weight">
+                                                {formErrors.weight}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="subjects-form-row">
+                                    <div className="subjects-form-group">
                                         <label htmlFor="edit-input-credits" className="subjects-form-label">
                                             Số tín chỉ <span className="subjects-form-required">*</span>
                                         </label>
@@ -940,59 +1046,52 @@ export function SubjectsPage({
                                     </div>
 
                                     <div className="subjects-form-group">
-                                        <label htmlFor="edit-input-sessions" className="subjects-form-label">
-                                            Tổng số buổi
+                                        <label htmlFor="edit-select-status" className="subjects-form-label">
+                                            Trạng thái
                                         </label>
-                                        <input
-                                            type="number"
-                                            id="edit-input-sessions"
-                                            data-testid="edit-input-sessions"
-                                            className={`subjects-form-input ${formErrors.total_sessions ? 'has-error' : ''}`}
-                                            min={0}
-                                            max={65535}
-                                            value={formSessions}
-                                            onChange={(e) => setFormSessions(e.target.value)}
+                                        <select
+                                            id="edit-select-status"
+                                            data-testid="edit-select-status"
+                                            className="subjects-form-select"
+                                            value={formStatus}
+                                            onChange={(e) => setFormStatus(e.target.value as SubjectStatus)}
                                             disabled={isSubmitting}
-                                        />
-                                        {formErrors.total_sessions && (
-                                            <span className="subjects-field-error" data-testid="error-edit-sessions">
-                                                {formErrors.total_sessions}
-                                            </span>
-                                        )}
+                                        >
+                                            <option value="draft">Bản nháp</option>
+                                            <option value="active">Đang hoạt động</option>
+                                            <option value="archived">Đã lưu trữ</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 <div className="subjects-form-group">
-                                    <label htmlFor="edit-input-description" className="subjects-form-label">
-                                        Mô tả
+                                    <label htmlFor="edit-input-learning-outcomes" className="subjects-form-label">
+                                        Mô tả chuẩn đầu ra
                                     </label>
                                     <textarea
-                                        id="edit-input-description"
-                                        data-testid="edit-input-description"
+                                        id="edit-input-learning-outcomes"
+                                        data-testid="edit-input-learning-outcomes"
                                         className="subjects-form-textarea"
                                         rows={3}
-                                        value={formDescription}
-                                        onChange={(e) => setFormDescription(e.target.value)}
+                                        value={formLearningOutcomes}
+                                        onChange={(e) => setFormLearningOutcomes(e.target.value)}
                                         disabled={isSubmitting}
                                     />
                                 </div>
 
                                 <div className="subjects-form-group">
-                                    <label htmlFor="edit-select-status" className="subjects-form-label">
-                                        Trạng thái
+                                    <label htmlFor="edit-input-description" className="subjects-form-label">
+                                        Mô tả môn học
                                     </label>
-                                    <select
-                                        id="edit-select-status"
-                                        data-testid="edit-select-status"
-                                        className="subjects-form-select"
-                                        value={formStatus}
-                                        onChange={(e) => setFormStatus(e.target.value as SubjectStatus)}
+                                    <textarea
+                                        id="edit-input-description"
+                                        data-testid="edit-input-description"
+                                        className="subjects-form-textarea"
+                                        rows={2}
+                                        value={formDescription}
+                                        onChange={(e) => setFormDescription(e.target.value)}
                                         disabled={isSubmitting}
-                                    >
-                                        <option value="draft">Bản nháp</option>
-                                        <option value="active">Đang hoạt động</option>
-                                        <option value="archived">Đã lưu trữ</option>
-                                    </select>
+                                    />
                                 </div>
                             </div>
 
@@ -1128,6 +1227,18 @@ export function SubjectsPage({
                                     <span className="subject-detail-item-label">Tổng số buổi</span>
                                     <span className="subject-detail-item-value" data-testid="detail-subject-sessions">
                                         {viewingSubject.total_sessions !== null ? `${viewingSubject.total_sessions} buổi` : 'Chưa xác định'}
+                                    </span>
+                                </div>
+                                <div className="subject-detail-item">
+                                    <span className="subject-detail-item-label">Trọng số</span>
+                                    <span className="subject-detail-item-value" data-testid="detail-subject-weight">
+                                        {viewingSubject.weight !== null && viewingSubject.weight !== undefined ? viewingSubject.weight : 'Chưa xác định'}
+                                    </span>
+                                </div>
+                                <div className="subject-detail-item">
+                                    <span className="subject-detail-item-label">Mô tả chuẩn đầu ra</span>
+                                    <span className="subject-detail-item-value" data-testid="detail-subject-learning-outcomes">
+                                        {viewingSubject.learning_outcomes || 'Chưa có chuẩn đầu ra'}
                                     </span>
                                 </div>
                                 <div className="subject-detail-item">
