@@ -13,6 +13,8 @@ export interface MenuItem {
     readonly requiredPermission?: string
     readonly requiredRole?: string
     readonly isPublic?: boolean
+    readonly activePaths?: readonly string[]
+    readonly children?: readonly MenuItem[]
 }
 
 /**
@@ -124,6 +126,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         icon: 'users',
         requiredRole: 'admin',
         requiredPermission: SYSTEM_PERMISSIONS.USER_VIEW,
+        activePaths: ['/users', '/users/*'],
     },
     {
         key: 'trainer_dashboard',
@@ -147,6 +150,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         path: '/courses',
         icon: 'book',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+        activePaths: ['/courses', '/courses/*'],
     },
     {
         key: 'training_programs',
@@ -154,6 +158,37 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         path: '/training-programs',
         icon: 'graduation-cap',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+        activePaths: [
+            '/training-programs',
+            '/training-programs/*',
+            '/program-structure',
+            '/program-structure/*',
+        ],
+        children: [
+            {
+                key: 'training_programs_list',
+                label: 'Danh sách chương trình',
+                path: '/training-programs',
+                activePaths: ['/training-programs'],
+            },
+            {
+                key: 'training_programs_short_term',
+                label: 'Chương trình ngắn hạn',
+                path: '/training-programs/short-term',
+                activePaths: ['/training-programs/short-term', '/training-programs/short-term/*'],
+            },
+            {
+                key: 'training_programs_structure',
+                label: 'Cấu trúc chương trình',
+                path: '/program-structure',
+                activePaths: [
+                    '/program-structure',
+                    '/program-structure/*',
+                    '/training-programs/:programId/structure',
+                    '/training-programs/*/structure',
+                ],
+            },
+        ],
     },
     {
         key: 'subjects',
@@ -161,6 +196,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         path: '/subjects',
         icon: 'book-open',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+        activePaths: ['/subjects', '/subjects/*'],
     },
     {
         key: 'leads',
@@ -168,6 +204,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         path: '/leads',
         icon: 'users',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_MANAGE,
+        activePaths: ['/leads', '/leads/*'],
     },
     {
         key: 'change_password',
@@ -227,29 +264,124 @@ export function filterMenuItems(
         userPermissions.filter((p) => typeof p === 'string' && isKnownPermission(p)),
     )
 
-    return menuItems.filter((item) => {
-        // Menu công khai cho người dùng đã xác thực phiên
-        if (item.isPublic) {
+    return menuItems
+        .filter((item) => {
+            // Menu công khai cho người dùng đã xác thực phiên
+            if (item.isPublic) {
+                return true
+            }
+
+            // Kiểm tra ràng buộc vai trò nếu có: user sở hữu ít nhất một vai trò phù hợp
+            if (item.requiredRole) {
+                const req = item.requiredRole.toLowerCase()
+                if (!userRoles.includes(req)) {
+                    return false
+                }
+            }
+
+            // Kiểm tra quyền hạn
+            if (item.requiredPermission) {
+                if (!isKnownPermission(item.requiredPermission)) {
+                    return false
+                }
+                return permissionSet.has(item.requiredPermission)
+            }
+
+            // Nếu menu không phải public và không cấu hình quyền rõ ràng -> Default Deny
+            return false
+        })
+        .map((item) => {
+            if (!item.children || item.children.length === 0) {
+                return item
+            }
+            const filteredChildren = item.children.filter((child) => {
+                if (child.isPublic) return true
+                if (child.requiredRole && !userRoles.includes(child.requiredRole.toLowerCase())) return false
+                if (child.requiredPermission) {
+                    if (!isKnownPermission(child.requiredPermission)) return false
+                    return permissionSet.has(child.requiredPermission)
+                }
+                return true
+            })
+            return {
+                ...item,
+                children: filteredChildren,
+            }
+        })
+}
+
+/**
+ * Helper kiểm tra xem một MenuItem có đang ở trạng thái active theo URL pathname hiện tại hay không.
+ *
+ * Tiêu chí:
+ * 1. Khớp chính xác (exact match): normalizedCurrent === normalizedItemPath
+ * 2. Khớp cấu hình activePaths (hỗ trợ wildcard như '/training-programs/*' hoặc param như '/training-programs/:programId/structure')
+ * 3. Menu cha (có children): Active nếu có bất kỳ menu con nào active, hoặc pathname thuộc tiền tố của menu cha (item.path + '/')
+ * 4. Menu độc lập không có children và không có activePaths riêng (như /users, /subjects, /courses, /leads):
+ *    Active nếu đang ở route con trực tiếp (pathname.startsWith(item.path + '/'))
+ */
+export function isMenuActive(item: MenuItem, currentPathname: string): boolean {
+    if (!item || !currentPathname) {
+        return false
+    }
+
+    const current = currentPathname.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/'
+    const itemPath = item.path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/'
+
+    // 1. Khớp chính xác
+    if (current === itemPath) {
+        return true
+    }
+
+    // 2. Khớp theo danh sách activePaths nếu có
+    if (item.activePaths && Array.isArray(item.activePaths)) {
+        for (const pattern of item.activePaths) {
+            const cleanPattern = pattern.split('?')[0].split('#')[0]
+
+            // Exact pattern match
+            if (current === cleanPattern.replace(/\/+$/, '')) {
+                return true
+            }
+
+            // Wildcard match (e.g. '/training-programs/*')
+            if (cleanPattern.endsWith('/*')) {
+                const prefix = cleanPattern.slice(0, -2).replace(/\/+$/, '')
+                if (current === prefix || current.startsWith(prefix + '/')) {
+                    return true
+                }
+            }
+
+            // Parameterized match (e.g. '/training-programs/:programId/structure')
+            if (cleanPattern.includes(':')) {
+                const regexPattern = '^' + cleanPattern
+                    .replace(/\/+$/, '')
+                    .replace(/:[a-zA-Z0-9_]+/g, '[^/]+')
+                    .replace(/\*/g, '.*') + '$'
+                if (new RegExp(regexPattern).test(current)) {
+                    return true
+                }
+            }
+        }
+    }
+
+    // 3. Menu cha (có children):
+    if (item.children && Array.isArray(item.children) && item.children.length > 0) {
+        // Active nếu bất kỳ menu con nào active
+        if (item.children.some((child) => isMenuActive(child, current))) {
             return true
         }
 
-        // Kiểm tra ràng buộc vai trò nếu có: user sở hữu ít nhất một vai trò phù hợp
-        if (item.requiredRole) {
-            const req = item.requiredRole.toLowerCase()
-            if (!userRoles.includes(req)) {
-                return false
-            }
+        // Hoặc nếu đang ở bất kỳ route con nào bắt đầu bằng item.path + '/' (ví dụ /training-programs/:id)
+        if (itemPath !== '/' && current.startsWith(itemPath + '/')) {
+            return true
         }
-
-        // Kiểm tra quyền hạn
-        if (item.requiredPermission) {
-            if (!isKnownPermission(item.requiredPermission)) {
-                return false
-            }
-            return permissionSet.has(item.requiredPermission)
+    } else {
+        // Menu lá không có children và không có activePaths riêng biệt:
+        // Tự động active nếu ở route con trực tiếp của nó (ví dụ /users/123, /subjects/456/sessions)
+        if (!item.activePaths && itemPath !== '/' && current.startsWith(itemPath + '/')) {
+            return true
         }
+    }
 
-        // Nếu menu không phải public và không cấu hình quyền rõ ràng -> Default Deny
-        return false
-    })
+    return false
 }

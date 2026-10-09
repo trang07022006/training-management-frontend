@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useLocation, Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
     APP_MENU_CONFIG,
     filterMenuItems,
+    isMenuActive,
     type MenuItem,
 } from './menuConfig'
 import { getUserDisplayName, getUserRoleDisplay } from './userProfileUtils'
@@ -161,6 +163,25 @@ export function Sidebar({
         permissions,
     })
 
+    // Trạng thái đóng/mở submenu của các menu cha
+    const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({})
+
+    const isSubmenuOpen = (item: MenuItem): boolean => {
+        if (!item.children || item.children.length === 0) {
+            return false
+        }
+        if (openSubmenus[item.key] !== undefined) {
+            return openSubmenus[item.key]
+        }
+        // Mặc định tự động mở khi đang ở trong module này (menu cha hoặc menu con active)
+        return isMenuActive(item, location.pathname)
+    }
+
+    const isProfileActive = isMenuActive(
+        { key: 'profile', label: 'Hồ sơ cá nhân', path: '/profile', activePaths: ['/profile', '/profile/*'] },
+        location.pathname,
+    )
+
     return (
         <>
             {/* Lớp phủ mờ (backdrop) khi mở sidebar trên màn hình nhỏ */}
@@ -222,31 +243,79 @@ export function Sidebar({
                 <nav className="sidebar-nav">
                     <ul className="sidebar-menu-list" role="list">
                         {visibleMenuItems.map((item) => {
-                            const isActive = location.pathname === item.path
-                            const isExpandable = item.key === 'training_programs' || item.key === 'courses'
+                            const isActive = isMenuActive(item, location.pathname)
+                            const hasChildren = Boolean(item.children && item.children.length > 0)
+                            const isExpanded = isSubmenuOpen(item)
                             const isHidden = item.key === 'change_password'
 
                             return (
                                 <li
                                     key={item.key}
-                                    className="sidebar-menu-item"
+                                    className={`sidebar-menu-item ${hasChildren ? 'has-submenu' : ''} ${isExpanded ? 'is-open' : ''}`}
                                     style={isHidden ? { display: 'none' } : undefined}
                                 >
-                                    <Link
-                                        to={item.path}
-                                        className={`sidebar-nav-link ${isActive ? 'is-active' : ''}`}
-                                        aria-current={isActive ? 'page' : undefined}
-                                        onClick={onClose}
-                                        data-testid={`menu-item-${item.key}`}
-                                    >
-                                        {getMenuIcon(item.icon)}
-                                        <span className="menu-label">{item.label}</span>
-                                        {isExpandable && (
-                                            <span className="menu-expand-chevron" aria-hidden="true">
-                                                ▾
-                                            </span>
-                                        )}
-                                    </Link>
+                                    <div className="sidebar-menu-item-header">
+                                        <Link
+                                            to={item.path}
+                                            className={`sidebar-nav-link ${isActive ? 'is-active' : ''}`}
+                                            aria-current={isActive ? 'page' : undefined}
+                                            aria-expanded={hasChildren ? isExpanded : undefined}
+                                            onClick={() => {
+                                                if (hasChildren && !isExpanded) {
+                                                    setOpenSubmenus((prev) => ({ ...prev, [item.key]: true }))
+                                                }
+                                                onClose?.()
+                                            }}
+                                            data-testid={`menu-item-${item.key}`}
+                                        >
+                                            {getMenuIcon(item.icon)}
+                                            <span className="menu-label">{item.label}</span>
+                                            {hasChildren && (
+                                                <span
+                                                    className={`menu-expand-chevron ${isExpanded ? 'is-expanded' : ''}`}
+                                                    aria-hidden="true"
+                                                    data-testid={`chevron-${item.key}`}
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        e.stopPropagation()
+                                                        setOpenSubmenus((prev) => ({
+                                                            ...prev,
+                                                            [item.key]: !isExpanded,
+                                                        }))
+                                                    }}
+                                                >
+                                                    ▾
+                                                </span>
+                                            )}
+                                        </Link>
+                                    </div>
+
+                                    {/* Submenu List */}
+                                    {hasChildren && isExpanded && (
+                                        <ul
+                                            className="sidebar-submenu-list"
+                                            role="list"
+                                            data-testid={`submenu-${item.key}`}
+                                        >
+                                            {item.children!.map((child) => {
+                                                const isChildActive = isMenuActive(child, location.pathname)
+                                                return (
+                                                    <li key={child.key} className="sidebar-submenu-item">
+                                                        <Link
+                                                            to={child.path}
+                                                            className={`sidebar-submenu-link ${isChildActive ? 'is-active' : ''}`}
+                                                            aria-current={isChildActive ? 'page' : undefined}
+                                                            onClick={onClose}
+                                                            data-testid={`menu-item-${child.key}`}
+                                                        >
+                                                            <span className="submenu-bullet" aria-hidden="true" />
+                                                            <span className="submenu-label">{child.label}</span>
+                                                        </Link>
+                                                    </li>
+                                                )
+                                            })}
+                                        </ul>
+                                    )}
                                 </li>
                             )
                         })}
@@ -272,7 +341,7 @@ export function Sidebar({
                 {hasSession && (
                     <Link
                         to="/profile"
-                        className="sidebar-user-footer"
+                        className={`sidebar-user-footer ${isProfileActive ? 'is-active' : ''}`}
                         data-testid="sidebar-user-footer"
                         onClick={onClose}
                         title="Hồ sơ cá nhân"
