@@ -1192,8 +1192,13 @@ export function SubjectsPage({
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="detail-modal-title"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            closeDetailModal()
+                        }
+                    }}
                 >
-                    <div className="subjects-modal-container">
+                    <div className="subjects-modal-container subjects-modal-detail">
                         <header className="subjects-modal-header">
                             <h2 id="detail-modal-title" className="subjects-modal-title">
                                 Chi tiết môn học
@@ -1209,8 +1214,8 @@ export function SubjectsPage({
                             </button>
                         </header>
 
-                        <div className="subjects-modal-body">
-                            <div className="subject-detail-list">
+                        <div className="subjects-modal-body subjects-modal-detail-body">
+                            <div className="subject-detail-list subject-detail-grid">
                                 <div className="subject-detail-item">
                                     <span className="subject-detail-item-label">Mã môn học</span>
                                     <span className="subject-detail-item-value" data-testid="detail-subject-code">{viewingSubject.code}</span>
@@ -1221,24 +1226,20 @@ export function SubjectsPage({
                                 </div>
                                 <div className="subject-detail-item">
                                     <span className="subject-detail-item-label">Số tín chỉ</span>
-                                    <span className="subject-detail-item-value" data-testid="detail-subject-credits">{viewingSubject.credits} tín chỉ</span>
+                                    <span className="subject-detail-item-value" data-testid="detail-subject-credits">
+                                        {viewingSubject.credits !== null && viewingSubject.credits !== undefined ? `${viewingSubject.credits} tín chỉ` : 'Chưa xác định'}
+                                    </span>
                                 </div>
                                 <div className="subject-detail-item">
                                     <span className="subject-detail-item-label">Tổng số buổi</span>
                                     <span className="subject-detail-item-value" data-testid="detail-subject-sessions">
-                                        {viewingSubject.total_sessions !== null ? `${viewingSubject.total_sessions} buổi` : 'Chưa xác định'}
+                                        {viewingSubject.total_sessions !== null && viewingSubject.total_sessions !== undefined ? `${viewingSubject.total_sessions} buổi` : 'Chưa xác định'}
                                     </span>
                                 </div>
                                 <div className="subject-detail-item">
                                     <span className="subject-detail-item-label">Trọng số</span>
                                     <span className="subject-detail-item-value" data-testid="detail-subject-weight">
                                         {viewingSubject.weight !== null && viewingSubject.weight !== undefined ? viewingSubject.weight : 'Chưa xác định'}
-                                    </span>
-                                </div>
-                                <div className="subject-detail-item">
-                                    <span className="subject-detail-item-label">Mô tả chuẩn đầu ra</span>
-                                    <span className="subject-detail-item-value" data-testid="detail-subject-learning-outcomes">
-                                        {viewingSubject.learning_outcomes || 'Chưa có chuẩn đầu ra'}
                                     </span>
                                 </div>
                                 <div className="subject-detail-item">
@@ -1249,28 +1250,34 @@ export function SubjectsPage({
                                         </span>
                                     </span>
                                 </div>
-                                <div className="subject-detail-item">
-                                    <span className="subject-detail-item-label">Mô tả</span>
-                                    <span className="subject-detail-item-value" data-testid="detail-subject-desc">
-                                        {viewingSubject.description || 'Không có mô tả'}
-                                    </span>
+                                <div className="subject-detail-item is-full-width">
+                                    <span className="subject-detail-item-label">Mô tả chuẩn đầu ra</span>
+                                    <div className="subject-detail-item-value subject-detail-text-block" data-testid="detail-subject-learning-outcomes">
+                                        {viewingSubject.learning_outcomes || 'Chưa có chuẩn đầu ra'}
+                                    </div>
                                 </div>
-                                <div className="subject-detail-item">
+                                <div className="subject-detail-item is-full-width">
+                                    <span className="subject-detail-item-label">Mô tả môn học</span>
+                                    <div className="subject-detail-item-value subject-detail-text-block" data-testid="detail-subject-desc">
+                                        {viewingSubject.description || 'Không có mô tả'}
+                                    </div>
+                                </div>
+                                <div className="subject-detail-item is-metadata">
                                     <span className="subject-detail-item-label">Ngày tạo</span>
                                     <span className="subject-detail-item-value">
-                                        {new Date(viewingSubject.created_at).toLocaleString('vi-VN')}
+                                        {viewingSubject.created_at ? new Date(viewingSubject.created_at).toLocaleString('vi-VN') : '—'}
                                     </span>
                                 </div>
-                                <div className="subject-detail-item">
+                                <div className="subject-detail-item is-metadata">
                                     <span className="subject-detail-item-label">Cập nhật gần nhất</span>
                                     <span className="subject-detail-item-value">
-                                        {new Date(viewingSubject.updated_at).toLocaleString('vi-VN')}
+                                        {viewingSubject.updated_at ? new Date(viewingSubject.updated_at).toLocaleString('vi-VN') : '—'}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <footer className="subjects-modal-footer">
+                        <footer className="subjects-modal-footer subjects-modal-detail-footer">
                             <button
                                 type="button"
                                 className="btn-modal-cancel"
