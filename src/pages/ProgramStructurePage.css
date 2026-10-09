@@ -616,7 +616,7 @@
 .form-group-checkbox {
     display: flex;
     flex-direction: column;
-    margin: 2px 0;
+    margin: 4px 0 2px 0;
     padding: 0;
     border: none;
     border-top: none;
@@ -624,6 +624,7 @@
     box-shadow: none;
 }
 
+.required-subject-option,
 .form-checkbox-label {
     display: inline-flex;
     align-items: flex-start;
@@ -636,29 +637,41 @@
     background: transparent;
     padding: 0;
     margin: 0;
+    width: auto;
 }
 
-.form-checkbox-input {
-    width: 17px;
-    height: 17px;
-    margin: 2px 0 0 0;
+.required-subject-option input[type="checkbox"],
+.form-checkbox-label input[type="checkbox"],
+.structure-modal input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    max-width: 16px !important;
+    padding: 0 !important;
+    margin: 2px 0 0 0 !important;
+    border: initial !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: initial !important;
+    flex: 0 0 auto !important;
     accent-color: #2563eb;
     cursor: pointer;
-    flex-shrink: 0;
-    border-radius: 4px;
+    box-sizing: content-box !important;
 }
 
-.form-checkbox-input:focus-visible {
-    outline: 2px solid #2563eb;
+.required-subject-option input[type="checkbox"]:focus-visible,
+.form-checkbox-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid #2563eb !important;
     outline-offset: 2px;
 }
 
+.required-subject-option span,
 .form-checkbox-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
 }
 
+.required-subject-option strong,
 .form-checkbox-title {
     font-size: 0.92rem;
     font-weight: 600;
@@ -667,11 +680,15 @@
     transition: color 0.15s ease;
 }
 
+.required-subject-option:hover strong,
 .form-checkbox-label:hover .form-checkbox-title {
     color: #0f172a;
 }
 
+.required-subject-option small,
 .form-checkbox-description {
+    display: block;
+    margin-top: 3px;
     font-size: 0.8rem;
     color: #64748b;
     line-height: 1.35;

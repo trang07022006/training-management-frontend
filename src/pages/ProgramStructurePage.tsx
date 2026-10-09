@@ -901,19 +901,18 @@ export function ProgramStructurePage({
                                 </div>
 
                                 <div className="form-group form-group-checkbox">
-                                    <label htmlFor="add-mandatory-checkbox" className="form-checkbox-label">
+                                    <label htmlFor="add-mandatory-checkbox" className="required-subject-option">
                                         <input
                                             type="checkbox"
                                             id="add-mandatory-checkbox"
                                             data-testid="add-mandatory-checkbox"
                                             checked={addIsMandatory}
                                             onChange={(e) => setAddIsMandatory(e.target.checked)}
-                                            className="form-checkbox-input"
                                         />
-                                        <div className="form-checkbox-text">
-                                            <span className="form-checkbox-title">Môn học bắt buộc</span>
-                                            <span className="form-checkbox-description">Bỏ chọn nếu đây là môn tự chọn</span>
-                                        </div>
+                                        <span>
+                                            <strong>Môn học bắt buộc</strong>
+                                            <small>Bỏ chọn nếu đây là môn tự chọn</small>
+                                        </span>
                                     </label>
                                 </div>
 
@@ -1013,19 +1012,18 @@ export function ProgramStructurePage({
                                 </div>
 
                                 <div className="form-group form-group-checkbox">
-                                    <label htmlFor="edit-mandatory-checkbox" className="form-checkbox-label">
+                                    <label htmlFor="edit-mandatory-checkbox" className="required-subject-option">
                                         <input
                                             type="checkbox"
                                             id="edit-mandatory-checkbox"
                                             data-testid="edit-mandatory-checkbox"
                                             checked={editIsMandatory}
                                             onChange={(e) => setEditIsMandatory(e.target.checked)}
-                                            className="form-checkbox-input"
                                         />
-                                        <div className="form-checkbox-text">
-                                            <span className="form-checkbox-title">Môn học bắt buộc</span>
-                                            <span className="form-checkbox-description">Bỏ chọn nếu đây là môn tự chọn</span>
-                                        </div>
+                                        <span>
+                                            <strong>Môn học bắt buộc</strong>
+                                            <small>Bỏ chọn nếu đây là môn tự chọn</small>
+                                        </span>
                                     </label>
                                 </div>
 
