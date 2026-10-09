@@ -381,7 +381,21 @@
     transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
+.structure-subject-row.is-draggable {
+    cursor: grab;
+    user-select: none;
+}
+
+.structure-subject-row.is-draggable:hover {
+    background-color: #f8fafc;
+}
+
+.structure-subject-row.is-draggable:active {
+    cursor: grabbing;
+}
+
 .structure-subject-row.row-dragging {
+    cursor: grabbing;
     opacity: 0.45;
     background-color: #f1f5f9 !important;
 }
@@ -390,6 +404,19 @@
     background-color: #eff6ff !important;
     position: relative;
     box-shadow: inset 0 3px 0 0 #2563eb;
+}
+
+/* Các control tương tác KHÔNG nhận cursor grab của row */
+.structure-subject-row .cell-actions,
+.structure-subject-row .actions-group,
+.structure-subject-row .btn-sm-prereq,
+.structure-subject-row .btn-sm-edit,
+.structure-subject-row .btn-sm-remove,
+.structure-subject-row a,
+.structure-subject-row input,
+.structure-subject-row select,
+.structure-subject-row textarea {
+    cursor: pointer;
 }
 
 /* Code & Name */

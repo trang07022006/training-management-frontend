@@ -441,4 +441,243 @@ describe('SCRUM-124: Drag & Drop Subject Ordering in Program Structure', () => {
         expect(screen.getByTestId('btn-edit-ps-c')).toBeDefined()
         expect(screen.getByTestId('btn-remove-ps-c')).toBeDefined()
     })
+
+    // 8. DRAG BẰNG MÃ MÔN
+    it('8. Kéo thả bằng mã môn (cell-subject-code) -> Đổi thứ tự thành 1 A, 2 C, 3 B và gọi API reorder', async () => {
+        let reorderPayload: unknown = null
+        const mockRequest = vi.fn().mockImplementation((path: string, init?: RequestInit) => {
+            if (init?.method === 'PATCH' && path.includes('/reorder')) {
+                reorderPayload = JSON.parse(init.body as string)
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ message: 'Sắp xếp thành công', semester: 1 }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockScrum124Data,
+            })
+        })
+
+        renderProgramStructurePage({ customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('subject-code-ps-a')).toBeDefined()
+        })
+
+        const codeA = screen.getByTestId('subject-code-ps-a')
+        const rowC = screen.getByTestId('subject-row-ps-c')
+
+        fireEvent.dragStart(codeA, {
+            dataTransfer: { setData: vi.fn(), effectAllowed: 'move' },
+        })
+        fireEvent.dragOver(rowC, {
+            dataTransfer: { dropEffect: 'move' },
+        })
+        fireEvent.drop(rowC)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('order-badge-ps-a').textContent).toBe('1')
+            expect(screen.getByTestId('order-badge-ps-c').textContent).toBe('2')
+            expect(screen.getByTestId('order-badge-ps-b').textContent).toBe('3')
+        })
+
+        expect(reorderPayload).toEqual({
+            semester: 1,
+            ordered_ids: ['ps-a', 'ps-c', 'ps-b'],
+        })
+    })
+
+    // 9. DRAG BẰNG TÊN MÔN
+    it('9. Kéo thả bằng tên môn (cell-subject-name) -> Đổi thứ tự thành 1 A, 2 C, 3 B và gọi API reorder', async () => {
+        let reorderPayload: unknown = null
+        const mockRequest = vi.fn().mockImplementation((path: string, init?: RequestInit) => {
+            if (init?.method === 'PATCH' && path.includes('/reorder')) {
+                reorderPayload = JSON.parse(init.body as string)
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ message: 'Sắp xếp thành công', semester: 1 }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockScrum124Data,
+            })
+        })
+
+        renderProgramStructurePage({ customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('subject-name-ps-a')).toBeDefined()
+        })
+
+        const nameA = screen.getByTestId('subject-name-ps-a')
+        const rowC = screen.getByTestId('subject-row-ps-c')
+
+        fireEvent.dragStart(nameA, {
+            dataTransfer: { setData: vi.fn(), effectAllowed: 'move' },
+        })
+        fireEvent.dragOver(rowC, {
+            dataTransfer: { dropEffect: 'move' },
+        })
+        fireEvent.drop(rowC)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('order-badge-ps-a').textContent).toBe('1')
+            expect(screen.getByTestId('order-badge-ps-c').textContent).toBe('2')
+            expect(screen.getByTestId('order-badge-ps-b').textContent).toBe('3')
+        })
+
+        expect(reorderPayload).toEqual({
+            semester: 1,
+            ordered_ids: ['ps-a', 'ps-c', 'ps-b'],
+        })
+    })
+
+    // 10. DRAG BẰNG SỐ THỨ TỰ
+    it('10. Kéo thả bằng số thứ tự (order-badge) -> Đổi thứ tự thành 1 A, 2 C, 3 B và gọi API reorder', async () => {
+        let reorderPayload: unknown = null
+        const mockRequest = vi.fn().mockImplementation((path: string, init?: RequestInit) => {
+            if (init?.method === 'PATCH' && path.includes('/reorder')) {
+                reorderPayload = JSON.parse(init.body as string)
+                return Promise.resolve({
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ message: 'Sắp xếp thành công', semester: 1 }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockScrum124Data,
+            })
+        })
+
+        renderProgramStructurePage({ customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('order-badge-ps-a')).toBeDefined()
+        })
+
+        const badgeA = screen.getByTestId('order-badge-ps-a')
+        const rowC = screen.getByTestId('subject-row-ps-c')
+
+        fireEvent.dragStart(badgeA, {
+            dataTransfer: { setData: vi.fn(), effectAllowed: 'move' },
+        })
+        fireEvent.dragOver(rowC, {
+            dataTransfer: { dropEffect: 'move' },
+        })
+        fireEvent.drop(rowC)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('order-badge-ps-a').textContent).toBe('1')
+            expect(screen.getByTestId('order-badge-ps-c').textContent).toBe('2')
+            expect(screen.getByTestId('order-badge-ps-b').textContent).toBe('3')
+        })
+
+        expect(reorderPayload).toEqual({
+            semester: 1,
+            ordered_ids: ['ps-a', 'ps-c', 'ps-b'],
+        })
+    })
+
+    // 11. CLICK TIÊN QUYẾT -> KHÔNG DRAG, MỞ MODAL TIÊN QUYẾT
+    it('11. Click Tiên quyết -> Hành vi mở modal hoạt động bình thường, không kích hoạt drag', async () => {
+        const mockRequest = vi.fn().mockImplementation((path: string) => {
+            if (path.includes('/prerequisites')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: async () => ({
+                        program_subject_id: 'ps-c',
+                        prerequisites: [],
+                    }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: async () => mockScrum124Data,
+            })
+        })
+
+        renderProgramStructurePage({ customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-prereq-ps-c')).toBeDefined()
+        })
+
+        const btnPrereq = screen.getByTestId('btn-prereq-ps-c')
+
+        // Thử kích hoạt dragStart từ nút Tiên quyết: bị ngăn chặn
+        const defaultPrevented = !fireEvent.dragStart(btnPrereq, {
+            dataTransfer: { setData: vi.fn(), effectAllowed: 'move' },
+        })
+        expect(defaultPrevented).toBe(true)
+
+        // Click nút Tiên quyết mở modal
+        fireEvent.click(btnPrereq)
+
+        await waitFor(() => {
+            expect(screen.getByText(/Môn học tiên quyết: QA-S124-C/i)).toBeDefined()
+        })
+    })
+
+    // 12. CLICK SỬA -> KHÔNG DRAG, MỞ MODAL SỬA
+    it('12. Click Sửa -> Hành vi mở modal hoạt động bình thường, không kích hoạt drag', async () => {
+        const mockRequest = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => mockScrum124Data,
+        })
+
+        renderProgramStructurePage({ customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-edit-ps-c')).toBeDefined()
+        })
+
+        const btnEdit = screen.getByTestId('btn-edit-ps-c')
+
+        // Thử kích hoạt dragStart từ nút Sửa: bị ngăn chặn
+        const defaultPrevented = !fireEvent.dragStart(btnEdit, {
+            dataTransfer: { setData: vi.fn(), effectAllowed: 'move' },
+        })
+        expect(defaultPrevented).toBe(true)
+
+        // Click nút Sửa mở modal
+        fireEvent.click(btnEdit)
+
+        await waitFor(() => {
+            expect(screen.getByText('Chỉnh sửa thông tin môn học')).toBeDefined()
+        })
+    })
+
+    // 13. CLICK GỠ -> KHÔNG DRAG, MỞ MODAL XÁC NHẬN GỠ
+    it('13. Click Gỡ -> Hành vi mở modal hoạt động bình thường, không kích hoạt drag', async () => {
+        const mockRequest = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => mockScrum124Data,
+        })
+
+        renderProgramStructurePage({ customRequest: mockRequest })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-remove-ps-c')).toBeDefined()
+        })
+
+        const btnRemove = screen.getByTestId('btn-remove-ps-c')
+
+        // Thử kích hoạt dragStart từ nút Gỡ: bị ngăn chặn
+        const defaultPrevented = !fireEvent.dragStart(btnRemove, {
+            dataTransfer: { setData: vi.fn(), effectAllowed: 'move' },
+        })
+        expect(defaultPrevented).toBe(true)
+
+        // Click nút Gỡ mở modal
+        fireEvent.click(btnRemove)
+
+        await waitFor(() => {
+            expect(screen.getByText('Xác nhận gỡ môn học')).toBeDefined()
+        })
+    })
 })

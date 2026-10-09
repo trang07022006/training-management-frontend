@@ -334,13 +334,31 @@ export function ProgramStructurePage({
         index: number,
         item: ProgramSubject,
     ) => {
+        // Kiểm tra phần tử bắt đầu kéo: các control tương tác KHÔNG được kích hoạt drag
+        const target = e.target as HTMLElement | null
+        if (target) {
+            const isInteractive = target.closest(
+                'button:not(.btn-drag-handle), a, input, select, textarea, [role="button"]:not(.btn-drag-handle), .cell-actions, .actions-group',
+            )
+            if (isInteractive) {
+                e.preventDefault()
+                return
+            }
+        }
+
         setDraggedItemInfo({
             semester,
             index,
             programSubjectId: item.program_subject_id,
         })
-        e.dataTransfer.effectAllowed = 'move'
-        e.dataTransfer.setData('text/plain', item.program_subject_id)
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move'
+            try {
+                e.dataTransfer.setData('text/plain', item.program_subject_id)
+            } catch {
+                // Ignore in testing environments
+            }
+        }
     }
 
     const handleDragOver = (e: React.DragEvent, semester: number | null, index: number) => {
@@ -805,8 +823,20 @@ export function ProgramStructurePage({
                                                             key={item.program_subject_id}
                                                             data-testid={`subject-row-${item.program_subject_id}`}
                                                             className={`structure-subject-row ${
+                                                                canManage && !isProgramArchived ? 'is-draggable' : ''
+                                                            } ${
                                                                 isDraggingRow ? 'row-dragging' : ''
                                                             } ${isOverRow ? 'row-drop-target' : ''}`}
+                                                            draggable={canManage && !isProgramArchived}
+                                                            onDragStart={(e) =>
+                                                                handleDragStart(
+                                                                    e,
+                                                                    group.semester,
+                                                                    index,
+                                                                    item,
+                                                                )
+                                                            }
+                                                            onDragEnd={handleDragEnd}
                                                             onDragOver={(e) =>
                                                                 handleDragOver(e, group.semester, index)
                                                             }
@@ -830,15 +860,16 @@ export function ProgramStructurePage({
                                                                                 isDraggingRow ? 'is-dragging' : ''
                                                                             }`}
                                                                             data-testid={`drag-handle-${item.program_subject_id}`}
-                                                                            draggable
-                                                                            onDragStart={(e) =>
+                                                                            draggable={canManage && !isProgramArchived}
+                                                                            onDragStart={(e) => {
+                                                                                e.stopPropagation()
                                                                                 handleDragStart(
                                                                                     e,
                                                                                     group.semester,
                                                                                     index,
                                                                                     item,
                                                                                 )
-                                                                            }
+                                                                            }}
                                                                             onDragEnd={handleDragEnd}
                                                                             onKeyDown={(e) =>
                                                                                 handleDragHandleKeyDown(
@@ -929,13 +960,32 @@ export function ProgramStructurePage({
 
                                                         {/* Actions */}
                                                         {canManage && !isProgramArchived && (
-                                                            <td className="cell-actions">
-                                                                <div className="actions-group">
+                                                            <td
+                                                                className="cell-actions"
+                                                                draggable={false}
+                                                                onDragStart={(e) => {
+                                                                    e.preventDefault()
+                                                                    e.stopPropagation()
+                                                                }}
+                                                            >
+                                                                <div
+                                                                    className="actions-group"
+                                                                    draggable={false}
+                                                                    onDragStart={(e) => {
+                                                                        e.preventDefault()
+                                                                        e.stopPropagation()
+                                                                    }}
+                                                                >
                                                                     <button
                                                                         type="button"
                                                                         className="btn-sm-prereq"
                                                                         data-testid={`btn-prereq-${item.program_subject_id}`}
                                                                         aria-label={`Quản lý tiên quyết môn ${item.code}`}
+                                                                        draggable={false}
+                                                                        onDragStart={(e) => {
+                                                                            e.preventDefault()
+                                                                            e.stopPropagation()
+                                                                        }}
                                                                         onClick={() => handleOpenPrereqModal(item)}
                                                                     >
                                                                         Tiên quyết ({item.prerequisites.length})
@@ -945,6 +995,11 @@ export function ProgramStructurePage({
                                                                         className="btn-sm-edit"
                                                                         data-testid={`btn-edit-${item.program_subject_id}`}
                                                                         aria-label={`Sửa môn ${item.code}`}
+                                                                        draggable={false}
+                                                                        onDragStart={(e) => {
+                                                                            e.preventDefault()
+                                                                            e.stopPropagation()
+                                                                        }}
                                                                         onClick={() => handleOpenEditModal(item)}
                                                                     >
                                                                         Sửa
@@ -954,6 +1009,11 @@ export function ProgramStructurePage({
                                                                         className="btn-sm-remove"
                                                                         data-testid={`btn-remove-${item.program_subject_id}`}
                                                                         aria-label={`Gỡ môn ${item.code}`}
+                                                                        draggable={false}
+                                                                        onDragStart={(e) => {
+                                                                            e.preventDefault()
+                                                                            e.stopPropagation()
+                                                                        }}
                                                                         onClick={() => handleOpenRemoveModal(item)}
                                                                     >
                                                                         Gỡ
