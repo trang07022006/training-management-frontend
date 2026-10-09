@@ -4,7 +4,7 @@
  * Tuân thủ tuyệt đối API Contract backend (/api/v1/subjects).
  */
 
-import { getErrorMessage } from '../utils/errorMessages'
+import { getErrorMessage, isFriendlyVietnamese, isTechnicalCode } from '../utils/errorMessages'
 import { ApiError, type RequestFunction } from './userApi'
 
 export { ApiError, type RequestFunction }
@@ -141,7 +141,8 @@ export async function getSubject(
             res.status === 400 ? 'INVALID_PARAMS' :
             'API_ERROR'
         )
-        const message = getErrorMessage({ code, message: body.message }, 'Không tìm thấy môn học yêu cầu.')
+        const defaultFallback = 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.'
+        const message = getErrorMessage({ code, message: body.message }, defaultFallback)
         throw new ApiError(message, code, res.status)
     }
 
@@ -173,11 +174,13 @@ export async function createSubject(
             res.status === 400 ? 'INVALID_PARAMS' :
             'VALIDATION_ERROR'
         )
-        const defaultFallback = code === 'DUPLICATE_CODE' ? 'Mã môn học đã tồn tại.' : 'Lỗi khi tạo môn học.'
-        const message =
-            code === 'DUPLICATE_CODE'
-                ? (body.message && body.message.includes('môn học') ? body.message : 'Mã môn học đã tồn tại.')
-                : getErrorMessage({ code, message: body.message }, defaultFallback)
+        const isDuplicate = code === 'DUPLICATE_CODE' || code === 'SUBJECT_CODE_EXISTS' || code === 'DUPLICATE_SUBJECT_CODE'
+        const rawMsg = body.message
+        const isTechnicalOrConflict = !rawMsg || isTechnicalCode(rawMsg) || rawMsg.toLowerCase().includes('conflict') || rawMsg.toLowerCase().includes('duplicate entry') || rawMsg.toLowerCase().includes('integrityerror')
+        const defaultFallback = isDuplicate ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.' : 'Lỗi khi tạo môn học.'
+        const message = isDuplicate
+            ? (isTechnicalOrConflict ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.' : rawMsg)
+            : getErrorMessage({ code, message: body.message }, defaultFallback)
         throw new ApiError(message, code, res.status)
     }
 
@@ -213,11 +216,15 @@ export async function updateSubject(
             res.status === 400 ? 'INVALID_PARAMS' :
             'UPDATE_ERROR'
         )
-        const defaultFallback = code === 'DUPLICATE_CODE' ? 'Mã môn học đã tồn tại.' : 'Lỗi khi cập nhật môn học.'
-        const message =
-            code === 'DUPLICATE_CODE'
-                ? (body.message && body.message.includes('môn học') ? body.message : 'Mã môn học đã tồn tại.')
-                : getErrorMessage({ code, message: body.message }, defaultFallback)
+        const isDuplicate = code === 'DUPLICATE_CODE' || code === 'SUBJECT_CODE_EXISTS' || code === 'DUPLICATE_SUBJECT_CODE'
+        const rawMsg = body.message
+        const isTechnicalOrConflict = !rawMsg || isTechnicalCode(rawMsg) || rawMsg.toLowerCase().includes('conflict') || rawMsg.toLowerCase().includes('duplicate entry') || rawMsg.toLowerCase().includes('integrityerror')
+        const defaultFallback = isDuplicate
+            ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.'
+            : (code === 'SUBJECT_NOT_FOUND' ? 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.' : 'Lỗi khi cập nhật môn học.')
+        const message = isDuplicate
+            ? (isTechnicalOrConflict ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.' : rawMsg)
+            : getErrorMessage({ code, message: body.message }, defaultFallback)
         throw new ApiError(message, code, res.status)
     }
 
@@ -253,11 +260,15 @@ export async function patchSubject(
             res.status === 400 ? 'INVALID_PARAMS' :
             'UPDATE_ERROR'
         )
-        const defaultFallback = code === 'DUPLICATE_CODE' ? 'Mã môn học đã tồn tại.' : 'Lỗi khi cập nhật môn học.'
-        const message =
-            code === 'DUPLICATE_CODE'
-                ? (body.message && body.message.includes('môn học') ? body.message : 'Mã môn học đã tồn tại.')
-                : getErrorMessage({ code, message: body.message }, defaultFallback)
+        const isDuplicate = code === 'DUPLICATE_CODE' || code === 'SUBJECT_CODE_EXISTS' || code === 'DUPLICATE_SUBJECT_CODE'
+        const rawMsg = body.message
+        const isTechnicalOrConflict = !rawMsg || isTechnicalCode(rawMsg) || rawMsg.toLowerCase().includes('conflict') || rawMsg.toLowerCase().includes('duplicate entry') || rawMsg.toLowerCase().includes('integrityerror')
+        const defaultFallback = isDuplicate
+            ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.'
+            : (code === 'SUBJECT_NOT_FOUND' ? 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.' : 'Lỗi khi cập nhật môn học.')
+        const message = isDuplicate
+            ? (isTechnicalOrConflict ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.' : rawMsg)
+            : getErrorMessage({ code, message: body.message }, defaultFallback)
         throw new ApiError(message, code, res.status)
     }
 
@@ -290,12 +301,34 @@ export async function deleteSubject(
             res.status === 400 ? 'INVALID_PARAMS' :
             'DELETE_ERROR'
         )
-        const defaultFallback =
-            code === 'SUBJECT_IN_USE'
-                ? 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
-                : 'Lỗi khi xóa môn học.'
-        const message = getErrorMessage({ code, message: body.message }, defaultFallback)
-        throw new ApiError(message, code, res.status)
+        const reason = body.reason
+        const details = body.details as { program_count?: number; session_count?: number; [key: string]: unknown } | undefined
+
+        let message = ''
+        if (code === 'SUBJECT_IN_USE') {
+            if (reason === 'PROGRAM_ASSOCIATION') {
+                const count = details?.program_count
+                message = count && count > 0
+                    ? `Không thể xóa môn học vì môn đang được sử dụng trong ${count} chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa.`
+                    : 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa.'
+            } else if (reason === 'CLASS_EXISTS') {
+                message = 'Không thể xóa môn học vì môn đã có lớp học. Để bảo toàn dữ liệu đào tạo, môn học đã phát sinh lớp học không được phép xóa. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
+            } else if (reason === 'SESSION_EXISTS') {
+                message = 'Không thể xóa môn học vì môn vẫn còn các buổi học. Hãy xử lý các buổi học liên quan trước khi xóa.'
+            } else if (reason === 'PREREQUISITE_EXISTS') {
+                message = 'Không thể xóa môn học vì môn đang được sử dụng làm môn tiên quyết. Hãy gỡ các quan hệ tiên quyết liên quan trước khi xóa.'
+            } else if (body.message && isFriendlyVietnamese(body.message) && !isTechnicalCode(body.message)) {
+                message = body.message
+            } else {
+                message = 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
+            }
+        } else if (code === 'SUBJECT_NOT_FOUND') {
+            message = 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.'
+        } else {
+            message = getErrorMessage({ code, message: body.message }, 'Lỗi khi xóa môn học.')
+        }
+
+        throw new ApiError(message, code, res.status, reason, details)
     }
 
     return body.data ?? { id }

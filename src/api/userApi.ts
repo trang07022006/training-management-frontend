@@ -78,12 +78,22 @@ export type RequestFunction = (path: string, init?: RequestInit) => Promise<Resp
 export class ApiError extends Error {
     code: string
     status: number
+    reason?: string
+    details?: unknown
 
-    constructor(message: string, code = 'API_ERROR', status = 500) {
+    constructor(
+        message: string,
+        code = 'API_ERROR',
+        status = 500,
+        reason?: string,
+        details?: unknown,
+    ) {
         super(message)
         this.name = 'ApiError'
         this.code = code
         this.status = status
+        this.reason = reason
+        this.details = details
     }
 }
 

@@ -163,6 +163,12 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // ----------------------------------------------------
     SUBJECT_NOT_FOUND: 'Không tìm thấy môn học yêu cầu.',
     SUBJECT_IN_USE: 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    SUBJECT_IN_USE_PROGRAM: 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa.',
+    SUBJECT_IN_USE_CLASS: 'Không thể xóa môn học vì môn đã có lớp học. Để bảo toàn dữ liệu đào tạo, môn học đã phát sinh lớp học không được phép xóa. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    SUBJECT_IN_USE_SESSION: 'Không thể xóa môn học vì môn vẫn còn các buổi học. Hãy xử lý các buổi học liên quan trước khi xóa.',
+    SUBJECT_IN_USE_PREREQUISITE: 'Không thể xóa môn học vì môn đang được sử dụng làm môn tiên quyết. Hãy gỡ các quan hệ tiên quyết liên quan trước khi xóa.',
+    SUBJECT_CODE_EXISTS: 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.',
+    DUPLICATE_SUBJECT_CODE: 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.',
     SUBJECT_NAME_REQUIRED: 'Tên môn học là bắt buộc.',
     SUBJECT_CODE_REQUIRED: 'Mã môn học là bắt buộc.',
     SUBJECT_CODE_TOO_LONG: 'Mã môn học không được vượt quá 50 ký tự.',
@@ -233,6 +239,7 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     CREATE_SUBJECT_SUCCESS: 'Tạo môn học thành công.',
     UPDATE_SUBJECT_SUCCESS: 'Cập nhật môn học thành công.',
     DELETE_SUBJECT_SUCCESS: 'Xóa môn học thành công.',
+    ARCHIVE_SUBJECT_SUCCESS: 'Đã lưu trữ môn học thành công.',
 }
 
 export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -338,13 +345,19 @@ export function getErrorMessage(
         if (code === 'ALREADY_ACTIVE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
-        if (code === 'DUPLICATE_CODE' && rawMessage && rawMessage.includes('môn học') && isFriendlyVietnamese(rawMessage)) {
+        if (
+            ((code === 'DUPLICATE_CODE') && rawMessage && rawMessage.includes('môn học') && isFriendlyVietnamese(rawMessage)) ||
+            ((code === 'SUBJECT_CODE_EXISTS' || code === 'DUPLICATE_SUBJECT_CODE') && rawMessage && isFriendlyVietnamese(rawMessage))
+        ) {
             return rawMessage
         }
         if (code === 'NAME_REQUIRED' && rawMessage && (rawMessage.includes('chương trình') || rawMessage.includes('môn học')) && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
         if (code === 'SUBJECT_IN_USE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'SUBJECT_NOT_FOUND' && rawMessage && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
         if (code === 'SUBJECT_ARCHIVED' && rawMessage && isFriendlyVietnamese(rawMessage)) {

@@ -15,7 +15,7 @@ import {
     type RequestFunction,
     ApiError,
 } from '../api/subjectApi'
-import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
+import { getErrorMessage, getSuccessMessage, isNetworkError, isTechnicalCode } from '../utils/errorMessages'
 import { Breadcrumb } from '../components/Breadcrumb'
 import './SubjectsPage.css'
 
@@ -87,6 +87,7 @@ export function SubjectsPage({
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
     const [deleteDialogError, setDeleteDialogError] = useState<string | null>(null)
+    const [deleteBlocked, setDeleteBlocked] = useState<boolean>(false)
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
 
     // Search debounce ref
@@ -107,10 +108,21 @@ export function SubjectsPage({
                 setSubjects(res.items ?? [])
                 setTotal(res.total ?? 0)
             } catch (err: unknown) {
-                if (err instanceof ApiError) {
+                const errMsg =
+                    err && typeof err === 'object' && 'message' in err
+                        ? String((err as { message: unknown }).message)
+                        : String(err)
+                if (isNetworkError(errMsg)) {
+                    setErrorMessage('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối và thử lại.')
+                } else if (err instanceof ApiError) {
                     setErrorMessage(err.message)
                 } else {
-                    setErrorMessage(getErrorMessage(err, 'Lỗi khi tải danh sách môn học.'))
+                    setErrorMessage(
+                        getErrorMessage(
+                            err,
+                            'Hệ thống chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.',
+                        ),
+                    )
                 }
             } finally {
                 setIsLoading(false)
@@ -138,11 +150,21 @@ export function SubjectsPage({
                 })
                 .catch((err: unknown) => {
                     if (isMounted) {
-                        setErrorMessage(
-                            err instanceof ApiError
-                                ? err.message
-                                : getErrorMessage(err, 'Lỗi khi tải danh sách môn học.'),
-                        )
+                        const errMsg =
+                            err && typeof err === 'object' && 'message' in err
+                                ? String((err as { message: unknown }).message)
+                                : String(err)
+                        if (isNetworkError(errMsg)) {
+                            setErrorMessage(
+                                'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối và thử lại.',
+                            )
+                        } else if (err instanceof ApiError) {
+                            setErrorMessage(err.message)
+                        } else {
+                            setErrorMessage(
+                                getErrorMessage(err, 'Lỗi khi tải danh sách môn học.'),
+                            )
+                        }
                         setIsLoading(false)
                     }
                 })
@@ -221,6 +243,7 @@ export function SubjectsPage({
     const openDeleteModal = (subj: Subject) => {
         setDeletingSubject(subj)
         setDeleteDialogError(null)
+        setDeleteBlocked(false)
         setIsDeleting(false)
     }
 
@@ -228,6 +251,7 @@ export function SubjectsPage({
         if (!isDeleting) {
             setDeletingSubject(null)
             setDeleteDialogError(null)
+            setDeleteBlocked(false)
         }
     }
 
@@ -279,7 +303,7 @@ export function SubjectsPage({
         if (trimmedWeight !== '') {
             const parsedWeight = Number(trimmedWeight)
             if (Number.isNaN(parsedWeight)) {
-                errors.weight = 'Trọng số phải là số hợp lệ.'
+                errors.weight = 'Trọng số phải là giá trị số hợp lệ.'
             }
         }
 
@@ -314,12 +338,25 @@ export function SubjectsPage({
             setPage(1)
         } catch (err: unknown) {
             const apiCode = (err && typeof err === 'object' && 'code' in err) ? String((err as { code: unknown }).code) : undefined
-            if (apiCode === 'DUPLICATE_CODE') {
-                setFormErrors({ code: 'Mã môn học đã tồn tại.' })
+            if (apiCode === 'DUPLICATE_CODE' || apiCode === 'SUBJECT_CODE_EXISTS' || apiCode === 'DUPLICATE_SUBJECT_CODE') {
+                const rawMsg = err instanceof ApiError ? err.message : undefined
+                const isTechnical = !rawMsg || isTechnicalCode(rawMsg) || rawMsg.toLowerCase().includes('conflict') || rawMsg.toLowerCase().includes('duplicate entry') || rawMsg.toLowerCase().includes('integrityerror')
+                const displayMsg = isTechnical ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.' : rawMsg
+                setFormErrors({ code: displayMsg })
+            } else if (apiCode === 'SUBJECT_ARCHIVED') {
+                setFormErrors({ general: 'Môn học đã được lưu trữ và không thể chỉnh sửa.' })
+            } else if (apiCode === 'SUBJECT_NOT_FOUND') {
+                setFormErrors({ general: 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.' })
             } else if (err instanceof ApiError) {
-                setFormErrors({ general: err.message })
+                if (isNetworkError(err.message)) {
+                    setFormErrors({ general: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối và thử lại.' })
+                } else if (err.status >= 500) {
+                    setFormErrors({ general: 'Hệ thống chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.' })
+                } else {
+                    setFormErrors({ general: err.message })
+                }
             } else {
-                setFormErrors({ general: getErrorMessage(err, 'Lỗi khi tạo môn học.') })
+                setFormErrors({ general: getErrorMessage(err, 'Hệ thống chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.') })
             }
         } finally {
             setIsSubmitting(false)
@@ -352,12 +389,25 @@ export function SubjectsPage({
             void loadSubjects(page, search, statusFilter)
         } catch (err: unknown) {
             const apiCode = (err && typeof err === 'object' && 'code' in err) ? String((err as { code: unknown }).code) : undefined
-            if (apiCode === 'DUPLICATE_CODE') {
-                setFormErrors({ code: 'Mã môn học đã tồn tại.' })
+            if (apiCode === 'DUPLICATE_CODE' || apiCode === 'SUBJECT_CODE_EXISTS' || apiCode === 'DUPLICATE_SUBJECT_CODE') {
+                const rawMsg = err instanceof ApiError ? err.message : undefined
+                const isTechnical = !rawMsg || isTechnicalCode(rawMsg) || rawMsg.toLowerCase().includes('conflict') || rawMsg.toLowerCase().includes('duplicate entry') || rawMsg.toLowerCase().includes('integrityerror')
+                const displayMsg = isTechnical ? 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.' : rawMsg
+                setFormErrors({ code: displayMsg })
+            } else if (apiCode === 'SUBJECT_ARCHIVED') {
+                setFormErrors({ general: 'Môn học đã được lưu trữ và không thể chỉnh sửa.' })
+            } else if (apiCode === 'SUBJECT_NOT_FOUND') {
+                setFormErrors({ general: 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.' })
             } else if (err instanceof ApiError) {
-                setFormErrors({ general: err.message })
+                if (isNetworkError(err.message)) {
+                    setFormErrors({ general: 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối và thử lại.' })
+                } else if (err.status >= 500) {
+                    setFormErrors({ general: 'Hệ thống chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.' })
+                } else {
+                    setFormErrors({ general: err.message })
+                }
             } else {
-                setFormErrors({ general: getErrorMessage(err, 'Lỗi khi cập nhật môn học.') })
+                setFormErrors({ general: getErrorMessage(err, 'Hệ thống chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.') })
             }
         } finally {
             setIsSubmitting(false)
@@ -366,7 +416,7 @@ export function SubjectsPage({
 
     // Confirm Delete
     const handleDeleteConfirm = async () => {
-        if (!deletingSubject || isDeleting) return
+        if (!deletingSubject || isDeleting || deleteBlocked) return
 
         setIsDeleting(true)
         setDeleteDialogError(null)
@@ -374,11 +424,25 @@ export function SubjectsPage({
         try {
             await deleteSubject(requestFn, deletingSubject.id)
             setDeletingSubject(null)
+            setDeleteBlocked(false)
             setSuccessMessage(getSuccessMessage('DELETE_SUBJECT_SUCCESS', 'Xóa môn học thành công.'))
             void loadSubjects(page, search, statusFilter)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setDeleteDialogError(err.message)
+            const errMsg =
+                err && typeof err === 'object' && 'message' in err
+                    ? String((err as { message: unknown }).message)
+                    : String(err)
+            if (isNetworkError(errMsg)) {
+                setDeleteDialogError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối và thử lại.')
+            } else if (err instanceof ApiError) {
+                if (err.status === 409 || err.code === 'SUBJECT_IN_USE') {
+                    setDeleteBlocked(true)
+                }
+                if (err.status >= 500) {
+                    setDeleteDialogError('Hệ thống chưa thể xử lý yêu cầu lúc này. Vui lòng thử lại sau.')
+                } else {
+                    setDeleteDialogError(err.message)
+                }
             } else {
                 setDeleteDialogError(getErrorMessage(err, 'Lỗi khi xóa môn học.'))
             }
@@ -1158,6 +1222,11 @@ export function SubjectsPage({
                                 </strong>
                                 ?
                             </p>
+                            {!deleteBlocked && (
+                                <p className="delete-modal-warning" style={{ margin: '8px 0 0 0', fontSize: '0.85rem', color: '#dc2626' }}>
+                                    Thao tác này không thể hoàn tác.
+                                </p>
+                            )}
                         </div>
 
                         <footer className="subjects-modal-footer">
@@ -1168,17 +1237,19 @@ export function SubjectsPage({
                                 onClick={closeDeleteModal}
                                 disabled={isDeleting}
                             >
-                                Hủy
+                                {deleteBlocked ? 'Đóng' : 'Hủy'}
                             </button>
-                            <button
-                                type="button"
-                                className="btn-modal-delete"
-                                data-testid="btn-confirm-delete"
-                                onClick={handleDeleteConfirm}
-                                disabled={isDeleting}
-                            >
-                                {isDeleting ? 'Đang xóa...' : 'Xóa môn học'}
-                            </button>
+                            {!deleteBlocked && (
+                                <button
+                                    type="button"
+                                    className="btn-modal-delete"
+                                    data-testid="btn-confirm-delete"
+                                    onClick={handleDeleteConfirm}
+                                    disabled={isDeleting}
+                                >
+                                    {isDeleting ? 'Đang xóa...' : 'Xóa môn học'}
+                                </button>
+                            )}
                         </footer>
                     </div>
                 </div>
