@@ -22,8 +22,8 @@
 /* Search Input Group */
 .search-input-wrapper {
     position: relative;
-    flex: 4;
-    min-width: 280px;
+    flex: 3 1 260px;
+    max-width: 440px;
     display: flex;
     align-items: center;
 }
@@ -74,8 +74,8 @@
 
 /* Select Dropdown Groups */
 .filter-select-wrapper {
-    flex: 1.8;
-    min-width: 160px;
+    flex: 1 1 150px;
+    max-width: 200px;
 }
 
 .filter-select {
@@ -146,7 +146,23 @@
     color: var(--ictu-action, #2563EB);
 }
 
+/* Right-aligned Extra Actions (Thêm người dùng) */
+.filter-extra-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* Responsive down to 360px mobile */
+@media (max-width: 992px) {
+    .filter-extra-actions {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+}
+
 @media (max-width: 768px) {
     .user-filter-form {
         flex-direction: column;
@@ -157,6 +173,7 @@
     .filter-select-wrapper {
         width: 100%;
         min-width: 100%;
+        max-width: none;
     }
 
     .filter-actions {
@@ -168,6 +185,16 @@
     .btn-filter-submit,
     .btn-filter-reset {
         flex: 1;
+        justify-content: center;
+    }
+
+    .filter-extra-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .filter-extra-actions .btn-primary-action {
+        width: 100%;
         justify-content: center;
     }
 }
