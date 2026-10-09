@@ -317,9 +317,9 @@
     background-color: #f8fafc;
 }
 
-/* Reorder Column */
+/* Reorder Column & Drag Handle */
 .cell-order {
-    width: 90px;
+    width: 95px;
 }
 
 .order-controls {
@@ -333,28 +333,63 @@
     color: #334155;
     min-width: 18px;
     text-align: center;
+    font-size: 0.9rem;
 }
 
-.btn-order-move {
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
+.btn-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 4px;
-    color: #475569;
-    cursor: pointer;
-    padding: 2px 6px;
-    font-size: 0.75rem;
+    color: #64748b;
+    cursor: grab;
+    padding: 4px;
     line-height: 1;
-    transition: background-color 0.1s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    user-select: none;
+    -webkit-user-drag: element;
 }
 
-.btn-order-move:hover:not(:disabled) {
+.btn-drag-handle:hover {
     background: #e2e8f0;
-    color: #0f172a;
+    color: #1e40af;
+    border-color: #cbd5e1;
 }
 
-.btn-order-move:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+.btn-drag-handle:active,
+.btn-drag-handle.is-dragging {
+    cursor: grabbing;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #93c5fd;
+}
+
+.btn-drag-handle:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.drag-handle-icon {
+    display: block;
+    pointer-events: none;
+}
+
+/* Row drag states & indicators */
+.structure-subject-row {
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.structure-subject-row.row-dragging {
+    opacity: 0.45;
+    background-color: #f1f5f9 !important;
+}
+
+.structure-subject-row.row-drop-target {
+    background-color: #eff6ff !important;
+    position: relative;
+    box-shadow: inset 0 3px 0 0 #2563eb;
 }
 
 /* Code & Name */

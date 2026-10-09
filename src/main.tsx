@@ -128,6 +128,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/courses" element={<CourseManagementPage />} />
                 <Route path="/training-programs" element={<TrainingProgramsPage />} />
                 <Route path="/training-programs/:programId/structure" element={<ProgramStructurePage />} />
+                <Route path="/training-programs/:id/structure" element={<ProgramStructurePage />} />
                 <Route path="/subjects" element={<SubjectsPage />} />
                 <Route path="/subjects/:subjectId/sessions" element={<SubjectSessionsPage />} />
               </Route>

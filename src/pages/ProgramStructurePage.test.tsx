@@ -375,7 +375,7 @@ describe('ProgramStructurePage - Test Matrix SCRUM-124 Activity A6', () => {
         })
     })
 
-    it('10. Di chuyển thứ tự môn học bằng nút Di chuyển Lên/Xuống', async () => {
+    it('10. Di chuyển thứ tự môn học bằng Drag Handle / Kéo thả', async () => {
         const mockRequest = vi.fn().mockImplementation((path: string, init?: RequestInit) => {
             if (init?.method === 'PATCH' && path.includes('/reorder')) {
                 return Promise.resolve({
@@ -393,10 +393,15 @@ describe('ProgramStructurePage - Test Matrix SCRUM-124 Activity A6', () => {
         renderProgramStructurePage({ role: 'admin', customRequest: mockRequest })
 
         await waitFor(() => {
-            expect(screen.getByTestId('btn-move-down-ps-1')).toBeDefined()
+            expect(screen.getByTestId('drag-handle-ps-1')).toBeDefined()
         })
 
-        fireEvent.click(screen.getByTestId('btn-move-down-ps-1'))
+        // Nút di chuyển cũ đã được xóa hoàn toàn
+        expect(screen.queryByTestId('btn-move-down-ps-1')).toBeNull()
+        expect(screen.queryByTestId('btn-move-up-ps-1')).toBeNull()
+
+        // Di chuyển thứ tự môn học bằng Drag Handle
+        fireEvent.keyDown(screen.getByTestId('drag-handle-ps-1'), { key: 'ArrowDown' })
 
         await waitFor(() => {
             expect(mockRequest).toHaveBeenCalledWith(

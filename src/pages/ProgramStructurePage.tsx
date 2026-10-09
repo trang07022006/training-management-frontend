@@ -44,8 +44,8 @@ export function ProgramStructurePage({
     customRequest,
     canManageOverride,
 }: ProgramStructurePageProps) {
-    const routeParams = useParams<{ programId?: string }>()
-    const programId = programIdProp || routeParams.programId || ''
+    const routeParams = useParams<{ programId?: string; id?: string }>()
+    const programId = programIdProp || routeParams.programId || routeParams.id || ''
 
     const { request: sessionRequest, role, roles, permissions: sessionPermissions } = useSession()
     const requestFn: RequestFunction = customRequest || (sessionRequest as RequestFunction)
@@ -102,6 +102,17 @@ export function ProgramStructurePage({
     const [prereqModalError, setPrereqModalError] = useState<string | null>(null)
     const [prereqModalSuccess, setPrereqModalSuccess] = useState<string | null>(null)
     const [isSubmittingPrereq, setIsSubmittingPrereq] = useState<boolean>(false)
+
+    // Drag & Drop State for Subject Reordering (SCRUM-124)
+    const [draggedItemInfo, setDraggedItemInfo] = useState<{
+        semester: number | null
+        index: number
+        programSubjectId: string
+    } | null>(null)
+    const [dragOverInfo, setDragOverInfo] = useState<{
+        semester: number | null
+        index: number
+    } | null>(null)
 
     // Fetch Program Structure
     const loadStructure = useCallback(async () => {
@@ -257,34 +268,140 @@ export function ProgramStructurePage({
         }
     }
 
-    // Reorder Handlers (Up / Down)
-    const handleMoveItem = async (
+    // Reorder Handlers (SCRUM-124 - Drag & Drop / Keyboard)
+    const handleReorderSemester = async (
         semesterKey: number | null,
-        itemList: ProgramSubject[],
-        currentIndex: number,
-        direction: 'up' | 'down',
+        fromIndex: number,
+        toIndex: number,
     ) => {
-        const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
-        if (targetIndex < 0 || targetIndex >= itemList.length) return
+        if (!structure || fromIndex === toIndex) return
 
-        // Swap IDs
-        const newOrdered = [...itemList]
-        const temp = newOrdered[currentIndex]
-        newOrdered[currentIndex] = newOrdered[targetIndex]
-        newOrdered[targetIndex] = temp
+        const previousStructure = structure
 
-        const orderedIds = newOrdered.map((item) => item.program_subject_id)
+        // Lấy danh sách môn học của học kỳ này theo thứ tự hiện tại
+        const semesterItems = structure.items
+            .filter((item) => item.semester === semesterKey)
+            .sort((a, b) => a.order_index - b.order_index)
+
+        if (
+            fromIndex < 0 ||
+            fromIndex >= semesterItems.length ||
+            toIndex < 0 ||
+            toIndex >= semesterItems.length
+        ) {
+            return
+        }
+
+        // Tạo mảng mới đã sắp xếp lại
+        const reorderedSemester = [...semesterItems]
+        const [moved] = reorderedSemester.splice(fromIndex, 1)
+        reorderedSemester.splice(toIndex, 0, moved)
+
+        // Cập nhật lại order_index tuần tự (1, 2, 3...)
+        const updatedSemesterItems = reorderedSemester.map((item, idx) => ({
+            ...item,
+            order_index: idx + 1,
+        }))
+
+        // Cập nhật optimistic vào local state
+        const otherSemesterItems = structure.items.filter((item) => item.semester !== semesterKey)
+        const newAllItems = [...otherSemesterItems, ...updatedSemesterItems]
+
+        setStructure({
+            ...structure,
+            items: newAllItems,
+        })
+        setErrorMessage(null)
+
+        const orderedIds = updatedSemesterItems.map((item) => item.program_subject_id)
 
         try {
             await reorderProgramSubjects(requestFn, programId, {
                 semester: semesterKey,
                 ordered_ids: orderedIds,
             })
-            void loadStructure()
-        } catch (err: unknown) {
-            setErrorMessage(
-                err instanceof ApiError ? err.message : 'Lỗi khi sắp xếp lại thứ tự môn học.',
-            )
+            setSuccessMessage('Đã cập nhật thứ tự môn học.')
+        } catch {
+            // Rollback về trạng thái cũ nếu API thất bại (Yêu cầu Jira SCRUM-124 Mục 6)
+            setStructure(previousStructure)
+            setErrorMessage('Không thể cập nhật thứ tự môn học. Vui lòng thử lại.')
+        }
+    }
+
+    const handleDragStart = (
+        e: React.DragEvent,
+        semester: number | null,
+        index: number,
+        item: ProgramSubject,
+    ) => {
+        setDraggedItemInfo({
+            semester,
+            index,
+            programSubjectId: item.program_subject_id,
+        })
+        e.dataTransfer.effectAllowed = 'move'
+        e.dataTransfer.setData('text/plain', item.program_subject_id)
+    }
+
+    const handleDragOver = (e: React.DragEvent, semester: number | null, index: number) => {
+        // Chỉ cho phép kéo thả trong cùng học kỳ (Chặn cross-semester drag)
+        if (!draggedItemInfo || draggedItemInfo.semester !== semester) {
+            return
+        }
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        if (dragOverInfo?.semester !== semester || dragOverInfo?.index !== index) {
+            setDragOverInfo({ semester, index })
+        }
+    }
+
+    const handleDragLeave = (semester: number | null, index: number) => {
+        if (dragOverInfo?.semester === semester && dragOverInfo?.index === index) {
+            setDragOverInfo(null)
+        }
+    }
+
+    const handleDrop = async (
+        e: React.DragEvent,
+        semester: number | null,
+        targetIndex: number,
+    ) => {
+        e.preventDefault()
+        if (!draggedItemInfo || draggedItemInfo.semester !== semester) {
+            setDraggedItemInfo(null)
+            setDragOverInfo(null)
+            return
+        }
+        const sourceIndex = draggedItemInfo.index
+        setDraggedItemInfo(null)
+        setDragOverInfo(null)
+
+        if (sourceIndex !== targetIndex) {
+            await handleReorderSemester(semester, sourceIndex, targetIndex)
+        }
+    }
+
+    const handleDragEnd = () => {
+        setDraggedItemInfo(null)
+        setDragOverInfo(null)
+    }
+
+    const handleDragHandleKeyDown = async (
+        e: React.KeyboardEvent,
+        semester: number | null,
+        items: ProgramSubject[],
+        index: number,
+    ) => {
+        if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            if (index > 0) {
+                await handleReorderSemester(semester, index, index - 1)
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            if (index < items.length - 1) {
+                await handleReorderSemester(semester, index, index + 1)
+            }
         }
     }
 
@@ -674,57 +791,94 @@ export function ProgramStructurePage({
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {group.items.map((item, index) => (
-                                                    <tr
-                                                        key={item.program_subject_id}
-                                                        data-testid={`subject-row-${item.program_subject_id}`}
-                                                    >
-                                                        {/* Reorder / Order index */}
-                                                        <td className="cell-order">
-                                                            <div className="order-controls">
-                                                                <span className="order-badge">{item.order_index}</span>
-                                                                {canManage && !isProgramArchived && (
-                                                                    <>
+                                                {group.items.map((item, index) => {
+                                                    const isDraggingRow =
+                                                        draggedItemInfo?.programSubjectId ===
+                                                        item.program_subject_id
+                                                    const isOverRow =
+                                                        dragOverInfo?.semester === group.semester &&
+                                                        dragOverInfo?.index === index &&
+                                                        !isDraggingRow
+
+                                                    return (
+                                                        <tr
+                                                            key={item.program_subject_id}
+                                                            data-testid={`subject-row-${item.program_subject_id}`}
+                                                            className={`structure-subject-row ${
+                                                                isDraggingRow ? 'row-dragging' : ''
+                                                            } ${isOverRow ? 'row-drop-target' : ''}`}
+                                                            onDragOver={(e) =>
+                                                                handleDragOver(e, group.semester, index)
+                                                            }
+                                                            onDragEnter={(e) =>
+                                                                handleDragOver(e, group.semester, index)
+                                                            }
+                                                            onDragLeave={() =>
+                                                                handleDragLeave(group.semester, index)
+                                                            }
+                                                            onDrop={(e) =>
+                                                                handleDrop(e, group.semester, index)
+                                                            }
+                                                        >
+                                                            {/* Reorder / Order index with Drag Handle */}
+                                                            <td className="cell-order">
+                                                                <div className="order-controls">
+                                                                    {canManage && !isProgramArchived && (
                                                                         <button
                                                                             type="button"
-                                                                            className="btn-order-move"
-                                                                            data-testid={`btn-move-up-${item.program_subject_id}`}
-                                                                            disabled={index === 0}
-                                                                            title="Di chuyển lên"
-                                                                            aria-label={`Di chuyển môn ${item.code} lên trên`}
-                                                                            onClick={() =>
-                                                                                handleMoveItem(
+                                                                            className={`btn-drag-handle ${
+                                                                                isDraggingRow ? 'is-dragging' : ''
+                                                                            }`}
+                                                                            data-testid={`drag-handle-${item.program_subject_id}`}
+                                                                            draggable
+                                                                            onDragStart={(e) =>
+                                                                                handleDragStart(
+                                                                                    e,
+                                                                                    group.semester,
+                                                                                    index,
+                                                                                    item,
+                                                                                )
+                                                                            }
+                                                                            onDragEnd={handleDragEnd}
+                                                                            onKeyDown={(e) =>
+                                                                                handleDragHandleKeyDown(
+                                                                                    e,
                                                                                     group.semester,
                                                                                     group.items,
                                                                                     index,
-                                                                                    'up',
                                                                                 )
                                                                             }
+                                                                            title="Kéo thả hoặc dùng phím mũi tên để đổi thứ tự"
+                                                                            aria-label={`Thay đổi thứ tự môn ${
+                                                                                item.code ||
+                                                                                (item as any).subject_code
+                                                                            }`}
                                                                         >
-                                                                            ▲
+                                                                            <svg
+                                                                                className="drag-handle-icon"
+                                                                                viewBox="0 0 16 16"
+                                                                                width="14"
+                                                                                height="14"
+                                                                                fill="currentColor"
+                                                                                aria-hidden="true"
+                                                                            >
+                                                                                <circle cx="5" cy="3" r="1.5" />
+                                                                                <circle cx="11" cy="3" r="1.5" />
+                                                                                <circle cx="5" cy="8" r="1.5" />
+                                                                                <circle cx="11" cy="8" r="1.5" />
+                                                                                <circle cx="5" cy="13" r="1.5" />
+                                                                                <circle cx="11" cy="13" r="1.5" />
+                                                                            </svg>
                                                                         </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            className="btn-order-move"
-                                                                            data-testid={`btn-move-down-${item.program_subject_id}`}
-                                                                            disabled={index === group.items.length - 1}
-                                                                            title="Di chuyển xuống"
-                                                                            aria-label={`Di chuyển môn ${item.code} xuống dưới`}
-                                                                            onClick={() =>
-                                                                                handleMoveItem(
-                                                                                    group.semester,
-                                                                                    group.items,
-                                                                                    index,
-                                                                                    'down',
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            ▼
-                                                                        </button>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </td>
+                                                                    )}
+                                                                    <span
+                                                                        className="order-badge"
+                                                                        data-testid={`order-badge-${item.program_subject_id}`}
+                                                                    >
+                                                                        {item.order_index}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
 
                                                         {/* Code */}
                                                         <td className="cell-subject-code" data-testid={`subject-code-${item.program_subject_id}`}>
@@ -808,7 +962,8 @@ export function ProgramStructurePage({
                                                             </td>
                                                         )}
                                                     </tr>
-                                                ))}
+                                                )
+                                            })}
                                             </tbody>
                                         </table>
                                     </div>
