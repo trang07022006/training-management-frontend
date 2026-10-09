@@ -234,7 +234,7 @@ export function LoginForm({
                                     <path d="M12 2a10 10 0 0 1 10 10" />
                                 </svg>
                             </span>
-                            <span>Đang xử lý...</span>
+                            <span className="loading-state-text">Đang xử lý...</span>
                         </span>
                     ) : (
                         <span>Đăng nhập</span>

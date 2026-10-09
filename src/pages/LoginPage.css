@@ -569,26 +569,30 @@
 }
 
 .loading-state {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     line-height: 1;
     color: #ffffff;
 }
 
-.loading-state span {
+.loading-state span,
+.loading-state-text {
     line-height: 1;
     color: #ffffff;
     font-size: 15px;
     font-weight: 600;
+    margin: 0;
+    padding: 0;
 }
 
 .login-btn-spinner,
 .submit-btn .spinner {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
+    position: static !important;
     width: 18px !important;
     height: 18px !important;
     max-width: 18px !important;
