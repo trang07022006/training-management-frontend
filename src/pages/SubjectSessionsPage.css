@@ -1,9 +1,11 @@
 /* SubjectSessionsPage.css - SCRUM-129 Activity A6 */
 
 .subject-sessions-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1.5rem 1rem;
+    max-width: none;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 0 24px 0;
     color: #1e293b;
     font-family: inherit;
 }

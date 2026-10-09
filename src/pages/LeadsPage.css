@@ -1,9 +1,11 @@
 /* LeadsPage.css - Giao diện Quản lý Tư vấn Tuyển sinh (SCRUM-126) */
 
 .leads-page-container {
-  padding: 1.5rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 0 0 24px 0;
+  max-width: none;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
   font-family: inherit;
 }
 

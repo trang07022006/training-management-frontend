@@ -1,6 +1,8 @@
 /* User Filter Bar Styles - SCRUM-91 */
 
 .user-filter-bar {
+    width: 100%;
+    box-sizing: border-box;
     background-color: var(--bg-surface, #ffffff);
     border-radius: var(--radius-lg, 12px);
     border: 1px solid var(--border, #DCE4EF);
@@ -13,14 +15,15 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
+    width: 100%;
 }
 
 /* Search Input Group */
 .search-input-wrapper {
     position: relative;
-    flex: 2;
-    min-width: 240px;
+    flex: 4;
+    min-width: 280px;
     display: flex;
     align-items: center;
 }
@@ -71,8 +74,8 @@
 
 /* Select Dropdown Groups */
 .filter-select-wrapper {
-    flex: 1;
-    min-width: 140px;
+    flex: 1.8;
+    min-width: 160px;
 }
 
 .filter-select {

@@ -1,16 +1,56 @@
 /* User Management Page Styles - SCRUM-25 / SCRUM-89 */
 
 .user-management-page {
-    padding: 28px 32px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 0 0 32px 0;
+    max-width: none;
+    margin: 0;
     width: 100%;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     color: var(--text, #334155);
     text-align: left;
+}
+
+/* User Management Tabs Navigation */
+.user-management-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 2px solid #e2e8f0;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: -4px;
+    margin-bottom: 4px;
+}
+
+.user-management-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #64748b;
+    background: transparent;
+    border: none;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -2px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border-radius: 6px 6px 0 0;
+}
+
+.user-management-tab-btn:hover {
+    color: var(--ictu-action, #2563EB);
+    background-color: rgba(37, 99, 235, 0.04);
+}
+
+.user-management-tab-btn.active {
+    color: var(--ictu-action, #2563EB);
+    border-bottom-color: var(--ictu-action, #2563EB);
+    background-color: rgba(37, 99, 235, 0.06);
 }
 
 .user-page-header {
@@ -21,6 +61,8 @@
     gap: 16px;
     padding-bottom: 20px;
     border-bottom: 1px solid #e2e8f0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .user-page-header-text {

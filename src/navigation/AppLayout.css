@@ -53,9 +53,15 @@
     position: relative;
     z-index: 1;
     flex: 1;
-    padding: 24px;
+    padding: 24px 32px;
     overflow-y: auto;
     background: transparent;
+}
+
+@media (min-width: 1440px) {
+    .app-content-body {
+        padding: 32px;
+    }
 }
 
 @media (min-width: 769px) {
