@@ -84,14 +84,18 @@ export async function submitPublicConsultation(
     const body = await res.json().catch(() => ({}))
 
     if (!res.ok) {
-        const code = body.code || (
+        const code = body.code || body.error?.code || (
+            res.status === 429 ? 'CONSULTATION_RATE_LIMITED' :
             res.status === 400 ? 'INVALID_PARAMS' :
             res.status === 404 ? 'PROGRAM_NOT_FOUND' :
             'DATABASE_ERROR'
         )
+        const rawMsg = body.message || body.error?.message
         const message = getErrorMessage(
-            { code, message: body.message },
-            'Không thể gửi yêu cầu tư vấn. Vui lòng thử lại.',
+            { code, message: rawMsg },
+            res.status === 429
+                ? 'Bạn vừa gửi yêu cầu tư vấn. Vui lòng thử lại sau khoảng 1 phút.'
+                : 'Không thể gửi yêu cầu tư vấn. Vui lòng thử lại.',
         )
         throw new ApiError(message, code, res.status)
     }

@@ -378,8 +378,9 @@ export function PublicConsultationPage({
                                 </div>
                                 <h2 className="success-title">Gửi yêu cầu thành công!</h2>
                                 <p className="success-message">
-                                    Cảm ơn bạn đã đăng ký tư vấn. Yêu cầu tư vấn của bạn đã được ghi nhận.
-                                    Chúng tôi sẽ liên hệ lại trong thời gian phù hợp.
+                                    Cảm ơn bạn đã đăng ký tư vấn. Yêu cầu của bạn đã được ghi nhận.
+                                    <br />
+                                    Bộ phận tư vấn ICTU sẽ liên hệ lại với bạn <strong>trong vòng 24 giờ làm việc</strong>.
                                 </p>
                                 {submittedId && (
                                     <div className="success-reference">

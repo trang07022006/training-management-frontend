@@ -162,7 +162,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // 14. MÔN HỌC / HỌC PHẦN (SCRUM-123)
     // ----------------------------------------------------
     SUBJECT_NOT_FOUND: 'Không tìm thấy môn học yêu cầu.',
-    SUBJECT_IN_USE: 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    SUBJECT_IN_USE: 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
     SUBJECT_IN_USE_PROGRAM: 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa.',
     SUBJECT_IN_USE_CLASS: 'Không thể xóa môn học vì môn đã có lớp học. Để bảo toàn dữ liệu đào tạo, môn học đã phát sinh lớp học không được phép xóa. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
     SUBJECT_IN_USE_SESSION: 'Không thể xóa môn học vì môn vẫn còn các buổi học. Hãy xử lý các buổi học liên quan trước khi xóa.',
@@ -197,6 +197,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     PHONE_REQUIRED: 'Số điện thoại là bắt buộc.',
     INVALID_PARAMS: 'Dữ liệu cung cấp không hợp lệ.',
     INVALID_PROGRAM: 'Chương trình đào tạo này hiện không mở đăng ký tư vấn.',
+    CONSULTATION_RATE_LIMITED: 'Bạn vừa gửi yêu cầu tư vấn. Vui lòng thử lại sau khoảng 1 phút.',
 
     // ----------------------------------------------------
     // 17. QUẢN LÝ BUỔI HỌC (SCRUM-129)
@@ -220,7 +221,7 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     UPDATE_SESSION_SUCCESS: 'Cập nhật buổi học thành công.',
     REORDER_SESSIONS_SUCCESS: 'Sắp xếp lại thứ tự buổi học thành công.',
     DELETE_SESSION_SUCCESS: 'Xóa buổi học thành công.',
-    SUBMIT_CONSULTATION_SUCCESS: 'Yêu cầu tư vấn của bạn đã được ghi nhận. Chúng tôi sẽ liên hệ lại trong thời gian phù hợp.',
+    SUBMIT_CONSULTATION_SUCCESS: 'Cảm ơn bạn đã đăng ký tư vấn. Yêu cầu của bạn đã được ghi nhận. Bộ phận tư vấn ICTU sẽ liên hệ lại với bạn trong vòng 24 giờ làm việc.',
     CHANGE_PASSWORD_SUCCESS: 'Đổi mật khẩu thành công.',
     RESET_PASSWORD_SUCCESS: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
     CREATE_USER_SUCCESS: 'Tạo người dùng thành công.',

@@ -131,5 +131,33 @@ describe('publicConsultationApi', () => {
 
             await expect(submitPublicConsultation(payload, mockFetch)).rejects.toThrow(ApiError)
         })
+
+        it('ném ApiError khi bị giới hạn tần suất (CONSULTATION_RATE_LIMITED - 429)', async () => {
+            const payload: PublicConsultationInput = {
+                full_name: 'QA SCRUM 125',
+                phone: '0988776655',
+            }
+
+            const mockFetch = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 429,
+                json: async () => ({
+                    code: 'CONSULTATION_RATE_LIMITED',
+                    message: 'Bạn đã gửi yêu cầu tư vấn gần đây. Vui lòng chờ một chút trước khi gửi lại.',
+                }),
+            })
+
+            let thrownError: any = null
+            try {
+                await submitPublicConsultation(payload, mockFetch)
+            } catch (err) {
+                thrownError = err
+            }
+
+            expect(thrownError).toBeInstanceOf(ApiError)
+            expect(thrownError.status).toBe(429)
+            expect(thrownError.code).toBe('CONSULTATION_RATE_LIMITED')
+            expect(thrownError.message).toContain('Bạn vừa gửi yêu cầu tư vấn')
+        })
     })
 })

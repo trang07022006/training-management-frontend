@@ -155,6 +155,9 @@ describe('PublicConsultationPage (SCRUM-125)', () => {
                 undefined,
             )
             expect(screen.getByText('Gửi yêu cầu thành công!')).toBeDefined()
+            expect(screen.getByText(/Bộ phận tư vấn ICTU sẽ liên hệ lại với bạn/)).toBeDefined()
+            expect(screen.getByText('trong vòng 24 giờ làm việc')).toBeDefined()
+            expect(screen.queryByText(/trong thời gian phù hợp/)).toBeNull()
             expect(screen.getByText(/lead-min-123/)).toBeDefined()
             expect(onSuccess).toHaveBeenCalled()
         })
@@ -291,6 +294,54 @@ describe('PublicConsultationPage (SCRUM-125)', () => {
             const select = screen.getByLabelText(/chương trình đào tạo quan tâm/i) as HTMLSelectElement
             expect(select.disabled).toBe(true)
             expect(screen.getByText('-- Hiện chưa có chương trình mở đăng ký --')).toBeDefined()
+        })
+    })
+
+    it('13. TC125-SPAM-05: Khi bị rate limit 429, hiển thị thông báo chống spam, không reset form và không chuyển sang màn hình thành công', async () => {
+        vi.spyOn(publicConsultationApi, 'submitPublicConsultation').mockRejectedValue(
+            new publicConsultationApi.ApiError(
+                'Bạn vừa gửi yêu cầu tư vấn. Vui lòng thử lại sau khoảng 1 phút.',
+                'CONSULTATION_RATE_LIMITED',
+                429,
+            ),
+        )
+
+        renderPage()
+
+        const nameInput = screen.getByLabelText(/họ và tên/i)
+        const phoneInput = screen.getByLabelText(/số điện thoại/i)
+        const emailInput = screen.getByLabelText(/địa chỉ email/i)
+        const msgInput = screen.getByLabelText(/nội dung cần tư vấn/i)
+
+        fireEvent.change(nameInput, { target: { value: 'QA SCRUM 125' } })
+        fireEvent.change(phoneInput, { target: { value: '0988776655' } })
+        fireEvent.change(emailInput, { target: { value: 'spam125@example.com' } })
+        fireEvent.change(msgInput, { target: { value: 'Tư vấn liên tiếp' } })
+
+        fireEvent.click(screen.getByRole('button', { name: /gửi yêu cầu tư vấn/i }))
+
+        await waitFor(() => {
+            // Thông báo lỗi thân thiện được hiển thị
+            const alerts = screen.getAllByRole('alert')
+            const alertText = alerts.map((a) => a.textContent).join(' ')
+            expect(alertText).toContain('Bạn vừa gửi yêu cầu tư vấn. Vui lòng thử lại sau khoảng 1 phút.')
+            expect(alertText).not.toContain('429')
+            expect(alertText).not.toContain('Too Many Requests')
+            expect(alertText).not.toContain('RATE_LIMIT_EXCEEDED')
+
+            // KHÔNG chuyển sang màn hình thành công
+            expect(screen.queryByText('Gửi yêu cầu thành công!')).toBeNull()
+
+            // Dữ liệu nhập trên form được GIỮ NGUYÊN
+            expect(nameInput).toHaveProperty('value', 'QA SCRUM 125')
+            expect(phoneInput).toHaveProperty('value', '0988776655')
+            expect(emailInput).toHaveProperty('value', 'spam125@example.com')
+            expect(msgInput).toHaveProperty('value', 'Tư vấn liên tiếp')
+
+            // Nút submit vẫn sẵn sàng để gửi lại sau cooldown
+            const submitBtn = screen.getByRole('button', { name: /gửi yêu cầu tư vấn/i })
+            expect(submitBtn).toBeDefined()
+            expect(submitBtn.hasAttribute('disabled')).toBe(false)
         })
     })
 })
