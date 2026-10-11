@@ -363,9 +363,78 @@
     background-color: #f8fafc;
 }
 
+.session-row {
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.session-row.is-draggable {
+    cursor: grab;
+    user-select: none;
+}
+
+.session-row.is-draggable:hover {
+    background-color: #f8fafc;
+}
+
+.session-row.is-draggable:active {
+    cursor: grabbing;
+}
+
+.session-row.row-dragging {
+    cursor: grabbing;
+    opacity: 0.45;
+    background-color: #f1f5f9 !important;
+}
+
+.session-row.row-drop-target {
+    background-color: #eff6ff !important;
+    position: relative;
+    box-shadow: inset 0 3px 0 0 #2563eb;
+}
+
+/* Các control tương tác KHÔNG nhận cursor grab của row */
+.session-row .cell-actions,
+.session-row .actions-group,
+.session-row .btn-action-edit,
+.session-row .btn-action-delete,
+.session-row button,
+.session-row a,
+.session-row input,
+.session-row select,
+.session-row textarea {
+    cursor: pointer;
+}
+
 .cell-number {
-    width: 100px;
+    width: 140px;
     white-space: nowrap;
+}
+
+.session-number-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.drag-handle-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: grab;
+    user-select: none;
+    letter-spacing: -1px;
+    transition: color 0.15s ease;
+}
+
+.session-row.is-draggable:hover .drag-handle-indicator {
+    color: #475569;
+}
+
+.session-row.is-draggable:active .drag-handle-indicator {
+    cursor: grabbing;
 }
 
 .session-badge {
@@ -393,7 +462,7 @@
 }
 
 .cell-actions {
-    width: 220px;
+    width: 140px;
     text-align: right;
     white-space: nowrap;
 }

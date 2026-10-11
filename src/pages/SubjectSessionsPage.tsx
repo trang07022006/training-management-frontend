@@ -97,6 +97,10 @@ export function SubjectSessionsPage({
     const [cloneError, setCloneError] = useState<string | null>(null)
     const [isCloning, setIsCloning] = useState<boolean>(false)
 
+    // Drag & Drop State (SCRUM-129)
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
     const isArchived = subjectStatus === 'archived'
 
     // Load data function
@@ -297,18 +301,18 @@ export function SubjectSessionsPage({
         }
     }
 
-    // Reorder Handlers (Move Up / Down)
-    const handleMoveSession = async (index: number, direction: 'up' | 'down') => {
-        if (isArchived) return
-        const targetIndex = direction === 'up' ? index - 1 : index + 1
+    // Drag & Drop Reorder Handlers (SCRUM-129)
+    const handleReorderSessions = async (sourceIndex: number, targetIndex: number) => {
+        if (sourceIndex === targetIndex || isArchived || !canManage) return
+        if (sourceIndex < 0 || sourceIndex >= sessions.length) return
         if (targetIndex < 0 || targetIndex >= sessions.length) return
 
         const previousSessions = [...sessions]
         const reordered = [...sessions]
-        const [moved] = reordered.splice(index, 1)
+        const [moved] = reordered.splice(sourceIndex, 1)
         reordered.splice(targetIndex, 0, moved)
 
-        // Optimistic UI update with updated session_numbers
+        // Optimistic UI update with updated session_numbers (1..N)
         const updatedLocal = reordered.map((item, idx) => ({
             ...item,
             session_number: idx + 1,
@@ -320,12 +324,84 @@ export function SubjectSessionsPage({
             const sessionIds = reordered.map((s) => s.id)
             const result = await reorderSubjectSessions(requestFn, subjectId, sessionIds)
             setSessions(result.sort((a, b) => a.session_number - b.session_number))
-            setSuccessMessage('Sắp xếp lại thứ tự buổi học thành công.')
+            setSuccessMessage('Đã cập nhật thứ tự buổi học.')
         } catch (err) {
             // Rollback on failure
             setSessions(previousSessions)
-            setErrorMessage(err instanceof ApiError ? err.message : 'Lỗi khi sắp xếp lại buổi học. Đã khôi phục thứ tự cũ.')
+            setErrorMessage(
+                err instanceof ApiError
+                    ? err.message
+                    : 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
+            )
         }
+    }
+
+    const handleDragStart = (e: React.DragEvent, index: number, sess: SubjectSession) => {
+        if (!canManage || isArchived) {
+            e.preventDefault()
+            return
+        }
+
+        // Kiểm tra phần tử bắt đầu kéo: các control tương tác KHÔNG được kích hoạt drag
+        const target = e.target as HTMLElement | null
+        if (target) {
+            const isInteractive = target.closest(
+                'button, a, input, select, textarea, [role="button"], .cell-actions, .actions-group',
+            )
+            if (isInteractive) {
+                e.preventDefault()
+                return
+            }
+        }
+
+        setDraggedIndex(index)
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move'
+            try {
+                e.dataTransfer.setData('text/plain', sess.id)
+            } catch {
+                // Ignore in testing environments
+            }
+        }
+    }
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        if (draggedIndex === null || !canManage || isArchived) return
+        e.preventDefault()
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'move'
+        }
+        if (dragOverIndex !== index) {
+            setDragOverIndex(index)
+        }
+    }
+
+    const handleDragLeave = (index: number) => {
+        if (dragOverIndex === index) {
+            setDragOverIndex(null)
+        }
+    }
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null)
+        setDragOverIndex(null)
+    }
+
+    const handleDrop = async (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault()
+        if (draggedIndex === null || !canManage || isArchived) {
+            setDraggedIndex(null)
+            setDragOverIndex(null)
+            return
+        }
+
+        const sourceIndex = draggedIndex
+        setDraggedIndex(null)
+        setDragOverIndex(null)
+
+        if (sourceIndex === targetIndex) return
+
+        await handleReorderSessions(sourceIndex, targetIndex)
     }
 
     // Delete Session Submit
@@ -592,50 +668,72 @@ export function SubjectSessionsPage({
                         </thead>
                         <tbody>
                             {sessions.map((sess, idx) => (
-                                <tr key={sess.id} data-testid={`session-row-${sess.id}`}>
+                                <tr
+                                    key={sess.id}
+                                    data-testid={`session-row-${sess.id}`}
+                                    className={`session-row ${
+                                        canManage && !isArchived ? 'is-draggable' : ''
+                                    } ${draggedIndex === idx ? 'row-dragging' : ''} ${
+                                        dragOverIndex === idx && draggedIndex !== idx
+                                            ? 'row-drop-target'
+                                            : ''
+                                    }`}
+                                    draggable={canManage && !isArchived}
+                                    onDragStart={(e) => handleDragStart(e, idx, sess)}
+                                    onDragEnd={handleDragEnd}
+                                    onDragOver={(e) => handleDragOver(e, idx)}
+                                    onDragEnter={(e) => handleDragOver(e, idx)}
+                                    onDragLeave={() => handleDragLeave(idx)}
+                                    onDrop={(e) => void handleDrop(e, idx)}
+                                >
                                     <td className="cell-number">
-                                        <span className="session-badge" data-testid={`session-number-${sess.id}`}>
-                                            Buổi {sess.session_number}
-                                        </span>
+                                        <div className="session-number-wrapper">
+                                            {canManage && !isArchived && (
+                                                <span
+                                                    className="drag-handle-indicator"
+                                                    data-testid={`drag-handle-${sess.id}`}
+                                                    aria-hidden="true"
+                                                    title="Kéo thả để sắp xếp thứ tự buổi học"
+                                                >
+                                                    ⋮⋮
+                                                </span>
+                                            )}
+                                            <span
+                                                className="session-badge"
+                                                data-testid={`session-number-${sess.id}`}
+                                            >
+                                                Buổi {sess.session_number}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="cell-topic" data-testid={`session-topic-${sess.id}`}>
                                         {sess.topic}
                                     </td>
-                                    <td className="cell-objective" data-testid={`session-objective-${sess.id}`}>
+                                    <td
+                                        className="cell-objective"
+                                        data-testid={`session-objective-${sess.id}`}
+                                    >
                                         {sess.objective}
                                     </td>
                                     {canManage && (
-                                        <td className="cell-actions">
-                                            <div className="actions-group">
-                                                <button
-                                                    type="button"
-                                                    className="btn-action-icon"
-                                                    data-testid={`btn-move-up-${sess.id}`}
-                                                    aria-label={`Di chuyển Buổi ${sess.session_number} lên trên`}
-                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : 'Di chuyển lên'}
-                                                    disabled={isArchived || idx === 0}
-                                                    onClick={() => void handleMoveSession(idx, 'up')}
-                                                >
-                                                    ↑
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="btn-action-icon"
-                                                    data-testid={`btn-move-down-${sess.id}`}
-                                                    aria-label={`Di chuyển Buổi ${sess.session_number} xuống dưới`}
-                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : 'Di chuyển xuống'}
-                                                    disabled={isArchived || idx === sessions.length - 1}
-                                                    onClick={() => void handleMoveSession(idx, 'down')}
-                                                >
-                                                    ↓
-                                                </button>
+                                        <td
+                                            className="cell-actions"
+                                            draggable={false}
+                                            onDragStart={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="actions-group" draggable={false}>
                                                 <button
                                                     type="button"
                                                     className="btn-action-edit"
                                                     data-testid={`btn-edit-${sess.id}`}
                                                     aria-label={`Sửa Buổi ${sess.session_number}`}
-                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                                    title={
+                                                        isArchived
+                                                            ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.'
+                                                            : undefined
+                                                    }
                                                     disabled={isArchived}
+                                                    draggable={false}
                                                     onClick={() => handleOpenEditModal(sess)}
                                                 >
                                                     Sửa
@@ -645,8 +743,13 @@ export function SubjectSessionsPage({
                                                     className="btn-action-delete"
                                                     data-testid={`btn-delete-${sess.id}`}
                                                     aria-label={`Xóa Buổi ${sess.session_number}`}
-                                                    title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                                    title={
+                                                        isArchived
+                                                            ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.'
+                                                            : undefined
+                                                    }
                                                     disabled={isArchived}
+                                                    draggable={false}
                                                     onClick={() => {
                                                         if (isArchived) return
                                                         setDeletingSession(sess)

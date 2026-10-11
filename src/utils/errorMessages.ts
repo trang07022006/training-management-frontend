@@ -216,7 +216,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     TOPIC_TOO_LONG: 'Chủ đề buổi học không được vượt quá 255 ký tự.',
     OBJECTIVE_REQUIRED: 'Mục tiêu buổi học là bắt buộc.',
     OBJECTIVE_TOO_LONG: 'Mục tiêu buổi học không được vượt quá 5000 ký tự.',
-    REORDER_SESSIONS_FAILED: 'Lỗi khi sắp xếp lại buổi học.',
+    REORDER_SESSIONS_FAILED: 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -447,6 +447,9 @@ export function getErrorMessage(
             return rawMessage
         }
         if (code === 'SUBJECT_ARCHIVED' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'REORDER_SESSIONS_FAILED' && rawMessage && isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
         if (

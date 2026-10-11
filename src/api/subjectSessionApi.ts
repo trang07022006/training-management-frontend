@@ -208,7 +208,10 @@ export async function reorderSubjectSessions(
             res.status === 401 ? 'UNAUTHORIZED' :
             'REORDER_SESSIONS_FAILED'
         )
-        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi sắp xếp lại buổi học.')
+        const message = getErrorMessage(
+            { code, message: body.message },
+            'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
+        )
         throw new ApiError(message, code, res.status)
     }
 
