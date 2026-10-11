@@ -20,6 +20,8 @@ import {
     getLeadStatusHistory,
     PIPELINE_STATUS_KEYS,
     REJECTION_REASONS,
+    createLeadCareLog,
+    getLeadCareLogs,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -28,6 +30,8 @@ import {
     type LeadStatusHistoryItem,
     type PipelineData,
     type RejectionReason,
+    type InteractionType,
+    type LeadCareLog,
 } from '../api/leadApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
@@ -126,6 +130,17 @@ export function LeadsPage() {
     const [statusHistory, setStatusHistory] = useState<LeadStatusHistoryItem[]>([])
     const [isLoadingStatusHistory, setIsLoadingStatusHistory] = useState<boolean>(false)
     const [statusHistoryError, setStatusHistoryError] = useState<string | null>(null)
+
+    // Nhật ký chăm sóc Lead (SCRUM-214)
+    const [careLogs, setCareLogs] = useState<LeadCareLog[]>([])
+    const [isLoadingCareLogs, setIsLoadingCareLogs] = useState<boolean>(false)
+    const [careLogsError, setCareLogsError] = useState<string | null>(null)
+    const [isAddCareLogOpen, setIsAddCareLogOpen] = useState<boolean>(false)
+    const [careLogType, setCareLogType] = useState<InteractionType>('call')
+    const [careLogContent, setCareLogContent] = useState<string>('')
+    const [careLogTime, setCareLogTime] = useState<string>('')
+    const [isSubmittingCareLog, setIsSubmittingCareLog] = useState<boolean>(false)
+    const [careLogFormError, setCareLogFormError] = useState<string | null>(null)
 
     // Chương trình đào tạo (SCRUM-126)
     const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([])
@@ -367,6 +382,19 @@ export function LeadsPage() {
         }
     }
 
+    const loadCareLogs = async (leadId: string) => {
+        setIsLoadingCareLogs(true)
+        setCareLogsError(null)
+        try {
+            const logs = await getLeadCareLogs(request, leadId)
+            setCareLogs(logs)
+        } catch (err: unknown) {
+            setCareLogsError(getErrorMessage(err, 'Không thể tải nhật ký chăm sóc.'))
+        } finally {
+            setIsLoadingCareLogs(false)
+        }
+    }
+
     const handleOpenDetail = async (leadId: string) => {
         setStatusError(null)
         setStatusSuccess(null)
@@ -389,6 +417,7 @@ export function LeadsPage() {
             setIsDetailModalOpen(true)
             void loadAssignmentHistory(leadId)
             void loadStatusHistory(leadId)
+            void loadCareLogs(leadId)
         } catch (err: unknown) {
             const message = getErrorMessage(err, 'Không thể tải chi tiết tư vấn.')
             setPageError(message)
@@ -408,6 +437,54 @@ export function LeadsPage() {
         setStatusSuccess(null)
         setAssignmentError(null)
         setAssignmentSuccess(null)
+        setCareLogs([])
+        setIsLoadingCareLogs(false)
+        setCareLogsError(null)
+        setIsAddCareLogOpen(false)
+        setCareLogType('call')
+        setCareLogContent('')
+        setCareLogTime('')
+        setCareLogFormError(null)
+    }
+
+    const handleAddCareLogSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!selectedLead || isSubmittingCareLog) return
+
+        if (!careLogType || !['call', 'message', 'meeting'].includes(careLogType)) {
+            setCareLogFormError('Vui lòng chọn loại tương tác hợp lệ (Gọi, Nhắn hoặc Gặp).')
+            return
+        }
+
+        if (!careLogContent.trim()) {
+            setCareLogFormError('Vui lòng nhập nội dung tương tác.')
+            return
+        }
+
+        if (!careLogTime.trim()) {
+            setCareLogFormError('Vui lòng chọn thời điểm tương tác.')
+            return
+        }
+
+        setIsSubmittingCareLog(true)
+        setCareLogFormError(null)
+
+        try {
+            const created = await createLeadCareLog(request, selectedLead.id, {
+                interaction_type: careLogType,
+                content: careLogContent.trim(),
+                interaction_at: careLogTime.trim(),
+            })
+
+            setCareLogs((prev) => [created, ...prev])
+            setIsAddCareLogOpen(false)
+            setCareLogContent('')
+            setCareLogFormError(null)
+        } catch (err: unknown) {
+            setCareLogFormError(getErrorMessage(err, 'Không thể lưu nhật ký tương tác.'))
+        } finally {
+            setIsSubmittingCareLog(false)
+        }
     }
 
     const handleDeleteClick = (lead: Lead) => {
@@ -1717,6 +1794,163 @@ export function LeadsPage() {
                                                         Ghi chú: {item.notes}
                                                     </div>
                                                 )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            {/* Khu vực Nhật ký chăm sóc (SCRUM-214) */}
+                            <div className="leads-modal-history-section" data-testid="care-logs-section">
+                                <div className="care-logs-header">
+                                    <span className="section-subheading-label">Nhật ký chăm sóc:</span>
+                                    {!isAddCareLogOpen && (
+                                        <button
+                                            type="button"
+                                            className="btn-add-care-log"
+                                            data-testid="add-care-log-btn"
+                                            onClick={() => {
+                                                setIsAddCareLogOpen(true)
+                                                setCareLogType('call')
+                                                setCareLogContent('')
+                                                const now = new Date()
+                                                const pad = (n: number) => String(n).padStart(2, '0')
+                                                const localIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+                                                setCareLogTime(localIso)
+                                                setCareLogFormError(null)
+                                            }}
+                                        >
+                                            + Ghi nhận tương tác
+                                        </button>
+                                    )}
+                                </div>
+
+                                {isAddCareLogOpen && (
+                                    <form
+                                        className="care-log-form"
+                                        data-testid="care-log-form"
+                                        onSubmit={(e) => void handleAddCareLogSubmit(e)}
+                                        noValidate
+                                    >
+                                        {careLogFormError && (
+                                            <div className="leads-alert-error" data-testid="care-log-error">
+                                                {careLogFormError}
+                                            </div>
+                                        )}
+                                        <div className="form-field-group">
+                                            <label htmlFor="care-log-type-select" className="care-log-label">
+                                                Loại tương tác *
+                                            </label>
+                                            <select
+                                                id="care-log-type-select"
+                                                data-testid="care-log-type-select"
+                                                className="assign-select-input"
+                                                value={careLogType}
+                                                onChange={(e) => setCareLogType(e.target.value as InteractionType)}
+                                                disabled={isSubmittingCareLog}
+                                            >
+                                                <option value="call">Gọi</option>
+                                                <option value="message">Nhắn</option>
+                                                <option value="meeting">Gặp</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="form-field-group" style={{ marginTop: '8px' }}>
+                                            <label htmlFor="care-log-content-input" className="care-log-label">
+                                                Nội dung *
+                                            </label>
+                                            <textarea
+                                                id="care-log-content-input"
+                                                data-testid="care-log-content-input"
+                                                className="assign-select-input"
+                                                style={{ width: '100%', height: '70px', paddingTop: '6px', resize: 'vertical' }}
+                                                placeholder="Nhập nội dung tương tác..."
+                                                value={careLogContent}
+                                                onChange={(e) => {
+                                                    setCareLogContent(e.target.value)
+                                                    if (careLogFormError) setCareLogFormError(null)
+                                                }}
+                                                disabled={isSubmittingCareLog}
+                                            />
+                                        </div>
+
+                                        <div className="form-field-group" style={{ marginTop: '8px' }}>
+                                            <label htmlFor="care-log-time-input" className="care-log-label">
+                                                Thời điểm *
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                id="care-log-time-input"
+                                                data-testid="care-log-time-input"
+                                                className="assign-select-input"
+                                                value={careLogTime}
+                                                onChange={(e) => {
+                                                    setCareLogTime(e.target.value)
+                                                    if (careLogFormError) setCareLogFormError(null)
+                                                }}
+                                                disabled={isSubmittingCareLog}
+                                            />
+                                        </div>
+
+                                        <div className="care-log-form-actions" style={{ marginTop: '10px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            <button
+                                                type="button"
+                                                className="btn-modal-close"
+                                                data-testid="care-log-cancel-btn"
+                                                onClick={() => {
+                                                    setIsAddCareLogOpen(false)
+                                                    setCareLogContent('')
+                                                    setCareLogFormError(null)
+                                                }}
+                                                disabled={isSubmittingCareLog}
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="btn-save-assign"
+                                                data-testid="care-log-submit-btn"
+                                                disabled={isSubmittingCareLog}
+                                            >
+                                                {isSubmittingCareLog ? 'Đang lưu...' : 'Lưu'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {isLoadingCareLogs ? (
+                                    <div className="history-loading-text" data-testid="care-logs-loading">
+                                        Đang tải nhật ký chăm sóc...
+                                    </div>
+                                ) : careLogsError ? (
+                                    <div className="history-error-text" data-testid="care-logs-error">
+                                        {careLogsError}
+                                    </div>
+                                ) : careLogs.length === 0 ? (
+                                    <p className="history-empty-text" data-testid="care-log-empty">
+                                        Chưa có nhật ký chăm sóc.
+                                    </p>
+                                ) : (
+                                    <ul className="assignment-history-list" data-testid="care-log-list">
+                                        {careLogs.map((log) => (
+                                            <li key={log.id} className="history-item" data-testid={`care-log-item-${log.id}`}>
+                                                <div className="history-item-header">
+                                                    <span className="history-time" data-testid={`care-log-time-${log.id}`}>
+                                                        {formatDate(log.interaction_at)}
+                                                    </span>
+                                                    <span
+                                                        className={`care-log-badge care-log-badge--${log.interaction_type}`}
+                                                        data-testid={`care-log-type-${log.id}`}
+                                                    >
+                                                        {log.interaction_type_label || (log.interaction_type === 'call' ? 'Gọi' : log.interaction_type === 'message' ? 'Nhắn' : 'Gặp')}
+                                                    </span>
+                                                </div>
+                                                <div className="care-log-content-text" data-testid={`care-log-content-${log.id}`}>
+                                                    {log.content}
+                                                </div>
+                                                <div className="history-item-actor" data-testid={`care-log-actor-${log.id}`}>
+                                                    Người thực hiện: {log.performed_by_name || 'Hệ thống'}
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>

@@ -1637,6 +1637,198 @@
   line-height: 1.5;
 }
 
+/* ==========================================================================
+   SCRUM-214: LEAD CARE LOGS & CALLBACK REMINDER
+   ========================================================================== */
+
+.care-logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.btn-add-care-log {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-add-care-log:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+
+.care-log-form {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.care-log-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 4px;
+}
+
+.care-log-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.care-log-badge--call {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.care-log-badge--message {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.care-log-badge--meeting {
+  background: #faf5ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+
+.care-log-content-text {
+  font-size: 0.88rem;
+  color: #1e293b;
+  margin: 4px 0;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Callback reminder controls (214-02 / 214-03) */
+.callback-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.callback-date-input {
+  padding: 6px 10px;
+  font-size: 0.88rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #1e293b;
+  background: #ffffff;
+}
+
+.btn-save-callback-date {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: #0284c7;
+  border: 1px solid #0284c7;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-save-callback-date:hover:not(:disabled) {
+  background: #0369a1;
+}
+
+.btn-clear-callback-date {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-clear-callback-date:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.callback-date-display {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+/* Overdue highlights (214-03) */
+.lead-overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  margin-top: 4px;
+}
+
+.lead-overdue-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  margin-left: 8px;
+}
+
+.row-overdue {
+  background-color: #fffbfb !important;
+}
+
+.row-overdue:hover {
+  background-color: #fef2f2 !important;
+}
+
+.pipeline-card--overdue {
+  border-color: #fca5a5 !important;
+  border-left: 3px solid #ef4444 !important;
+  background: #fffafa !important;
+}
+
+.pipeline-card-overdue {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+
 
 
 
