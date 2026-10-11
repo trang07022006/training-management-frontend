@@ -12,6 +12,10 @@ export { ApiError, type RequestFunction }
 export type LeadStatus =
     | 'new'
     | 'contacted'
+    | 'consulting'
+    | 'trial_scheduled'
+    | 'won'
+    | 'rejected'
     | 'qualified'
     | 'converted'
     | 'lost'
@@ -28,6 +32,7 @@ export interface Lead {
     message: string | null
     source: string
     status: LeadStatus
+    rejection_reason?: string | null
     assigned_to_user_id?: string | null
     assigned_at?: string | null
     assigned_to_name?: string | null
@@ -84,8 +89,12 @@ export interface LeadListResponseData {
 }
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
-    new: 'Mới tiếp nhận',
+    new: 'Mới',
     contacted: 'Đã liên hệ',
+    consulting: 'Đang tư vấn',
+    trial_scheduled: 'Hẹn học thử',
+    won: 'Chốt',
+    rejected: 'Từ chối',
     qualified: 'Tiềm năng',
     converted: 'Đã nhập học',
     lost: 'Không thành công',
@@ -95,10 +104,59 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
 export const LEAD_STATUS_BADGE_CLASSES: Record<LeadStatus, string> = {
     new: 'status-badge--new',
     contacted: 'status-badge--contacted',
+    consulting: 'status-badge--consulting',
+    trial_scheduled: 'status-badge--trial',
+    won: 'status-badge--won',
+    rejected: 'status-badge--rejected',
     qualified: 'status-badge--qualified',
     converted: 'status-badge--converted',
     lost: 'status-badge--lost',
     cancelled: 'status-badge--cancelled',
+}
+
+export const PIPELINE_STATUS_KEYS: LeadStatus[] = [
+    'new',
+    'contacted',
+    'consulting',
+    'trial_scheduled',
+    'won',
+    'rejected',
+]
+
+export const REJECTION_REASONS = [
+    'Không còn nhu cầu',
+    'Chi phí không phù hợp',
+    'Chọn đơn vị khác',
+    'Không liên lạc được',
+    'Khác',
+] as const
+
+export type RejectionReason = (typeof REJECTION_REASONS)[number]
+
+export interface LeadStatusHistoryItem {
+    id: string
+    lead_id: string
+    old_status: string
+    new_status: string
+    reason?: string | null
+    notes?: string | null
+    performed_by_user_id?: string | null
+    performed_by_name?: string | null
+    created_at: string
+}
+
+export interface PipelineColumn {
+    status: LeadStatus
+    label: string
+    count: number
+    leads: Lead[]
+}
+
+export interface PipelineData {
+    columns: PipelineColumn[]
+    leads: Lead[]
+    counts: Record<string, number>
+    total: number
 }
 
 export function getLeadStatusLabel(status?: string | null): string {
@@ -275,13 +333,19 @@ export async function updateLeadStatus(
     requestFn: RequestFunction,
     id: string,
     status: LeadStatus,
+    reason?: string | null,
+    notes?: string | null,
 ): Promise<Lead> {
     const path = `/api/v1/leads/${encodeURIComponent(id.trim())}`
+
+    const payload: { status: LeadStatus; reason?: string; notes?: string } = { status }
+    if (reason && reason.trim()) payload.reason = reason.trim()
+    if (notes && notes.trim()) payload.notes = notes.trim()
 
     const res = await requestFn(path, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify(payload),
     })
     const body = await res.json().catch(() => ({}))
 
@@ -624,5 +688,75 @@ export async function deleteLead(
         status: body.status || 'success',
         message: body.message || 'Xóa khách hàng tiềm năng thành công.',
     }
+}
+
+/**
+ * Lấy dữ liệu bảng phễu Lead (Kanban) với 6 trạng thái chuẩn (SCRUM-213).
+ * GET /api/v1/leads/pipeline
+ * Yêu cầu quyền: course.manage
+ */
+export async function getLeadPipeline(
+    requestFn: RequestFunction,
+): Promise<PipelineData> {
+    const path = '/api/v1/leads/pipeline'
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code =
+            body.code ||
+            (res.status === 403
+                ? 'FORBIDDEN'
+                : res.status === 401
+                  ? 'UNAUTHORIZED'
+                  : 'API_ERROR')
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể tải dữ liệu bảng phễu Lead.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return (
+        body.data ?? {
+            columns: [],
+            leads: [],
+            counts: {},
+            total: 0,
+        }
+    )
+}
+
+/**
+ * Lấy lịch sử thay đổi trạng thái của một Lead (SCRUM-213).
+ * GET /api/v1/leads/<id>/status-history
+ * Yêu cầu quyền: course.manage
+ */
+export async function getLeadStatusHistory(
+    requestFn: RequestFunction,
+    leadId: string,
+): Promise<LeadStatusHistoryItem[]> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/status-history`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code =
+            body.code ||
+            (res.status === 404
+                ? 'LEAD_NOT_FOUND'
+                : res.status === 403
+                  ? 'FORBIDDEN'
+                  : res.status === 401
+                    ? 'UNAUTHORIZED'
+                    : 'API_ERROR')
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể tải lịch sử trạng thái của Lead.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data ?? []
 }
 

@@ -15,6 +15,8 @@ import {
     updateLead,
     deleteLead,
     checkLeadPhone,
+    getLeadPipeline,
+    getLeadStatusHistory,
     ApiError,
 } from '../api/leadApi'
 import { getTrainingPrograms } from '../api/trainingProgramApi'
@@ -57,6 +59,8 @@ vi.mock('../api/leadApi', async (importOriginal) => {
         updateLead: vi.fn(),
         deleteLead: vi.fn(),
         checkLeadPhone: vi.fn(),
+        getLeadPipeline: vi.fn(),
+        getLeadStatusHistory: vi.fn(),
     }
 })
 
@@ -144,6 +148,27 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
         vi.mocked(getAssignableUsers).mockResolvedValue(mockAssignableUsers)
         vi.mocked(getLeadAssignmentHistory).mockResolvedValue([])
         vi.mocked(bulkAssignLeads).mockResolvedValue({ updated_count: 2, message: 'Phân công thành công' })
+        vi.mocked(getLeadPipeline).mockResolvedValue({
+            columns: [
+                { status: 'new', label: 'Mới', count: 1, leads: [mockLeads[0]] },
+                { status: 'contacted', label: 'Đã liên hệ', count: 1, leads: [mockLeads[1]] },
+                { status: 'consulting', label: 'Đang tư vấn', count: 0, leads: [] },
+                { status: 'trial_scheduled', label: 'Hẹn học thử', count: 0, leads: [] },
+                { status: 'won', label: 'Chốt', count: 0, leads: [] },
+                { status: 'rejected', label: 'Từ chối', count: 0, leads: [] },
+            ],
+            leads: mockLeads,
+            counts: {
+                new: 1,
+                contacted: 1,
+                consulting: 0,
+                trial_scheduled: 0,
+                won: 0,
+                rejected: 0,
+            },
+            total: 2,
+        })
+        vi.mocked(getLeadStatusHistory).mockResolvedValue([])
     })
 
     afterEach(() => {
@@ -196,7 +221,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
                 'Trần Văn Tư Vấn',
             )
             expect(screen.getByTestId('status-badge-lead-uuid-1').textContent).toContain(
-                'Mới tiếp nhận',
+                'Mới',
             )
 
             expect(screen.getByText('Trần Thị B')).toBeDefined()
@@ -847,7 +872,7 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
         })
     })
 
-    it('19. Lead chưa xem trong 24h có highlight nền xanh nhạt và badge Chưa xem; khi xem chi tiết thì bỏ highlight, giữ nguyên status Mới tiếp nhận', async () => {
+    it('19. Lead chưa xem trong 24h có highlight nền xanh nhạt và badge Chưa xem; khi xem chi tiết thì bỏ highlight, giữ nguyên status Mới', async () => {
         // Lead tạo cách đây 1 giờ (trong 24h)
         const recentIso = new Date(Date.now() - 3600 * 1000).toISOString()
         const unreadRecentLead: Lead = {
@@ -874,8 +899,8 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             expect(row.className).toContain('lead-row--unread-recent')
             expect(screen.getByTestId('unread-badge-lead-unread-recent')).toBeDefined()
             expect(screen.getByTestId('unread-badge-lead-unread-recent').textContent).toContain('Chưa xem')
-            // Trạng thái nghiệp vụ là "Mới tiếp nhận"
-            expect(screen.getByTestId('status-badge-lead-unread-recent').textContent).toContain('Mới tiếp nhận')
+            // Trạng thái nghiệp vụ là "Mới"
+            expect(screen.getByTestId('status-badge-lead-unread-recent').textContent).toContain('Mới')
         })
 
         // Mở xem chi tiết
@@ -888,8 +913,8 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             expect(row.className).not.toContain('lead-row--unread-recent')
             // Badge "Chưa xem" biến mất
             expect(screen.queryByTestId('unread-badge-lead-unread-recent')).toBeNull()
-            // KHÔNG làm thay đổi trạng thái nghiệp vụ "Mới tiếp nhận"
-            expect(screen.getByTestId('status-badge-lead-unread-recent').textContent).toContain('Mới tiếp nhận')
+            // KHÔNG làm thay đổi trạng thái nghiệp vụ "Mới"
+            expect(screen.getByTestId('status-badge-lead-unread-recent').textContent).toContain('Mới')
         })
     })
 
@@ -1660,6 +1685,373 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             expect(screen.getByTestId('assignment-error-alert').textContent).toContain(
                 'Chỉ có thể phân công Lead cho nhân viên Tư vấn tuyển sinh.',
             )
+        })
+    })
+
+    describe('SCRUM-213 - Bảng phễu Lead (Pipeline / Kanban) & Lịch sử trạng thái', () => {
+        const mockPipelineLeads: Lead[] = [
+            {
+                id: 'lead-s213-a',
+                full_name: 'QA-S213-A',
+                phone: '0901000001',
+                email: 'a@example.com',
+                interested_program_id: 'prog-1',
+                interested_program_name: 'Công nghệ thông tin',
+                message: 'Cần tư vấn',
+                source: 'website',
+                status: 'new',
+                assigned_to_user_id: 'user-advisor-1',
+                assigned_to_name: 'Trần Văn Tư Vấn',
+                created_at: '2026-03-01T10:00:00Z',
+                updated_at: '2026-03-01T10:00:00Z',
+            },
+            {
+                id: 'lead-s213-b',
+                full_name: 'QA-S213-B',
+                phone: '0901000002',
+                email: 'b@example.com',
+                interested_program_id: 'prog-1',
+                interested_program_name: 'Công nghệ thông tin',
+                message: 'Cần tư vấn',
+                source: 'website',
+                status: 'contacted',
+                assigned_to_user_id: 'user-advisor-1',
+                assigned_to_name: 'Trần Văn Tư Vấn',
+                created_at: '2026-03-01T11:00:00Z',
+                updated_at: '2026-03-01T11:00:00Z',
+            },
+        ]
+
+        const pipelineDataFixture = {
+            columns: [
+                { status: 'new' as const, label: 'Mới', count: 1, leads: [mockPipelineLeads[0]] },
+                { status: 'contacted' as const, label: 'Đã liên hệ', count: 1, leads: [mockPipelineLeads[1]] },
+                { status: 'consulting' as const, label: 'Đang tư vấn', count: 0, leads: [] },
+                { status: 'trial_scheduled' as const, label: 'Hẹn học thử', count: 0, leads: [] },
+                { status: 'won' as const, label: 'Chốt', count: 0, leads: [] },
+                { status: 'rejected' as const, label: 'Từ chối', count: 0, leads: [] },
+            ],
+            leads: mockPipelineLeads,
+            counts: {
+                new: 1,
+                contacted: 1,
+                consulting: 0,
+                trial_scheduled: 0,
+                won: 0,
+                rejected: 0,
+            },
+            total: 2,
+        }
+
+        it('TC213-01 & TC213-02: Chuyển sang Bảng phễu hiển thị đủ 6 cột đúng thứ tự kèm số lượng', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLeadPipeline).mockResolvedValue(pipelineDataFixture)
+
+            render(<LeadsPage />)
+
+            // Kiểm tra nút chuyển view mode
+            const listBtn = screen.getByTestId('view-mode-list-btn')
+            const pipelineBtn = screen.getByTestId('view-mode-pipeline-btn')
+            expect(listBtn).toBeDefined()
+            expect(pipelineBtn).toBeDefined()
+
+            // Click chuyển sang Bảng phễu
+            fireEvent.click(pipelineBtn)
+
+            await waitFor(() => {
+                expect(screen.getByTestId('leads-pipeline-board')).toBeDefined()
+            })
+
+            // Kiểm tra đủ 6 cột đúng thứ tự nghiệp vụ
+            const expectedColumns = [
+                { status: 'new', title: 'Mới (1)' },
+                { status: 'contacted', title: 'Đã liên hệ (1)' },
+                { status: 'consulting', title: 'Đang tư vấn (0)' },
+                { status: 'trial_scheduled', title: 'Hẹn học thử (0)' },
+                { status: 'won', title: 'Chốt (0)' },
+                { status: 'rejected', title: 'Từ chối (0)' },
+            ]
+
+            expectedColumns.forEach(({ status, title }) => {
+                const col = screen.getByTestId(`pipeline-column-${status}`)
+                expect(col).toBeDefined()
+                const titleEl = screen.getByTestId(`pipeline-column-title-${status}`)
+                expect(titleEl.textContent).toContain(title)
+            })
+
+            // Card QA-S213-A hiển thị trong cột Mới
+            expect(screen.getByTestId('lead-card-lead-s213-a')).toBeDefined()
+            expect(screen.getByText('QA-S213-A')).toBeDefined()
+            expect(screen.getByText('0901000001')).toBeDefined()
+        })
+
+        it('TC213-03 & TC213-04: Kéo thả từ Mới sang Đã liên hệ cập nhật UI và gọi updateLeadStatus', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLeadPipeline).mockResolvedValue(pipelineDataFixture)
+            vi.mocked(updateLeadStatus).mockResolvedValue({
+                ...mockPipelineLeads[0],
+                status: 'contacted',
+            })
+
+            render(<LeadsPage />)
+
+            // Chuyển sang Bảng phễu
+            fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-card-lead-s213-a')).toBeDefined()
+            })
+
+            const card = screen.getByTestId('lead-card-lead-s213-a')
+            const targetColumn = screen.getByTestId('pipeline-column-contacted')
+
+            const mockDataTransfer = {
+                setData: vi.fn(),
+                getData: vi.fn().mockReturnValue('lead-s213-a'),
+                effectAllowed: 'move',
+                dropEffect: 'move',
+            }
+
+            // Bắt đầu kéo
+            fireEvent.dragStart(card, { dataTransfer: mockDataTransfer })
+            // Kéo qua cột Đã liên hệ
+            fireEvent.dragOver(targetColumn, { dataTransfer: mockDataTransfer })
+            // Thả vào cột Đã liên hệ
+            fireEvent.drop(targetColumn, { dataTransfer: mockDataTransfer })
+
+            // Kiểm tra gọi API cập nhật trạng thái
+            await waitFor(() => {
+                expect(updateLeadStatus).toHaveBeenCalledWith(
+                    mockRequest,
+                    'lead-s213-a',
+                    'contacted',
+                    undefined,
+                    undefined,
+                )
+            })
+        })
+
+        it('Optimistic update: Rollback card về cột cũ khi API thất bại', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLeadPipeline).mockResolvedValue(pipelineDataFixture)
+            vi.mocked(updateLeadStatus).mockRejectedValue(new ApiError('Lỗi mạng', 'NETWORK_ERROR', 500))
+
+            render(<LeadsPage />)
+
+            fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-card-lead-s213-a')).toBeDefined()
+            })
+
+            const card = screen.getByTestId('lead-card-lead-s213-a')
+            const targetColumn = screen.getByTestId('pipeline-column-contacted')
+
+            const mockDataTransfer = {
+                setData: vi.fn(),
+                getData: vi.fn().mockReturnValue('lead-s213-a'),
+            }
+
+            fireEvent.dragStart(card, { dataTransfer: mockDataTransfer })
+            fireEvent.drop(targetColumn, { dataTransfer: mockDataTransfer })
+
+            // Thông báo lỗi rollback xuất hiện
+            await waitFor(() => {
+                expect(screen.getByText('Không thể cập nhật trạng thái Lead. Vui lòng thử lại.')).toBeDefined()
+            })
+        })
+
+        it('TC213-06 & TC213-07: Kéo vào Từ chối mở modal, bấm Hủy giữ nguyên trạng thái cũ', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLeadPipeline).mockResolvedValue(pipelineDataFixture)
+
+            render(<LeadsPage />)
+
+            fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-card-lead-s213-a')).toBeDefined()
+            })
+
+            const card = screen.getByTestId('lead-card-lead-s213-a')
+            const rejectedColumn = screen.getByTestId('pipeline-column-rejected')
+
+            const mockDataTransfer = {
+                setData: vi.fn(),
+                getData: vi.fn().mockReturnValue('lead-s213-a'),
+            }
+
+            // Kéo thả vào Từ chối
+            fireEvent.dragStart(card, { dataTransfer: mockDataTransfer })
+            fireEvent.drop(rejectedColumn, { dataTransfer: mockDataTransfer })
+
+            // Modal Xác nhận từ chối Lead xuất hiện
+            await waitFor(() => {
+                expect(screen.getByTestId('rejection-modal')).toBeDefined()
+                expect(screen.getByText('Xác nhận từ chối Lead')).toBeDefined()
+            })
+
+            // Bấm Hủy
+            fireEvent.click(screen.getByTestId('rejection-cancel-btn'))
+
+            // Modal đóng
+            await waitFor(() => {
+                expect(screen.queryByTestId('rejection-modal')).toBeNull()
+            })
+
+            // Không có lời gọi updateLeadStatus nào được thực hiện
+            expect(updateLeadStatus).not.toHaveBeenCalled()
+        })
+
+        it('TC213-08: Kéo vào Từ chối, chọn lý do và xác nhận lưu thành công', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLeadPipeline).mockResolvedValue(pipelineDataFixture)
+            vi.mocked(updateLeadStatus).mockResolvedValue({
+                ...mockPipelineLeads[0],
+                status: 'rejected',
+                rejection_reason: 'Không còn nhu cầu',
+            })
+
+            render(<LeadsPage />)
+
+            fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-card-lead-s213-a')).toBeDefined()
+            })
+
+            const card = screen.getByTestId('lead-card-lead-s213-a')
+            const rejectedColumn = screen.getByTestId('pipeline-column-rejected')
+
+            const mockDataTransfer = {
+                setData: vi.fn(),
+                getData: vi.fn().mockReturnValue('lead-s213-a'),
+            }
+
+            fireEvent.dragStart(card, { dataTransfer: mockDataTransfer })
+            fireEvent.drop(rejectedColumn, { dataTransfer: mockDataTransfer })
+
+            await waitFor(() => {
+                expect(screen.getByTestId('rejection-modal')).toBeDefined()
+            })
+
+            // Chọn lý do "Không còn nhu cầu"
+            fireEvent.change(screen.getByTestId('rejection-reason-select'), {
+                target: { value: 'Không còn nhu cầu' },
+            })
+
+            // Nhập ghi chú
+            fireEvent.change(screen.getByTestId('rejection-notes-input'), {
+                target: { value: 'Học viên chuyển chỗ ở' },
+            })
+
+            // Xác nhận từ chối
+            fireEvent.click(screen.getByTestId('rejection-confirm-btn'))
+
+            await waitFor(() => {
+                expect(updateLeadStatus).toHaveBeenCalledWith(
+                    mockRequest,
+                    'lead-s213-a',
+                    'rejected',
+                    'Không còn nhu cầu',
+                    'Học viên chuyển chỗ ở',
+                )
+            })
+
+            // Modal đóng sau khi xác nhận
+            await waitFor(() => {
+                expect(screen.queryByTestId('rejection-modal')).toBeNull()
+            })
+        })
+
+        it('Bắt buộc nhập ghi chú khi lý do từ chối là Khác', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLeadPipeline).mockResolvedValue(pipelineDataFixture)
+
+            render(<LeadsPage />)
+
+            fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-card-lead-s213-a')).toBeDefined()
+            })
+
+            const card = screen.getByTestId('lead-card-lead-s213-a')
+            const rejectedColumn = screen.getByTestId('pipeline-column-rejected')
+
+            const mockDataTransfer = {
+                setData: vi.fn(),
+                getData: vi.fn().mockReturnValue('lead-s213-a'),
+            }
+
+            fireEvent.dragStart(card, { dataTransfer: mockDataTransfer })
+            fireEvent.drop(rejectedColumn, { dataTransfer: mockDataTransfer })
+
+            await waitFor(() => {
+                expect(screen.getByTestId('rejection-modal')).toBeDefined()
+            })
+
+            // Chọn "Khác" nhưng không nhập ghi chú
+            fireEvent.change(screen.getByTestId('rejection-reason-select'), {
+                target: { value: 'Khác' },
+            })
+
+            fireEvent.click(screen.getByTestId('rejection-confirm-btn'))
+
+            // Báo lỗi yêu cầu ghi chú
+            await waitFor(() => {
+                expect(screen.getByTestId('rejection-error').textContent).toContain(
+                    'Vui lòng nhập lý do cụ thể khi chọn "Khác".',
+                )
+            })
+
+            // Không gọi API
+            expect(updateLeadStatus).not.toHaveBeenCalled()
+        })
+
+        it('TC213-05: Modal xem chi tiết Lead hiển thị mục Lịch sử trạng thái', async () => {
+            vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+            vi.mocked(getLead).mockResolvedValue(mockLeads[0])
+            vi.mocked(getLeadStatusHistory).mockResolvedValue([
+                {
+                    id: 'hist-2',
+                    lead_id: mockLeads[0].id,
+                    old_status: 'contacted',
+                    new_status: 'consulting',
+                    reason: null,
+                    notes: null,
+                    performed_by_name: 'Trần Văn Tư Vấn',
+                    created_at: '2026-03-02T16:15:00Z',
+                },
+                {
+                    id: 'hist-1',
+                    lead_id: mockLeads[0].id,
+                    old_status: 'new',
+                    new_status: 'contacted',
+                    reason: null,
+                    notes: null,
+                    performed_by_name: 'Trần Văn Tư Vấn',
+                    created_at: '2026-03-02T15:30:00Z',
+                },
+            ])
+
+            render(<LeadsPage />)
+
+            await waitFor(() => {
+                expect(screen.getByTestId('view-lead-lead-uuid-1')).toBeDefined()
+            })
+
+            fireEvent.click(screen.getByTestId('view-lead-lead-uuid-1'))
+
+            // Modal chi tiết mở và hiển thị section Lịch sử trạng thái
+            await waitFor(() => {
+                expect(screen.getByTestId('status-history-section')).toBeDefined()
+            })
+
+            expect(screen.getByText(/Lịch sử trạng thái/i)).toBeDefined()
+            expect(screen.getByTestId('status-history-item-hist-2')).toBeDefined()
+            expect(screen.getByTestId('status-history-item-hist-1')).toBeDefined()
+            expect(screen.getByTestId('status-history-actor-hist-2').textContent).toContain('Trần Văn Tư Vấn')
         })
     })
 })

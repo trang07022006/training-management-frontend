@@ -14,6 +14,8 @@ import {
     createLead,
     updateLead,
     deleteLead,
+    getLeadPipeline,
+    getLeadStatusHistory,
     type Lead,
     type AssignableUser,
     ApiError,
@@ -38,8 +40,12 @@ describe('leadApi - API Client (SCRUM-126 Activity A6)', () => {
 
     describe('getLeadStatusLabel', () => {
         it('ánh xạ đúng nhãn trạng thái tiếng Việt', () => {
-            expect(getLeadStatusLabel('new')).toBe('Mới tiếp nhận')
+            expect(getLeadStatusLabel('new')).toBe('Mới')
             expect(getLeadStatusLabel('contacted')).toBe('Đã liên hệ')
+            expect(getLeadStatusLabel('consulting')).toBe('Đang tư vấn')
+            expect(getLeadStatusLabel('trial_scheduled')).toBe('Hẹn học thử')
+            expect(getLeadStatusLabel('won')).toBe('Chốt')
+            expect(getLeadStatusLabel('rejected')).toBe('Từ chối')
             expect(getLeadStatusLabel('qualified')).toBe('Tiềm năng')
             expect(getLeadStatusLabel('converted')).toBe('Đã nhập học')
             expect(getLeadStatusLabel('lost')).toBe('Không thành công')
@@ -514,6 +520,110 @@ describe('leadApi - API Client (SCRUM-126 Activity A6)', () => {
             })
 
             await expect(deleteLead(mockRequest, mockLead.id)).rejects.toThrow(ApiError)
+        })
+    })
+
+    describe('SCRUM-213 - Lead Pipeline & Status History API', () => {
+        it('updateLeadStatus gửi reason và notes khi cập nhật rejected', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    data: { ...mockLead, status: 'rejected', rejection_reason: 'Không còn nhu cầu' },
+                }),
+            })
+
+            const res = await updateLeadStatus(
+                mockRequest,
+                mockLead.id,
+                'rejected',
+                'Không còn nhu cầu',
+                'Khách hàng chuyển hướng du học',
+            )
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}`,
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        status: 'rejected',
+                        reason: 'Không còn nhu cầu',
+                        notes: 'Khách hàng chuyển hướng du học',
+                    }),
+                }),
+            )
+            expect(res.status).toBe('rejected')
+        })
+
+        it('getLeadPipeline gọi GET /api/v1/leads/pipeline và trả về các cột', async () => {
+            const pipelineData = {
+                columns: [
+                    { status: 'new', label: 'Mới', count: 1 },
+                    { status: 'contacted', label: 'Đã liên hệ', count: 0 },
+                ],
+                leads: [mockLead],
+                counts: {
+                    new: 1,
+                    contacted: 0,
+                    consulting: 0,
+                    trial_scheduled: 0,
+                    won: 0,
+                    rejected: 0,
+                },
+                total: 1,
+            }
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    data: pipelineData,
+                }),
+            })
+
+            const res = await getLeadPipeline(mockRequest)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                '/api/v1/leads/pipeline',
+                expect.objectContaining({ method: 'GET' }),
+            )
+            expect(res.leads).toHaveLength(1)
+            expect(res.counts.new).toBe(1)
+            expect(res.total).toBe(1)
+        })
+
+        it('getLeadStatusHistory gọi GET /api/v1/leads/<id>/status-history', async () => {
+            const historyItems = [
+                {
+                    id: 'hist-1',
+                    lead_id: mockLead.id,
+                    old_status: 'new',
+                    new_status: 'contacted',
+                    reason: null,
+                    notes: null,
+                    performed_by_name: 'Tư vấn A',
+                    created_at: '2026-03-01T10:00:00Z',
+                },
+            ]
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    data: historyItems,
+                }),
+            })
+
+            const res = await getLeadStatusHistory(mockRequest, mockLead.id)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}/status-history`,
+                expect.objectContaining({ method: 'GET' }),
+            )
+            expect(res).toHaveLength(1)
+            expect(res[0].old_status).toBe('new')
+            expect(res[0].new_status).toBe('contacted')
         })
     })
 })

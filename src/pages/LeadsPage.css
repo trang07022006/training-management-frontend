@@ -176,6 +176,26 @@
   color: #b45309;
 }
 
+.status-badge--consulting {
+  background-color: #ede9fe;
+  color: #6d28d9;
+}
+
+.status-badge--trial {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-badge--won {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge--rejected {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
 .status-badge--qualified {
   background-color: #e0e7ff;
   color: #4338ca;
@@ -1380,6 +1400,241 @@
 .history-item-actor {
   font-size: 0.8rem;
   color: #64748b;
+}
+
+/* ==========================================================================
+   SCRUM-213: LEAD PIPELINE / KANBAN BOARD & REJECTION MODAL
+   ========================================================================== */
+
+/* Chế độ xem: [Danh sách] [Bảng phễu] */
+.leads-view-toggle-group {
+  display: inline-flex;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.leads-btn-toggle-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.leads-btn-toggle-view:hover {
+  color: #1e293b;
+}
+
+.leads-btn-toggle-view--active {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Kanban Board Container */
+.leads-pipeline-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(250px, 1fr));
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 4px 20px 4px;
+  min-height: calc(100vh - 270px);
+  align-items: start;
+}
+
+.pipeline-column {
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+  max-height: calc(100vh - 240px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pipeline-column--drag-over {
+  background-color: #f0f9ff;
+  border: 2px dashed #0284c7 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.pipeline-column-header {
+  padding: 12px 14px;
+  border-bottom: 3px solid #cbd5e1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 2;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.pipeline-column--new .pipeline-column-header {
+  border-bottom-color: #0284c7;
+}
+
+.pipeline-column--contacted .pipeline-column-header {
+  border-bottom-color: #d97706;
+}
+
+.pipeline-column--consulting .pipeline-column-header {
+  border-bottom-color: #7c3aed;
+}
+
+.pipeline-column--trial_scheduled .pipeline-column-header {
+  border-bottom-color: #4f46e5;
+}
+
+.pipeline-column--won .pipeline-column-header {
+  border-bottom-color: #16a34a;
+}
+
+.pipeline-column--rejected .pipeline-column-header {
+  border-bottom-color: #dc2626;
+}
+
+.pipeline-column-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #1e293b;
+}
+
+.pipeline-cards-container {
+  padding: 10px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pipeline-column-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Lead Card */
+.pipeline-lead-card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  padding: 12px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.pipeline-lead-card:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 4px 8px -1px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.pipeline-lead-card:active {
+  cursor: grabbing;
+}
+
+.pipeline-lead-card.is-dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: scale(0.98);
+}
+
+.pipeline-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pipeline-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #0f172a;
+  display: block;
+}
+
+.pipeline-card-phone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #0284c7;
+  font-weight: 500;
+}
+
+.pipeline-card-program {
+  font-size: 0.82rem;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pipeline-card-footer {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.pipeline-card-assignee {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pipeline-card-time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* Modal Xác nhận từ chối */
+.rejection-modal-card {
+  max-width: 500px;
+}
+
+.rejection-target-desc {
+  font-size: 0.92rem;
+  color: #334155;
+  margin-bottom: 16px;
+  line-height: 1.5;
 }
 
 

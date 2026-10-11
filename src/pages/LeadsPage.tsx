@@ -16,11 +16,18 @@ import {
     deleteLead,
     checkLeadPhone,
     LEAD_STATUS_BADGE_CLASSES,
+    getLeadPipeline,
+    getLeadStatusHistory,
+    PIPELINE_STATUS_KEYS,
+    REJECTION_REASONS,
     ApiError,
     type Lead,
     type LeadStatus,
     type AssignableUser,
     type LeadAssignmentHistoryItem,
+    type LeadStatusHistoryItem,
+    type PipelineData,
+    type RejectionReason,
 } from '../api/leadApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
@@ -97,6 +104,28 @@ export function LeadsPage() {
     const [bulkAssigneeId, setBulkAssigneeId] = useState<string>('')
     const [isBulkAssigning, setIsBulkAssigning] = useState<boolean>(false)
     const [bulkAssignError, setBulkAssignError] = useState<string | null>(null)
+
+    // Chế độ xem: 'list' (Danh sách) hoặc 'pipeline' (Bảng phễu - SCRUM-213)
+    const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list')
+    const [pipelineData, setPipelineData] = useState<PipelineData | null>(null)
+    const [isLoadingPipeline, setIsLoadingPipeline] = useState<boolean>(false)
+    const [pipelineError, setPipelineError] = useState<string | null>(null)
+
+    // Kéo thả Kanban (SCRUM-213)
+    const [draggedLead, setDraggedLead] = useState<Lead | null>(null)
+    const [dragOverStatus, setDragOverStatus] = useState<LeadStatus | null>(null)
+
+    // Modal Xác nhận từ chối Lead (SCRUM-213)
+    const [isRejectionModalOpen, setIsRejectionModalOpen] = useState<boolean>(false)
+    const [rejectionTargetLead, setRejectionTargetLead] = useState<Lead | null>(null)
+    const [rejectionReason, setRejectionReason] = useState<RejectionReason>('Không còn nhu cầu')
+    const [rejectionNotes, setRejectionNotes] = useState<string>('')
+    const [rejectionError, setRejectionError] = useState<string | null>(null)
+
+    // Lịch sử trạng thái Lead (SCRUM-213)
+    const [statusHistory, setStatusHistory] = useState<LeadStatusHistoryItem[]>([])
+    const [isLoadingStatusHistory, setIsLoadingStatusHistory] = useState<boolean>(false)
+    const [statusHistoryError, setStatusHistoryError] = useState<string | null>(null)
 
     // Chương trình đào tạo (SCRUM-126)
     const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([])
@@ -302,6 +331,42 @@ export function LeadsPage() {
         }
     }
 
+    // Tải dữ liệu Bảng phễu Lead (SCRUM-213)
+    useEffect(() => {
+        let isMounted = true
+
+        getLeadPipeline(request)
+            .then((data) => {
+                if (isMounted) {
+                    setPipelineData(data)
+                    setIsLoadingPipeline(false)
+                }
+            })
+            .catch((err: unknown) => {
+                if (isMounted) {
+                    setPipelineError(getErrorMessage(err, 'Không thể tải bảng phễu Lead.'))
+                    setIsLoadingPipeline(false)
+                }
+            })
+
+        return () => {
+            isMounted = false
+        }
+    }, [request, refreshTrigger])
+
+    const loadStatusHistory = async (leadId: string) => {
+        setIsLoadingStatusHistory(true)
+        setStatusHistoryError(null)
+        try {
+            const history = await getLeadStatusHistory(request, leadId)
+            setStatusHistory(history)
+        } catch (err: unknown) {
+            setStatusHistoryError(getErrorMessage(err, 'Không thể tải lịch sử trạng thái.'))
+        } finally {
+            setIsLoadingStatusHistory(false)
+        }
+    }
+
     const handleOpenDetail = async (leadId: string) => {
         setStatusError(null)
         setStatusSuccess(null)
@@ -323,6 +388,7 @@ export function LeadsPage() {
             setSelectedAssigneeId(detail.assigned_to_user_id || '')
             setIsDetailModalOpen(true)
             void loadAssignmentHistory(leadId)
+            void loadStatusHistory(leadId)
         } catch (err: unknown) {
             const message = getErrorMessage(err, 'Không thể tải chi tiết tư vấn.')
             setPageError(message)
@@ -335,6 +401,9 @@ export function LeadsPage() {
         setAssignmentHistory([])
         setIsLoadingHistory(false)
         setHistoryError(null)
+        setStatusHistory([])
+        setIsLoadingStatusHistory(false)
+        setStatusHistoryError(null)
         setStatusError(null)
         setStatusSuccess(null)
         setAssignmentError(null)
@@ -391,9 +460,89 @@ export function LeadsPage() {
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [deletingLead, isDeletingLead])
 
+    const executeStatusUpdate = async (
+        lead: Lead,
+        targetStatus: LeadStatus,
+        reason?: string,
+        notes?: string,
+    ) => {
+        const oldStatus = lead.status
+        const previousPipelineData = pipelineData
+
+        // Optimistic update trên Pipeline data
+        if (pipelineData) {
+            const updatedCard: Lead = {
+                ...lead,
+                status: targetStatus,
+                rejection_reason: reason || null,
+                updated_at: new Date().toISOString(),
+            }
+
+            const newColumns = pipelineData.columns.map((col) => {
+                let colLeads = col.leads.filter((l) => l.id !== lead.id)
+                if (col.status === targetStatus) {
+                    colLeads = [updatedCard, ...colLeads]
+                }
+                return {
+                    ...col,
+                    count: colLeads.length,
+                    leads: colLeads,
+                }
+            })
+
+            const newCounts = { ...pipelineData.counts }
+            newCounts[oldStatus] = Math.max(0, (newCounts[oldStatus] || 1) - 1)
+            newCounts[targetStatus] = (newCounts[targetStatus] || 0) + 1
+
+            setPipelineData({
+                ...pipelineData,
+                columns: newColumns,
+                counts: newCounts,
+            })
+        }
+
+        // Optimistic update trên Table list
+        setLeads((prev) =>
+            prev.map((l) =>
+                l.id === lead.id
+                    ? { ...l, status: targetStatus, rejection_reason: reason || null }
+                    : l,
+            ),
+        )
+
+        try {
+            const updated = await updateLeadStatus(request, lead.id, targetStatus, reason, notes)
+            if (selectedLead?.id === lead.id) {
+                setSelectedLead(updated)
+                setSelectedStatus(updated.status)
+                void loadStatusHistory(lead.id)
+            }
+            setRefreshTrigger((prev) => prev + 1)
+        } catch {
+            // Rollback on failure!
+            if (previousPipelineData) {
+                setPipelineData(previousPipelineData)
+            }
+            setLeads((prev) =>
+                prev.map((l) => (l.id === lead.id ? { ...l, status: oldStatus } : l)),
+            )
+            setPageError('Không thể cập nhật trạng thái Lead. Vui lòng thử lại.')
+            setTimeout(() => setPageError(null), 5000)
+        }
+    }
+
     const handleStatusChange = async (newStatus: LeadStatus) => {
         if (!selectedLead || isUpdatingStatus) return
         if (newStatus === selectedLead.status) return
+
+        if (newStatus === 'rejected') {
+            setRejectionTargetLead(selectedLead)
+            setRejectionReason('Không còn nhu cầu')
+            setRejectionNotes('')
+            setRejectionError(null)
+            setIsRejectionModalOpen(true)
+            return
+        }
 
         const previousStatus = selectedStatus
         setSelectedStatus(newStatus)
@@ -410,7 +559,7 @@ export function LeadsPage() {
             setSelectedLead(updated)
             setSelectedStatus(updated.status)
             setStatusSuccess('Đã cập nhật trạng thái.')
-            // Trigger refetch đồng bộ dữ liệu theo đúng bộ lọc hiện tại
+            void loadStatusHistory(selectedLead.id)
             setRefreshTrigger((prev) => prev + 1)
         } catch (err: unknown) {
             setSelectedStatus(previousStatus)
@@ -418,6 +567,82 @@ export function LeadsPage() {
         } finally {
             setIsUpdatingStatus(false)
         }
+    }
+
+    const handleConfirmRejection = async () => {
+        if (!rejectionTargetLead) return
+        if (!rejectionReason) {
+            setRejectionError('Vui lòng chọn lý do từ chối.')
+            return
+        }
+        if (rejectionReason === 'Khác' && !rejectionNotes.trim()) {
+            setRejectionError('Vui lòng nhập lý do cụ thể khi chọn "Khác".')
+            return
+        }
+
+        const targetLead = rejectionTargetLead
+        const reason = rejectionReason
+        const notes = rejectionNotes.trim() || undefined
+
+        setIsRejectionModalOpen(false)
+        setRejectionTargetLead(null)
+
+        await executeStatusUpdate(targetLead, 'rejected', reason, notes)
+    }
+
+    const handleCancelRejection = () => {
+        if (selectedLead && rejectionTargetLead?.id === selectedLead.id) {
+            setSelectedStatus(selectedLead.status)
+        }
+        setIsRejectionModalOpen(false)
+        setRejectionTargetLead(null)
+        setRejectionReason('Không còn nhu cầu')
+        setRejectionNotes('')
+        setRejectionError(null)
+    }
+
+    // Drag & Drop handlers (SCRUM-213)
+    const handleDragStart = (e: React.DragEvent, lead: Lead) => {
+        e.dataTransfer.setData('text/plain', lead.id)
+        e.dataTransfer.effectAllowed = 'move'
+        setDraggedLead(lead)
+    }
+
+    const handleDragOver = (e: React.DragEvent, status: LeadStatus) => {
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        if (dragOverStatus !== status) {
+            setDragOverStatus(status)
+        }
+    }
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault()
+        // Do not immediately clear if entering children
+    }
+
+    const handleDragEnd = () => {
+        setDraggedLead(null)
+        setDragOverStatus(null)
+    }
+
+    const handleDrop = async (e: React.DragEvent, targetStatus: LeadStatus) => {
+        e.preventDefault()
+        setDragOverStatus(null)
+        const lead = draggedLead
+        setDraggedLead(null)
+        if (!lead || lead.status === targetStatus) return
+
+        if (targetStatus === 'rejected') {
+            setRejectionTargetLead(lead)
+            setRejectionReason('Không còn nhu cầu')
+            setRejectionNotes('')
+            setRejectionError(null)
+            setIsRejectionModalOpen(true)
+            return
+        }
+
+        await executeStatusUpdate(lead, targetStatus)
     }
 
     const handleAssigneeChange = async (newAssigneeId: string) => {
@@ -621,6 +846,41 @@ export function LeadsPage() {
                         </p>
                     </div>
                     <div className="leads-actions">
+                        <div className="leads-view-toggle-group" role="tablist" aria-label="Chế độ xem">
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={viewMode === 'list'}
+                                className={`leads-btn-toggle-view ${viewMode === 'list' ? 'leads-btn-toggle-view--active' : ''}`}
+                                onClick={() => setViewMode('list')}
+                                data-testid="view-mode-list-btn"
+                            >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                                </svg>
+                                Danh sách
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={viewMode === 'pipeline'}
+                                className={`leads-btn-toggle-view ${viewMode === 'pipeline' ? 'leads-btn-toggle-view--active' : ''}`}
+                                onClick={() => setViewMode('pipeline')}
+                                data-testid="view-mode-pipeline-btn"
+                            >
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                                    <rect x="10" y="3" width="5" height="12" rx="1"></rect>
+                                    <rect x="17" y="3" width="5" height="8" rx="1"></rect>
+                                </svg>
+                                Bảng phễu
+                            </button>
+                        </div>
                         <button
                             type="button"
                             className="leads-btn-action leads-btn-action-primary"
@@ -654,6 +914,9 @@ export function LeadsPage() {
                 </div>
             )}
 
+            {/* Danh sách List View (SCRUM-128 / SCRUM-126) */}
+            {viewMode === 'list' && (
+            <>
             {/* Thanh tìm kiếm & Bộ lọc nâng cao (SCRUM-128) */}
             <div className="leads-filter-bar" data-testid="leads-filter-bar">
                 <input
@@ -679,8 +942,12 @@ export function LeadsPage() {
                     aria-label="Lọc theo trạng thái"
                 >
                     <option value="">Tất cả trạng thái</option>
-                    <option value="new">Mới tiếp nhận</option>
+                    <option value="new">Mới</option>
                     <option value="contacted">Đã liên hệ</option>
+                    <option value="consulting">Đang tư vấn</option>
+                    <option value="trial_scheduled">Hẹn học thử</option>
+                    <option value="won">Chốt</option>
+                    <option value="rejected">Từ chối</option>
                     <option value="qualified">Tiềm năng</option>
                     <option value="converted">Đã nhập học</option>
                     <option value="lost">Không thành công</option>
@@ -765,7 +1032,10 @@ export function LeadsPage() {
                     </button>
                 )}
             </div>
+            </>
+            )}
 
+            {viewMode === 'list' && (
             <div className="leads-card">
                 {canManageAssignments && selectedLeadIds.size > 0 && (
                     <div className="leads-bulk-actions-bar" data-testid="bulk-actions-bar">
@@ -1004,6 +1274,131 @@ export function LeadsPage() {
                     </div>
                 </div>
             </div>
+            )}
+
+            {/* Bảng phễu Kanban (SCRUM-213) */}
+            {viewMode === 'pipeline' && (
+                <div className="leads-pipeline-board" data-testid="leads-pipeline-board">
+                    {isLoadingPipeline && !pipelineData ? (
+                        <div className="pipeline-column-empty" style={{ gridColumn: '1 / -1' }}>
+                            Đang tải bảng phễu Lead...
+                        </div>
+                    ) : pipelineError ? (
+                        <div className="leads-alert-error" style={{ gridColumn: '1 / -1' }}>
+                            {pipelineError}
+                        </div>
+                    ) : (
+                        PIPELINE_STATUS_KEYS.map((statusKey) => {
+                            const col = pipelineData?.columns.find((c) => c.status === statusKey) || {
+                                status: statusKey,
+                                label: getLeadStatusLabel(statusKey),
+                                count: 0,
+                                leads: [],
+                            }
+                            const isDragOver = dragOverStatus === statusKey
+
+                            return (
+                                <div
+                                    key={statusKey}
+                                    className={`pipeline-column pipeline-column--${statusKey} ${
+                                        isDragOver ? 'pipeline-column--drag-over' : ''
+                                    }`}
+                                    data-testid={`pipeline-column-${statusKey}`}
+                                    onDragOver={(e) => handleDragOver(e, statusKey)}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => void handleDrop(e, statusKey)}
+                                >
+                                    <div className="pipeline-column-header">
+                                        <span
+                                            className="pipeline-column-title"
+                                            data-testid={`pipeline-column-title-${statusKey}`}
+                                        >
+                                            {col.label} ({col.count})
+                                        </span>
+                                    </div>
+                                    <div
+                                        className="pipeline-cards-container"
+                                        data-testid={`pipeline-cards-${statusKey}`}
+                                    >
+                                        {col.leads.length === 0 ? (
+                                            <div className="pipeline-column-empty">Chưa có lead</div>
+                                        ) : (
+                                            col.leads.map((lead) => {
+                                                const isBeingDragged = draggedLead?.id === lead.id
+                                                return (
+                                                    <div
+                                                        key={lead.id}
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(e, lead)}
+                                                        onDragEnd={handleDragEnd}
+                                                        onClick={() => void handleOpenDetail(lead.id)}
+                                                        className={`pipeline-lead-card ${
+                                                            isBeingDragged ? 'is-dragging' : ''
+                                                        }`}
+                                                        data-testid={`lead-card-${lead.id}`}
+                                                    >
+                                                        <div className="pipeline-card-header">
+                                                            <span className="pipeline-card-name">
+                                                                {lead.full_name}
+                                                            </span>
+                                                        </div>
+                                                        <div className="pipeline-card-phone">
+                                                            <svg
+                                                                width="13"
+                                                                height="13"
+                                                                viewBox="0 0 24 24"
+                                                                fill="none"
+                                                                stroke="currentColor"
+                                                                strokeWidth="2"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                aria-hidden="true"
+                                                            >
+                                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                            </svg>
+                                                            <span>{lead.phone}</span>
+                                                        </div>
+                                                        <div className="pipeline-card-program">
+                                                            {lead.interested_program_name ||
+                                                                lead.interested_program_code ||
+                                                                'Chưa chọn CT'}
+                                                        </div>
+                                                        <div className="pipeline-card-footer">
+                                                            <span
+                                                                className="pipeline-card-assignee"
+                                                                title={lead.assigned_to_name || 'Chưa phân công'}
+                                                            >
+                                                                <svg
+                                                                    width="12"
+                                                                    height="12"
+                                                                    viewBox="0 0 24 24"
+                                                                    fill="none"
+                                                                    stroke="currentColor"
+                                                                    strokeWidth="2"
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    aria-hidden="true"
+                                                                >
+                                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                                    <circle cx="12" cy="7" r="4"></circle>
+                                                                </svg>
+                                                                <span>{lead.assigned_to_name || 'Chưa phân công'}</span>
+                                                            </span>
+                                                            <span className="pipeline-card-time">
+                                                                {formatDate(lead.updated_at || lead.created_at)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+            )}
 
             {/* Modal Chi tiết & Cập nhật trạng thái / Phân công */}
             {isDetailModalOpen && selectedLead && (
@@ -1212,8 +1607,12 @@ export function LeadsPage() {
                                         }
                                         disabled={isUpdatingStatus}
                                     >
-                                        <option value="new">Mới tiếp nhận</option>
+                                        <option value="new">Mới</option>
                                         <option value="contacted">Đã liên hệ</option>
+                                        <option value="consulting">Đang tư vấn</option>
+                                        <option value="trial_scheduled">Hẹn học thử</option>
+                                        <option value="won">Chốt</option>
+                                        <option value="rejected">Từ chối</option>
                                         <option value="qualified">Tiềm năng</option>
                                         <option value="converted">Đã nhập học</option>
                                         <option value="lost">Không thành công</option>
@@ -1266,6 +1665,58 @@ export function LeadsPage() {
                                                 <div className="history-item-actor" data-testid={`history-actor-${item.id}`}>
                                                     Thực hiện bởi: {item.performed_by_name || 'Hệ thống'}
                                                 </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            {/* Khu vực lịch sử trạng thái (SCRUM-213) */}
+                            <div className="leads-modal-history-section" data-testid="status-history-section">
+                                <span className="section-subheading-label">Lịch sử trạng thái:</span>
+                                {isLoadingStatusHistory ? (
+                                    <div className="history-loading-text" data-testid="status-history-loading">
+                                        Đang tải lịch sử...
+                                    </div>
+                                ) : statusHistoryError ? (
+                                    <div className="history-error-text" data-testid="status-history-error">
+                                        {statusHistoryError}
+                                    </div>
+                                ) : statusHistory.length === 0 ? (
+                                    <p className="history-empty-text" data-testid="status-history-empty">
+                                        Chưa có lịch sử thay đổi trạng thái.
+                                    </p>
+                                ) : (
+                                    <ul className="assignment-history-list" data-testid="status-history-list">
+                                        {statusHistory.map((item) => (
+                                            <li key={item.id} className="history-item" data-testid={`status-history-item-${item.id}`}>
+                                                <div className="history-item-header">
+                                                    <span className="history-time" data-testid={`status-history-time-${item.id}`}>
+                                                        {formatDate(item.created_at)}
+                                                    </span>
+                                                </div>
+                                                <div className="history-item-transfer" data-testid={`status-history-transfer-${item.id}`}>
+                                                    <span className="history-old-assignee">
+                                                        {getLeadStatusLabel(item.old_status)}
+                                                    </span>
+                                                    <span className="history-arrow"> → </span>
+                                                    <span className="history-new-assignee">
+                                                        {getLeadStatusLabel(item.new_status)}
+                                                    </span>
+                                                </div>
+                                                <div className="history-item-actor" data-testid={`status-history-actor-${item.id}`}>
+                                                    Thực hiện bởi: {item.performed_by_name || 'Hệ thống'}
+                                                </div>
+                                                {item.reason && (
+                                                    <div className="history-item-actor" style={{ marginTop: '2px', color: '#b91c1c' }}>
+                                                        Lý do: <strong>{item.reason}</strong>
+                                                    </div>
+                                                )}
+                                                {item.notes && (
+                                                    <div className="history-item-actor" style={{ marginTop: '2px' }}>
+                                                        Ghi chú: {item.notes}
+                                                    </div>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>
@@ -1601,6 +2052,109 @@ export function LeadsPage() {
                                 disabled={isDeletingLead}
                             >
                                 {isDeletingLead ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </footer>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Xác nhận từ chối Lead (SCRUM-213) */}
+            {isRejectionModalOpen && rejectionTargetLead && (
+                <div
+                    className="leads-modal-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="rejection-modal-title"
+                    data-testid="rejection-modal"
+                >
+                    <div className="leads-modal-card rejection-modal-card">
+                        <header className="leads-modal-header">
+                            <h2 id="rejection-modal-title" className="leads-modal-title">
+                                Xác nhận từ chối Lead
+                            </h2>
+                            <button
+                                type="button"
+                                className="leads-modal-close-btn"
+                                onClick={handleCancelRejection}
+                                aria-label="Đóng"
+                                data-testid="rejection-modal-close-btn"
+                            >
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </header>
+
+                        <div className="leads-modal-body">
+                            <p className="rejection-target-desc">
+                                Bạn đang chuyển khách hàng <strong>{rejectionTargetLead.full_name}</strong> sang trạng thái <strong>Từ chối</strong>.
+                            </p>
+
+                            {rejectionError && (
+                                <div className="leads-alert-error" role="alert" data-testid="rejection-error" style={{ marginBottom: '14px' }}>
+                                    {rejectionError}
+                                </div>
+                            )}
+
+                            <div className="form-field-group">
+                                <label htmlFor="rejection-reason-select" className="section-subheading-label">
+                                    Lý do từ chối *
+                                </label>
+                                <select
+                                    id="rejection-reason-select"
+                                    className="status-select-input"
+                                    style={{ width: '100%', height: '38px' }}
+                                    data-testid="rejection-reason-select"
+                                    value={rejectionReason}
+                                    onChange={(e) => {
+                                        setRejectionReason(e.target.value as RejectionReason)
+                                        setRejectionError(null)
+                                    }}
+                                >
+                                    {REJECTION_REASONS.map((r) => (
+                                        <option key={r} value={r}>
+                                            {r}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="form-field-group" style={{ marginTop: '14px' }}>
+                                <label htmlFor="rejection-notes-input" className="section-subheading-label">
+                                    Ghi chú thêm {rejectionReason === 'Khác' && <span style={{ color: '#dc2626' }}>*</span>}
+                                </label>
+                                <textarea
+                                    id="rejection-notes-input"
+                                    className="assign-select-input"
+                                    style={{ width: '100%', height: '80px', paddingTop: '8px', paddingBottom: '8px', resize: 'vertical' }}
+                                    data-testid="rejection-notes-input"
+                                    placeholder={rejectionReason === 'Khác' ? 'Vui lòng nhập lý do cụ thể...' : 'Nhập ghi chú thêm nếu có...'}
+                                    value={rejectionNotes}
+                                    onChange={(e) => {
+                                        setRejectionNotes(e.target.value)
+                                        setRejectionError(null)
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <footer className="leads-modal-footer">
+                            <button
+                                type="button"
+                                className="btn-modal-close"
+                                onClick={handleCancelRejection}
+                                data-testid="rejection-cancel-btn"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-save-assign btn-unassign"
+                                onClick={() => void handleConfirmRejection()}
+                                data-testid="rejection-confirm-btn"
+                            >
+                                Xác nhận từ chối
                             </button>
                         </footer>
                     </div>
