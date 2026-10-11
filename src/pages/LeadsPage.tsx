@@ -22,6 +22,8 @@ import {
     REJECTION_REASONS,
     createLeadCareLog,
     getLeadCareLogs,
+    updateLeadCallbackDate,
+    formatCallbackDateDisplay,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -141,6 +143,12 @@ export function LeadsPage() {
     const [careLogTime, setCareLogTime] = useState<string>('')
     const [isSubmittingCareLog, setIsSubmittingCareLog] = useState<boolean>(false)
     const [careLogFormError, setCareLogFormError] = useState<string | null>(null)
+
+    // Ngày nhắc gọi lại (SCRUM-214 - Sub-task 214-02)
+    const [callbackDateInput, setCallbackDateInput] = useState<string>('')
+    const [isUpdatingCallbackDate, setIsUpdatingCallbackDate] = useState<boolean>(false)
+    const [callbackDateError, setCallbackDateError] = useState<string | null>(null)
+    const [callbackDateSuccess, setCallbackDateSuccess] = useState<string | null>(null)
 
     // Chương trình đào tạo (SCRUM-126)
     const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([])
@@ -414,6 +422,9 @@ export function LeadsPage() {
             setSelectedLead(detail)
             setSelectedStatus(detail.status)
             setSelectedAssigneeId(detail.assigned_to_user_id || '')
+            setCallbackDateInput(detail.callback_date ? detail.callback_date.slice(0, 10) : '')
+            setCallbackDateError(null)
+            setCallbackDateSuccess(null)
             setIsDetailModalOpen(true)
             void loadAssignmentHistory(leadId)
             void loadStatusHistory(leadId)
@@ -445,6 +456,10 @@ export function LeadsPage() {
         setCareLogContent('')
         setCareLogTime('')
         setCareLogFormError(null)
+        setCallbackDateInput('')
+        setCallbackDateError(null)
+        setCallbackDateSuccess(null)
+        setIsUpdatingCallbackDate(false)
     }
 
     const handleAddCareLogSubmit = async (e: React.FormEvent) => {
@@ -484,6 +499,86 @@ export function LeadsPage() {
             setCareLogFormError(getErrorMessage(err, 'Không thể lưu nhật ký tương tác.'))
         } finally {
             setIsSubmittingCareLog(false)
+        }
+    }
+
+    const handleSaveCallbackDate = async () => {
+        if (!selectedLead || isUpdatingCallbackDate) return
+        setIsUpdatingCallbackDate(true)
+        setCallbackDateError(null)
+        setCallbackDateSuccess(null)
+
+        const targetDate = callbackDateInput.trim() || null
+        try {
+            const updated = await updateLeadCallbackDate(request, selectedLead.id, targetDate)
+            setSelectedLead(updated)
+            setLeads((prev) =>
+                prev.map((l) => (l.id === updated.id ? { ...l, callback_date: updated.callback_date } : l)),
+            )
+            if (pipelineData) {
+                setPipelineData((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              leads: prev.leads.map((l) =>
+                                  l.id === updated.id ? { ...l, callback_date: updated.callback_date } : l,
+                              ),
+                              columns: prev.columns.map((col) => ({
+                                  ...col,
+                                  leads: col.leads.map((l) =>
+                                      l.id === updated.id ? { ...l, callback_date: updated.callback_date } : l,
+                                  ),
+                              })),
+                          }
+                        : null,
+                )
+            }
+            setCallbackDateSuccess(targetDate ? 'Lưu ngày nhắc gọi lại thành công.' : 'Đã xóa ngày nhắc gọi lại.')
+            setTimeout(() => setCallbackDateSuccess(null), 4000)
+        } catch (err: unknown) {
+            setCallbackDateError(getErrorMessage(err, 'Không thể lưu ngày nhắc gọi lại.'))
+        } finally {
+            setIsUpdatingCallbackDate(false)
+        }
+    }
+
+    const handleClearCallbackDate = async () => {
+        if (!selectedLead || isUpdatingCallbackDate) return
+        setCallbackDateInput('')
+        setIsUpdatingCallbackDate(true)
+        setCallbackDateError(null)
+        setCallbackDateSuccess(null)
+
+        try {
+            const updated = await updateLeadCallbackDate(request, selectedLead.id, null)
+            setSelectedLead(updated)
+            setLeads((prev) =>
+                prev.map((l) => (l.id === updated.id ? { ...l, callback_date: null } : l)),
+            )
+            if (pipelineData) {
+                setPipelineData((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              leads: prev.leads.map((l) =>
+                                  l.id === updated.id ? { ...l, callback_date: null } : l,
+                              ),
+                              columns: prev.columns.map((col) => ({
+                                  ...col,
+                                  leads: col.leads.map((l) =>
+                                      l.id === updated.id ? { ...l, callback_date: null } : l,
+                                  ),
+                              })),
+                          }
+                        : null,
+                )
+            }
+            setCallbackDateSuccess('Đã xóa ngày nhắc gọi lại.')
+            setTimeout(() => setCallbackDateSuccess(null), 4000)
+        } catch (err: unknown) {
+            setCallbackDateError(getErrorMessage(err, 'Không thể xóa ngày nhắc gọi lại.'))
+        } finally {
+            setIsUpdatingCallbackDate(false)
         }
     }
 
@@ -1626,6 +1721,63 @@ export function LeadsPage() {
                                 <div className="detail-message-box" data-testid="detail-message">
                                     {selectedLead.message || 'Không có ghi chú nội dung tư vấn.'}
                                 </div>
+                            </div>
+
+                            {/* Khu vực Ngày nhắc gọi lại (SCRUM-214 - Sub-task 214-02) */}
+                            <div className="leads-modal-section" data-testid="callback-reminder-section" style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #e2e8f0' }}>
+                                <label htmlFor="callback-date-input" className="section-subheading-label">
+                                    Ngày nhắc gọi lại:
+                                </label>
+                                <div className="callback-date-row" style={{ marginTop: '6px' }}>
+                                    <input
+                                        type="date"
+                                        id="callback-date-input"
+                                        className="callback-date-input"
+                                        data-testid="callback-date-input"
+                                        value={callbackDateInput}
+                                        onChange={(e) => {
+                                            setCallbackDateInput(e.target.value)
+                                            setCallbackDateError(null)
+                                            setCallbackDateSuccess(null)
+                                        }}
+                                        disabled={isUpdatingCallbackDate}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn-save-callback-date"
+                                        data-testid="save-callback-date-btn"
+                                        onClick={() => void handleSaveCallbackDate()}
+                                        disabled={isUpdatingCallbackDate}
+                                    >
+                                        {isUpdatingCallbackDate ? 'Đang lưu...' : 'Lưu ngày nhắc'}
+                                    </button>
+                                    {selectedLead.callback_date && (
+                                        <button
+                                            type="button"
+                                            className="btn-clear-callback-date"
+                                            data-testid="clear-callback-date-btn"
+                                            onClick={() => void handleClearCallbackDate()}
+                                            disabled={isUpdatingCallbackDate}
+                                        >
+                                            Xóa nhắc
+                                        </button>
+                                    )}
+                                </div>
+                                {callbackDateSuccess && (
+                                    <div className="leads-alert-success" data-testid="callback-date-success" style={{ marginTop: '6px' }}>
+                                        {callbackDateSuccess}
+                                    </div>
+                                )}
+                                {callbackDateError && (
+                                    <div className="leads-alert-error" data-testid="callback-date-error" style={{ marginTop: '6px' }}>
+                                        {callbackDateError}
+                                    </div>
+                                )}
+                                {selectedLead.callback_date && (
+                                    <div className="callback-date-display" data-testid="callback-date-display" style={{ marginTop: '6px' }}>
+                                        Ngày nhắc đã đặt: <strong>{formatCallbackDateDisplay(selectedLead.callback_date)}</strong>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Khu vực phân công nhân sự phụ trách (SCRUM-127) */}

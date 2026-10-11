@@ -12,6 +12,7 @@ import {
     getLeadStatusHistory,
     createLeadCareLog,
     getLeadCareLogs,
+    updateLeadCallbackDate,
 } from '../api/leadApi'
 import { getTrainingPrograms } from '../api/trainingProgramApi'
 
@@ -356,3 +357,135 @@ describe('SCRUM-214: Sub-task 214-01 – Nhật ký chăm sóc Lead (UI & API In
         })
     })
 })
+
+describe('SCRUM-214: Sub-task 214-02 – Đặt lịch nhắc gọi lại (Callback Reminder UI)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockCurrentRole = 'consultant'
+        mockCurrentRoles = ['consultant']
+        mockCurrentPermissions = ['course.manage']
+
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(sampleLead)
+        vi.mocked(getAssignableUsers).mockResolvedValue(sampleAssignableUsers)
+        vi.mocked(getTrainingPrograms).mockResolvedValue({ items: [], total: 0 } as any)
+        vi.mocked(getLeadAssignmentHistory).mockResolvedValue([])
+        vi.mocked(getLeadStatusHistory).mockResolvedValue([])
+        vi.mocked(getLeadCareLogs).mockResolvedValue([])
+        vi.mocked(getLeadPipeline).mockResolvedValue({
+            columns: [],
+            leads: [sampleLead],
+            counts: { new: 1, contacted: 0, consulting: 0, trial_scheduled: 0, won: 0, rejected: 0 },
+            total: 1,
+        })
+    })
+
+    afterEach(() => {
+        cleanup()
+    })
+
+    it('TC214-07: Chọn ngày nhắc gọi lại và bấm Lưu -> gọi API và hiển thị thành công', async () => {
+        const updatedLead: Lead = {
+            ...sampleLead,
+            callback_date: '2026-10-20',
+        }
+        vi.mocked(updateLeadCallbackDate).mockResolvedValue(updatedLead)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('callback-reminder-section')).toBeDefined()
+            expect(screen.getByTestId('callback-date-input')).toBeDefined()
+        })
+
+        const dateInput = screen.getByTestId('callback-date-input') as HTMLInputElement
+        fireEvent.change(dateInput, { target: { value: '2026-10-20' } })
+        expect(dateInput.value).toBe('2026-10-20')
+
+        fireEvent.click(screen.getByTestId('save-callback-date-btn'))
+
+        await waitFor(() => {
+            expect(updateLeadCallbackDate).toHaveBeenCalledWith(
+                mockRequest,
+                sampleLead.id,
+                '2026-10-20',
+            )
+            expect(screen.getByTestId('callback-date-success').textContent).toContain(
+                'Lưu ngày nhắc gọi lại thành công.',
+            )
+            expect(screen.getByTestId('callback-date-display').textContent).toContain('20/10/2026')
+        })
+    })
+
+    it('TC214-08: Lead đã có ngày nhắc -> hiển thị đúng khi mở modal chi tiết', async () => {
+        const leadWithCallback: Lead = {
+            ...sampleLead,
+            id: 'lead-with-cb-1',
+            callback_date: '2026-10-25',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [leadWithCallback],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(leadWithCallback)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${leadWithCallback.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${leadWithCallback.id}`))
+
+        await waitFor(() => {
+            const dateInput = screen.getByTestId('callback-date-input') as HTMLInputElement
+            expect(dateInput.value).toBe('2026-10-25')
+            expect(screen.getByTestId('callback-date-display').textContent).toContain('25/10/2026')
+            expect(screen.getByTestId('clear-callback-date-btn')).toBeDefined()
+        })
+    })
+
+    it('TC214-09: Bấm nút Xóa nhắc -> gọi API update null và xóa ngày nhắc', async () => {
+        const leadWithCallback: Lead = {
+            ...sampleLead,
+            id: 'lead-with-cb-2',
+            callback_date: '2026-10-22',
+        }
+        const leadCleared: Lead = {
+            ...leadWithCallback,
+            callback_date: null,
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [leadWithCallback],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(leadWithCallback)
+        vi.mocked(updateLeadCallbackDate).mockResolvedValue(leadCleared)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${leadWithCallback.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${leadWithCallback.id}`))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('clear-callback-date-btn')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('clear-callback-date-btn'))
+
+        await waitFor(() => {
+            expect(updateLeadCallbackDate).toHaveBeenCalledWith(
+                mockRequest,
+                leadWithCallback.id,
+                null,
+            )
+            expect(screen.getByTestId('callback-date-success').textContent).toContain(
+                'Đã xóa ngày nhắc gọi lại.',
+            )
+        })
+    })
+})
+
