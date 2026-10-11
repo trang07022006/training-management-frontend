@@ -24,6 +24,7 @@ import {
     getLeadCareLogs,
     updateLeadCallbackDate,
     formatCallbackDateDisplay,
+    isLeadCallbackOverdue,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -1312,11 +1313,15 @@ export function LeadsPage() {
 
                                     const isRead = readLeadIds.has(lead.id)
                                     const isRecent = isWithin24Hours(lead.created_at)
+                                    const isOverdue = isLeadCallbackOverdue(lead.callback_date)
                                     let rowClass = 'lead-row--read'
                                     if (!isRead) {
                                         rowClass = isRecent
                                             ? 'lead-row--unread lead-row--unread-recent'
                                             : 'lead-row--unread lead-row--unread-older'
+                                    }
+                                    if (isOverdue) {
+                                        rowClass += ' row-overdue'
                                     }
 
                                     return (
@@ -1335,6 +1340,15 @@ export function LeadsPage() {
                                             <td>
                                                 <div className="lead-name-cell">
                                                     <strong>{lead.full_name}</strong>
+                                                    {isOverdue && (
+                                                        <span
+                                                            className="lead-overdue-badge"
+                                                            data-testid={`overdue-badge-${lead.id}`}
+                                                            title={`Quá hạn gọi lại (${formatCallbackDateDisplay(lead.callback_date)})`}
+                                                        >
+                                                            ⚠️ Quá hạn gọi lại ({formatCallbackDateDisplay(lead.callback_date)})
+                                                        </span>
+                                                    )}
                                                     {!isRead && (
                                                         <span
                                                             className={`lead-unread-badge ${!isRecent ? 'lead-unread-badge--older' : ''}`}
@@ -1497,6 +1511,7 @@ export function LeadsPage() {
                                         ) : (
                                             col.leads.map((lead) => {
                                                 const isBeingDragged = draggedLead?.id === lead.id
+                                                const isOverdue = isLeadCallbackOverdue(lead.callback_date)
                                                 return (
                                                     <div
                                                         key={lead.id}
@@ -1506,7 +1521,7 @@ export function LeadsPage() {
                                                         onClick={() => void handleOpenDetail(lead.id)}
                                                         className={`pipeline-lead-card ${
                                                             isBeingDragged ? 'is-dragging' : ''
-                                                        }`}
+                                                        } ${isOverdue ? 'pipeline-card--overdue' : ''}`}
                                                         data-testid={`lead-card-${lead.id}`}
                                                     >
                                                         <div className="pipeline-card-header">
@@ -1514,6 +1529,14 @@ export function LeadsPage() {
                                                                 {lead.full_name}
                                                             </span>
                                                         </div>
+                                                        {isOverdue && (
+                                                            <div
+                                                                className="pipeline-card-overdue"
+                                                                data-testid={`kanban-overdue-badge-${lead.id}`}
+                                                            >
+                                                                ⚠️ Quá hạn gọi lại ({formatCallbackDateDisplay(lead.callback_date)})
+                                                            </div>
+                                                        )}
                                                         <div className="pipeline-card-phone">
                                                             <svg
                                                                 width="13"
@@ -1776,6 +1799,14 @@ export function LeadsPage() {
                                 {selectedLead.callback_date && (
                                     <div className="callback-date-display" data-testid="callback-date-display" style={{ marginTop: '6px' }}>
                                         Ngày nhắc đã đặt: <strong>{formatCallbackDateDisplay(selectedLead.callback_date)}</strong>
+                                        {isLeadCallbackOverdue(selectedLead.callback_date) && (
+                                            <span
+                                                className="lead-overdue-tag"
+                                                data-testid="detail-overdue-tag"
+                                            >
+                                                ⚠️ Quá hạn gọi lại
+                                            </span>
+                                        )}
                                     </div>
                                 )}
                             </div>

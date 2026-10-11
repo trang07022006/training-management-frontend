@@ -489,3 +489,126 @@ describe('SCRUM-214: Sub-task 214-02 – Đặt lịch nhắc gọi lại (Callb
     })
 })
 
+describe('SCRUM-214: Sub-task 214-03 – Đánh dấu Lead quá hạn gọi lại (Overdue Callback Highlight)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockCurrentRole = 'consultant'
+        mockCurrentRoles = ['consultant']
+        mockCurrentPermissions = ['course.manage']
+
+        vi.mocked(getAssignableUsers).mockResolvedValue(sampleAssignableUsers)
+        vi.mocked(getTrainingPrograms).mockResolvedValue({ items: [], total: 0 } as any)
+        vi.mocked(getLeadAssignmentHistory).mockResolvedValue([])
+        vi.mocked(getLeadStatusHistory).mockResolvedValue([])
+        vi.mocked(getLeadCareLogs).mockResolvedValue([])
+    })
+
+    afterEach(() => {
+        cleanup()
+    })
+
+    it('TC214-10: Lead có ngày nhắc trong tương lai -> KHÔNG đánh dấu quá hạn', async () => {
+        const futureLead: Lead = {
+            ...sampleLead,
+            id: 'lead-future-1',
+            callback_date: '2099-12-31',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [futureLead],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(futureLead)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`lead-row-${futureLead.id}`)).toBeDefined())
+
+        const row = screen.getByTestId(`lead-row-${futureLead.id}`)
+        expect(row.className).not.toContain('row-overdue')
+        expect(screen.queryByTestId(`overdue-badge-${futureLead.id}`)).toBeNull()
+    })
+
+    it('TC214-11: Lead có ngày nhắc trong quá khứ -> đánh dấu quá hạn nổi bật trên Table view & Modal', async () => {
+        const overdueLead: Lead = {
+            ...sampleLead,
+            id: 'lead-overdue-1',
+            callback_date: '2020-01-01',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [overdueLead],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(overdueLead)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`lead-row-${overdueLead.id}`)).toBeDefined())
+
+        // Kiểm tra table row có class row-overdue và badge quá hạn
+        const row = screen.getByTestId(`lead-row-${overdueLead.id}`)
+        expect(row.className).toContain('row-overdue')
+
+        const overdueBadge = screen.getByTestId(`overdue-badge-${overdueLead.id}`)
+        expect(overdueBadge.textContent).toContain('Quá hạn gọi lại')
+        expect(overdueBadge.textContent).toContain('01/01/2020')
+
+        // Mở detail modal
+        fireEvent.click(screen.getByTestId(`view-lead-${overdueLead.id}`))
+        await waitFor(() => {
+            expect(screen.getByTestId('detail-overdue-tag')).toBeDefined()
+            expect(screen.getByTestId('detail-overdue-tag').textContent).toContain('Quá hạn gọi lại')
+        })
+    })
+
+    it('TC214-12: Lead quá hạn trên Kanban board -> hiển thị badge và border nổi bật', async () => {
+        const overdueLead: Lead = {
+            ...sampleLead,
+            id: 'lead-kanban-overdue-1',
+            callback_date: '2020-01-01',
+            status: 'new',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [overdueLead],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLeadPipeline).mockResolvedValue({
+            columns: [
+                {
+                    status: 'new',
+                    label: 'Mới',
+                    count: 1,
+                    leads: [overdueLead],
+                },
+            ],
+            leads: [overdueLead],
+            counts: { new: 1 },
+            total: 1,
+        })
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId('view-mode-pipeline-btn')).toBeDefined())
+
+        // Chuyển sang chế độ Kanban
+        fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId(`lead-card-${overdueLead.id}`)).toBeDefined()
+        })
+
+        const card = screen.getByTestId(`lead-card-${overdueLead.id}`)
+        expect(card.className).toContain('pipeline-card--overdue')
+
+        const kanbanBadge = screen.getByTestId(`kanban-overdue-badge-${overdueLead.id}`)
+        expect(kanbanBadge.textContent).toContain('Quá hạn gọi lại')
+        expect(kanbanBadge.textContent).toContain('01/01/2020')
+    })
+})
+
+
