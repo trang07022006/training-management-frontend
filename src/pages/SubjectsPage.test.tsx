@@ -560,7 +560,7 @@ describe('SubjectsPage - Test Matrix SCRUM-123 Activity A6', () => {
                     json: async () => ({
                         code: 'SUBJECT_IN_USE',
                         message:
-                            'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+                            'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
                     }),
                 })
             }
@@ -581,7 +581,7 @@ describe('SubjectsPage - Test Matrix SCRUM-123 Activity A6', () => {
         await waitFor(() => {
             expect(screen.getByTestId('delete-dialog-error')).toBeDefined()
             expect(screen.getByTestId('delete-dialog-error').textContent).toContain(
-                'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+                'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
             )
         })
     })

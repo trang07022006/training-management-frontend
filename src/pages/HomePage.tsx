@@ -7,6 +7,7 @@ import {
   type RequestFunction,
 } from '../api/publicConsultationApi'
 import { getProgramVisualMeta } from '../utils/programAssets'
+import { getErrorMessage } from '../utils/errorMessages'
 import './HomePage.css'
 
 export interface HomePageProps {
@@ -43,10 +44,7 @@ export function HomePage({ apiOrigin, requestFn }: HomePageProps) {
       })
       .catch((err: unknown) => {
         if (isMounted) {
-          const message =
-            err && typeof err === 'object' && 'message' in err
-              ? String(err.message)
-              : 'Không thể tải danh sách chương trình đào tạo.'
+          const message = getErrorMessage(err, 'Không thể tải danh sách chương trình đào tạo.')
           setProgramError(message)
           setIsLoadingPrograms(false)
         }
@@ -95,10 +93,7 @@ export function HomePage({ apiOrigin, requestFn }: HomePageProps) {
       setCompactEmail('')
       setCompactProgramId('')
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Không thể gửi đăng ký lúc này. Vui lòng thử lại sau.'
+      const msg = getErrorMessage(err, 'Không thể gửi đăng ký lúc này. Vui lòng thử lại sau.')
       setSubmitError(msg)
     } finally {
       setIsSubmitting(false)

@@ -27,6 +27,7 @@ export const SYSTEM_PERMISSIONS = {
     COURSE_MANAGE: 'course.manage',
     SESSION_VIEW: 'session.view',
     SESSION_REVOKE: 'session.revoke',
+    LEAD_DELETE: 'lead.delete',
 } as const
 
 export type SystemPermission =
@@ -46,6 +47,7 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.COURSE_MANAGE,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SESSION_REVOKE,
+        SYSTEM_PERMISSIONS.LEAD_DELETE,
     ],
     trainer: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
@@ -58,6 +60,17 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
     ],
     user: [
         SYSTEM_PERMISSIONS.SESSION_VIEW,
+    ],
+    consultant: [
+        SYSTEM_PERMISSIONS.COURSE_VIEW,
+        SYSTEM_PERMISSIONS.COURSE_MANAGE,
+        SYSTEM_PERMISSIONS.SESSION_VIEW,
+    ],
+    training_manager: [
+        SYSTEM_PERMISSIONS.COURSE_VIEW,
+        SYSTEM_PERMISSIONS.COURSE_MANAGE,
+        SYSTEM_PERMISSIONS.SESSION_VIEW,
+        SYSTEM_PERMISSIONS.LEAD_DELETE,
     ],
 }
 

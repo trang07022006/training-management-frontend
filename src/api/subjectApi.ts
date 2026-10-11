@@ -320,7 +320,7 @@ export async function deleteSubject(
             } else if (body.message && isFriendlyVietnamese(body.message) && !isTechnicalCode(body.message)) {
                 message = body.message
             } else {
-                message = 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
+                message = 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
             }
         } else if (code === 'SUBJECT_NOT_FOUND') {
             message = 'Không tìm thấy môn học. Dữ liệu có thể đã được thay đổi hoặc xóa.'

@@ -1211,7 +1211,12 @@ export function SubjectsPage({
                         <div className="subjects-modal-body">
                             {deleteDialogError && (
                                 <div className="subjects-banner subjects-banner-error" role="alert" data-testid="delete-dialog-error">
-                                    <p className="subjects-banner-message">{deleteDialogError}</p>
+                                    <p className="subjects-banner-message">
+                                        {deleteDialogError.replace(
+                                            'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+                                            'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+                                        )}
+                                    </p>
                                 </div>
                             )}
 

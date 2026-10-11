@@ -612,7 +612,7 @@ describe('TrainingProgramsPage - Test Matrix SCRUM-122 Activity A6', () => {
         await waitFor(() => {
             expect(screen.getByTestId('banner-error')).toBeDefined()
         })
-        expect(screen.getByText('Bạn cần đăng nhập để tiếp tục.')).toBeDefined()
+        expect(screen.getByText('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')).toBeDefined()
     })
 
     // 27. Forbidden handling

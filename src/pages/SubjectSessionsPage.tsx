@@ -26,6 +26,7 @@ import {
 } from '../api/subjectSessionApi'
 import { getSubject } from '../api/subjectApi'
 import { Breadcrumb } from '../components/Breadcrumb'
+import { getErrorMessage } from '../utils/errorMessages'
 import './SubjectSessionsPage.css'
 
 export interface SubjectSessionsPageProps {
@@ -143,7 +144,7 @@ export function SubjectSessionsPage({
             })
             .catch((err: unknown) => {
                 if (isMounted) {
-                    setErrorMessage(err instanceof ApiError ? err.message : 'Lỗi khi tải dữ liệu buổi học.')
+                    setErrorMessage(getErrorMessage(err, 'Lỗi khi tải dữ liệu buổi học.'))
                     setLoading(false)
                 }
             })

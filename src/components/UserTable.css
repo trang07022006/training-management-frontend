@@ -119,6 +119,19 @@
     border: 1px solid #e2e8f0;
 }
 
+.role-badge.role-consultant {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.role-badge.role-training_manager,
+.role-badge.role-training-manager {
+    background-color: #fae8ff;
+    color: #86198f;
+    border: 1px solid #f5d0fe;
+}
+
 /* Status Badges */
 .status-badge {
     display: inline-flex;

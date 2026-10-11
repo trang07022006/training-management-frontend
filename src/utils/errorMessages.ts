@@ -27,9 +27,10 @@ export const ERROR_MESSAGES: Record<string, string> = {
     ACCESS_TOKEN_EXPIRED: 'Phiên làm việc cần được làm mới.',
     SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.',
     SESSION_REVOKED: 'Phiên đăng nhập đã được kết thúc. Vui lòng đăng nhập lại.',
-    UNAUTHORIZED: 'Bạn cần đăng nhập để tiếp tục.',
-    AUTH_REQUIRED: 'Bạn cần đăng nhập để tiếp tục.',
-    SESSION_INVALID: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
+    UNAUTHORIZED: 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.',
+    AUTH_REQUIRED: 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.',
+    '401': 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.',
+    SESSION_INVALID: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.',
     REFRESH_TOKEN_INVALID: 'Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.',
     TOKEN_INVALID: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
     SESSION_CHANGED: 'Phiên đăng nhập đã thay đổi. Vui lòng tải lại trang.',
@@ -63,7 +64,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // 5. PHÂN QUYỀN
     // ----------------------------------------------------
     FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
-    PERMISSION_DENIED: 'Bạn không có quyền truy cập chức năng này.',
+    PERMISSION_DENIED: 'Bạn không có quyền thực hiện thao tác này.',
+    '403': 'Bạn không có quyền thực hiện thao tác này.',
 
     // ----------------------------------------------------
     // 6. QUẢN LÝ NGƯỜI DÙNG
@@ -192,12 +194,14 @@ export const ERROR_MESSAGES: Record<string, string> = {
     SEMESTER_EXCEEDS_DURATION: 'Học kỳ vượt quá thời gian đào tạo của chương trình.',
 
     // ----------------------------------------------------
-    // 16. TƯ VẤN CÔNG KHAI (SCRUM-125)
+    // 16. TƯ VẤN CÔNG KHAI & PHÂN CÔNG LEAD (SCRUM-125 / SCRUM-127)
     // ----------------------------------------------------
     PHONE_REQUIRED: 'Số điện thoại là bắt buộc.',
     INVALID_PARAMS: 'Dữ liệu cung cấp không hợp lệ.',
     INVALID_PROGRAM: 'Chương trình đào tạo này hiện không mở đăng ký tư vấn.',
     CONSULTATION_RATE_LIMITED: 'Bạn vừa gửi yêu cầu tư vấn. Vui lòng thử lại sau khoảng 1 phút.',
+    INVALID_ASSIGNEE: 'Chỉ có thể phân công Lead cho nhân viên Tư vấn tuyển sinh.',
+    INACTIVE_USER: 'Người dùng không còn hoạt động, không thể nhận phân công.',
 
     // ----------------------------------------------------
     // 17. QUẢN LÝ BUỔI HỌC (SCRUM-129)
@@ -248,6 +252,7 @@ export const NETWORK_ERROR_MESSAGE = 'Không thể kết nối tới máy chủ.
 
 const TECHNICAL_CODE_REGEX = /^[A-Z0-9_]{3,}$/
 const VIETNAMESE_ACCENT_REGEX = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i
+const TECHNICAL_ERROR_REGEX = /(?:traceback|exception|error:|stack trace|internal server error|econnrefused|fetch failed|\bat\s+\w+\s+\()/i
 
 /**
  * Kiểm tra xem chuỗi có phải là mã kỹ thuật dạng CONSTANT_CASE hay không.
@@ -284,49 +289,126 @@ export function isFriendlyVietnamese(text?: string | null): boolean {
     const trimmed = text.trim()
     if (!trimmed) return false
     if (isTechnicalCode(trimmed)) return false
+    if (isTechnicalError(trimmed)) return false
     return VIETNAMESE_ACCENT_REGEX.test(trimmed)
 }
 
 /**
+ * Kiểm tra chuỗi có chứa lỗi kỹ thuật, stack trace hoặc mã hệ thống hay không.
+ */
+export function isTechnicalError(text?: string | null): boolean {
+    if (!text || typeof text !== 'string') return false
+    const trimmed = text.trim()
+    if (!trimmed) return false
+    if (isTechnicalCode(trimmed)) return true
+    if (TECHNICAL_ERROR_REGEX.test(trimmed)) return true
+    return false
+}
+
+/**
+ * Chuẩn hóa fallback để đảm bảo tuyệt đối không leak mã lỗi hoặc stack trace.
+ */
+export function sanitizeFallback(fallback?: string): string {
+    if (!fallback || typeof fallback !== 'string') return DEFAULT_FALLBACK_ERROR
+    const trimmed = fallback.trim()
+    if (!trimmed) return DEFAULT_FALLBACK_ERROR
+    if (trimmed in ERROR_MESSAGES) return ERROR_MESSAGES[trimmed]
+    if (isTechnicalCode(trimmed) || isTechnicalError(trimmed)) return DEFAULT_FALLBACK_ERROR
+    if (isFriendlyVietnamese(trimmed)) return trimmed
+    return DEFAULT_FALLBACK_ERROR
+}
+
+/**
  * Hàm dùng chung ánh xạ error code hoặc error object sang thông báo tiếng Việt thân thiện.
+ * Tuân thủ quy định:
+ * - UNAUTHORIZED -> "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
+ * - FORBIDDEN / 403 -> "Bạn không có quyền thực hiện thao tác này."
+ * - 401 -> "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
+ * - Tuyệt đối không hiển thị mã kỹ thuật, status code, backend raw error, stack trace ra UI.
  */
 export function getErrorMessage(
     errorOrCode: unknown,
     fallback?: string,
 ): string {
-    if (!errorOrCode) {
-        return fallback || DEFAULT_FALLBACK_ERROR
+    const safeFallback = sanitizeFallback(fallback)
+
+    if (errorOrCode === undefined || errorOrCode === null) {
+        return safeFallback
     }
 
-    // 1. Trường hợp là chuỗi
+    // 1. Trường hợp là number (ví dụ 401, 403)
+    if (typeof errorOrCode === 'number') {
+        if (errorOrCode === 401) {
+            return ERROR_MESSAGES['401']
+        }
+        if (errorOrCode === 403) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        const str = String(errorOrCode)
+        if (str in ERROR_MESSAGES) {
+            return ERROR_MESSAGES[str]
+        }
+        return safeFallback
+    }
+
+    // 2. Trường hợp là chuỗi
     if (typeof errorOrCode === 'string') {
         const trimmed = errorOrCode.trim()
         if (isNetworkError(trimmed)) {
             return NETWORK_ERROR_MESSAGE
         }
+
+        const upper = trimmed.toUpperCase()
+
+        // Mapping ưu tiên mã auth / permission
+        if (trimmed === '401' || trimmed.startsWith('401')) {
+            return ERROR_MESSAGES['401']
+        }
+        if (upper === 'UNAUTHORIZED' || upper === 'AUTH_REQUIRED') {
+            return ERROR_MESSAGES.UNAUTHORIZED
+        }
+        if (upper === 'FORBIDDEN' || upper === 'PERMISSION_DENIED' || trimmed === '403' || trimmed.startsWith('403')) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        if (trimmed.includes('401')) {
+            return ERROR_MESSAGES['401']
+        }
+        if (upper.includes('UNAUTHORIZED')) {
+            return ERROR_MESSAGES.UNAUTHORIZED
+        }
+        if (upper.includes('FORBIDDEN') || trimmed.includes('403')) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+
         if (trimmed in ERROR_MESSAGES) {
             return ERROR_MESSAGES[trimmed]
         }
-        if (isTechnicalCode(trimmed)) {
-            return fallback || DEFAULT_FALLBACK_ERROR
+        if (isTechnicalCode(trimmed) || isTechnicalError(trimmed)) {
+            return safeFallback
         }
         if (isFriendlyVietnamese(trimmed)) {
             return trimmed
         }
-        return fallback || DEFAULT_FALLBACK_ERROR
+        return safeFallback
     }
 
-    // 2. Trường hợp là Error hoặc Object có thuộc tính code / message
+    // 3. Trường hợp là Error hoặc Object có thuộc tính code / message / status
     let code: string | null = null
     let rawMessage: string | null = null
+    let status: number | null = null
 
-    if (typeof errorOrCode === 'object' && errorOrCode !== null) {
+    if (typeof errorOrCode === 'object') {
         const anyObj = errorOrCode as Record<string, unknown>
         if ('code' in anyObj && typeof anyObj.code === 'string') {
             code = anyObj.code.trim()
         }
         if ('message' in anyObj && typeof anyObj.message === 'string') {
             rawMessage = anyObj.message.trim()
+        }
+        if ('status' in anyObj && typeof anyObj.status === 'number') {
+            status = anyObj.status
+        } else if ('statusCode' in anyObj && typeof anyObj.statusCode === 'number') {
+            status = anyObj.statusCode
         }
     }
 
@@ -335,8 +417,11 @@ export function getErrorMessage(
         return NETWORK_ERROR_MESSAGE
     }
 
-    // Nếu có mã code được định nghĩa trong ERROR_MESSAGES
-    if (code && code in ERROR_MESSAGES) {
+    const normCode = code?.toUpperCase()
+    const upperMsg = rawMessage?.toUpperCase() || ''
+
+    // Nếu có mã code được định nghĩa trong ERROR_MESSAGES (ngoại trừ các mã chung chung như API_ERROR)
+    if (code && code in ERROR_MESSAGES && !['API_ERROR', 'REQUEST_FAILED', 'UNKNOWN_ERROR'].includes(code)) {
         if (code === 'ACCOUNT_LOCKED' && rawMessage && (rawMessage.includes('15 phút') || rawMessage.includes('tạm thời'))) {
             return rawMessage
         }
@@ -374,20 +459,52 @@ export function getErrorMessage(
         return ERROR_MESSAGES[code]
     }
 
+    // Ánh xạ lỗi xác thực và phân quyền qua status hoặc message khi mã code không chuyên biệt
+    if (normCode === 'UNAUTHORIZED' || normCode === 'AUTH_REQUIRED') {
+        return ERROR_MESSAGES.UNAUTHORIZED
+    }
+
+    if (
+        normCode === 'FORBIDDEN' ||
+        normCode === 'PERMISSION_DENIED' ||
+        normCode === '403' ||
+        status === 403 ||
+        upperMsg === 'FORBIDDEN' ||
+        upperMsg.startsWith('403') ||
+        upperMsg.includes('FORBIDDEN') ||
+        upperMsg.includes('403') ||
+        upperMsg.includes('PERMISSION_DENIED')
+    ) {
+        return ERROR_MESSAGES.FORBIDDEN
+    }
+
+    if (
+        normCode === '401' ||
+        status === 401 ||
+        upperMsg.startsWith('401') ||
+        upperMsg.includes('401')
+    ) {
+        return ERROR_MESSAGES['401']
+    }
+
+    if (upperMsg === 'UNAUTHORIZED' || upperMsg.includes('UNAUTHORIZED')) {
+        return ERROR_MESSAGES.UNAUTHORIZED
+    }
+
     // Nếu message có trong mapper
     if (rawMessage) {
         if (rawMessage in ERROR_MESSAGES) {
             return ERROR_MESSAGES[rawMessage]
         }
-        if (isTechnicalCode(rawMessage)) {
-            return fallback || DEFAULT_FALLBACK_ERROR
+        if (isTechnicalCode(rawMessage) || isTechnicalError(rawMessage)) {
+            return safeFallback
         }
         if (isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
     }
 
-    return fallback || DEFAULT_FALLBACK_ERROR
+    return safeFallback
 }
 
 /**

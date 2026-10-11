@@ -46,8 +46,10 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
         })
 
         it('map UNAUTHORIZED và AUTH_REQUIRED', () => {
-            expect(getErrorMessage('UNAUTHORIZED')).toBe('Bạn cần đăng nhập để tiếp tục.')
-            expect(getErrorMessage('AUTH_REQUIRED')).toBe('Bạn cần đăng nhập để tiếp tục.')
+            expect(getErrorMessage('UNAUTHORIZED')).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+            expect(getErrorMessage('AUTH_REQUIRED')).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+            expect(getErrorMessage('401')).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+            expect(getErrorMessage(401)).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
         })
 
         it('map ACCESS_TOKEN_EXPIRED không hiển thị mã kỹ thuật', () => {
@@ -122,9 +124,28 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
     })
 
     describe('5. Phân quyền (RBAC)', () => {
-        it('map FORBIDDEN và PERMISSION_DENIED', () => {
+        it('map FORBIDDEN, PERMISSION_DENIED và 403', () => {
             expect(getErrorMessage('FORBIDDEN')).toBe('Bạn không có quyền thực hiện thao tác này.')
-            expect(getErrorMessage('PERMISSION_DENIED')).toBe('Bạn không có quyền truy cập chức năng này.')
+            expect(getErrorMessage('PERMISSION_DENIED')).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage('403')).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(403)).toBe('Bạn không có quyền thực hiện thao tác này.')
+        })
+
+        it('map object và error có mã hoặc trạng thái phân quyền', () => {
+            expect(getErrorMessage(new Error('FORBIDDEN'))).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(new Error('UNAUTHORIZED'))).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+            expect(getErrorMessage(new Error('403 Forbidden'))).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(new Error('401 Unauthorized'))).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+            expect(getErrorMessage({ status: 403 })).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage({ status: 401 })).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+            expect(getErrorMessage({ code: 'FORBIDDEN' })).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage({ code: 'UNAUTHORIZED' })).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+        })
+
+        it('không hiển thị raw error code hay stack trace ra ngoài', () => {
+            expect(getErrorMessage('Traceback (most recent call last):\n  File "server.py", line 12')).not.toContain('Traceback')
+            expect(getErrorMessage('Internal Server Error: 500 at app.py:45')).toBe('Đã xảy ra lỗi. Vui lòng thử lại.')
+            expect(getErrorMessage(new Error('Traceback at handler()'))).toBe('Đã xảy ra lỗi. Vui lòng thử lại.')
         })
     })
 

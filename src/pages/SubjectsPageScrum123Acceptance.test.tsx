@@ -234,7 +234,7 @@ describe('SCRUM-123 Acceptance Tests - Subject Management UI', () => {
                     status: 409,
                     json: async () => ({
                         code: 'SUBJECT_IN_USE',
-                        message: 'Không thể xóa môn học vì đang có dữ liệu liên quan. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+                        message: 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
                     }),
                 })
             }
@@ -256,7 +256,7 @@ describe('SCRUM-123 Acceptance Tests - Subject Management UI', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('delete-dialog-error').textContent).toContain(
-                'Không thể xóa môn học vì đang có dữ liệu liên quan',
+                'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo',
             )
         })
     })

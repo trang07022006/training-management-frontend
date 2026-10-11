@@ -41,7 +41,7 @@ export function RoleDashboard({ role: roleProp }: RoleDashboardProps) {
                 <div className="role-badge-container">
                     <span className="role-badge">
                         <span className="role-badge-dot" aria-hidden="true" />
-                        <span>Vai trò: {roleLabel} ({activeRole})</span>
+                        <span>Vai trò: {roleLabel}</span>
                     </span>
                 </div>
 

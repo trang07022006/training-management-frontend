@@ -131,6 +131,8 @@ export function UserFilterBar({
                         <option value="admin">Quản trị viên</option>
                         <option value="trainer">Giảng viên</option>
                         <option value="trainee">Học viên</option>
+                        <option value="consultant">Tư vấn tuyển sinh</option>
+                        <option value="training_manager">Quản lý đào tạo</option>
                         <option value="user">Người dùng</option>
                     </select>
                 </div>

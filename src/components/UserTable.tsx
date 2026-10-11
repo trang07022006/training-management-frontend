@@ -1,4 +1,5 @@
 import { type User, getStatusInfo } from '../api/userApi'
+import { getRoleLabel } from '../auth/roleRouting'
 import './UserTable.css'
 
 export interface UserTableProps {
@@ -17,6 +18,8 @@ const ROLE_LABELS: Record<string, string> = {
     trainer: 'Giảng viên',
     trainee: 'Học viên',
     user: 'Người dùng',
+    consultant: 'Tư vấn tuyển sinh',
+    training_manager: 'Quản lý đào tạo',
 }
 
 export function UserTable({
@@ -56,7 +59,7 @@ export function UserTable({
                     <tbody>
                         {users.map((u) => {
                             const roleKey = (u.role || 'user').toLowerCase()
-                            const roleText = ROLE_LABELS[roleKey] || u.role || 'Người dùng'
+                            const roleText = ROLE_LABELS[roleKey] || getRoleLabel(u.role) || 'Người dùng'
                             const { key: statusKey, label: statusText } = getStatusInfo(u.status)
 
                             return (

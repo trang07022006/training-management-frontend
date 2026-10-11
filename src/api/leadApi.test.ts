@@ -8,6 +8,12 @@ import {
     assignLead,
     getAssignableUsers,
     getLeadStatusLabel,
+    getLeadSourceLabel,
+    LEAD_SOURCES,
+    checkLeadPhone,
+    createLead,
+    updateLead,
+    deleteLead,
     type Lead,
     type AssignableUser,
     ApiError,
@@ -286,5 +292,230 @@ describe('leadApi - API Client (SCRUM-126 Activity A6)', () => {
             await expect(getAssignableUsers(mockRequest)).rejects.toThrow(ApiError)
         })
     })
+
+    describe('getLeadSourceLabel & LEAD_SOURCES (SCRUM-126)', () => {
+        it('chứa danh sách các nguồn hợp lệ của hệ thống', () => {
+            expect(LEAD_SOURCES.some((s) => s.value === 'direct')).toBe(true)
+            expect(LEAD_SOURCES.some((s) => s.value === 'hotline')).toBe(true)
+            expect(LEAD_SOURCES.some((s) => s.value === 'public_form')).toBe(true)
+        })
+
+        it('ánh xạ đúng nhãn tiếng Việt cho các mã nguồn', () => {
+            expect(getLeadSourceLabel('direct')).toBe('Trực tiếp tại văn phòng')
+            expect(getLeadSourceLabel('hotline')).toBe('Hotline / Điện thoại')
+            expect(getLeadSourceLabel('social')).toBe('Mạng xã hội (Facebook, Zalo...)')
+            expect(getLeadSourceLabel('public_form')).toBe('Biểu mẫu website')
+            expect(getLeadSourceLabel(null)).toBe('Chưa xác định')
+            expect(getLeadSourceLabel('other_custom')).toBe('other_custom')
+        })
+    })
+
+    describe('checkLeadPhone (GET /api/v1/leads/check-phone) - SCRUM-126', () => {
+        it('kiểm tra số điện thoại trùng thành công', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    data: {
+                        exists: true,
+                        lead: {
+                            id: 'lead-1',
+                            full_name: 'Nguyễn Văn A',
+                            phone: '0912345678',
+                        },
+                    },
+                }),
+            })
+
+            const result = await checkLeadPhone(mockRequest, '0912345678', 'lead-2')
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                '/api/v1/leads/check-phone?phone=0912345678&exclude_id=lead-2',
+                { method: 'GET' },
+            )
+            expect(result.exists).toBe(true)
+            expect(result.lead?.full_name).toBe('Nguyễn Văn A')
+        })
+
+        it('ném ApiError khi gặp lỗi hệ thống', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 500,
+                json: async () => ({
+                    code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Lỗi kiểm tra số điện thoại.',
+                }),
+            })
+
+            await expect(checkLeadPhone(mockRequest, '0912345678')).rejects.toThrow(ApiError)
+        })
+    })
+
+    describe('createLead (POST /api/v1/leads) - SCRUM-126', () => {
+        it('gửi thông tin tạo lead thủ công thành công', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    message: 'Tạo khách hàng tiềm năng thành công.',
+                    data: mockLead,
+                    duplicate_warning: false,
+                    existing_lead: null,
+                }),
+            })
+
+            const input = {
+                full_name: 'QA SCRUM 126',
+                phone: '0912612626',
+                email: 'qa.s126@example.com',
+                source: 'direct',
+                interested_program_id: 'prog-uuid-123',
+            }
+
+            const result = await createLead(mockRequest, input)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                '/api/v1/leads',
+                expect.objectContaining({
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(input),
+                }),
+            )
+            expect(result.lead.id).toBe(mockLead.id)
+            expect(result.duplicate_warning).toBe(false)
+            expect(result.message).toBe('Tạo khách hàng tiềm năng thành công.')
+        })
+
+        it('nhận duplicate_warning khi số điện thoại đã tồn tại', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    message: 'Tạo khách hàng tiềm năng thành công.',
+                    data: mockLead,
+                    duplicate_warning: true,
+                    existing_lead: {
+                        id: 'old-lead',
+                        full_name: 'Nguyễn Văn Cũ',
+                        phone: '0912612626',
+                    },
+                }),
+            })
+
+            const result = await createLead(mockRequest, {
+                full_name: 'QA SCRUM 126',
+                phone: '0912612626',
+            })
+
+            expect(result.duplicate_warning).toBe(true)
+            expect(result.existing_lead?.full_name).toBe('Nguyễn Văn Cũ')
+        })
+
+        it('ném ApiError khi validate lỗi (400)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 400,
+                json: async () => ({
+                    code: 'NAME_REQUIRED',
+                    message: 'Vui lòng nhập họ và tên.',
+                }),
+            })
+
+            await expect(
+                createLead(mockRequest, { full_name: '', phone: '0912612626' }),
+            ).rejects.toThrow(ApiError)
+        })
+    })
+
+    describe('updateLead (PUT /api/v1/leads/<id>) - SCRUM-126', () => {
+        it('gửi thông tin cập nhật lead thành công', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    message: 'Cập nhật khách hàng tiềm năng thành công.',
+                    data: { ...mockLead, full_name: 'Tên Đã Sửa' },
+                    duplicate_warning: false,
+                    existing_lead: null,
+                }),
+            })
+
+            const input = {
+                full_name: 'Tên Đã Sửa',
+                phone: '0912345678',
+                email: 'test@example.com',
+                source: 'hotline',
+            }
+
+            const result = await updateLead(mockRequest, mockLead.id, input)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}`,
+                expect.objectContaining({
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(input),
+                }),
+            )
+            expect(result.lead.full_name).toBe('Tên Đã Sửa')
+            expect(result.message).toBe('Cập nhật khách hàng tiềm năng thành công.')
+        })
+
+        it('ném ApiError khi lead không tồn tại (404)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 404,
+                json: async () => ({
+                    code: 'LEAD_NOT_FOUND',
+                    message: 'Không tìm thấy khách hàng tiềm năng.',
+                }),
+            })
+
+            await expect(
+                updateLead(mockRequest, 'unknown-id', {
+                    full_name: 'Tên',
+                    phone: '0912345678',
+                }),
+            ).rejects.toThrow(ApiError)
+        })
+    })
+
+    describe('deleteLead (DELETE /api/v1/leads/<id>) - SCRUM-126', () => {
+        it('gọi DELETE /api/v1/leads/<id> thành công (200)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    message: 'Xóa khách hàng tiềm năng thành công.',
+                }),
+            })
+
+            const res = await deleteLead(mockRequest, mockLead.id)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}`,
+                expect.objectContaining({ method: 'DELETE' }),
+            )
+            expect(res.status).toBe('success')
+            expect(res.message).toBe('Xóa khách hàng tiềm năng thành công.')
+        })
+
+        it('bị từ chối quyền (403 FORBIDDEN) khi role không có quyền xóa', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: async () => ({
+                    status: 'error',
+                    code: 'FORBIDDEN',
+                    message: 'Không có quyền thực hiện thao tác này.',
+                }),
+            })
+
+            await expect(deleteLead(mockRequest, mockLead.id)).rejects.toThrow(ApiError)
+        })
+    })
 })
+
 

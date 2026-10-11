@@ -28,6 +28,7 @@ import {
     type RequestFunction,
     ApiError,
 } from '../api/programStructureApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import { getSubjects, type Subject } from '../api/subjectApi'
 import { getProgramStatusLabel } from '../api/trainingProgramApi'
 import { Breadcrumb } from '../components/Breadcrumb'
@@ -150,9 +151,7 @@ export function ProgramStructurePage({
             .catch((err: unknown) => {
                 if (isMounted) {
                     setErrorMessage(
-                        err instanceof ApiError
-                            ? err.message
-                            : 'Lỗi khi tải cấu trúc chương trình đào tạo.',
+                        getErrorMessage(err, 'Lỗi khi tải cấu trúc chương trình đào tạo.'),
                     )
                     setLoading(false)
                 }
