@@ -631,6 +631,18 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+.form-group input.input-invalid,
+.form-group textarea.input-invalid {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 1px #dc2626;
+}
+
+.form-group input.input-invalid:focus,
+.form-group textarea.input-invalid:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
 .form-help-text {
     font-size: 0.8rem;
     color: #64748b;
@@ -638,9 +650,13 @@
 }
 
 .form-error-text {
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     color: #dc2626;
     margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 500;
 }
 
 .btn-secondary {

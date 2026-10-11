@@ -28,6 +28,7 @@ import {
 import { getSubject, getSubjects, type Subject } from '../api/subjectApi'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { getErrorMessage } from '../utils/errorMessages'
+import { validateSessionNumber } from '../utils/subjectSessionValidation'
 import './SubjectSessionsPage.css'
 
 export interface SubjectSessionsPageProps {
@@ -72,8 +73,11 @@ export function SubjectSessionsPage({
     // Modals State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false)
     const [createNumber, setCreateNumber] = useState<string>('1')
+    const [createNumberError, setCreateNumberError] = useState<string | null>(null)
     const [createTopic, setCreateTopic] = useState<string>('')
+    const [createTopicError, setCreateTopicError] = useState<string | null>(null)
     const [createObjective, setCreateObjective] = useState<string>('')
+    const [createObjectiveError, setCreateObjectiveError] = useState<string | null>(null)
     const [createError, setCreateError] = useState<string | null>(null)
     const [isCreating, setIsCreating] = useState<boolean>(false)
 
@@ -102,6 +106,12 @@ export function SubjectSessionsPage({
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
     const isArchived = subjectStatus === 'archived'
+    const isFullSessions = Boolean(
+        subject?.total_sessions !== null &&
+            subject?.total_sessions !== undefined &&
+            subject.total_sessions > 0 &&
+            sessions.length >= subject.total_sessions,
+    )
 
     // Load data function
     const loadData = useCallback(async () => {
@@ -185,11 +195,14 @@ export function SubjectSessionsPage({
 
     // Open Create Modal
     const handleOpenCreateModal = () => {
-        if (isArchived) return
+        if (isArchived || isFullSessions) return
         const nextNum = sessions.length > 0 ? Math.max(...sessions.map((s) => s.session_number)) + 1 : 1
         setCreateNumber(String(nextNum))
+        setCreateNumberError(null)
         setCreateTopic('')
+        setCreateTopicError(null)
         setCreateObjective('')
+        setCreateObjectiveError(null)
         setCreateError(null)
         setIsCreateModalOpen(true)
     }
@@ -198,40 +211,48 @@ export function SubjectSessionsPage({
     const handleCreateSubmit = async (e: FormEvent) => {
         e.preventDefault()
         if (isArchived) return
-        setCreateError(null)
 
-        const num = Number.parseInt(createNumber, 10)
-        if (Number.isNaN(num) || num < 1) {
-            setCreateError('Số thứ tự buổi học phải là số nguyên dương lớn hơn hoặc bằng 1.')
+        setCreateError(null)
+        setCreateTopicError(null)
+        setCreateObjectiveError(null)
+
+        const numError = validateSessionNumber(createNumber, subject?.total_sessions)
+        if (numError) {
+            setCreateNumberError(numError)
             return
         }
+        setCreateNumberError(null)
 
-        if (subject?.total_sessions !== null && subject?.total_sessions !== undefined) {
-            if (num > subject.total_sessions) {
-                setCreateError(`Số thứ tự buổi học vượt quá tổng số buổi của môn học (tối đa ${subject.total_sessions}).`)
-                return
-            }
+        if (isFullSessions) {
+            setCreateError(`Môn học đã khai báo đủ ${subject?.total_sessions}/${subject?.total_sessions} buổi.`)
+            return
         }
 
         const trimmedTopic = createTopic.trim()
         if (!trimmedTopic) {
+            setCreateTopicError('Chủ đề buổi học là bắt buộc.')
             setCreateError('Chủ đề buổi học là bắt buộc.')
             return
         }
         if (trimmedTopic.length > 255) {
+            setCreateTopicError('Chủ đề buổi học không được vượt quá 255 ký tự.')
             setCreateError('Chủ đề buổi học không được vượt quá 255 ký tự.')
             return
         }
 
         const trimmedObjective = createObjective.trim()
         if (!trimmedObjective) {
+            setCreateObjectiveError('Mục tiêu buổi học là bắt buộc.')
             setCreateError('Mục tiêu buổi học là bắt buộc.')
             return
         }
         if (trimmedObjective.length > 5000) {
+            setCreateObjectiveError('Mục tiêu buổi học không được vượt quá 5000 ký tự.')
             setCreateError('Mục tiêu buổi học không được vượt quá 5000 ký tự.')
             return
         }
+
+        const num = Number.parseInt(createNumber.trim(), 10)
 
         setIsCreating(true)
         try {
@@ -580,8 +601,14 @@ export function SubjectSessionsPage({
                                 type="button"
                                 className="btn-add-session"
                                 data-testid="btn-add-session"
-                                disabled={isArchived}
-                                title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                disabled={isArchived || isFullSessions}
+                                title={
+                                    isArchived
+                                        ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.'
+                                        : isFullSessions
+                                          ? `Môn học đã khai báo đủ ${subject?.total_sessions}/${subject?.total_sessions} buổi.`
+                                          : undefined
+                                }
                                 onClick={handleOpenCreateModal}
                             >
                                 + Thêm buổi học
@@ -646,8 +673,14 @@ export function SubjectSessionsPage({
                             type="button"
                             className="btn-add-session"
                             data-testid="btn-empty-add-session"
-                            disabled={isArchived}
-                            title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                            disabled={isArchived || isFullSessions}
+                            title={
+                                isArchived
+                                    ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.'
+                                    : isFullSessions
+                                      ? `Môn học đã khai báo đủ ${subject?.total_sessions}/${subject?.total_sessions} buổi.`
+                                      : undefined
+                            }
                             onClick={handleOpenCreateModal}
                         >
                             + Thêm buổi học đầu tiên
@@ -778,7 +811,7 @@ export function SubjectSessionsPage({
                         aria-labelledby="modal-create-title"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <form onSubmit={handleCreateSubmit}>
+                        <form noValidate onSubmit={handleCreateSubmit} onInvalid={(e) => e.preventDefault()}>
                             <div className="modal-header">
                                 <h2 id="modal-create-title">Thêm buổi học mới</h2>
                                 <button
@@ -808,11 +841,29 @@ export function SubjectSessionsPage({
                                         min="1"
                                         max={subject?.total_sessions ?? undefined}
                                         value={createNumber}
-                                        onChange={(e) => setCreateNumber(e.target.value)}
-                                        required
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            setCreateNumber(val)
+                                            setCreateNumberError(validateSessionNumber(val, subject?.total_sessions))
+                                        }}
+                                        onInvalid={(e) => e.preventDefault()}
+                                        className={createNumberError ? 'input-invalid' : ''}
                                         disabled={isCreating}
+                                        aria-invalid={Boolean(createNumberError)}
+                                        aria-describedby={createNumberError ? 'error-session-number' : undefined}
                                     />
-                                    {subject?.total_sessions && (
+                                    {createNumberError && (
+                                        <div
+                                            id="error-session-number"
+                                            className="form-error-text"
+                                            data-testid="error-session-number"
+                                            role="alert"
+                                        >
+                                            <span aria-hidden="true">⚠</span>
+                                            <span>{createNumberError}</span>
+                                        </div>
+                                    )}
+                                    {!createNumberError && subject?.total_sessions && (
                                         <div className="form-help-text">
                                             Tổng số buổi cấu hình cho môn học: tối đa {subject.total_sessions} buổi.
                                         </div>
@@ -829,11 +880,21 @@ export function SubjectSessionsPage({
                                         placeholder="Ví dụ: Giới thiệu môn học và cơ sở lập trình"
                                         maxLength={255}
                                         value={createTopic}
-                                        onChange={(e) => setCreateTopic(e.target.value)}
-                                        required
+                                        onChange={(e) => {
+                                            setCreateTopic(e.target.value)
+                                            if (createTopicError) setCreateTopicError(null)
+                                        }}
+                                        onInvalid={(e) => e.preventDefault()}
+                                        className={createTopicError ? 'input-invalid' : ''}
                                         disabled={isCreating}
                                     />
-                                    <div className="form-help-text">Tối đa 255 ký tự.</div>
+                                    {createTopicError && (
+                                        <div className="form-error-text" role="alert">
+                                            <span aria-hidden="true">⚠</span>
+                                            <span>{createTopicError}</span>
+                                        </div>
+                                    )}
+                                    {!createTopicError && <div className="form-help-text">Tối đa 255 ký tự.</div>}
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor="create-session-objective">
@@ -846,11 +907,21 @@ export function SubjectSessionsPage({
                                         rows={4}
                                         maxLength={5000}
                                         value={createObjective}
-                                        onChange={(e) => setCreateObjective(e.target.value)}
-                                        required
+                                        onChange={(e) => {
+                                            setCreateObjective(e.target.value)
+                                            if (createObjectiveError) setCreateObjectiveError(null)
+                                        }}
+                                        onInvalid={(e) => e.preventDefault()}
+                                        className={createObjectiveError ? 'input-invalid' : ''}
                                         disabled={isCreating}
                                     />
-                                    <div className="form-help-text">Tối đa 5000 ký tự.</div>
+                                    {createObjectiveError && (
+                                        <div className="form-error-text" role="alert">
+                                            <span aria-hidden="true">⚠</span>
+                                            <span>{createObjectiveError}</span>
+                                        </div>
+                                    )}
+                                    {!createObjectiveError && <div className="form-help-text">Tối đa 5000 ký tự.</div>}
                                 </div>
                             </div>
                             <div className="modal-footer">
@@ -886,7 +957,7 @@ export function SubjectSessionsPage({
                         aria-labelledby="modal-edit-title"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <form onSubmit={handleEditSubmit}>
+                        <form noValidate onSubmit={handleEditSubmit} onInvalid={(e) => e.preventDefault()}>
                             <div className="modal-header">
                                 <h2 id="modal-edit-title">Chỉnh sửa Buổi {editingSession.session_number}</h2>
                                 <button
@@ -914,7 +985,7 @@ export function SubjectSessionsPage({
                                         style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}
                                     />
                                     <div className="form-help-text">
-                                        Số thứ tự được cố định tại đây. Để thay đổi thứ tự, hãy dùng nút Sắp xếp (↑/↓).
+                                        Số thứ tự được cố định tại đây. Để thay đổi thứ tự, hãy kéo thả dòng buổi học trong danh sách.
                                     </div>
                                 </div>
                                 <div className="form-group">

@@ -5,6 +5,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { useEffect, type ReactNode } from 'react'
 import { SubjectSessionsPage } from './SubjectSessionsPage'
+import { validateSessionNumber } from '../utils/subjectSessionValidation'
 import { SessionProvider, useSession } from '../auth/SessionProvider'
 import type { SubjectSession, SubjectSummary } from '../api/subjectSessionApi'
 
@@ -327,7 +328,8 @@ describe('SubjectSessionsPage - Test Suite SCRUM-129 Activity A6', () => {
         const form = screen.getByRole('dialog').querySelector('form')!
         fireEvent.submit(form)
 
-        expect(screen.getByText(/Số thứ tự buổi học vượt quá tổng số buổi của môn học/i)).toBeDefined()
+        expect(screen.getByText('Số thứ tự buổi học không được vượt quá 5.')).toBeDefined()
+        expect(screen.getByTestId('input-session-number').classList.contains('input-invalid')).toBe(true)
     })
 
     it('9. Chỉnh sửa buổi học thành công và gửi đúng dữ liệu', async () => {
@@ -1243,6 +1245,174 @@ describe('SubjectSessionsPage - Test Suite SCRUM-129 Activity A6', () => {
             )
             expect(screen.getByTestId('session-number-sess-1').textContent).toBe('Buổi 1')
             expect(screen.getByTestId('session-number-sess-2').textContent).toBe('Buổi 2')
+        })
+    })
+
+    describe('SCRUM-129 - Vietnamese Validation & Native Browser Tooltip Replacement', () => {
+        it('28. validateSessionNumber unit tests for all validation cases', () => {
+            // Case: Để trống
+            expect(validateSessionNumber('', 3)).toBe('Vui lòng nhập số thứ tự buổi học.')
+            expect(validateSessionNumber('   ', 3)).toBe('Vui lòng nhập số thứ tự buổi học.')
+
+            // Case: Không phải số nguyên hợp lệ
+            expect(validateSessionNumber('abc', 3)).toBe('Vui lòng nhập số thứ tự buổi học hợp lệ.')
+            expect(validateSessionNumber('1.5', 3)).toBe('Vui lòng nhập số thứ tự buổi học hợp lệ.')
+            expect(validateSessionNumber('3,5', 3)).toBe('Vui lòng nhập số thứ tự buổi học hợp lệ.')
+
+            // Case: Nhập 0 hoặc số nhỏ hơn 1
+            expect(validateSessionNumber('0', 3)).toBe('Số thứ tự buổi học phải lớn hơn hoặc bằng 1.')
+            expect(validateSessionNumber('-1', 3)).toBe('Số thứ tự buổi học phải lớn hơn hoặc bằng 1.')
+            expect(validateSessionNumber('-10', 3)).toBe('Số thứ tự buổi học phải lớn hơn hoặc bằng 1.')
+
+            // Case: Vượt quá total_sessions (động, không hard-code)
+            expect(validateSessionNumber('4', 3)).toBe('Số thứ tự buổi học không được vượt quá 3.')
+            expect(validateSessionNumber('11', 10)).toBe('Số thứ tự buổi học không được vượt quá 10.')
+            expect(validateSessionNumber('100', 50)).toBe('Số thứ tự buổi học không được vượt quá 50.')
+
+            // Case: Hợp lệ
+            expect(validateSessionNumber('1', 3)).toBeNull()
+            expect(validateSessionNumber('2', 3)).toBeNull()
+            expect(validateSessionNumber('3', 3)).toBeNull()
+            expect(validateSessionNumber('10', 10)).toBeNull()
+            expect(validateSessionNumber('5', null)).toBeNull()
+        })
+
+        it('29. Test 1 (nhập 4 với total_sessions = 3): Hiển thị "Số thứ tự buổi học không được vượt quá 3." và form có noValidate', async () => {
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                initialSubject: { ...mockSubjectSummary, total_sessions: 3 },
+                initialSessions: [mockSessionsData[0], mockSessionsData[1]], // 2/3 buổi
+            })
+
+            fireEvent.click(screen.getByTestId('btn-add-session'))
+            const form = screen.getByRole('dialog').querySelector('form')!
+            expect(form.noValidate).toBe(true)
+
+            const inputNumber = screen.getByTestId('input-session-number')
+            fireEvent.change(inputNumber, { target: { value: '4' } })
+
+            // Hiển thị ngay dưới input
+            expect(screen.getByText('Số thứ tự buổi học không được vượt quá 3.')).toBeDefined()
+            expect(inputNumber.classList.contains('input-invalid')).toBe(true)
+
+            // Submit không được gọi API
+            const submitBtn = screen.getByTestId('btn-submit-create')
+            fireEvent.click(submitBtn)
+            expect(screen.getByText('Số thứ tự buổi học không được vượt quá 3.')).toBeDefined()
+        })
+
+        it('30. Test 2 (nhập 0): Hiển thị "Số thứ tự buổi học phải lớn hơn hoặc bằng 1."', async () => {
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                initialSubject: { ...mockSubjectSummary, total_sessions: 3 },
+                initialSessions: [mockSessionsData[0]],
+            })
+
+            fireEvent.click(screen.getByTestId('btn-add-session'))
+            const inputNumber = screen.getByTestId('input-session-number')
+            fireEvent.change(inputNumber, { target: { value: '0' } })
+
+            expect(screen.getByText('Số thứ tự buổi học phải lớn hơn hoặc bằng 1.')).toBeDefined()
+            expect(inputNumber.classList.contains('input-invalid')).toBe(true)
+        })
+
+        it('31. Test 3 (để trống): Hiển thị "Vui lòng nhập số thứ tự buổi học."', async () => {
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                initialSubject: { ...mockSubjectSummary, total_sessions: 3 },
+                initialSessions: [mockSessionsData[0]],
+            })
+
+            fireEvent.click(screen.getByTestId('btn-add-session'))
+            const inputNumber = screen.getByTestId('input-session-number')
+            fireEvent.change(inputNumber, { target: { value: '' } })
+
+            expect(screen.getByText('Vui lòng nhập số thứ tự buổi học.')).toBeDefined()
+            expect(inputNumber.classList.contains('input-invalid')).toBe(true)
+        })
+
+        it('32. Test 4 (nhập 3 với total_sessions = 3): Field hợp lệ, lỗi biến mất', async () => {
+            const mockRequest = vi.fn().mockImplementation(async (_path: string, init?: RequestInit) => {
+                if (init?.method === 'POST') {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            status: 'success',
+                            data: {
+                                id: 'sess-3',
+                                subject_id: 'sub-101',
+                                session_number: 3,
+                                topic: 'Buổi cuối',
+                                objective: 'Mục tiêu hoàn thành',
+                            },
+                        }),
+                    }
+                }
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            subject: { ...mockSubjectSummary, total_sessions: 3 },
+                            items: [mockSessionsData[0], mockSessionsData[1]],
+                        },
+                    }),
+                }
+            })
+
+            renderSubjectSessionsPage({
+                customRequest: mockRequest,
+                canManageOverride: true,
+                initialSubject: { ...mockSubjectSummary, total_sessions: 3 },
+                initialSessions: [mockSessionsData[0], mockSessionsData[1]],
+            })
+
+            fireEvent.click(screen.getByTestId('btn-add-session'))
+            const inputNumber = screen.getByTestId('input-session-number')
+
+            // Ban đầu nhập 4 (bị lỗi)
+            fireEvent.change(inputNumber, { target: { value: '4' } })
+            expect(screen.getByText('Số thứ tự buổi học không được vượt quá 3.')).toBeDefined()
+
+            // Sửa lại thành 3 (hợp lệ)
+            fireEvent.change(inputNumber, { target: { value: '3' } })
+            expect(screen.queryByTestId('error-session-number')).toBeNull()
+            expect(inputNumber.classList.contains('input-invalid')).toBe(false)
+
+            // Điền topic, objective và submit
+            fireEvent.change(screen.getByTestId('input-session-topic'), { target: { value: 'Buổi cuối' } })
+            fireEvent.change(screen.getByTestId('input-session-objective'), { target: { value: 'Mục tiêu hoàn thành' } })
+            fireEvent.click(screen.getByTestId('btn-submit-create'))
+
+            await waitFor(() => {
+                expect(mockRequest).toHaveBeenCalledWith(
+                    '/api/v1/subjects/sub-101/sessions',
+                    expect.objectContaining({
+                        method: 'POST',
+                        body: JSON.stringify({
+                            session_number: 3,
+                            topic: 'Buổi cuối',
+                            objective: 'Mục tiêu hoàn thành',
+                        }),
+                    }),
+                )
+            })
+        })
+
+        it('33. Khi đã đủ 3/3 buổi đã tạo: disable nút "+ Thêm buổi học" với tooltip tiếng Việt', async () => {
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                initialSubject: { ...mockSubjectSummary, total_sessions: 3 },
+                initialSessions: [mockSessionsData[0], mockSessionsData[1], mockSessionsData[2]], // 3/3 buổi
+            })
+
+            const addBtn = screen.getByTestId('btn-add-session') as HTMLButtonElement
+            expect(addBtn.disabled).toBe(true)
+            expect(addBtn.getAttribute('title')).toBe('Môn học đã khai báo đủ 3/3 buổi.')
+
+            // Không mở được modal tạo
+            fireEvent.click(addBtn)
+            expect(screen.queryByText('Thêm buổi học mới')).toBeNull()
         })
     })
 })
