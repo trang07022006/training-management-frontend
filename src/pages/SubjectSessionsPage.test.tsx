@@ -81,7 +81,21 @@ function renderSubjectSessionsPage({
     initialSessions?: SubjectSession[]
     initialSubject?: SubjectSummary
 }) {
-    const defaultMockRequest = vi.fn().mockImplementation(async (path: string) => {
+    const defaultMockRequest = vi.fn().mockImplementation(async (path: string, _init?: RequestInit) => {
+        if (path.includes('/clone')) {
+            return {
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    message: 'Đã nhân bản 3 buổi học thành công.',
+                    data: {
+                        cloned_count: 3,
+                        total_sessions: 3,
+                        items: mockSessionsData,
+                    },
+                }),
+            }
+        }
         if (path.includes('/sessions') && !path.includes('/reorder')) {
             return {
                 ok: true,
@@ -90,6 +104,29 @@ function renderSubjectSessionsPage({
                     data: {
                         subject: initialSubject || mockSubjectSummary,
                         items: initialSessions || mockSessionsData,
+                    },
+                }),
+            }
+        }
+        if (path.includes('/subjects?') || path === '/api/v1/subjects') {
+            return {
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    data: {
+                        items: [
+                            {
+                                id: 'source-subj-1',
+                                code: 'QA-S129-SOURCE',
+                                name: 'Nguồn buổi học',
+                                total_sessions: 3,
+                                status: 'active',
+                            },
+                        ],
+                        total: 1,
+                        page: 1,
+                        page_size: 100,
+                        total_pages: 1,
                     },
                 }),
             }
@@ -507,6 +544,418 @@ describe('SubjectSessionsPage - Test Suite SCRUM-129 Activity A6', () => {
         // Click nút Sửa buổi học
         fireEvent.click(screen.getByTestId('btn-edit-sess-1'))
         expect(screen.queryByText('Chỉnh sửa buổi học')).toBeNull()
+    })
+
+    it('16. Header có nút "Nhân bản buổi học" bên cạnh "+ Thêm buổi học"', async () => {
+        renderSubjectSessionsPage({
+            initialSubject: mockSubjectSummary,
+            initialSessions: mockSessionsData,
+        })
+
+        const cloneBtn = screen.getByTestId('btn-clone-sessions')
+        expect(cloneBtn).toBeDefined()
+        expect(cloneBtn.textContent).toContain('Nhân bản buổi học')
+
+        const addBtn = screen.getByTestId('btn-add-session')
+        expect(addBtn).toBeDefined()
+    })
+
+    it('17. Mở modal "Nhân bản danh sách buổi học" và load danh sách môn nguồn (không chứa môn hiện tại)', async () => {
+        renderSubjectSessionsPage({
+            subjectId: 'sub-101',
+            initialSubject: mockSubjectSummary,
+            initialSessions: mockSessionsData,
+        })
+
+        fireEvent.click(screen.getByTestId('btn-clone-sessions'))
+
+        await waitFor(() => {
+            expect(screen.getByText('Nhân bản danh sách buổi học')).toBeDefined()
+        })
+
+        const select = screen.getByTestId('select-source-subject') as HTMLSelectElement
+        expect(select).toBeDefined()
+
+        await waitFor(() => {
+            expect(screen.getByText('QA-S129-SOURCE – Nguồn buổi học')).toBeDefined()
+            expect(screen.queryByText('CS101 – Cấu trúc dữ liệu & Giải thuật')).toBeNull()
+        })
+    })
+
+    it('18. TC129-CLONE-01: Xem trước và nhân bản 3 buổi học thành công (0/3 -> 3/3)', async () => {
+        const targetSubject: SubjectSummary = {
+            id: 'qa-target-1',
+            code: 'QA-S129-TARGET',
+            name: 'Nhận buổi học',
+            total_sessions: 3,
+        }
+
+        const sourceSessions: SubjectSession[] = [
+            {
+                id: 'src-1',
+                subject_id: 'source-subj-1',
+                session_number: 1,
+                topic: 'Tổng quan môn học',
+                objective: 'Nắm được nội dung và mục tiêu của môn học',
+                created_at: '2026-03-01T00:00:00Z',
+                updated_at: '2026-03-01T00:00:00Z',
+            },
+            {
+                id: 'src-2',
+                subject_id: 'source-subj-1',
+                session_number: 2,
+                topic: 'Kiến thức nền tảng',
+                objective: 'Hiểu các khái niệm cơ bản',
+                created_at: '2026-03-02T00:00:00Z',
+                updated_at: '2026-03-02T00:00:00Z',
+            },
+            {
+                id: 'src-3',
+                subject_id: 'source-subj-1',
+                session_number: 3,
+                topic: 'Thực hành',
+                objective: 'Vận dụng kiến thức vào bài thực hành',
+                created_at: '2026-03-03T00:00:00Z',
+                updated_at: '2026-03-03T00:00:00Z',
+            },
+        ]
+
+        let currentTargetSessions: SubjectSession[] = []
+
+        const customMockRequest = vi.fn().mockImplementation(async (path: string, _init?: RequestInit) => {
+            if (path.includes('/clone')) {
+                currentTargetSessions = [...sourceSessions]
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        message: 'Đã nhân bản 3 buổi học thành công.',
+                        data: {
+                            cloned_count: 3,
+                            total_sessions: 3,
+                            items: currentTargetSessions,
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/source-subj-1/sessions')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            subject: { id: 'source-subj-1', code: 'QA-S129-SOURCE', name: 'Nguồn buổi học' },
+                            items: sourceSessions,
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/sessions') && !path.includes('/reorder')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            subject: targetSubject,
+                            items: currentTargetSessions,
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/subjects?') || path === '/api/v1/subjects') {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            items: [
+                                {
+                                    id: 'source-subj-1',
+                                    code: 'QA-S129-SOURCE',
+                                    name: 'Nguồn buổi học',
+                                    total_sessions: 3,
+                                    status: 'active',
+                                },
+                            ],
+                            total: 1,
+                            page: 1,
+                            page_size: 100,
+                            total_pages: 1,
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/subjects/')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            ...targetSubject,
+                            status: 'active',
+                        },
+                    }),
+                }
+            }
+            return { ok: true, json: async () => ({ status: 'success' }) }
+        })
+
+        renderSubjectSessionsPage({
+            subjectId: 'qa-target-1',
+            initialSubject: targetSubject,
+            initialSessions: [],
+            customRequest: customMockRequest,
+        })
+
+        // Ban đầu 0 / 3 buổi
+        expect(screen.getByTestId('badge-subject-progress').textContent).toContain('0 / 3 buổi đã tạo')
+
+        // Mở modal nhân bản
+        fireEvent.click(screen.getByTestId('btn-clone-sessions'))
+
+        await waitFor(() => {
+            expect(screen.getByText('Nhân bản danh sách buổi học')).toBeDefined()
+        })
+
+        // Chọn môn nguồn
+        const select = screen.getByTestId('select-source-subject')
+        fireEvent.change(select, { target: { value: 'source-subj-1' } })
+
+        // Chờ preview hiển thị
+        await waitFor(() => {
+            expect(screen.getByTestId('clone-preview-source-info').textContent).toContain('QA-S129-SOURCE – Nguồn buổi học')
+            expect(screen.getByTestId('clone-preview-count').textContent).toContain('3 buổi')
+            expect(screen.getByText('Buổi 1 – Tổng quan môn học')).toBeDefined()
+            expect(screen.getByText('Mục tiêu: Nắm được nội dung và mục tiêu của môn học')).toBeDefined()
+            expect(screen.getByText('Buổi 2 – Kiến thức nền tảng')).toBeDefined()
+            expect(screen.getByText('Buổi 3 – Thực hành')).toBeDefined()
+        })
+
+        // Bấm nút Nhân bản
+        const submitBtn = screen.getByTestId('btn-submit-clone')
+        expect((submitBtn as HTMLButtonElement).disabled).toBe(false)
+        fireEvent.click(submitBtn)
+
+        // Chờ hoàn thành
+        await waitFor(() => {
+            expect(screen.getByTestId('banner-success').textContent).toContain('Đã nhân bản 3 buổi học thành công.')
+            expect(screen.getByTestId('badge-subject-progress').textContent).toContain('3 / 3 buổi đã tạo')
+        })
+    })
+
+    it('19. TC129-CLONE-04: Chặn nhân bản khi TARGET max = 2 mà SOURCE có 3 buổi', async () => {
+        const targetSubject: SubjectSummary = {
+            id: 'qa-target-small',
+            code: 'QA-S129-TARGET-2',
+            name: 'Môn đích 2 buổi',
+            total_sessions: 2,
+        }
+
+        const sourceSessions: SubjectSession[] = [
+            { id: 's1', subject_id: 'src-1', session_number: 1, topic: 'B1', objective: 'O1', created_at: '', updated_at: '' },
+            { id: 's2', subject_id: 'src-1', session_number: 2, topic: 'B2', objective: 'O2', created_at: '', updated_at: '' },
+            { id: 's3', subject_id: 'src-1', session_number: 3, topic: 'B3', objective: 'O3', created_at: '', updated_at: '' },
+        ]
+
+        const customMockRequest = vi.fn().mockImplementation(async (path: string) => {
+            if (path.includes('/source-subj-1/sessions')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            subject: { id: 'source-subj-1', code: 'QA-S129-SOURCE', name: 'Nguồn buổi học' },
+                            items: sourceSessions,
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/sessions') && !path.includes('/reorder')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: { subject: targetSubject, items: [] },
+                    }),
+                }
+            }
+            if (path.includes('/subjects?') || path === '/api/v1/subjects') {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            items: [{ id: 'source-subj-1', code: 'QA-S129-SOURCE', name: 'Nguồn buổi học', total_sessions: 3, status: 'active' }],
+                            total: 1, page: 1, page_size: 100, total_pages: 1,
+                        },
+                    }),
+                }
+            }
+            return { ok: true, json: async () => ({ status: 'success' }) }
+        })
+
+        renderSubjectSessionsPage({
+            subjectId: 'qa-target-small',
+            initialSubject: targetSubject,
+            initialSessions: [],
+            customRequest: customMockRequest,
+        })
+
+        fireEvent.click(screen.getByTestId('btn-clone-sessions'))
+        await waitFor(() => screen.getByTestId('select-source-subject'))
+
+        fireEvent.change(screen.getByTestId('select-source-subject'), { target: { value: 'source-subj-1' } })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('clone-error-banner').textContent).toContain(
+                'Không thể nhân bản. Môn học này chỉ được khai báo tối đa 2 buổi.',
+            )
+        })
+
+        const submitBtn = screen.getByTestId('btn-submit-clone') as HTMLButtonElement
+        expect(submitBtn.disabled).toBe(true)
+    })
+
+    it('20. TC129-CLONE-05: Chặn nhân bản khi tổng số buổi sau clone vượt quá max (3 + 3 > 5)', async () => {
+        const targetSubject: SubjectSummary = {
+            id: 'qa-target-5',
+            code: 'QA-S129-TARGET-5',
+            name: 'Môn đích 5 buổi',
+            total_sessions: 5,
+        }
+
+        const targetCurrentSessions: SubjectSession[] = [
+            { id: 't1', subject_id: 'qa-target-5', session_number: 1, topic: 'T1', objective: 'O1', created_at: '', updated_at: '' },
+            { id: 't2', subject_id: 'qa-target-5', session_number: 2, topic: 'T2', objective: 'O2', created_at: '', updated_at: '' },
+            { id: 't3', subject_id: 'qa-target-5', session_number: 3, topic: 'T3', objective: 'O3', created_at: '', updated_at: '' },
+        ]
+
+        const sourceSessions: SubjectSession[] = [
+            { id: 's1', subject_id: 'src-1', session_number: 1, topic: 'B1', objective: 'O1', created_at: '', updated_at: '' },
+            { id: 's2', subject_id: 'src-1', session_number: 2, topic: 'B2', objective: 'O2', created_at: '', updated_at: '' },
+            { id: 's3', subject_id: 'src-1', session_number: 3, topic: 'B3', objective: 'O3', created_at: '', updated_at: '' },
+        ]
+
+        const customMockRequest = vi.fn().mockImplementation(async (path: string) => {
+            if (path.includes('/source-subj-1/sessions')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            subject: { id: 'source-subj-1', code: 'QA-S129-SOURCE', name: 'Nguồn buổi học' },
+                            items: sourceSessions,
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/sessions') && !path.includes('/reorder')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: { subject: targetSubject, items: targetCurrentSessions },
+                    }),
+                }
+            }
+            if (path.includes('/subjects?') || path === '/api/v1/subjects') {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            items: [{ id: 'source-subj-1', code: 'QA-S129-SOURCE', name: 'Nguồn buổi học', total_sessions: 3, status: 'active' }],
+                            total: 1, page: 1, page_size: 100, total_pages: 1,
+                        },
+                    }),
+                }
+            }
+            return { ok: true, json: async () => ({ status: 'success' }) }
+        })
+
+        renderSubjectSessionsPage({
+            subjectId: 'qa-target-5',
+            initialSubject: targetSubject,
+            initialSessions: targetCurrentSessions,
+            customRequest: customMockRequest,
+        })
+
+        fireEvent.click(screen.getByTestId('btn-clone-sessions'))
+        await waitFor(() => screen.getByTestId('select-source-subject'))
+
+        fireEvent.change(screen.getByTestId('select-source-subject'), { target: { value: 'source-subj-1' } })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('clone-error-banner').textContent).toContain(
+                'Không thể nhân bản vì số buổi sau khi nhân bản sẽ vượt quá giới hạn của môn học.',
+            )
+        })
+
+        const submitBtn = screen.getByTestId('btn-submit-clone') as HTMLButtonElement
+        expect(submitBtn.disabled).toBe(true)
+    })
+
+    it('21. TC129-CLONE-07: Hiển thị cảnh báo khi môn nguồn không có buổi học nào', async () => {
+        const customMockRequest = vi.fn().mockImplementation(async (path: string) => {
+            if (path.includes('/source-empty/sessions')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            subject: { id: 'source-empty', code: 'EMPTY-SOURCE', name: 'Môn nguồn rỗng' },
+                            items: [],
+                        },
+                    }),
+                }
+            }
+            if (path.includes('/sessions') && !path.includes('/reorder')) {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: { subject: mockSubjectSummary, items: [] },
+                    }),
+                }
+            }
+            if (path.includes('/subjects?') || path === '/api/v1/subjects') {
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            items: [{ id: 'source-empty', code: 'EMPTY-SOURCE', name: 'Môn nguồn rỗng', total_sessions: 3, status: 'active' }],
+                            total: 1, page: 1, page_size: 100, total_pages: 1,
+                        },
+                    }),
+                }
+            }
+            return { ok: true, json: async () => ({ status: 'success' }) }
+        })
+
+        renderSubjectSessionsPage({
+            subjectId: 'sub-101',
+            initialSubject: mockSubjectSummary,
+            initialSessions: [],
+            customRequest: customMockRequest,
+        })
+
+        fireEvent.click(screen.getByTestId('btn-clone-sessions'))
+        await waitFor(() => screen.getByTestId('select-source-subject'))
+
+        fireEvent.change(screen.getByTestId('select-source-subject'), { target: { value: 'source-empty' } })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('clone-error-banner').textContent).toContain(
+                'Môn học được chọn chưa có buổi học để nhân bản.',
+            )
+            expect(screen.getByTestId('clone-preview-empty').textContent).toContain(
+                'Môn học này chưa có buổi học nào để nhân bản.',
+            )
+        })
+
+        const submitBtn = screen.getByTestId('btn-submit-clone') as HTMLButtonElement
+        expect(submitBtn.disabled).toBe(true)
     })
 })
 

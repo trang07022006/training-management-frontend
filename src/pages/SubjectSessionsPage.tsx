@@ -19,12 +19,13 @@ import {
     updateSubjectSession,
     reorderSubjectSessions,
     deleteSubjectSession,
+    cloneSubjectSessions,
     type SubjectSession,
     type SubjectSummary,
     type RequestFunction,
     ApiError,
 } from '../api/subjectSessionApi'
-import { getSubject } from '../api/subjectApi'
+import { getSubject, getSubjects, type Subject } from '../api/subjectApi'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { getErrorMessage } from '../utils/errorMessages'
 import './SubjectSessionsPage.css'
@@ -85,6 +86,16 @@ export function SubjectSessionsPage({
     const [deletingSession, setDeletingSession] = useState<SubjectSession | null>(null)
     const [deleteError, setDeleteError] = useState<string | null>(null)
     const [isDeleting, setIsDeleting] = useState<boolean>(false)
+
+    // Clone Modal State (SCRUM-129)
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState<boolean>(false)
+    const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([])
+    const [isLoadingSubjects, setIsLoadingSubjects] = useState<boolean>(false)
+    const [selectedSourceId, setSelectedSourceId] = useState<string>('')
+    const [sourceSessionsPreview, setSourceSessionsPreview] = useState<SubjectSession[]>([])
+    const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false)
+    const [cloneError, setCloneError] = useState<string | null>(null)
+    const [isCloning, setIsCloning] = useState<boolean>(false)
 
     const isArchived = subjectStatus === 'archived'
 
@@ -159,13 +170,14 @@ export function SubjectSessionsPage({
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 if (isCreateModalOpen && !isCreating) setIsCreateModalOpen(false)
+                if (isCloneModalOpen && !isCloning) setIsCloneModalOpen(false)
                 if (editingSession && !isUpdating) setEditingSession(null)
                 if (deletingSession && !isDeleting) setDeletingSession(null)
             }
         }
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [isCreateModalOpen, isCreating, editingSession, isUpdating, deletingSession, isDeleting])
+    }, [isCreateModalOpen, isCreating, isCloneModalOpen, isCloning, editingSession, isUpdating, deletingSession, isDeleting])
 
     // Open Create Modal
     const handleOpenCreateModal = () => {
@@ -334,6 +346,98 @@ export function SubjectSessionsPage({
         }
     }
 
+    // Open Clone Modal (SCRUM-129)
+    const handleOpenCloneModal = async () => {
+        if (isArchived) return
+        setSelectedSourceId('')
+        setSourceSessionsPreview([])
+        setCloneError(null)
+        setIsCloneModalOpen(true)
+        setIsLoadingSubjects(true)
+
+        try {
+            const res = await getSubjects(requestFn, { page_size: 100 })
+            const filtered = res.items.filter((s) => s.id !== subjectId)
+            setAvailableSubjects(filtered)
+        } catch (err) {
+            setCloneError(getErrorMessage(err, 'Lỗi khi tải danh sách môn học nguồn.'))
+        } finally {
+            setIsLoadingSubjects(false)
+        }
+    }
+
+    // Select Source Subject (SCRUM-129)
+    const handleSelectSourceSubject = async (sourceId: string) => {
+        setSelectedSourceId(sourceId)
+        setCloneError(null)
+        setSourceSessionsPreview([])
+
+        if (!sourceId) return
+
+        setIsLoadingPreview(true)
+        try {
+            const res = await getSubjectSessions(requestFn, sourceId)
+            const sortedItems = res.items.sort((a, b) => a.session_number - b.session_number)
+            setSourceSessionsPreview(sortedItems)
+
+            if (sortedItems.length === 0) {
+                setCloneError('Môn học được chọn chưa có buổi học để nhân bản.')
+                return
+            }
+
+            if (subject?.total_sessions !== null && subject?.total_sessions !== undefined) {
+                if (sessions.length === 0 && sortedItems.length > subject.total_sessions) {
+                    setCloneError(`Không thể nhân bản. Môn học này chỉ được khai báo tối đa ${subject.total_sessions} buổi.`)
+                } else if (sessions.length > 0 && sessions.length + sortedItems.length > subject.total_sessions) {
+                    setCloneError('Không thể nhân bản vì số buổi sau khi nhân bản sẽ vượt quá giới hạn của môn học.')
+                }
+            }
+        } catch (err) {
+            setCloneError(getErrorMessage(err, 'Không thể tải danh sách buổi học của môn nguồn.'))
+        } finally {
+            setIsLoadingPreview(false)
+        }
+    }
+
+    // Submit Clone Sessions (SCRUM-129)
+    const handleCloneSubmit = async (e: FormEvent) => {
+        e.preventDefault()
+        if (isArchived || isCloning || !selectedSourceId) return
+        setCloneError(null)
+
+        if (sourceSessionsPreview.length === 0) {
+            setCloneError('Môn học được chọn chưa có buổi học để nhân bản.')
+            return
+        }
+
+        if (subject?.total_sessions !== null && subject?.total_sessions !== undefined) {
+            if (sessions.length === 0 && sourceSessionsPreview.length > subject.total_sessions) {
+                setCloneError(`Không thể nhân bản. Môn học này chỉ được khai báo tối đa ${subject.total_sessions} buổi.`)
+                return
+            }
+            if (sessions.length > 0 && sessions.length + sourceSessionsPreview.length > subject.total_sessions) {
+                setCloneError('Không thể nhân bản vì số buổi sau khi nhân bản sẽ vượt quá giới hạn của môn học.')
+                return
+            }
+        }
+
+        setIsCloning(true)
+        try {
+            const res = await cloneSubjectSessions(requestFn, subjectId, selectedSourceId)
+            setIsCloneModalOpen(false)
+            setSuccessMessage(`Đã nhân bản ${res.cloned_count} buổi học thành công.`)
+            await loadData()
+        } catch (err) {
+            setCloneError(
+                err instanceof ApiError
+                    ? err.message
+                    : 'Không thể nhân bản danh sách buổi học. Vui lòng thử lại.',
+            )
+        } finally {
+            setIsCloning(false)
+        }
+    }
+
     return (
         <div className="subject-sessions-container" data-testid="subject-sessions-page">
             <Breadcrumb
@@ -370,16 +474,43 @@ export function SubjectSessionsPage({
                     </div>
 
                     {canManage && (
-                        <button
-                            type="button"
-                            className="btn-add-session"
-                            data-testid="btn-add-session"
-                            disabled={isArchived}
-                            title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
-                            onClick={handleOpenCreateModal}
-                        >
-                            + Thêm buổi học
-                        </button>
+                        <div className="subject-sessions-actions">
+                            <button
+                                type="button"
+                                className="btn-clone-sessions"
+                                data-testid="btn-clone-sessions"
+                                disabled={isArchived}
+                                title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                onClick={handleOpenCloneModal}
+                            >
+                                <svg
+                                    className="btn-clone-icon"
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                >
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                </svg>
+                                Nhân bản buổi học
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-add-session"
+                                data-testid="btn-add-session"
+                                disabled={isArchived}
+                                title={isArchived ? 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.' : undefined}
+                                onClick={handleOpenCreateModal}
+                            >
+                                + Thêm buổi học
+                            </button>
+                        </div>
                     )}
                 </div>
             </header>
@@ -791,6 +922,180 @@ export function SubjectSessionsPage({
                                 {isDeleting ? 'Đang xóa...' : 'Xóa buổi học'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* CLONE MODAL (SCRUM-129) */}
+            {isCloneModalOpen && (
+                <div
+                    className="modal-overlay"
+                    role="presentation"
+                    onClick={() => !isCloning && setIsCloneModalOpen(false)}
+                >
+                    <div
+                        className="modal-content clone-modal-content"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="modal-clone-title"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <form onSubmit={handleCloneSubmit}>
+                            <div className="modal-header">
+                                <h2 id="modal-clone-title">Nhân bản danh sách buổi học</h2>
+                                <button
+                                    type="button"
+                                    className="modal-close-btn"
+                                    aria-label="Đóng hộp thoại"
+                                    onClick={() => !isCloning && setIsCloneModalOpen(false)}
+                                    disabled={isCloning}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                {cloneError && (
+                                    <div
+                                        className="sessions-banner sessions-banner-error"
+                                        role="alert"
+                                        data-testid="clone-error-banner"
+                                        style={{ marginBottom: '1rem' }}
+                                    >
+                                        <p className="sessions-banner-message">⚠ {cloneError}</p>
+                                    </div>
+                                )}
+                                <div className="form-group">
+                                    <label htmlFor="clone-source-subject">
+                                        Môn nguồn <span style={{ color: '#dc2626' }}>*</span>
+                                    </label>
+                                    <select
+                                        id="clone-source-subject"
+                                        className="clone-select-source"
+                                        data-testid="select-source-subject"
+                                        value={selectedSourceId}
+                                        onChange={(e) => void handleSelectSourceSubject(e.target.value)}
+                                        required
+                                        disabled={isCloning || isLoadingSubjects}
+                                    >
+                                        <option value="">-- Chọn môn học --</option>
+                                        {availableSubjects.map((s) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.code} – {s.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {isLoadingSubjects && (
+                                        <div className="form-help-text">Đang tải danh sách môn học...</div>
+                                    )}
+                                </div>
+
+                                {isLoadingPreview && (
+                                    <div className="clone-preview-loading" data-testid="clone-preview-loading">
+                                        <p>Đang tải danh sách buổi học của môn nguồn...</p>
+                                    </div>
+                                )}
+
+                                {!isLoadingPreview && selectedSourceId && (
+                                    <div className="clone-preview-section" data-testid="clone-preview-section">
+                                        {(() => {
+                                            const selectedSubj = availableSubjects.find(
+                                                (s) => s.id === selectedSourceId,
+                                            )
+                                            return (
+                                                <>
+                                                    <div className="clone-preview-header">
+                                                        <div
+                                                            className="clone-preview-title"
+                                                            data-testid="clone-preview-source-info"
+                                                        >
+                                                            <strong>Tên môn:</strong>{' '}
+                                                            {selectedSubj
+                                                                ? `${selectedSubj.code} – ${selectedSubj.name}`
+                                                                : ''}
+                                                        </div>
+                                                        <div
+                                                            className="clone-preview-count"
+                                                            data-testid="clone-preview-count"
+                                                        >
+                                                            <strong>Số buổi hiện có:</strong>{' '}
+                                                            {sourceSessionsPreview.length} buổi
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                fontSize: '0.875rem',
+                                                                color: '#475569',
+                                                                marginTop: '0.25rem',
+                                                            }}
+                                                        >
+                                                            {sourceSessionsPreview.length} buổi sẽ được nhân bản
+                                                        </div>
+                                                    </div>
+
+                                                    {sourceSessionsPreview.length === 0 ? (
+                                                        <div
+                                                            className="clone-preview-empty"
+                                                            data-testid="clone-preview-empty"
+                                                        >
+                                                            Môn học này chưa có buổi học nào để nhân bản.
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            className="clone-preview-list"
+                                                            data-testid="clone-preview-list"
+                                                        >
+                                                            {sourceSessionsPreview.map((s) => (
+                                                                <div
+                                                                    key={s.id}
+                                                                    className="clone-preview-item"
+                                                                    data-testid={`clone-preview-item-${s.id}`}
+                                                                >
+                                                                    <div className="clone-preview-item-title">
+                                                                        Buổi {s.session_number} – {s.topic}
+                                                                    </div>
+                                                                    <div className="clone-preview-item-objective">
+                                                                        Mục tiêu: {s.objective}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )
+                                        })()}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    data-testid="btn-cancel-clone"
+                                    onClick={() => setIsCloneModalOpen(false)}
+                                    disabled={isCloning}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    data-testid="btn-submit-clone"
+                                    disabled={
+                                        isCloning ||
+                                        !selectedSourceId ||
+                                        isLoadingPreview ||
+                                        sourceSessionsPreview.length === 0 ||
+                                        Boolean(
+                                            cloneError &&
+                                                (cloneError.includes('vượt quá') ||
+                                                    cloneError.includes('chỉ được khai báo tối đa') ||
+                                                    cloneError.includes('chưa có buổi học')),
+                                        )
+                                    }
+                                >
+                                    {isCloning ? 'Đang nhân bản...' : 'Nhân bản'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

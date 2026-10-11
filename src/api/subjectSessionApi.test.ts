@@ -8,6 +8,7 @@ import {
     updateSubjectSession,
     reorderSubjectSessions,
     deleteSubjectSession,
+    cloneSubjectSessions,
     type SubjectSession,
     type RequestFunction,
     ApiError,
@@ -234,6 +235,75 @@ describe('subjectSessionApi - API Client (SCRUM-129 Activity A6)', () => {
             )
             expect(result.id).toBe(mockSession.id)
             expect(result.message).toBe('Xóa buổi học thành công.')
+        })
+    })
+
+    describe('cloneSubjectSessions (POST /api/v1/subjects/<subject_id>/sessions/clone)', () => {
+        const mockSourceId = 'source-subj-123'
+
+        it('gọi POST clone thành công với source_subject_id trong body', async () => {
+            const mockClonedSessions = [
+                {
+                    id: 'new-sess-1',
+                    subject_id: mockSubjectId,
+                    session_number: 1,
+                    topic: 'Tổng quan môn học',
+                    objective: 'Nắm được nội dung và mục tiêu',
+                    created_at: '2026-03-05T00:00:00Z',
+                    updated_at: '2026-03-05T00:00:00Z',
+                },
+            ]
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    status: 'success',
+                    message: 'Đã nhân bản 1 buổi học thành công.',
+                    data: {
+                        cloned_count: 1,
+                        total_sessions: 1,
+                        items: mockClonedSessions,
+                    },
+                }),
+            }) as unknown as RequestFunction
+
+            const result = await cloneSubjectSessions(mockRequest, mockSubjectId, mockSourceId)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/subjects/${mockSubjectId}/sessions/clone`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ source_subject_id: mockSourceId }),
+                },
+            )
+            expect(result.cloned_count).toBe(1)
+            expect(result.items).toHaveLength(1)
+            expect(result.message).toBe('Đã nhân bản 1 buổi học thành công.')
+        })
+
+        it('ném ApiError khi backend trả về lỗi 400 (vượt quá giới hạn)', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 400,
+                json: async () => ({
+                    code: 'SESSION_LIMIT_EXCEEDED',
+                    message: 'Không thể nhân bản vì số buổi sau khi nhân bản sẽ vượt quá giới hạn của môn học.',
+                }),
+            }) as unknown as RequestFunction
+
+            await expect(cloneSubjectSessions(mockRequest, mockSubjectId, mockSourceId)).rejects.toThrow(
+                'Không thể nhân bản vì số buổi sau khi nhân bản sẽ vượt quá giới hạn của môn học.',
+            )
+        })
+
+        it('ném ApiError 403 khi không có quyền course.manage', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: false,
+                status: 403,
+                json: async () => ({ code: 'FORBIDDEN', message: 'Forbidden' }),
+            }) as unknown as RequestFunction
+
+            await expect(cloneSubjectSessions(mockRequest, mockSubjectId, mockSourceId)).rejects.toThrow(ApiError)
         })
     })
 })

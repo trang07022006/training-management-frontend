@@ -245,3 +245,53 @@ export async function deleteSubjectSession(
         id: sessionId,
     }
 }
+
+export interface CloneSubjectSessionsResponse {
+    message: string
+    cloned_count: number
+    total_sessions: number
+    items: SubjectSession[]
+}
+
+/**
+ * Nhân bản danh sách buổi học từ môn học khác (SCRUM-129).
+ * POST /api/v1/subjects/<subject_id>/sessions/clone
+ * Quyền yêu cầu: course.manage
+ */
+export async function cloneSubjectSessions(
+    requestFn: RequestFunction,
+    targetSubjectId: string,
+    sourceSubjectId: string,
+): Promise<CloneSubjectSessionsResponse> {
+    const path = `/api/v1/subjects/${encodeURIComponent(targetSubjectId)}/sessions/clone`
+    const res = await requestFn(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_subject_id: sourceSubjectId }),
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (
+            res.status === 403 ? 'FORBIDDEN' :
+            res.status === 401 ? 'UNAUTHORIZED' :
+            res.status === 404 ? 'SUBJECT_NOT_FOUND' :
+            res.status === 400 ? 'INVALID_PARAMS' :
+            'API_ERROR'
+        )
+        const message = getErrorMessage(
+            { code, message: body.message },
+            'Không thể nhân bản danh sách buổi học. Vui lòng thử lại.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    const data = body.data || {}
+    return {
+        message: body.message || `Đã nhân bản ${data.cloned_count || 0} buổi học thành công.`,
+        cloned_count: data.cloned_count ?? 0,
+        total_sessions: data.total_sessions ?? 0,
+        items: data.items ?? [],
+    }
+}
+
