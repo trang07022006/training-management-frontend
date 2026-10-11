@@ -67,6 +67,7 @@ export function LeadsPage() {
     const [search, setSearch] = useState<string>('')
     const [debouncedSearch, setDebouncedSearch] = useState<string>('')
     const [statusFilter, setStatusFilter] = useState<string>('')
+    const [sourceFilter, setSourceFilter] = useState<string>('')
     const [assigneeFilter, setAssigneeFilter] = useState<string>('')
     const [dateFrom, setDateFrom] = useState<string>('')
     const [dateTo, setDateTo] = useState<string>('')
@@ -193,6 +194,7 @@ export function LeadsPage() {
             page_size: pageSize,
             search: debouncedSearch.trim() || undefined,
             status: statusFilter || undefined,
+            source: sourceFilter || undefined,
             assigned_to_user_id: assigneeFilter || undefined,
             date_from: dateFrom || undefined,
             date_to: dateTo || undefined,
@@ -269,6 +271,7 @@ export function LeadsPage() {
         pageSize,
         debouncedSearch,
         statusFilter,
+        sourceFilter,
         assigneeFilter,
         dateFrom,
         dateTo,
@@ -279,6 +282,7 @@ export function LeadsPage() {
         setSearch('')
         setDebouncedSearch('')
         setStatusFilter('')
+        setSourceFilter('')
         setAssigneeFilter('')
         setDateFrom('')
         setDateTo('')
@@ -685,6 +689,24 @@ export function LeadsPage() {
 
                 <select
                     className="leads-filter-select"
+                    data-testid="leads-source-filter"
+                    value={sourceFilter}
+                    onChange={(e) => {
+                        setSourceFilter(e.target.value)
+                        setPage(1)
+                    }}
+                    aria-label="Lọc theo nguồn tiếp nhận"
+                >
+                    <option value="">Tất cả nguồn</option>
+                    {LEAD_SOURCES.map((s) => (
+                        <option key={s.value} value={s.value}>
+                            {s.label}
+                        </option>
+                    ))}
+                </select>
+
+                <select
+                    className="leads-filter-select"
                     data-testid="leads-assignee-filter"
                     value={assigneeFilter}
                     onChange={(e) => {
@@ -732,7 +754,7 @@ export function LeadsPage() {
                     />
                 </div>
 
-                {(search || statusFilter || assigneeFilter || dateFrom || dateTo) && (
+                {(search || statusFilter || sourceFilter || assigneeFilter || dateFrom || dateTo) && (
                     <button
                         type="button"
                         className="btn-clear-filters"

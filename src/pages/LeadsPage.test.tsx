@@ -165,7 +165,16 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             screen.getByTestId('leads-status-filter'),
         ).toBeDefined()
         expect(
+            screen.getByTestId('leads-source-filter'),
+        ).toBeDefined()
+        expect(
             screen.getByTestId('leads-assignee-filter'),
+        ).toBeDefined()
+        expect(
+            screen.getByTestId('leads-date-from-filter'),
+        ).toBeDefined()
+        expect(
+            screen.getByTestId('leads-date-to-filter'),
         ).toBeDefined()
 
         await waitFor(() => {
@@ -314,6 +323,108 @@ describe('LeadsPage - UI Test Suite (SCRUM-126/127/128)', () => {
             expect(
                 (screen.getByTestId('leads-date-to-filter') as HTMLInputElement).value,
             ).toBe('')
+        })
+    })
+
+    it('5a. Lọc theo nguồn tiếp nhận (TC128-04)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('leads-source-filter')).toBeDefined()
+        })
+
+        // Lọc theo nguồn 'direct' (Trực tiếp tại văn phòng)
+        fireEvent.change(screen.getByTestId('leads-source-filter'), {
+            target: { value: 'direct' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    source: 'direct',
+                    page: 1,
+                }),
+            )
+        })
+
+        // Lọc theo nguồn 'public_form' (Biểu mẫu website)
+        fireEvent.change(screen.getByTestId('leads-source-filter'), {
+            target: { value: 'public_form' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    source: 'public_form',
+                    page: 1,
+                }),
+            )
+        })
+    })
+
+    it('5b. Kết hợp đa điều kiện đồng thời và Xóa bộ lọc reset toàn bộ (TC128-08 & TC128-09)', async () => {
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+
+        render(<LeadsPage />)
+
+        await waitFor(() => {
+            expect(screen.getByTestId('leads-search-input')).toBeDefined()
+        })
+
+        // 1. Nhập tìm kiếm
+        fireEvent.change(screen.getByTestId('leads-search-input'), {
+            target: { value: 'QA-S127' },
+        })
+        // 2. Chọn trạng thái
+        fireEvent.change(screen.getByTestId('leads-status-filter'), {
+            target: { value: 'new' },
+        })
+        // 3. Chọn nguồn
+        fireEvent.change(screen.getByTestId('leads-source-filter'), {
+            target: { value: 'direct' },
+        })
+        // 4. Chọn người phụ trách
+        fireEvent.change(screen.getByTestId('leads-assignee-filter'), {
+            target: { value: 'user-advisor-1' },
+        })
+        // 5. Chọn ngày
+        fireEvent.change(screen.getByTestId('leads-date-from-filter'), {
+            target: { value: '2026-10-11' },
+        })
+        fireEvent.change(screen.getByTestId('leads-date-to-filter'), {
+            target: { value: '2026-10-11' },
+        })
+
+        await waitFor(() => {
+            expect(getLeads).toHaveBeenCalledWith(
+                mockRequest,
+                expect.objectContaining({
+                    status: 'new',
+                    source: 'direct',
+                    assigned_to_user_id: 'user-advisor-1',
+                    date_from: '2026-10-11',
+                    date_to: '2026-10-11',
+                    page: 1,
+                }),
+            )
+        })
+
+        // 6. Xóa bộ lọc phải reset toàn bộ về mặc định (TC128-09)
+        const clearBtn = screen.getByTestId('clear-filters-btn')
+        expect(clearBtn).toBeDefined()
+        fireEvent.click(clearBtn)
+
+        await waitFor(() => {
+            expect((screen.getByTestId('leads-search-input') as HTMLInputElement).value).toBe('')
+            expect((screen.getByTestId('leads-status-filter') as HTMLSelectElement).value).toBe('')
+            expect((screen.getByTestId('leads-source-filter') as HTMLSelectElement).value).toBe('')
+            expect((screen.getByTestId('leads-assignee-filter') as HTMLSelectElement).value).toBe('')
+            expect((screen.getByTestId('leads-date-from-filter') as HTMLInputElement).value).toBe('')
+            expect((screen.getByTestId('leads-date-to-filter') as HTMLInputElement).value).toBe('')
         })
     })
 
