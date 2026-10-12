@@ -6,15 +6,19 @@ import {
     createClass,
     updateClassStatus,
     getClassDetail,
+    assignClassSubjectInstructors,
     CLASS_STATUS_LABELS,
     type TrainingClass,
     type ClassStatus,
+    type ClassSubjectItem,
+    type ListClassesParams,
     type RequestFunction,
     ApiError,
 } from '../api/classApi'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
 import { enrollStudents, getClassRoster, type EnrollmentItem } from '../api/enrollmentApi'
 import { listStudents, type Student } from '../api/studentApi'
+import { fetchUsersApi, type User } from '../api/userApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import './ClassesPage.css'
 
@@ -23,6 +27,7 @@ export interface ClassesPageProps {
     initialTotal?: number
     initialPrograms?: TrainingProgram[]
     initialStudents?: Student[]
+    initialInstructors?: User[]
     customRequest?: RequestFunction
     canManageOverride?: boolean
 }
@@ -32,6 +37,7 @@ export function ClassesPage({
     initialTotal,
     initialPrograms,
     initialStudents,
+    initialInstructors,
     customRequest,
     canManageOverride,
 }: ClassesPageProps) {
@@ -47,13 +53,19 @@ export function ClassesPage({
     const normalizedRoles = effectiveRoles.map((r) => (typeof r === 'string' ? r.trim().toLowerCase() : ''))
     const effectivePerms =
         permissions && permissions.length > 0 ? permissions : getRolePermissions(effectiveRoles)
+    const isTrainerOnly =
+        normalizedRoles.includes('trainer') &&
+        !normalizedRoles.includes('admin') &&
+        !normalizedRoles.includes('training_manager')
     const canManage =
         canManageOverride !== undefined
             ? canManageOverride
             : (
-                effectivePerms.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
-                normalizedRoles.includes('admin') ||
-                normalizedRoles.includes('training_manager')
+                !isTrainerOnly && (
+                    effectivePerms.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
+                    normalizedRoles.includes('admin') ||
+                    normalizedRoles.includes('training_manager')
+                )
             )
 
     // State danh sách lớp học
@@ -62,6 +74,28 @@ export function ClassesPage({
     const [loading, setLoading] = useState(initialClasses === undefined)
     const [searchKeyword, setSearchKeyword] = useState('')
     const [activeSearch, setActiveSearch] = useState('')
+
+    // State bộ lọc lớp học (SCRUM-219 & SCRUM-220)
+    const [filterStatus, setFilterStatus] = useState<string>('')
+    const [filterProgramId, setFilterProgramId] = useState<string>('')
+    const [filterInstructorId, setFilterInstructorId] = useState<string>('')
+    const [filterDateFrom, setFilterDateFrom] = useState<string>('')
+    const [filterDateTo, setFilterDateTo] = useState<string>('')
+    const [instructors, setInstructors] = useState<User[]>(initialInstructors ?? [])
+
+    // State phân công giảng viên theo từng môn (SCRUM-220 - 220-01)
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+    const [assigningSubject, setAssigningSubject] = useState<ClassSubjectItem | null>(null)
+    const [assignForm, setAssignForm] = useState<{ main_instructor_id: string; assistant_ids: string[] }>({
+        main_instructor_id: '',
+        assistant_ids: [],
+    })
+    const [isSavingAssignment, setIsSavingAssignment] = useState(false)
+    const [assignModalError, setAssignModalError] = useState<string | null>(null)
+
+    // Lọc tài khoản theo vai trò (SCRUM-220 - 220-02)
+    const eligibleTrainers = instructors.filter((u) => u.role === 'trainer')
+    const eligibleAssistants = instructors.filter((u) => u.role === 'trainer')
 
     // State danh sách chương trình đào tạo để chọn khi mở lớp
     const [programs, setPrograms] = useState<TrainingProgram[]>(initialPrograms ?? [])
@@ -104,17 +138,37 @@ export function ClassesPage({
     // Alert feedback
     const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-    // Tải danh sách lớp học
+    // Tải danh sách lớp học có lọc (SCRUM-217, SCRUM-219, SCRUM-220)
     const loadClasses = useCallback(
-        async (search?: string) => {
+        async (customParams?: {
+            search?: string
+            status?: string
+            program_id?: string
+            instructor_id?: string
+            date_from?: string
+            date_to?: string
+        }) => {
             setLoading(true)
             setAlertMessage(null)
             try {
-                const res = await listClasses(requestFnRef.current, {
-                    search: search !== undefined ? search : activeSearch,
+                const searchVal = customParams && 'search' in customParams ? customParams.search : activeSearch
+                const statusVal = customParams && 'status' in customParams ? customParams.status : filterStatus
+                const progVal = customParams && 'program_id' in customParams ? customParams.program_id : filterProgramId
+                const insVal = customParams && 'instructor_id' in customParams ? customParams.instructor_id : filterInstructorId
+                const fromVal = customParams && 'date_from' in customParams ? customParams.date_from : filterDateFrom
+                const toVal = customParams && 'date_to' in customParams ? customParams.date_to : filterDateTo
+
+                const params: ListClassesParams = {
+                    search: searchVal?.trim() || undefined,
+                    status: statusVal?.trim() || undefined,
+                    program_id: progVal?.trim() || undefined,
+                    instructor_id: insVal?.trim() || undefined,
+                    date_from: fromVal?.trim() || undefined,
+                    date_to: toVal?.trim() || undefined,
                     page: 1,
                     page_size: 50,
-                })
+                }
+                const res = await listClasses(requestFnRef.current, params)
                 setClasses(res.items)
                 setTotal(res.total)
             } catch (err: unknown) {
@@ -124,7 +178,7 @@ export function ClassesPage({
                 setLoading(false)
             }
         },
-        [activeSearch],
+        [activeSearch, filterStatus, filterProgramId, filterInstructorId, filterDateFrom, filterDateTo],
     )
 
     // Initial load classes
@@ -156,6 +210,16 @@ export function ClassesPage({
             isMounted = false
         }
     }, [initialClasses])
+
+    // Đồng bộ initialClasses khi props thay đổi
+    const [prevInitialClasses, setPrevInitialClasses] = useState(initialClasses)
+    if (initialClasses !== prevInitialClasses) {
+        setPrevInitialClasses(initialClasses)
+        if (initialClasses !== undefined) {
+            setClasses(initialClasses)
+            setTotal(initialTotal ?? initialClasses.length)
+        }
+    }
 
     // Load programs for select dropdown
     useEffect(() => {
@@ -195,11 +259,124 @@ export function ClassesPage({
         }
     }, [initialStudents])
 
-    // Xử lý tìm kiếm lớp học
-    const handleSearchSubmit = (e: FormEvent) => {
-        e.preventDefault()
+    // Load instructors for assignment & filter (SCRUM-219 & SCRUM-220)
+    useEffect(() => {
+        let isMounted = true
+        if (initialInstructors === undefined) {
+            fetchUsersApi(requestFnRef.current, { role: 'trainer', page: 1, page_size: 100 })
+                .then((res) => {
+                    if (isMounted && res.items) {
+                        setInstructors(res.items)
+                    }
+                })
+                .catch(() => {
+                    // Ignore background load error
+                })
+        }
+        return () => {
+            isMounted = false
+        }
+    }, [initialInstructors])
+
+    // Xử lý bộ lọc lớp học (SCRUM-219 & SCRUM-220)
+    const handleApplyFilters = (e?: FormEvent) => {
+        if (e) e.preventDefault()
         setActiveSearch(searchKeyword.trim())
-        loadClasses(searchKeyword.trim())
+        loadClasses({
+            search: searchKeyword.trim(),
+            status: filterStatus,
+            program_id: filterProgramId,
+            instructor_id: filterInstructorId,
+            date_from: filterDateFrom,
+            date_to: filterDateTo,
+        })
+    }
+
+    const handleResetFilters = () => {
+        setSearchKeyword('')
+        setActiveSearch('')
+        setFilterStatus('')
+        setFilterProgramId('')
+        setFilterInstructorId('')
+        setFilterDateFrom('')
+        setFilterDateTo('')
+        loadClasses({
+            search: '',
+            status: '',
+            program_id: '',
+            instructor_id: '',
+            date_from: '',
+            date_to: '',
+        })
+    }
+
+    // Mở modal phân công giảng viên (SCRUM-220 - 220-01)
+    const handleOpenAssignModal = (subject: ClassSubjectItem) => {
+        setAssigningSubject(subject)
+        setAssignForm({
+            main_instructor_id: subject.main_instructor?.id || '',
+            assistant_ids: subject.assistants?.map((a) => a.id) || [],
+        })
+        setAssignModalError(null)
+        setIsAssignModalOpen(true)
+    }
+
+    // Lưu phân công giảng viên (SCRUM-220 - 220-01 & 220-02)
+    const handleSaveAssignment = async (e: FormEvent) => {
+        e.preventDefault()
+        if (!selectedClass || !assigningSubject) return
+        setIsSavingAssignment(true)
+        setAssignModalError(null)
+
+        try {
+            const updated = await assignClassSubjectInstructors(
+                requestFnRef.current,
+                selectedClass.id,
+                assigningSubject.id,
+                {
+                    main_instructor_id: assignForm.main_instructor_id || null,
+                    assistant_ids: assignForm.assistant_ids,
+                },
+            )
+
+            const updatedSubjects = (selectedClass.subjects || []).map((s) => {
+                if (s.id === assigningSubject.id) {
+                    return {
+                        ...s,
+                        main_instructor: updated.main_instructor,
+                        assistants: updated.assistants,
+                    }
+                }
+                return s
+            })
+
+            setSelectedClass({
+                ...selectedClass,
+                subjects: updatedSubjects,
+            })
+
+            setClasses((prev) =>
+                prev.map((c) =>
+                    c.id === selectedClass.id
+                        ? {
+                              ...c,
+                              subjects: updatedSubjects,
+                          }
+                        : c,
+                ),
+            )
+
+            setIsAssignModalOpen(false)
+            setAlertMessage({
+                type: 'success',
+                text: `Phân công giảng viên cho môn '${assigningSubject.subject_name || assigningSubject.id}' thành công.`,
+            })
+        } catch (err: unknown) {
+            const msg = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi phân công giảng viên.')
+            setAssignModalError(msg)
+        } finally {
+            setIsSavingAssignment(false)
+        }
     }
 
     // Mở modal tạo lớp
@@ -303,7 +480,9 @@ export function ClassesPage({
         setIsDetailModalOpen(true)
         try {
             const detail = await getClassDetail(requestFnRef.current, cls.id)
-            setSelectedClass(detail)
+            if (detail && detail.id) {
+                setSelectedClass(detail)
+            }
         } catch {
             // Giữ lại dữ liệu hiện tại
         }
@@ -467,23 +646,116 @@ export function ClassesPage({
                 </div>
             )}
 
-            {/* Tìm kiếm */}
-            <form className="students-search-bar" onSubmit={handleSearchSubmit} data-testid="search-form">
-                <div className="students-search-input-wrapper">
-                    <span className="search-icon" aria-hidden="true">🔍</span>
-                    <input
-                        type="text"
-                        className="students-search-input"
-                        placeholder="Tìm kiếm theo mã lớp, tên chương trình..."
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        data-testid="class-search-input"
-                    />
-                </div>
-                <button type="submit" className="btn-search" data-testid="class-search-btn">
-                    Tìm kiếm
-                </button>
-            </form>
+            {/* Bộ lọc và Tìm kiếm danh sách lớp (SCRUM-219 & SCRUM-220) */}
+            <div className="classes-filter-card" data-testid="classes-filter-section">
+                <form className="classes-filter-form" onSubmit={handleApplyFilters} data-testid="search-form">
+                    <div className="classes-filter-grid">
+                        <div className="classes-filter-field search-field">
+                            <label htmlFor="search-input">Tìm kiếm</label>
+                            <input
+                                id="search-input"
+                                type="text"
+                                className="filter-input"
+                                placeholder="Tìm kiếm theo mã lớp, tên chương trình..."
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                data-testid="class-search-input"
+                            />
+                        </div>
+
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-status">Trạng thái</label>
+                            <select
+                                id="filter-status"
+                                className="filter-select"
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                data-testid="filter-status"
+                            >
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="preparing">Chuẩn bị</option>
+                                <option value="in_progress">Đang học</option>
+                                <option value="completed">Kết thúc</option>
+                                <option value="cancelled">Huỷ</option>
+                            </select>
+                        </div>
+
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-program">Chương trình đào tạo</label>
+                            <select
+                                id="filter-program"
+                                className="filter-select"
+                                value={filterProgramId}
+                                onChange={(e) => setFilterProgramId(e.target.value)}
+                                data-testid="filter-program"
+                            >
+                                <option value="">Tất cả chương trình</option>
+                                {programs.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.code} - {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-instructor">Giảng viên</label>
+                            <select
+                                id="filter-instructor"
+                                className="filter-select"
+                                value={filterInstructorId}
+                                onChange={(e) => setFilterInstructorId(e.target.value)}
+                                data-testid="filter-instructor"
+                            >
+                                <option value="">Tất cả giảng viên</option>
+                                {eligibleTrainers.map((t) => (
+                                    <option key={t.id} value={String(t.id)}>
+                                        {t.name} ({t.email})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-date-from">Từ ngày</label>
+                            <input
+                                id="filter-date-from"
+                                type="date"
+                                className="filter-input"
+                                value={filterDateFrom}
+                                onChange={(e) => setFilterDateFrom(e.target.value)}
+                                data-testid="filter-date-from"
+                            />
+                        </div>
+
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-date-to">Đến ngày</label>
+                            <input
+                                id="filter-date-to"
+                                type="date"
+                                className="filter-input"
+                                value={filterDateTo}
+                                onChange={(e) => setFilterDateTo(e.target.value)}
+                                data-testid="filter-date-to"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="classes-filter-actions">
+                        <button type="submit" className="btn-filter-apply" data-testid="class-search-btn">
+                            Lọc danh sách
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-filter-reset"
+                            onClick={handleResetFilters}
+                            data-testid="reset-filter-btn"
+                        >
+                            Xóa bộ lọc
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             {/* Bảng danh sách lớp học */}
             <div className="classes-table-card">
@@ -769,6 +1041,9 @@ export function ClassesPage({
                                             <th>Số tín chỉ</th>
                                             <th>Học kỳ</th>
                                             <th>Tính chất</th>
+                                            <th>Giảng viên chính</th>
+                                            <th>Trợ giảng</th>
+                                            {canManage && <th>Thao tác</th>}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -781,6 +1056,26 @@ export function ClassesPage({
                                                 <td>{s.credits ?? '-'}</td>
                                                 <td>Học kỳ {s.semester ?? 1}</td>
                                                 <td>{s.is_mandatory ? 'Bắt buộc' : 'Tự chọn'}</td>
+                                                <td data-testid={`main-instructor-${s.id}`}>
+                                                    {s.main_instructor ? s.main_instructor.name : 'Chưa phân công'}
+                                                </td>
+                                                <td data-testid={`assistants-${s.id}`}>
+                                                    {s.assistants && s.assistants.length > 0
+                                                        ? s.assistants.map((a) => a.name).join(', ')
+                                                        : 'Không'}
+                                                </td>
+                                                {canManage && (
+                                                    <td>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-action-small"
+                                                            data-testid={`assign-instructor-btn-${s.id}`}
+                                                            onClick={() => handleOpenAssignModal(s)}
+                                                        >
+                                                            Phân công giảng viên
+                                                        </button>
+                                                    </td>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>
@@ -1029,6 +1324,125 @@ export function ClassesPage({
                                 Đóng
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Phân công giảng viên theo từng môn (SCRUM-220 - 220-01, 220-02) */}
+            {isAssignModalOpen && assigningSubject && (
+                <div className="modal-overlay" role="dialog" aria-modal="true" data-testid="assign-instructor-modal">
+                    <div className="class-modal" style={{ maxWidth: 600 }}>
+                        <div className="modal-header">
+                            <h2>
+                                Phân công giảng viên - {assigningSubject.subject_name || assigningSubject.subject_code}
+                            </h2>
+                            <button
+                                type="button"
+                                className="btn-close"
+                                onClick={() => setIsAssignModalOpen(false)}
+                                data-testid="close-assign-modal-btn"
+                                aria-label="Đóng"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveAssignment}>
+                            <div className="modal-body">
+                                {assignModalError && (
+                                    <div className="modal-alert error" data-testid="assign-modal-error" style={{ marginBottom: 16 }}>
+                                        <span>⚠️ {assignModalError}</span>
+                                    </div>
+                                )}
+
+                                <div className="form-group">
+                                    <label htmlFor="main-instructor-select">
+                                        Giảng viên chính:
+                                    </label>
+                                    <select
+                                        id="main-instructor-select"
+                                        className="form-select"
+                                        data-testid="main-instructor-select"
+                                        value={assignForm.main_instructor_id}
+                                        onChange={(e) =>
+                                            setAssignForm((prev) => ({
+                                                ...prev,
+                                                main_instructor_id: e.target.value,
+                                            }))
+                                        }
+                                    >
+                                        <option value="">-- Chưa chọn giảng viên chính --</option>
+                                        {eligibleTrainers.map((t) => (
+                                            <option key={t.id} value={String(t.id)}>
+                                                {t.name} ({t.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-group" style={{ marginTop: 16 }}>
+                                    <label>Trợ giảng (có thể chọn nhiều):</label>
+                                    <div
+                                        className="assistants-checkbox-list"
+                                        data-testid="assistants-list"
+                                    >
+                                        {eligibleAssistants.length === 0 ? (
+                                            <div style={{ color: '#64748b', fontSize: 14 }}>
+                                                Không có tài khoản trợ giảng khả dụng.
+                                            </div>
+                                        ) : (
+                                            eligibleAssistants.map((ast) => {
+                                                const astId = String(ast.id)
+                                                const isChecked = assignForm.assistant_ids.includes(astId)
+                                                return (
+                                                    <label
+                                                        key={astId}
+                                                        className="assistant-checkbox-label"
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            data-testid={`assistant-checkbox-${astId}`}
+                                                            checked={isChecked}
+                                                            onChange={(e) => {
+                                                                const checked = e.target.checked
+                                                                setAssignForm((prev) => ({
+                                                                    ...prev,
+                                                                    assistant_ids: checked
+                                                                        ? [...prev.assistant_ids, astId]
+                                                                        : prev.assistant_ids.filter((id) => id !== astId),
+                                                                }))
+                                                            }}
+                                                        />
+                                                        <span>
+                                                            {ast.name} ({ast.email})
+                                                        </span>
+                                                    </label>
+                                                )
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={() => setIsAssignModalOpen(false)}
+                                    data-testid="cancel-assignment-btn"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    data-testid="save-assignment-btn"
+                                    disabled={isSavingAssignment}
+                                >
+                                    {isSavingAssignment ? 'Đang lưu...' : 'Lưu phân công'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}
