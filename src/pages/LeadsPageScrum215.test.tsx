@@ -50,6 +50,7 @@ vi.mock('../api/leadApi', async (importOriginal) => {
         deleteLead: vi.fn(),
         checkLeadPhone: vi.fn(),
         convertLeadToStudent: vi.fn(),
+        getLeadStudent: vi.fn(),
     }
 })
 
@@ -249,6 +250,12 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
             status: 'converted',
             assigned_to_user_id: 'user-cons-01',
             assigned_to_name: 'Lê Tư Vấn',
+            student_code: 'STU000001',
+            student: {
+                student_code: 'STU000001',
+                account_email: 'enrolled@example.com',
+                account_status: 'Đã tạo',
+            },
             created_at: '2026-10-12T08:00:00Z',
             updated_at: '2026-10-12T08:30:00Z',
         }
@@ -321,6 +328,62 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
 
             // Không có nút Chuyển thành học viên trong modal
             expect(screen.queryByTestId('convert-lead-to-student-btn')).toBeNull()
+        })
+
+        it('TC215-21: Mở modal Lead đã nhập học (sau reload) hiển thị đầy đủ Thông tin học viên từ database thật', async () => {
+            vi.mocked(getLead).mockResolvedValue(sampleConvertedLead)
+
+            render(<LeadsPage />)
+            await waitFor(() => {
+                expect(screen.getByTestId(`view-lead-${sampleConvertedLead.id}`)).toBeDefined()
+            })
+
+            // Mở modal chi tiết
+            fireEvent.click(screen.getByTestId(`view-lead-${sampleConvertedLead.id}`))
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-detail-modal')).toBeDefined()
+            })
+
+            // Hiển thị khối Thông tin học viên
+            expect(screen.getByTestId('student-info-section')).toBeDefined()
+            expect(screen.getByTestId('detail-student-heading').textContent).toContain('Thông tin học viên')
+
+            // Mã học viên
+            expect(screen.getByTestId('detail-student-code')).toBeDefined()
+            expect(screen.getByTestId('generated-student-code').textContent).toBe('STU000001')
+
+            // Tài khoản
+            expect(screen.getByTestId('detail-student-account')).toBeDefined()
+            expect(screen.getByTestId('student-account-email').textContent).toBe('enrolled@example.com')
+
+            // Trạng thái tài khoản
+            expect(screen.getByTestId('detail-account-status')).toBeDefined()
+            expect(screen.getByTestId('account-creation-result').textContent).toBe('Đã tạo')
+        })
+
+        it('TC215-22: Lead chưa chuyển đổi mở modal KHÔNG hiển thị Thông tin học viên giả', async () => {
+            vi.mocked(getLeads).mockResolvedValue({
+                items: [sampleNewLead],
+                total: 1,
+                page: 1,
+                page_size: 10,
+                total_pages: 1,
+            })
+            vi.mocked(getLead).mockResolvedValue(sampleNewLead)
+
+            render(<LeadsPage />)
+            await waitFor(() => {
+                expect(screen.getByTestId(`view-lead-${sampleNewLead.id}`)).toBeDefined()
+            })
+
+            fireEvent.click(screen.getByTestId(`view-lead-${sampleNewLead.id}`))
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-detail-modal')).toBeDefined()
+            })
+
+            // Tuyệt đối không hiển thị khối thông tin học viên giả
+            expect(screen.queryByTestId('student-info-section')).toBeNull()
+            expect(screen.queryByTestId('detail-student-heading')).toBeNull()
         })
     })
 })

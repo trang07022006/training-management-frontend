@@ -26,6 +26,7 @@ import {
     formatCallbackDateDisplay,
     isLeadCallbackOverdue,
     convertLeadToStudent,
+    getLeadStudent,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -428,9 +429,25 @@ export function LeadsPage() {
 
         try {
             const detail = await getLead(request, leadId)
-            setSelectedLead(detail)
-            setSelectedStatus(detail.status)
-            setSelectedAssigneeId(detail.assigned_to_user_id || '')
+            let finalDetail = detail
+            if (!finalDetail.student_code && finalDetail.status === 'converted') {
+                try {
+                    const linked = await getLeadStudent(request, leadId)
+                    if (linked) {
+                        finalDetail = {
+                            ...finalDetail,
+                            student_code: linked.student_code,
+                            student: linked,
+                        }
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+            setSelectedLead(finalDetail)
+            setConvertedStudentCode(finalDetail.student_code || finalDetail.student?.student_code || null)
+            setSelectedStatus(finalDetail.status)
+            setSelectedAssigneeId(finalDetail.assigned_to_user_id || '')
             setCallbackDateInput(detail.callback_date ? detail.callback_date.slice(0, 10) : '')
             setCallbackDateError(null)
             setCallbackDateSuccess(null)
@@ -480,6 +497,19 @@ export function LeadsPage() {
                           ...prev,
                           status: 'converted',
                           ...(code ? { student_code: code } : {}),
+                          student: res?.student
+                              ? {
+                                    id: res.student.id,
+                                    student_code: res.student.student_code,
+                                    user_id: res.user_id || res.student.user_id,
+                                    full_name: res.student.full_name,
+                                    account_email: res.student.email || prev.email,
+                                    account_status: accountCreated ? 'Đã tạo' : 'Chưa tạo',
+                                    status: res.student.status,
+                                    program_code: res.student.program_code,
+                                    program_name: res.student.program_name,
+                                }
+                              : prev.student,
                       }
                     : prev,
             )
@@ -1880,28 +1910,42 @@ export function LeadsPage() {
                                     </span>
                                 </div>
 
-                                {(convertedStudentCode || selectedLead.student_code) && (
-                                    <div className="detail-row" data-testid="detail-student-code">
-                                        <span className="detail-label">Mã học viên:</span>
-                                        <span className="detail-value student-code-highlight" data-testid="generated-student-code">
-                                            {convertedStudentCode || selectedLead.student_code}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {(accountResult || selectedLead.status === 'converted') && (
-                                    <div className="detail-row" data-testid="detail-account-status">
-                                        <span className="detail-label">Tài khoản & Email:</span>
-                                        <span className="detail-value" data-testid="account-creation-result">
-                                            {accountResult
-                                                ? (accountResult.accountCreated
-                                                    ? 'Đã tạo tài khoản & gửi email'
-                                                    : 'Chưa tạo tài khoản')
-                                                : 'Đã tạo tài khoản & gửi email'}
-                                        </span>
-                                    </div>
-                                )}
                             </div>
+
+                            {/* Khối Thông tin học viên (SCRUM-215 - Chi tiết Lead đã nhập học) */}
+                            {(convertedStudentCode || selectedLead.student_code || selectedLead.student || selectedLead.status === 'converted') && (
+                                <div className="detail-student-section" data-testid="student-info-section">
+                                    <h4 className="detail-student-heading" data-testid="detail-student-heading">
+                                        Thông tin học viên
+                                    </h4>
+                                    <div className="detail-student-grid">
+                                        <div className="detail-row" data-testid="detail-student-code">
+                                            <span className="detail-label">Mã học viên:</span>
+                                            <span className="detail-value student-code-highlight" data-testid="generated-student-code">
+                                                {convertedStudentCode || selectedLead.student?.student_code || selectedLead.student_code || '—'}
+                                            </span>
+                                        </div>
+
+                                        <div className="detail-row" data-testid="detail-student-account">
+                                            <span className="detail-label">Tài khoản:</span>
+                                            <span className="detail-value" data-testid="student-account-email">
+                                                {selectedLead.student?.account_email || selectedLead.email || '—'}
+                                            </span>
+                                        </div>
+
+                                        <div className="detail-row" data-testid="detail-account-status">
+                                            <span className="detail-label">Trạng thái tài khoản:</span>
+                                            <span className="detail-value" data-testid="account-creation-result">
+                                                {accountResult
+                                                    ? (accountResult.accountCreated
+                                                        ? (accountResult.emailSent ? 'Đã tạo tài khoản & gửi email' : 'Đã tạo')
+                                                        : 'Chưa tạo tài khoản')
+                                                    : (selectedLead.student?.account_status || 'Đã tạo')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="detail-message-section">
                                 <span className="detail-label">Nội dung tư vấn:</span>

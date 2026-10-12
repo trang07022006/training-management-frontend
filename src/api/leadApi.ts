@@ -22,6 +22,19 @@ export type LeadStatus =
     | 'lost'
     | 'cancelled'
 
+export interface LinkedStudent {
+    id?: string
+    student_code: string
+    user_id?: string | null
+    full_name?: string
+    account_email?: string | null
+    account_status?: string
+    status?: string
+    program_code?: string | null
+    program_name?: string | null
+    created_at?: string | null
+}
+
 export interface Lead {
     id: string
     full_name: string
@@ -40,6 +53,7 @@ export interface Lead {
     assigned_to_name?: string | null
     assigned_to_email?: string | null
     student_code?: string | null
+    student?: LinkedStudent | null
     created_at: string | null
     updated_at: string | null
 }
@@ -325,6 +339,26 @@ export async function getLead(
     }
 
     return body.data
+}
+
+/**
+ * Lấy thông tin học viên liên kết với Lead đã nhập học (SCRUM-215).
+ * GET /api/v1/leads/<id>/student
+ */
+export async function getLeadStudent(
+    requestFn: RequestFunction,
+    leadId: string,
+): Promise<LinkedStudent | null> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/student`
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        if (res.status === 404) return null
+        const body = await res.json().catch(() => ({}))
+        if (!res.ok) return null
+        return body.data ?? null
+    } catch {
+        return null
+    }
 }
 
 /**

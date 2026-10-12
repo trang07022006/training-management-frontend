@@ -1894,6 +1894,32 @@
   filter: grayscale(1);
 }
 
+/* Thông tin học viên (SCRUM-215) */
+.detail-student-section {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+}
+
+.detail-student-heading {
+  margin: 0 0 12px 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-student-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
 
 
 
