@@ -43,6 +43,7 @@ export interface TrainingClass {
     status: ClassStatus
     status_label: string
     enrolled_count: number
+    session_progress?: string | null
     subjects?: ClassSubjectItem[]
     copied_subjects_count?: number
     created_at: string | null
@@ -62,6 +63,9 @@ export interface ListClassesParams {
     program_id?: string
     status?: string
     search?: string
+    date_from?: string
+    date_to?: string
+    instructor_id?: string
     page?: number
     page_size?: number
 }
@@ -125,6 +129,9 @@ export async function listClasses(
     if (params.program_id?.trim()) query.set('program_id', params.program_id.trim())
     if (params.status?.trim()) query.set('status', params.status.trim())
     if (params.search?.trim()) query.set('search', params.search.trim())
+    if (params.date_from?.trim()) query.set('date_from', params.date_from.trim())
+    if (params.date_to?.trim()) query.set('date_to', params.date_to.trim())
+    if (params.instructor_id?.trim()) query.set('instructor_id', params.instructor_id.trim())
     if (params.page) query.set('page', String(params.page))
     if (params.page_size) query.set('page_size', String(params.page_size))
 

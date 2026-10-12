@@ -9,6 +9,7 @@ import {
     CLASS_STATUS_LABELS,
     type TrainingClass,
     type ClassStatus,
+    type ListClassesParams,
     type RequestFunction,
     ApiError,
 } from '../api/classApi'
@@ -16,6 +17,7 @@ import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgra
 import { enrollStudents, getClassRoster, type EnrollmentItem } from '../api/enrollmentApi'
 import { listStudents, type Student } from '../api/studentApi'
 import { getErrorMessage } from '../utils/errorMessages'
+import { fetchUsersApi, type User } from '../api/userApi'
 import './ClassesPage.css'
 
 export interface ClassesPageProps {
@@ -23,6 +25,7 @@ export interface ClassesPageProps {
     initialTotal?: number
     initialPrograms?: TrainingProgram[]
     initialStudents?: Student[]
+    initialInstructors?: User[]
     customRequest?: RequestFunction
     canManageOverride?: boolean
 }
@@ -32,6 +35,7 @@ export function ClassesPage({
     initialTotal,
     initialPrograms,
     initialStudents,
+    initialInstructors,
     customRequest,
     canManageOverride,
 }: ClassesPageProps) {
@@ -62,6 +66,14 @@ export function ClassesPage({
     const [loading, setLoading] = useState(initialClasses === undefined)
     const [searchKeyword, setSearchKeyword] = useState('')
     const [activeSearch, setActiveSearch] = useState('')
+
+    // State bộ lọc lớp học (SCRUM-219)
+    const [filterStatus, setFilterStatus] = useState<string>('')
+    const [filterProgramId, setFilterProgramId] = useState<string>('')
+    const [filterInstructorId, setFilterInstructorId] = useState<string>('')
+    const [filterDateFrom, setFilterDateFrom] = useState<string>('')
+    const [filterDateTo, setFilterDateTo] = useState<string>('')
+    const [instructors, setInstructors] = useState<User[]>(initialInstructors ?? [])
 
     // State danh sách chương trình đào tạo để chọn khi mở lớp
     const [programs, setPrograms] = useState<TrainingProgram[]>(initialPrograms ?? [])
@@ -104,17 +116,37 @@ export function ClassesPage({
     // Alert feedback
     const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-    // Tải danh sách lớp học
+    // Tải danh sách lớp học có lọc (SCRUM-217 & SCRUM-219)
     const loadClasses = useCallback(
-        async (search?: string) => {
+        async (customParams?: {
+            search?: string
+            status?: string
+            program_id?: string
+            instructor_id?: string
+            date_from?: string
+            date_to?: string
+        }) => {
             setLoading(true)
             setAlertMessage(null)
             try {
-                const res = await listClasses(requestFnRef.current, {
-                    search: search !== undefined ? search : activeSearch,
+                const searchVal = customParams && 'search' in customParams ? customParams.search : activeSearch
+                const statusVal = customParams && 'status' in customParams ? customParams.status : filterStatus
+                const progVal = customParams && 'program_id' in customParams ? customParams.program_id : filterProgramId
+                const insVal = customParams && 'instructor_id' in customParams ? customParams.instructor_id : filterInstructorId
+                const fromVal = customParams && 'date_from' in customParams ? customParams.date_from : filterDateFrom
+                const toVal = customParams && 'date_to' in customParams ? customParams.date_to : filterDateTo
+
+                const params: ListClassesParams = {
+                    search: searchVal?.trim() || undefined,
+                    status: statusVal?.trim() || undefined,
+                    program_id: progVal?.trim() || undefined,
+                    instructor_id: insVal?.trim() || undefined,
+                    date_from: fromVal?.trim() || undefined,
+                    date_to: toVal?.trim() || undefined,
                     page: 1,
                     page_size: 50,
-                })
+                }
+                const res = await listClasses(requestFnRef.current, params)
                 setClasses(res.items)
                 setTotal(res.total)
             } catch (err: unknown) {
@@ -124,8 +156,27 @@ export function ClassesPage({
                 setLoading(false)
             }
         },
-        [activeSearch],
+        [activeSearch, filterStatus, filterProgramId, filterInstructorId, filterDateFrom, filterDateTo],
     )
+
+    // Tải danh sách giảng viên để lọc (SCRUM-219)
+    useEffect(() => {
+        let isMounted = true
+        if (initialInstructors === undefined) {
+            fetchUsersApi(requestFnRef.current, { role: 'trainer', page: 1, page_size: 100 })
+                .then((res) => {
+                    if (isMounted && res.items) {
+                        setInstructors(res.items)
+                    }
+                })
+                .catch(() => {
+                    // Ignore background load error
+                })
+        }
+        return () => {
+            isMounted = false
+        }
+    }, [initialInstructors])
 
     // Initial load classes
     useEffect(() => {
@@ -195,11 +246,36 @@ export function ClassesPage({
         }
     }, [initialStudents])
 
-    // Xử lý tìm kiếm lớp học
-    const handleSearchSubmit = (e: FormEvent) => {
-        e.preventDefault()
+    // Xử lý tìm kiếm & bộ lọc lớp học (SCRUM-219)
+    const handleApplyFilters = (e?: FormEvent) => {
+        if (e) e.preventDefault()
         setActiveSearch(searchKeyword.trim())
-        loadClasses(searchKeyword.trim())
+        loadClasses({
+            search: searchKeyword.trim(),
+            status: filterStatus,
+            program_id: filterProgramId,
+            instructor_id: filterInstructorId,
+            date_from: filterDateFrom,
+            date_to: filterDateTo,
+        })
+    }
+
+    const handleResetFilters = () => {
+        setSearchKeyword('')
+        setActiveSearch('')
+        setFilterStatus('')
+        setFilterProgramId('')
+        setFilterInstructorId('')
+        setFilterDateFrom('')
+        setFilterDateTo('')
+        loadClasses({
+            search: '',
+            status: '',
+            program_id: '',
+            instructor_id: '',
+            date_from: '',
+            date_to: '',
+        })
     }
 
     // Mở modal tạo lớp
@@ -467,23 +543,110 @@ export function ClassesPage({
                 </div>
             )}
 
-            {/* Tìm kiếm */}
-            <form className="students-search-bar" onSubmit={handleSearchSubmit} data-testid="search-form">
-                <div className="students-search-input-wrapper">
-                    <span className="search-icon" aria-hidden="true">🔍</span>
-                    <input
-                        type="text"
-                        className="students-search-input"
-                        placeholder="Tìm kiếm theo mã lớp, tên chương trình..."
-                        value={searchKeyword}
-                        onChange={(e) => setSearchKeyword(e.target.value)}
-                        data-testid="class-search-input"
-                    />
-                </div>
-                <button type="submit" className="btn-search" data-testid="class-search-btn">
-                    Tìm kiếm
-                </button>
-            </form>
+            {/* Bộ lọc và Tìm kiếm danh sách lớp (SCRUM-219) */}
+            <div className="classes-filter-card" data-testid="classes-filter-section">
+                <form className="classes-filter-form" onSubmit={handleApplyFilters} data-testid="search-form">
+                    <div className="classes-filter-grid">
+                        <div className="classes-filter-field search-field">
+                            <label htmlFor="search-input">Tìm kiếm</label>
+                            <input
+                                id="search-input"
+                                type="text"
+                                className="filter-input"
+                                placeholder="Tìm kiếm theo mã lớp, tên chương trình..."
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                data-testid="class-search-input"
+                            />
+                        </div>
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-status">Trạng thái</label>
+                            <select
+                                id="filter-status"
+                                className="filter-select"
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                                data-testid="filter-status"
+                            >
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="preparing">Chuẩn bị</option>
+                                <option value="in_progress">Đang học</option>
+                                <option value="completed">Kết thúc</option>
+                                <option value="cancelled">Huỷ</option>
+                            </select>
+                        </div>
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-program">Chương trình đào tạo</label>
+                            <select
+                                id="filter-program"
+                                className="filter-select"
+                                value={filterProgramId}
+                                onChange={(e) => setFilterProgramId(e.target.value)}
+                                data-testid="filter-program"
+                            >
+                                <option value="">Tất cả chương trình</option>
+                                {programs.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name} ({p.code})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-instructor">Giảng viên</label>
+                            <select
+                                id="filter-instructor"
+                                className="filter-select"
+                                value={filterInstructorId}
+                                onChange={(e) => setFilterInstructorId(e.target.value)}
+                                data-testid="filter-instructor"
+                            >
+                                <option value="">Tất cả giảng viên</option>
+                                {instructors.map((ins) => (
+                                    <option key={ins.id} value={String(ins.id)}>
+                                        {ins.name} ({ins.email})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-date-from">Từ ngày</label>
+                            <input
+                                id="filter-date-from"
+                                type="date"
+                                className="filter-input"
+                                value={filterDateFrom}
+                                onChange={(e) => setFilterDateFrom(e.target.value)}
+                                data-testid="filter-date-from"
+                            />
+                        </div>
+                        <div className="classes-filter-field">
+                            <label htmlFor="filter-date-to">Đến ngày</label>
+                            <input
+                                id="filter-date-to"
+                                type="date"
+                                className="filter-input"
+                                value={filterDateTo}
+                                onChange={(e) => setFilterDateTo(e.target.value)}
+                                data-testid="filter-date-to"
+                            />
+                        </div>
+                    </div>
+                    <div className="classes-filter-actions">
+                        <button type="submit" className="btn-filter-apply" data-testid="class-search-btn">
+                            Lọc danh sách
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-filter-reset"
+                            onClick={handleResetFilters}
+                            data-testid="reset-filter-btn"
+                        >
+                            Xóa bộ lọc
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             {/* Bảng danh sách lớp học */}
             <div className="classes-table-card">
@@ -503,6 +666,7 @@ export function ClassesPage({
                                 <th>Chương trình đào tạo</th>
                                 <th>Khai giảng dự kiến</th>
                                 <th>Sĩ số</th>
+                                <th>Tiến độ buổi học</th>
                                 <th>Hình thức</th>
                                 <th>Trạng thái vòng đời</th>
                                 <th>Thao tác</th>
@@ -524,6 +688,13 @@ export function ClassesPage({
                                     </td>
                                     <td data-testid={`class-capacity-${cls.id}`}>
                                         {cls.enrolled_count ?? 0} / {cls.max_capacity}
+                                    </td>
+                                    <td data-testid={`class-progress-${cls.id}`}>
+                                        {cls.session_progress ? (
+                                            <span className="session-progress-badge">{cls.session_progress}</span>
+                                        ) : (
+                                            <span className="session-progress-none" title="Chưa có dữ liệu buổi học (Chờ SCRUM-224)">-</span>
+                                        )}
                                     </td>
                                     <td data-testid={`class-mode-${cls.id}`}>
                                         {cls.learning_mode === 'offline' ? 'Trực tiếp' : cls.learning_mode === 'online' ? 'Trực tuyến' : cls.learning_mode}
