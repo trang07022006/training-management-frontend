@@ -178,4 +178,28 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
 
         expect(screen.queryByTestId('menu-item-unknown')).toBeNull()
     })
+
+    it('9. SCRUM-217: Quản lý đào tạo (training_manager) và Admin thấy menu Lớp học (/classes)', () => {
+        render(
+            <MemoryRouter initialEntries={['/classes']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="training_manager" />
+                    <Sidebar />
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        const classMenu = screen.getByTestId('menu-item-classes')
+        expect(classMenu).toBeDefined()
+        expect(classMenu.textContent).toContain('Lớp học')
+        expect(classMenu.getAttribute('href')).toBe('/classes')
+        expect(classMenu.classList.contains('is-active')).toBe(true)
+
+        // Các menu khác vẫn tồn tại đầy đủ
+        expect(screen.getByTestId('menu-item-courses')).toBeDefined()
+        expect(screen.getByTestId('menu-item-training_programs')).toBeDefined()
+        expect(screen.getByTestId('menu-item-subjects')).toBeDefined()
+        expect(screen.getByTestId('menu-item-students')).toBeDefined()
+        expect(screen.getByTestId('menu-item-leads')).toBeDefined()
+    })
 })
