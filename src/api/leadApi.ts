@@ -8,6 +8,7 @@ import { getErrorMessage } from '../utils/errorMessages'
 import { ApiError, type RequestFunction } from './userApi'
 
 export { ApiError, type RequestFunction }
+export { convertLeadToStudent, type Student, type ConvertLeadResult } from './studentApi'
 
 export type LeadStatus =
     | 'new'
@@ -20,6 +21,19 @@ export type LeadStatus =
     | 'converted'
     | 'lost'
     | 'cancelled'
+
+export interface LinkedStudent {
+    id?: string
+    student_code: string
+    user_id?: string | null
+    full_name?: string
+    account_email?: string | null
+    account_status?: string
+    status?: string
+    program_code?: string | null
+    program_name?: string | null
+    created_at?: string | null
+}
 
 export interface Lead {
     id: string
@@ -38,6 +52,8 @@ export interface Lead {
     assigned_at?: string | null
     assigned_to_name?: string | null
     assigned_to_email?: string | null
+    student_code?: string | null
+    student?: LinkedStudent | null
     created_at: string | null
     updated_at: string | null
 }
@@ -323,6 +339,26 @@ export async function getLead(
     }
 
     return body.data
+}
+
+/**
+ * Lấy thông tin học viên liên kết với Lead đã nhập học (SCRUM-215).
+ * GET /api/v1/leads/<id>/student
+ */
+export async function getLeadStudent(
+    requestFn: RequestFunction,
+    leadId: string,
+): Promise<LinkedStudent | null> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/student`
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        if (res.status === 404) return null
+        const body = await res.json().catch(() => ({}))
+        if (!res.ok) return null
+        return body.data ?? null
+    } catch {
+        return null
+    }
 }
 
 /**
@@ -700,32 +736,61 @@ export async function getLeadPipeline(
     requestFn: RequestFunction,
 ): Promise<PipelineData> {
     const path = '/api/v1/leads/pipeline'
-    const res = await requestFn(path, { method: 'GET' })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code =
-            body.code ||
-            (res.status === 403
-                ? 'FORBIDDEN'
-                : res.status === 401
-                  ? 'UNAUTHORIZED'
-                  : 'API_ERROR')
-        const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
-            'Không thể tải dữ liệu bảng phễu Lead.',
-        )
-        throw new ApiError(message, code, res.status)
+        if (res.ok && body.data) {
+            return body.data
+        }
+
+        if (!res.ok && res.status !== 404) {
+            const code =
+                body.code ||
+                (res.status === 403
+                    ? 'FORBIDDEN'
+                    : res.status === 401
+                      ? 'UNAUTHORIZED'
+                      : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể tải dữ liệu bảng phễu Lead.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+    } catch (err: unknown) {
+        const errStatus = (err as { status?: number })?.status
+        if (errStatus && errStatus !== 404) {
+            throw err
+        }
+        if (err instanceof ApiError && err.status !== 404) {
+            throw err
+        }
     }
 
-    return (
-        body.data ?? {
-            columns: [],
-            leads: [],
-            counts: {},
-            total: 0,
+    // Fallback: Tự động tải danh sách và phân nhóm theo đúng 6 cột SCRUM-213 nếu backend chưa có endpoint riêng
+    const listRes = await getLeads(requestFn, { page: 1, page_size: 100 }).catch(() => null)
+    const items = listRes?.items || []
+    const counts: Record<string, number> = {}
+    for (const k of PIPELINE_STATUS_KEYS) counts[k] = 0
+    const columns = PIPELINE_STATUS_KEYS.map((k) => {
+        const colLeads = items.filter((l) => l.status === k)
+        counts[k] = colLeads.length
+        return {
+            status: k,
+            label: LEAD_STATUS_LABELS[k] || k,
+            count: colLeads.length,
+            leads: colLeads,
         }
-    )
+    })
+    const pipelineLeads = items.filter((l) => PIPELINE_STATUS_KEYS.includes(l.status))
+
+    return {
+        columns,
+        leads: pipelineLeads,
+        counts,
+        total: pipelineLeads.length,
+    }
 }
 
 /**
@@ -738,27 +803,37 @@ export async function getLeadStatusHistory(
     leadId: string,
 ): Promise<LeadStatusHistoryItem[]> {
     const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/status-history`
-    const res = await requestFn(path, { method: 'GET' })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code =
-            body.code ||
-            (res.status === 404
-                ? 'LEAD_NOT_FOUND'
-                : res.status === 403
-                  ? 'FORBIDDEN'
-                  : res.status === 401
-                    ? 'UNAUTHORIZED'
-                    : 'API_ERROR')
+        if (!res.ok) {
+            const code =
+                body.code ||
+                (res.status === 404
+                    ? 'LEAD_NOT_FOUND'
+                    : res.status === 403
+                      ? 'FORBIDDEN'
+                      : res.status === 401
+                        ? 'UNAUTHORIZED'
+                        : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể tải lịch sử trạng thái của Lead.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+
+        return body.data ?? []
+    } catch (err: unknown) {
+        if (err instanceof ApiError) throw err
+        const errObj = err as { code?: string; status?: number; message?: string }
         const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
+            errObj,
             'Không thể tải lịch sử trạng thái của Lead.',
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, errObj.code || 'API_ERROR', errObj.status || 0)
     }
-
-    return body.data ?? []
 }
 
 export type InteractionType = 'call' | 'message' | 'meeting'
@@ -837,19 +912,37 @@ export async function getLeadCareLogs(
     leadId: string,
 ): Promise<LeadCareLog[]> {
     const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/care-logs`
-    const res = await requestFn(path, { method: 'GET' })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code = body.code || 'API_ERROR'
+        if (!res.ok) {
+            const code =
+                body.code ||
+                (res.status === 404
+                    ? 'LEAD_NOT_FOUND'
+                    : res.status === 403
+                      ? 'FORBIDDEN'
+                      : res.status === 401
+                        ? 'UNAUTHORIZED'
+                        : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể tải nhật ký chăm sóc Lead.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+
+        return body.data ?? []
+    } catch (err: unknown) {
+        if (err instanceof ApiError) throw err
+        const errObj = err as { code?: string; status?: number; message?: string }
         const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
+            errObj,
             'Không thể tải nhật ký chăm sóc Lead.',
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, errObj.code || 'API_ERROR', errObj.status || 0)
     }
-
-    return body.data ?? []
 }
 
 /**
@@ -863,23 +956,41 @@ export async function updateLeadCallbackDate(
     callbackDate: string | null,
 ): Promise<Lead> {
     const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/callback-date`
-    const res = await requestFn(path, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callback_date: callbackDate }),
-    })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_date: callbackDate }),
+        })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code = body.code || 'API_ERROR'
+        if (!res.ok) {
+            const code =
+                body.code ||
+                (res.status === 404
+                    ? 'LEAD_NOT_FOUND'
+                    : res.status === 403
+                      ? 'FORBIDDEN'
+                      : res.status === 401
+                        ? 'UNAUTHORIZED'
+                        : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể cập nhật ngày nhắc gọi lại.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+
+        return body.data
+    } catch (err: unknown) {
+        if (err instanceof ApiError) throw err
+        const errObj = err as { code?: string; status?: number; message?: string }
         const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
+            errObj,
             'Không thể cập nhật ngày nhắc gọi lại.',
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, errObj.code || 'API_ERROR', errObj.status || 0)
     }
-
-    return body.data
 }
 
 /**

@@ -160,6 +160,15 @@ export function LoginPage() {
                     ? data.user.email
                     : email
 
+            const mustChangePassword = Boolean(
+                ('must_change_password' in data && data.must_change_password) ||
+                ('user' in data &&
+                    typeof data.user === 'object' &&
+                    data.user !== null &&
+                    'must_change_password' in data.user &&
+                    data.user.must_change_password)
+            )
+
             // Cập nhật session theo cơ chế SCRUM-19 và SCRUM-26
             startSession(
                 {
@@ -173,11 +182,23 @@ export function LoginPage() {
                 userEmail,
                 userRoles,
                 userPermissions,
+                undefined,
+                mustChangePassword,
             )
 
-            // Điều hướng người dùng tới trang phù hợp theo role
-            const targetPath = getRoleHomePath(userRole)
-            navigate(targetPath, { replace: true })
+            if (mustChangePassword) {
+                navigate('/change-password', {
+                    replace: true,
+                    state: {
+                        forced: true,
+                        message: 'Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng hệ thống.',
+                    },
+                })
+            } else {
+                // Điều hướng người dùng tới trang phù hợp theo role
+                const targetPath = getRoleHomePath(userRole)
+                navigate(targetPath, { replace: true })
+            }
         } catch (err: unknown) {
             setErrorMessage(
                 getErrorMessage(err, 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'),

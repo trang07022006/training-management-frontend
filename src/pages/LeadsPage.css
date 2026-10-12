@@ -1828,6 +1828,99 @@
   display: inline-block;
 }
 
+/* SCRUM-215: Convert Lead to Student */
+.status-badge--converted {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.btn-action-convert {
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-convert:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-action-convert:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-modal-convert {
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-convert:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-modal-convert:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.student-code-highlight {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0284c7;
+  letter-spacing: 0.05em;
+  background: #f0f9ff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #bae6fd;
+}
+
+.btn-action-edit:disabled,
+.btn-modal-edit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+/* Thông tin học viên (SCRUM-215) */
+.detail-student-section {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+}
+
+.detail-student-heading {
+  margin: 0 0 12px 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detail-student-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+
 
 
 

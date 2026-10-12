@@ -25,6 +25,8 @@ import {
     updateLeadCallbackDate,
     formatCallbackDateDisplay,
     isLeadCallbackOverdue,
+    convertLeadToStudent,
+    getLeadStudent,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -177,6 +179,13 @@ export function LeadsPage() {
 
     // Trigger refetch để đồng bộ danh sách sau mutations khi đang có bộ lọc (SCRUM-128)
     const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
+
+    // Chuyển đổi Lead sang Hồ sơ học viên (SCRUM-215)
+    const [isConverting, setIsConverting] = useState(false)
+    const [convertError, setConvertError] = useState<string | null>(null)
+    const [convertSuccess, setConvertSuccess] = useState<string | null>(null)
+    const [convertedStudentCode, setConvertedStudentCode] = useState<string | null>(null)
+    const [accountResult, setAccountResult] = useState<{ accountCreated?: boolean; emailSent?: boolean } | null>(null)
 
     // Debounce search input (300ms)
     useEffect(() => {
@@ -420,9 +429,25 @@ export function LeadsPage() {
 
         try {
             const detail = await getLead(request, leadId)
-            setSelectedLead(detail)
-            setSelectedStatus(detail.status)
-            setSelectedAssigneeId(detail.assigned_to_user_id || '')
+            let finalDetail = detail
+            if (!finalDetail.student_code && finalDetail.status === 'converted') {
+                try {
+                    const linked = await getLeadStudent(request, leadId)
+                    if (linked) {
+                        finalDetail = {
+                            ...finalDetail,
+                            student_code: linked.student_code,
+                            student: linked,
+                        }
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+            setSelectedLead(finalDetail)
+            setConvertedStudentCode(finalDetail.student_code || finalDetail.student?.student_code || null)
+            setSelectedStatus(finalDetail.status)
+            setSelectedAssigneeId(finalDetail.assigned_to_user_id || '')
             setCallbackDateInput(detail.callback_date ? detail.callback_date.slice(0, 10) : '')
             setCallbackDateError(null)
             setCallbackDateSuccess(null)
@@ -433,6 +458,95 @@ export function LeadsPage() {
         } catch (err: unknown) {
             const message = getErrorMessage(err, 'Không thể tải chi tiết tư vấn.')
             setPageError(message)
+        }
+    }
+
+    const handleConvertToStudent = async (leadId: string) => {
+        if (isConverting) return
+        const targetLead = leads.find((l) => l.id === leadId) || (selectedLead?.id === leadId ? selectedLead : null)
+        if (targetLead && (targetLead.status === 'converted' || targetLead.status !== 'won')) {
+            setConvertError('Khách hàng đã nhập học hoặc chưa chốt, không thể chuyển đổi.')
+            return
+        }
+        setIsConverting(true)
+        setConvertError(null)
+        setConvertSuccess(null)
+
+        try {
+            const res = await convertLeadToStudent(request, leadId)
+            const code = res?.student?.student_code
+            const accountCreated = res?.account_created
+            const emailSent = res?.email_sent
+
+            let successMsg = 'Chuyển đổi khách hàng thành học viên thành công.'
+            if (code) {
+                successMsg += ` Mã học viên: ${code}.`
+            }
+            if (accountCreated) {
+                successMsg += emailSent
+                    ? ' Đã tạo tài khoản và gửi email thông báo.'
+                    : ' Đã tạo tài khoản đăng nhập.'
+            }
+
+            setConvertSuccess(successMsg)
+            setConvertedStudentCode(code || null)
+            setAccountResult({ accountCreated, emailSent })
+            setSelectedLead((prev) =>
+                prev && prev.id === leadId
+                    ? {
+                          ...prev,
+                          status: 'converted',
+                          ...(code ? { student_code: code } : {}),
+                          student: res?.student
+                              ? {
+                                    id: res.student.id,
+                                    student_code: res.student.student_code,
+                                    user_id: res.user_id || res.student.user_id,
+                                    full_name: res.student.full_name,
+                                    account_email: res.student.email || prev.email,
+                                    account_status: accountCreated ? 'Đã tạo' : 'Chưa tạo',
+                                    status: res.student.status,
+                                    program_code: res.student.program_code,
+                                    program_name: res.student.program_name,
+                                }
+                              : prev.student,
+                      }
+                    : prev,
+            )
+            setSelectedStatus('converted')
+            setLeads((prev) =>
+                prev.map((l) =>
+                    l.id === leadId
+                        ? {
+                              ...l,
+                              status: 'converted',
+                              ...(code ? { student_code: code } : {}),
+                          }
+                        : l,
+                ),
+            )
+            setPipelineData((prev) => {
+                if (!prev) return prev
+                const newCols = prev.columns.map((c) => ({
+                    ...c,
+                    leads: c.leads.filter((l) => l.id !== leadId),
+                    count: c.status === 'won' ? Math.max(0, c.count - 1) : c.count,
+                }))
+                const newCounts = { ...prev.counts }
+                if (newCounts['won']) newCounts['won'] = Math.max(0, newCounts['won'] - 1)
+                return {
+                    ...prev,
+                    columns: newCols,
+                    leads: prev.leads.filter((l) => l.id !== leadId),
+                    counts: newCounts,
+                    total: Math.max(0, prev.total - 1),
+                }
+            })
+            setTimeout(() => setConvertSuccess(null), 5000)
+        } catch (err: unknown) {
+            setConvertError(getErrorMessage(err, 'Không thể chuyển đổi khách hàng thành học viên.'))
+        } finally {
+            setIsConverting(false)
         }
     }
 
@@ -449,6 +563,10 @@ export function LeadsPage() {
         setStatusSuccess(null)
         setAssignmentError(null)
         setAssignmentSuccess(null)
+        setConvertError(null)
+        setConvertSuccess(null)
+        setConvertedStudentCode(null)
+        setAccountResult(null)
         setCareLogs([])
         setIsLoadingCareLogs(false)
         setCareLogsError(null)
@@ -639,6 +757,11 @@ export function LeadsPage() {
         reason?: string,
         notes?: string,
     ) => {
+        if (lead.status === 'converted') {
+            setPageError('Khách hàng đã nhập học, không thể chuyển trạng thái.')
+            return
+        }
+
         const oldStatus = lead.status
         const previousPipelineData = pipelineData
 
@@ -706,6 +829,10 @@ export function LeadsPage() {
 
     const handleStatusChange = async (newStatus: LeadStatus) => {
         if (!selectedLead || isUpdatingStatus) return
+        if (selectedLead.status === 'converted') {
+            setStatusError('Khách hàng đã nhập học, không thể thay đổi trạng thái.')
+            return
+        }
         if (newStatus === selectedLead.status) return
 
         if (newStatus === 'rejected') {
@@ -776,6 +903,7 @@ export function LeadsPage() {
 
     // Drag & Drop handlers (SCRUM-213)
     const handleDragStart = (e: React.DragEvent, lead: Lead) => {
+        if (lead.status === 'converted') return
         e.dataTransfer.setData('text/plain', lead.id)
         e.dataTransfer.effectAllowed = 'move'
         setDraggedLead(lead)
@@ -804,7 +932,7 @@ export function LeadsPage() {
         setDragOverStatus(null)
         const lead = draggedLead
         setDraggedLead(null)
-        if (!lead || lead.status === targetStatus) return
+        if (!lead || lead.status === targetStatus || lead.status === 'converted') return
 
         if (targetStatus === 'rejected') {
             setRejectionTargetLead(lead)
@@ -820,6 +948,10 @@ export function LeadsPage() {
 
     const handleAssigneeChange = async (newAssigneeId: string) => {
         if (!selectedLead || isAssigning) return
+        if (selectedLead.status === 'converted') {
+            setAssignmentError('Khách hàng đã nhập học, không thể thay đổi phân công.')
+            return
+        }
         const currentAssigneeId = selectedLead.assigned_to_user_id || ''
         if (newAssigneeId === currentAssigneeId) return
 
@@ -920,6 +1052,10 @@ export function LeadsPage() {
     }
 
     const handleOpenEditModal = (leadToEdit: Lead) => {
+        if (leadToEdit.status === 'converted') {
+            setPageError('Khách hàng đã nhập học, không thể chỉnh sửa thông tin.')
+            return
+        }
         setEditingLead(leadToEdit)
         setFormFullName(leadToEdit.full_name || '')
         setFormPhone(leadToEdit.phone || '')
@@ -947,6 +1083,11 @@ export function LeadsPage() {
     const handleSubmitForm = async (e: React.FormEvent) => {
         e.preventDefault()
         if (isSubmittingForm) return
+
+        if (editingLead && editingLead.status === 'converted') {
+            setFormApiError('Khách hàng đã nhập học, không thể chỉnh sửa thông tin.')
+            return
+        }
 
         const errors: { full_name?: string; phone?: string; email?: string } = {}
         const trimmedName = formFullName.trim()
@@ -1398,11 +1539,24 @@ export function LeadsPage() {
                                                     >
                                                         Xem chi tiết
                                                     </button>
+                                                    {lead.status === 'won' && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn-action-convert"
+                                                            data-testid={`convert-lead-${lead.id}`}
+                                                            onClick={() => void handleOpenDetail(lead.id)}
+                                                            title="Chuyển lead đã chốt thành hồ sơ học viên"
+                                                        >
+                                                            Chuyển HV
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         className="btn-action-edit"
                                                         data-testid={`edit-lead-${lead.id}`}
                                                         onClick={() => handleOpenEditModal(lead)}
+                                                        disabled={lead.status === 'converted'}
+                                                        title={lead.status === 'converted' ? 'Khách hàng đã nhập học, không thể chỉnh sửa' : 'Chỉnh sửa'}
                                                     >
                                                         Sửa
                                                     </button>
@@ -1632,6 +1786,24 @@ export function LeadsPage() {
                         </header>
 
                         <div className="leads-modal-body">
+                            {convertSuccess && (
+                                <div
+                                    className="leads-alert-success"
+                                    data-testid="convert-success-alert"
+                                >
+                                    {convertSuccess}
+                                </div>
+                            )}
+
+                            {convertError && (
+                                <div
+                                    className="leads-alert-error"
+                                    data-testid="convert-error-alert"
+                                >
+                                    {convertError}
+                                </div>
+                            )}
+
                             {statusSuccess && (
                                 <div
                                     className="leads-alert-success"
@@ -1737,7 +1909,43 @@ export function LeadsPage() {
                                         {formatDate(selectedLead.updated_at)}
                                     </span>
                                 </div>
+
                             </div>
+
+                            {/* Khối Thông tin học viên (SCRUM-215 - Chi tiết Lead đã nhập học) */}
+                            {(convertedStudentCode || selectedLead.student_code || selectedLead.student || selectedLead.status === 'converted') && (
+                                <div className="detail-student-section" data-testid="student-info-section">
+                                    <h4 className="detail-student-heading" data-testid="detail-student-heading">
+                                        Thông tin học viên
+                                    </h4>
+                                    <div className="detail-student-grid">
+                                        <div className="detail-row" data-testid="detail-student-code">
+                                            <span className="detail-label">Mã học viên:</span>
+                                            <span className="detail-value student-code-highlight" data-testid="generated-student-code">
+                                                {convertedStudentCode || selectedLead.student?.student_code || selectedLead.student_code || '—'}
+                                            </span>
+                                        </div>
+
+                                        <div className="detail-row" data-testid="detail-student-account">
+                                            <span className="detail-label">Tài khoản:</span>
+                                            <span className="detail-value" data-testid="student-account-email">
+                                                {selectedLead.student?.account_email || selectedLead.email || '—'}
+                                            </span>
+                                        </div>
+
+                                        <div className="detail-row" data-testid="detail-account-status">
+                                            <span className="detail-label">Trạng thái tài khoản:</span>
+                                            <span className="detail-value" data-testid="account-creation-result">
+                                                {accountResult
+                                                    ? (accountResult.accountCreated
+                                                        ? (accountResult.emailSent ? 'Đã tạo tài khoản & gửi email' : 'Đã tạo')
+                                                        : 'Chưa tạo tài khoản')
+                                                    : (selectedLead.student?.account_status || 'Đã tạo')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="detail-message-section">
                                 <span className="detail-label">Nội dung tư vấn:</span>
@@ -1828,7 +2036,7 @@ export function LeadsPage() {
                                         onChange={(e) =>
                                             void handleAssigneeChange(e.target.value)
                                         }
-                                        disabled={isAssigning}
+                                        disabled={isAssigning || selectedLead.status === 'converted'}
                                     >
                                         <option value="">-- Chưa phân công / Gỡ phân công --</option>
                                         {assignableUsers.map((u) => (
@@ -1865,7 +2073,7 @@ export function LeadsPage() {
                                         onChange={(e) =>
                                             void handleStatusChange(e.target.value as LeadStatus)
                                         }
-                                        disabled={isUpdatingStatus}
+                                        disabled={isUpdatingStatus || selectedLead.status === 'converted'}
                                     >
                                         <option value="new">Mới</option>
                                         <option value="contacted">Đã liên hệ</option>
@@ -2142,11 +2350,23 @@ export function LeadsPage() {
                         </div>
 
                         <footer className="leads-modal-footer">
+                            {selectedLead.status === 'won' && (
+                                <button
+                                    type="button"
+                                    className="btn-modal-convert"
+                                    data-testid="convert-lead-to-student-btn"
+                                    onClick={() => void handleConvertToStudent(selectedLead.id)}
+                                    disabled={isConverting}
+                                >
+                                    {isConverting ? 'Đang chuyển đổi...' : 'Chuyển thành học viên'}
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 className="btn-modal-edit"
                                 data-testid="edit-lead-btn"
                                 onClick={() => handleOpenEditModal(selectedLead)}
+                                disabled={selectedLead.status === 'converted'}
                             >
                                 Sửa
                             </button>
