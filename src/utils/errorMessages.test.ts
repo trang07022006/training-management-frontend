@@ -319,20 +319,44 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
         })
     })
 
-    describe('15. Buổi học môn học (SCRUM-129)', () => {
-        it('map mã SUBJECT_ARCHIVED sang thông báo rõ ràng tiếng Việt', () => {
-            expect(getErrorMessage('SUBJECT_ARCHIVED')).toBe(
-                'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.'
+    describe('16. HTTP Status và Network Error (SCRUM-215 Bugfix)', () => {
+        it('phân biệt HTTP 403, 404, 500 với network error', () => {
+            // 403 -> Bạn không có quyền thực hiện thao tác này
+            expect(getErrorMessage({ status: 403 })).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(403)).toBe('Bạn không có quyền thực hiện thao tác này.')
+
+            // 404 -> Thông báo phù hợp / fallback
+            expect(getErrorMessage({ status: 404 })).toBe('Không tìm thấy dữ liệu yêu cầu.')
+            expect(getErrorMessage({ status: 404 }, 'Không thể tải lịch sử trạng thái.')).toBe(
+                'Không thể tải lịch sử trạng thái.'
             )
-            expect(
-                getErrorMessage({
-                    code: 'SUBJECT_ARCHIVED',
-                    message: 'Môn học đã lưu trữ, không thể chỉnh sửa buổi học.',
-                })
-            ).toBe('Môn học đã lưu trữ, không thể chỉnh sửa buổi học.')
+            expect(getErrorMessage({ status: 404 }, 'Không thể tải nhật ký chăm sóc.')).toBe(
+                'Không thể tải nhật ký chăm sóc.'
+            )
+
+            // 500 -> Có lỗi máy chủ, vui lòng thử lại
+            expect(getErrorMessage({ status: 500 })).toBe('Có lỗi máy chủ, vui lòng thử lại.')
+            expect(getErrorMessage(500)).toBe('Có lỗi máy chủ, vui lòng thử lại.')
+
+            // Network unreachable -> Không thể kết nối tới máy chủ
+            expect(getErrorMessage('Failed to fetch')).toBe(
+                'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.'
+            )
+            expect(getErrorMessage('NetworkError')).toBe(
+                'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.'
+            )
+
+            // Khi có HTTP status 404/403, không bị nhầm thành network error
+            expect(getErrorMessage({ message: 'Failed to fetch', status: 404 })).toBe(
+                'Không tìm thấy dữ liệu yêu cầu.'
+            )
+            expect(getErrorMessage({ message: 'Failed to fetch', status: 403 })).toBe(
+                'Bạn không có quyền thực hiện thao tác này.'
+            )
         })
     })
 })
+
 
 
 

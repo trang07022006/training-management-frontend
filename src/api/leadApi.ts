@@ -725,6 +725,10 @@ export async function getLeadPipeline(
             throw new ApiError(message, code, res.status)
         }
     } catch (err: unknown) {
+        const errStatus = (err as { status?: number })?.status
+        if (errStatus && errStatus !== 404) {
+            throw err
+        }
         if (err instanceof ApiError && err.status !== 404) {
             throw err
         }
@@ -765,27 +769,37 @@ export async function getLeadStatusHistory(
     leadId: string,
 ): Promise<LeadStatusHistoryItem[]> {
     const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/status-history`
-    const res = await requestFn(path, { method: 'GET' })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code =
-            body.code ||
-            (res.status === 404
-                ? 'LEAD_NOT_FOUND'
-                : res.status === 403
-                  ? 'FORBIDDEN'
-                  : res.status === 401
-                    ? 'UNAUTHORIZED'
-                    : 'API_ERROR')
+        if (!res.ok) {
+            const code =
+                body.code ||
+                (res.status === 404
+                    ? 'LEAD_NOT_FOUND'
+                    : res.status === 403
+                      ? 'FORBIDDEN'
+                      : res.status === 401
+                        ? 'UNAUTHORIZED'
+                        : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể tải lịch sử trạng thái của Lead.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+
+        return body.data ?? []
+    } catch (err: unknown) {
+        if (err instanceof ApiError) throw err
+        const errObj = err as { code?: string; status?: number; message?: string }
         const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
+            errObj,
             'Không thể tải lịch sử trạng thái của Lead.',
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, errObj.code || 'API_ERROR', errObj.status || 0)
     }
-
-    return body.data ?? []
 }
 
 export type InteractionType = 'call' | 'message' | 'meeting'
@@ -864,19 +878,37 @@ export async function getLeadCareLogs(
     leadId: string,
 ): Promise<LeadCareLog[]> {
     const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/care-logs`
-    const res = await requestFn(path, { method: 'GET' })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, { method: 'GET' })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code = body.code || 'API_ERROR'
+        if (!res.ok) {
+            const code =
+                body.code ||
+                (res.status === 404
+                    ? 'LEAD_NOT_FOUND'
+                    : res.status === 403
+                      ? 'FORBIDDEN'
+                      : res.status === 401
+                        ? 'UNAUTHORIZED'
+                        : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể tải nhật ký chăm sóc Lead.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+
+        return body.data ?? []
+    } catch (err: unknown) {
+        if (err instanceof ApiError) throw err
+        const errObj = err as { code?: string; status?: number; message?: string }
         const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
+            errObj,
             'Không thể tải nhật ký chăm sóc Lead.',
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, errObj.code || 'API_ERROR', errObj.status || 0)
     }
-
-    return body.data ?? []
 }
 
 /**
@@ -890,23 +922,41 @@ export async function updateLeadCallbackDate(
     callbackDate: string | null,
 ): Promise<Lead> {
     const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/callback-date`
-    const res = await requestFn(path, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ callback_date: callbackDate }),
-    })
-    const body = await res.json().catch(() => ({}))
+    try {
+        const res = await requestFn(path, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ callback_date: callbackDate }),
+        })
+        const body = await res.json().catch(() => ({}))
 
-    if (!res.ok) {
-        const code = body.code || 'API_ERROR'
+        if (!res.ok) {
+            const code =
+                body.code ||
+                (res.status === 404
+                    ? 'LEAD_NOT_FOUND'
+                    : res.status === 403
+                      ? 'FORBIDDEN'
+                      : res.status === 401
+                        ? 'UNAUTHORIZED'
+                        : 'API_ERROR')
+            const message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                'Không thể cập nhật ngày nhắc gọi lại.',
+            )
+            throw new ApiError(message, code, res.status)
+        }
+
+        return body.data
+    } catch (err: unknown) {
+        if (err instanceof ApiError) throw err
+        const errObj = err as { code?: string; status?: number; message?: string }
         const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
+            errObj,
             'Không thể cập nhật ngày nhắc gọi lại.',
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, errObj.code || 'API_ERROR', errObj.status || 0)
     }
-
-    return body.data
 }
 
 /**

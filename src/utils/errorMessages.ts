@@ -268,6 +268,17 @@ export function isTechnicalCode(str?: string | null): boolean {
 export function isNetworkError(text?: string | null): boolean {
     if (!text || typeof text !== 'string') return false
     const lower = text.toLowerCase()
+    if (
+        lower.includes('400') ||
+        lower.includes('401') ||
+        lower.includes('403') ||
+        lower.includes('404') ||
+        lower.includes('500') ||
+        lower.includes('status code 4') ||
+        lower.includes('status code 5')
+    ) {
+        return false
+    }
     return (
         lower.includes('failed to fetch') ||
         lower.includes('networkerror') ||
@@ -344,6 +355,12 @@ export function getErrorMessage(
         if (errorOrCode === 403) {
             return ERROR_MESSAGES.FORBIDDEN
         }
+        if (errorOrCode === 404) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (errorOrCode === 500) {
+            return 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
         const str = String(errorOrCode)
         if (str in ERROR_MESSAGES) {
             return ERROR_MESSAGES[str]
@@ -380,6 +397,13 @@ export function getErrorMessage(
             return ERROR_MESSAGES.FORBIDDEN
         }
 
+        if (trimmed === '404') {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (trimmed === '500') {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+
         if (trimmed in ERROR_MESSAGES) {
             return ERROR_MESSAGES[trimmed]
         }
@@ -412,8 +436,8 @@ export function getErrorMessage(
         }
     }
 
-    // Kiểm tra lỗi mạng
-    if (rawMessage && isNetworkError(rawMessage)) {
+    // Kiểm tra lỗi mạng (chỉ khi không có HTTP status code hợp lệ)
+    if ((!status || status === 0) && rawMessage && isNetworkError(rawMessage)) {
         return NETWORK_ERROR_MESSAGE
     }
 
@@ -488,6 +512,34 @@ export function getErrorMessage(
         upperMsg.includes('401')
     ) {
         return ERROR_MESSAGES['401']
+    }
+
+    if (
+        status === 404 ||
+        normCode === '404' ||
+        normCode === 'NOT_FOUND' ||
+        upperMsg.startsWith('404')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (fallback && fallback !== DEFAULT_FALLBACK_ERROR) {
+            return fallback
+        }
+        return 'Không tìm thấy dữ liệu yêu cầu.'
+    }
+
+    if (
+        status === 500 ||
+        normCode === '500' ||
+        normCode === 'INTERNAL_SERVER_ERROR' ||
+        normCode === 'INTERNAL_ERROR' ||
+        upperMsg.startsWith('500')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        return 'Có lỗi máy chủ, vui lòng thử lại.'
     }
 
     if (upperMsg === 'UNAUTHORIZED' || upperMsg.includes('UNAUTHORIZED')) {
