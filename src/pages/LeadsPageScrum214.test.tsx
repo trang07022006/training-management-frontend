@@ -1,0 +1,614 @@
+// @vitest-environment jsdom
+
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor, fireEvent, cleanup } from '@testing-library/react'
+import { LeadsPage } from './LeadsPage'
+import {
+    getLeads,
+    getLead,
+    getAssignableUsers,
+    getLeadAssignmentHistory,
+    getLeadPipeline,
+    getLeadStatusHistory,
+    createLeadCareLog,
+    getLeadCareLogs,
+    updateLeadCallbackDate,
+} from '../api/leadApi'
+import { getTrainingPrograms } from '../api/trainingProgramApi'
+
+import type {
+    Lead,
+    LeadListResponseData,
+    AssignableUser,
+    LeadCareLog,
+} from '../api/leadApi'
+
+// Mock SessionProvider
+const mockRequest = vi.fn()
+let mockCurrentRole = 'consultant'
+let mockCurrentRoles = ['consultant']
+let mockCurrentPermissions = ['course.manage']
+
+vi.mock('../auth/SessionProvider', () => ({
+    useSession: () => ({
+        request: mockRequest,
+        role: mockCurrentRole,
+        roles: mockCurrentRoles,
+        permissions: mockCurrentPermissions,
+    }),
+}))
+
+// Mock leadApi functions
+vi.mock('../api/leadApi', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../api/leadApi')>()
+    return {
+        ...actual,
+        getLeads: vi.fn(),
+        getLead: vi.fn(),
+        updateLeadStatus: vi.fn(),
+        assignLead: vi.fn(),
+        getAssignableUsers: vi.fn(),
+        getLeadAssignmentHistory: vi.fn(),
+        bulkAssignLeads: vi.fn(),
+        createLead: vi.fn(),
+        updateLead: vi.fn(),
+        deleteLead: vi.fn(),
+        checkLeadPhone: vi.fn(),
+        getLeadPipeline: vi.fn(),
+        getLeadStatusHistory: vi.fn(),
+        createLeadCareLog: vi.fn(),
+        getLeadCareLogs: vi.fn(),
+        updateLeadCallbackDate: vi.fn(),
+    }
+})
+
+// Mock trainingProgramApi
+vi.mock('../api/trainingProgramApi', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../api/trainingProgramApi')>()
+    return {
+        ...actual,
+        getTrainingPrograms: vi.fn(),
+    }
+})
+
+const sampleLead: Lead = {
+    id: 'lead-214-001',
+    full_name: 'Nguyễn Văn Test',
+    phone: '0987654321',
+    email: 'van.test@example.com',
+    interested_program_id: 'prog-01',
+    interested_program_name: 'Công nghệ thông tin',
+    message: 'Quan tâm tuyển sinh',
+    source: 'direct',
+    status: 'new',
+    assigned_to_user_id: 'user-cons-01',
+    assigned_to_name: 'Trần Tư Vấn',
+    created_at: '2026-10-12T08:00:00Z',
+    updated_at: '2026-10-12T08:00:00Z',
+}
+
+const mockListResponse: LeadListResponseData = {
+    items: [sampleLead],
+    total: 1,
+    page: 1,
+    page_size: 10,
+    total_pages: 1,
+}
+
+const sampleAssignableUsers: AssignableUser[] = [
+    {
+        id: 'user-cons-01',
+        name: 'Trần Tư Vấn',
+        email: 'tuvan@ictu.vn',
+        role: 'consultant',
+    },
+]
+
+describe('SCRUM-214: Sub-task 214-01 – Nhật ký chăm sóc Lead (UI & API Integration)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockCurrentRole = 'consultant'
+        mockCurrentRoles = ['consultant']
+        mockCurrentPermissions = ['course.manage']
+
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(sampleLead)
+        vi.mocked(getAssignableUsers).mockResolvedValue(sampleAssignableUsers)
+        vi.mocked(getTrainingPrograms).mockResolvedValue({ items: [], total: 0 } as any)
+        vi.mocked(getLeadAssignmentHistory).mockResolvedValue([])
+        vi.mocked(getLeadStatusHistory).mockResolvedValue([])
+        vi.mocked(getLeadCareLogs).mockResolvedValue([])
+        vi.mocked(getLeadPipeline).mockResolvedValue({
+            columns: [],
+            leads: [sampleLead],
+            counts: { new: 1, contacted: 0, consulting: 0, trial_scheduled: 0, won: 0, rejected: 0 },
+            total: 1,
+        })
+    })
+
+    afterEach(() => {
+        cleanup()
+    })
+
+    it('TC214-01: Tạo interaction loại Gọi (call) -> lưu thành công và xuất hiện trong danh sách', async () => {
+        const createdLog: LeadCareLog = {
+            id: 'care-log-call-1',
+            lead_id: sampleLead.id,
+            interaction_type: 'call',
+            interaction_type_label: 'Gọi',
+            content: 'Đã gọi điện tư vấn khóa học Lập trình Web Fullstack',
+            interaction_at: '2026-10-12T09:00:00Z',
+            performed_by_user_id: 'user-cons-01',
+            performed_by_name: 'Trần Tư Vấn',
+            created_at: '2026-10-12T09:00:00Z',
+        }
+        vi.mocked(createLeadCareLog).mockResolvedValue(createdLog)
+
+        render(<LeadsPage />)
+        await waitFor(() => {
+            expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined()
+        })
+
+        // Mở chi tiết Lead
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+        await waitFor(() => {
+            expect(screen.getByTestId('lead-detail-modal')).toBeDefined()
+            expect(screen.getByTestId('care-logs-section')).toBeDefined()
+        })
+
+        // Bấm nút "+ Ghi nhận tương tác"
+        fireEvent.click(screen.getByTestId('add-care-log-btn'))
+        expect(screen.getByTestId('care-log-form')).toBeDefined()
+
+        // Chọn loại: Gọi
+        const typeSelect = screen.getByTestId('care-log-type-select') as HTMLSelectElement
+        fireEvent.change(typeSelect, { target: { value: 'call' } })
+        expect(typeSelect.value).toBe('call')
+
+        // Nhập nội dung và thời điểm
+        fireEvent.change(screen.getByTestId('care-log-content-input'), {
+            target: { value: 'Đã gọi điện tư vấn khóa học Lập trình Web Fullstack' },
+        })
+        fireEvent.change(screen.getByTestId('care-log-time-input'), {
+            target: { value: '2026-10-12T09:00' },
+        })
+
+        // Bấm Lưu
+        fireEvent.click(screen.getByTestId('care-log-submit-btn'))
+
+        await waitFor(() => {
+            expect(createLeadCareLog).toHaveBeenCalledWith(
+                mockRequest,
+                sampleLead.id,
+                expect.objectContaining({
+                    interaction_type: 'call',
+                    content: 'Đã gọi điện tư vấn khóa học Lập trình Web Fullstack',
+                }),
+            )
+            // Record xuất hiện ngay, không reload toàn trang
+            expect(screen.getByTestId(`care-log-item-${createdLog.id}`)).toBeDefined()
+            expect(screen.getByTestId(`care-log-type-${createdLog.id}`).textContent).toContain('Gọi')
+            expect(screen.getByTestId(`care-log-content-${createdLog.id}`).textContent).toContain(
+                'Đã gọi điện tư vấn khóa học Lập trình Web Fullstack',
+            )
+        })
+    })
+
+    it('TC214-02: Tạo interaction loại Nhắn (message) -> lưu đúng', async () => {
+        const createdLog: LeadCareLog = {
+            id: 'care-log-msg-2',
+            lead_id: sampleLead.id,
+            interaction_type: 'message',
+            interaction_type_label: 'Nhắn',
+            content: 'Gửi lộ trình qua Zalo cho học viên',
+            interaction_at: '2026-10-12T10:15:00Z',
+            performed_by_user_id: 'user-cons-01',
+            performed_by_name: 'Trần Tư Vấn',
+            created_at: '2026-10-12T10:15:00Z',
+        }
+        vi.mocked(createLeadCareLog).mockResolvedValue(createdLog)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+        await waitFor(() => expect(screen.getByTestId('add-care-log-btn')).toBeDefined())
+
+        fireEvent.click(screen.getByTestId('add-care-log-btn'))
+        fireEvent.change(screen.getByTestId('care-log-type-select'), {
+            target: { value: 'message' },
+        })
+        fireEvent.change(screen.getByTestId('care-log-content-input'), {
+            target: { value: 'Gửi lộ trình qua Zalo cho học viên' },
+        })
+        fireEvent.change(screen.getByTestId('care-log-time-input'), {
+            target: { value: '2026-10-12T10:15' },
+        })
+        fireEvent.click(screen.getByTestId('care-log-submit-btn'))
+
+        await waitFor(() => {
+            expect(createLeadCareLog).toHaveBeenCalledWith(
+                mockRequest,
+                sampleLead.id,
+                expect.objectContaining({
+                    interaction_type: 'message',
+                    content: 'Gửi lộ trình qua Zalo cho học viên',
+                }),
+            )
+            expect(screen.getByTestId(`care-log-type-${createdLog.id}`).textContent).toContain('Nhắn')
+        })
+    })
+
+    it('TC214-03: Tạo interaction loại Gặp (meeting) -> lưu đúng', async () => {
+        const createdLog: LeadCareLog = {
+            id: 'care-log-meet-3',
+            lead_id: sampleLead.id,
+            interaction_type: 'meeting',
+            interaction_type_label: 'Gặp',
+            content: 'Gặp mặt tư vấn trực tiếp tại phòng tuyển sinh',
+            interaction_at: '2026-10-12T14:30:00Z',
+            performed_by_user_id: 'user-cons-01',
+            performed_by_name: 'Trần Tư Vấn',
+            created_at: '2026-10-12T14:30:00Z',
+        }
+        vi.mocked(createLeadCareLog).mockResolvedValue(createdLog)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+        await waitFor(() => expect(screen.getByTestId('add-care-log-btn')).toBeDefined())
+
+        fireEvent.click(screen.getByTestId('add-care-log-btn'))
+        fireEvent.change(screen.getByTestId('care-log-type-select'), {
+            target: { value: 'meeting' },
+        })
+        fireEvent.change(screen.getByTestId('care-log-content-input'), {
+            target: { value: 'Gặp mặt tư vấn trực tiếp tại phòng tuyển sinh' },
+        })
+        fireEvent.change(screen.getByTestId('care-log-time-input'), {
+            target: { value: '2026-10-12T14:30' },
+        })
+        fireEvent.click(screen.getByTestId('care-log-submit-btn'))
+
+        await waitFor(() => {
+            expect(createLeadCareLog).toHaveBeenCalledWith(
+                mockRequest,
+                sampleLead.id,
+                expect.objectContaining({
+                    interaction_type: 'meeting',
+                    content: 'Gặp mặt tư vấn trực tiếp tại phòng tuyển sinh',
+                }),
+            )
+            expect(screen.getByTestId(`care-log-type-${createdLog.id}`).textContent).toContain('Gặp')
+        })
+    })
+
+    it('TC214-04: Kiểm tra validation nội dung + thời điểm (thông báo tiếng Việt)', async () => {
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+        await waitFor(() => expect(screen.getByTestId('add-care-log-btn')).toBeDefined())
+
+        fireEvent.click(screen.getByTestId('add-care-log-btn'))
+
+        // Nội dung rỗng
+        fireEvent.change(screen.getByTestId('care-log-content-input'), {
+            target: { value: '   ' },
+        })
+        fireEvent.click(screen.getByTestId('care-log-submit-btn'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('care-log-error').textContent).toContain(
+                'Vui lòng nhập nội dung tương tác.',
+            )
+        })
+        expect(createLeadCareLog).not.toHaveBeenCalled()
+    })
+
+    it('TC214-05: Reload / mở lại detail modal -> nhật ký vẫn tồn tại', async () => {
+        const persistedLogs: LeadCareLog[] = [
+            {
+                id: 'care-log-persisted-1',
+                lead_id: sampleLead.id,
+                interaction_type: 'call',
+                interaction_type_label: 'Gọi',
+                content: 'Lần gọi đầu tiên được lưu',
+                interaction_at: '2026-10-11T09:00:00Z',
+                performed_by_name: 'Trần Tư Vấn',
+                created_at: '2026-10-11T09:00:00Z',
+            },
+        ]
+        vi.mocked(getLeadCareLogs).mockResolvedValue(persistedLogs)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+
+        await waitFor(() => {
+            expect(getLeadCareLogs).toHaveBeenCalledWith(mockRequest, sampleLead.id)
+            expect(screen.getByTestId(`care-log-item-${persistedLogs[0].id}`)).toBeDefined()
+            expect(screen.getByTestId(`care-log-content-${persistedLogs[0].id}`).textContent).toContain(
+                'Lần gọi đầu tiên được lưu',
+            )
+        })
+    })
+
+    it('TC214-06: Kiểm tra người thực hiện đúng user thao tác', async () => {
+        const logWithActor: LeadCareLog = {
+            id: 'care-log-actor-1',
+            lead_id: sampleLead.id,
+            interaction_type: 'message',
+            interaction_type_label: 'Nhắn',
+            content: 'Nhắn tin qua SMS cho khách',
+            interaction_at: '2026-10-12T11:00:00Z',
+            performed_by_user_id: 'user-cons-01',
+            performed_by_name: 'Trần Tư Vấn (Chính chủ)',
+            created_at: '2026-10-12T11:00:00Z',
+        }
+        vi.mocked(getLeadCareLogs).mockResolvedValue([logWithActor])
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+
+        await waitFor(() => {
+            expect(screen.getByTestId(`care-log-actor-${logWithActor.id}`).textContent).toContain(
+                'Người thực hiện: Trần Tư Vấn (Chính chủ)',
+            )
+        })
+    })
+})
+
+describe('SCRUM-214: Sub-task 214-02 – Đặt lịch nhắc gọi lại (Callback Reminder UI)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockCurrentRole = 'consultant'
+        mockCurrentRoles = ['consultant']
+        mockCurrentPermissions = ['course.manage']
+
+        vi.mocked(getLeads).mockResolvedValue(mockListResponse)
+        vi.mocked(getLead).mockResolvedValue(sampleLead)
+        vi.mocked(getAssignableUsers).mockResolvedValue(sampleAssignableUsers)
+        vi.mocked(getTrainingPrograms).mockResolvedValue({ items: [], total: 0 } as any)
+        vi.mocked(getLeadAssignmentHistory).mockResolvedValue([])
+        vi.mocked(getLeadStatusHistory).mockResolvedValue([])
+        vi.mocked(getLeadCareLogs).mockResolvedValue([])
+        vi.mocked(getLeadPipeline).mockResolvedValue({
+            columns: [],
+            leads: [sampleLead],
+            counts: { new: 1, contacted: 0, consulting: 0, trial_scheduled: 0, won: 0, rejected: 0 },
+            total: 1,
+        })
+    })
+
+    afterEach(() => {
+        cleanup()
+    })
+
+    it('TC214-07: Chọn ngày nhắc gọi lại và bấm Lưu -> gọi API và hiển thị thành công', async () => {
+        const updatedLead: Lead = {
+            ...sampleLead,
+            callback_date: '2026-10-20',
+        }
+        vi.mocked(updateLeadCallbackDate).mockResolvedValue(updatedLead)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleLead.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleLead.id}`))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('callback-reminder-section')).toBeDefined()
+            expect(screen.getByTestId('callback-date-input')).toBeDefined()
+        })
+
+        const dateInput = screen.getByTestId('callback-date-input') as HTMLInputElement
+        fireEvent.change(dateInput, { target: { value: '2026-10-20' } })
+        expect(dateInput.value).toBe('2026-10-20')
+
+        fireEvent.click(screen.getByTestId('save-callback-date-btn'))
+
+        await waitFor(() => {
+            expect(updateLeadCallbackDate).toHaveBeenCalledWith(
+                mockRequest,
+                sampleLead.id,
+                '2026-10-20',
+            )
+            expect(screen.getByTestId('callback-date-success').textContent).toContain(
+                'Lưu ngày nhắc gọi lại thành công.',
+            )
+            expect(screen.getByTestId('callback-date-display').textContent).toContain('20/10/2026')
+        })
+    })
+
+    it('TC214-08: Lead đã có ngày nhắc -> hiển thị đúng khi mở modal chi tiết', async () => {
+        const leadWithCallback: Lead = {
+            ...sampleLead,
+            id: 'lead-with-cb-1',
+            callback_date: '2026-10-25',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [leadWithCallback],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(leadWithCallback)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${leadWithCallback.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${leadWithCallback.id}`))
+
+        await waitFor(() => {
+            const dateInput = screen.getByTestId('callback-date-input') as HTMLInputElement
+            expect(dateInput.value).toBe('2026-10-25')
+            expect(screen.getByTestId('callback-date-display').textContent).toContain('25/10/2026')
+            expect(screen.getByTestId('clear-callback-date-btn')).toBeDefined()
+        })
+    })
+
+    it('TC214-09: Bấm nút Xóa nhắc -> gọi API update null và xóa ngày nhắc', async () => {
+        const leadWithCallback: Lead = {
+            ...sampleLead,
+            id: 'lead-with-cb-2',
+            callback_date: '2026-10-22',
+        }
+        const leadCleared: Lead = {
+            ...leadWithCallback,
+            callback_date: null,
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [leadWithCallback],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(leadWithCallback)
+        vi.mocked(updateLeadCallbackDate).mockResolvedValue(leadCleared)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${leadWithCallback.id}`)).toBeDefined())
+        fireEvent.click(screen.getByTestId(`view-lead-${leadWithCallback.id}`))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('clear-callback-date-btn')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('clear-callback-date-btn'))
+
+        await waitFor(() => {
+            expect(updateLeadCallbackDate).toHaveBeenCalledWith(
+                mockRequest,
+                leadWithCallback.id,
+                null,
+            )
+            expect(screen.getByTestId('callback-date-success').textContent).toContain(
+                'Đã xóa ngày nhắc gọi lại.',
+            )
+        })
+    })
+})
+
+describe('SCRUM-214: Sub-task 214-03 – Đánh dấu Lead quá hạn gọi lại (Overdue Callback Highlight)', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockCurrentRole = 'consultant'
+        mockCurrentRoles = ['consultant']
+        mockCurrentPermissions = ['course.manage']
+
+        vi.mocked(getAssignableUsers).mockResolvedValue(sampleAssignableUsers)
+        vi.mocked(getTrainingPrograms).mockResolvedValue({ items: [], total: 0 } as any)
+        vi.mocked(getLeadAssignmentHistory).mockResolvedValue([])
+        vi.mocked(getLeadStatusHistory).mockResolvedValue([])
+        vi.mocked(getLeadCareLogs).mockResolvedValue([])
+    })
+
+    afterEach(() => {
+        cleanup()
+    })
+
+    it('TC214-10: Lead có ngày nhắc trong tương lai -> KHÔNG đánh dấu quá hạn', async () => {
+        const futureLead: Lead = {
+            ...sampleLead,
+            id: 'lead-future-1',
+            callback_date: '2099-12-31',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [futureLead],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(futureLead)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`lead-row-${futureLead.id}`)).toBeDefined())
+
+        const row = screen.getByTestId(`lead-row-${futureLead.id}`)
+        expect(row.className).not.toContain('row-overdue')
+        expect(screen.queryByTestId(`overdue-badge-${futureLead.id}`)).toBeNull()
+    })
+
+    it('TC214-11: Lead có ngày nhắc trong quá khứ -> đánh dấu quá hạn nổi bật trên Table view & Modal', async () => {
+        const overdueLead: Lead = {
+            ...sampleLead,
+            id: 'lead-overdue-1',
+            callback_date: '2020-01-01',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [overdueLead],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLead).mockResolvedValue(overdueLead)
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`lead-row-${overdueLead.id}`)).toBeDefined())
+
+        // Kiểm tra table row có class row-overdue và badge quá hạn
+        const row = screen.getByTestId(`lead-row-${overdueLead.id}`)
+        expect(row.className).toContain('row-overdue')
+
+        const overdueBadge = screen.getByTestId(`overdue-badge-${overdueLead.id}`)
+        expect(overdueBadge.textContent).toContain('Quá hạn gọi lại')
+        expect(overdueBadge.textContent).toContain('01/01/2020')
+
+        // Mở detail modal
+        fireEvent.click(screen.getByTestId(`view-lead-${overdueLead.id}`))
+        await waitFor(() => {
+            expect(screen.getByTestId('detail-overdue-tag')).toBeDefined()
+            expect(screen.getByTestId('detail-overdue-tag').textContent).toContain('Quá hạn gọi lại')
+        })
+    })
+
+    it('TC214-12: Lead quá hạn trên Kanban board -> hiển thị badge và border nổi bật', async () => {
+        const overdueLead: Lead = {
+            ...sampleLead,
+            id: 'lead-kanban-overdue-1',
+            callback_date: '2020-01-01',
+            status: 'new',
+        }
+        vi.mocked(getLeads).mockResolvedValue({
+            items: [overdueLead],
+            total: 1,
+            page: 1,
+            page_size: 10,
+            total_pages: 1,
+        })
+        vi.mocked(getLeadPipeline).mockResolvedValue({
+            columns: [
+                {
+                    status: 'new',
+                    label: 'Mới',
+                    count: 1,
+                    leads: [overdueLead],
+                },
+            ],
+            leads: [overdueLead],
+            counts: { new: 1 },
+            total: 1,
+        })
+
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId('view-mode-pipeline-btn')).toBeDefined())
+
+        // Chuyển sang chế độ Kanban
+        fireEvent.click(screen.getByTestId('view-mode-pipeline-btn'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId(`lead-card-${overdueLead.id}`)).toBeDefined()
+        })
+
+        const card = screen.getByTestId(`lead-card-${overdueLead.id}`)
+        expect(card.className).toContain('pipeline-card--overdue')
+
+        const kanbanBadge = screen.getByTestId(`kanban-overdue-badge-${overdueLead.id}`)
+        expect(kanbanBadge.textContent).toContain('Quá hạn gọi lại')
+        expect(kanbanBadge.textContent).toContain('01/01/2020')
+    })
+})
+
+
