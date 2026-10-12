@@ -247,4 +247,95 @@ describe('SCRUM-221: Quản lý phòng học vật lý và trực tuyến (TC221
         expect(screen.getByTestId(`room-link-${sampleOnlineRoom.id}`).textContent).toBe(sampleOnlineRoom.online_link)
         expect(screen.getByTestId(`room-link-${sampleOnlineRoom.id}`).getAttribute('href')).toBe(sampleOnlineRoom.online_link)
     })
+
+    // =========================================================================
+    // 221-02: CẢNH BÁO VƯỢT SỨC CHỨA (TC221-05 -> TC221-08)
+    // =========================================================================
+
+    it('TC221-05: Lớp <= sức chứa phòng -> không warning', async () => {
+        renderClassroomsPage({
+            initialRooms: [samplePhysicalRoom],
+            activeCapacityWarning: {
+                room_id: samplePhysicalRoom.id,
+                room_code: samplePhysicalRoom.room_code,
+                room_type: 'physical',
+                room_capacity: 40,
+                class_id: 'cls-01',
+                class_code: 'CNTT-K21',
+                class_size: 35,
+                basis: 'CLASS_MAX_CAPACITY',
+                is_exceeded: false,
+                warning: false,
+                warning_message: null,
+            },
+        })
+
+        expect(await screen.findByTestId(`room-code-${samplePhysicalRoom.id}`)).toBeDefined()
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+    })
+
+    it('TC221-06: Lớp > sức chứa phòng -> cảnh báo rõ ràng (non-blocking)', async () => {
+        renderClassroomsPage({
+            initialRooms: [samplePhysicalRoom],
+            activeCapacityWarning: {
+                room_id: samplePhysicalRoom.id,
+                room_code: samplePhysicalRoom.room_code,
+                room_type: 'physical',
+                room_capacity: 20,
+                class_id: 'cls-01',
+                class_code: 'CNTT-K21',
+                class_size: 30,
+                basis: 'CLASS_MAX_CAPACITY',
+                is_exceeded: true,
+                warning: true,
+                warning_message: 'Sĩ số lớp vượt sức chứa phòng. (Lớp: 30 học viên – Phòng: 20 chỗ)',
+            },
+        })
+
+        const warningBanner = await screen.findByTestId('room-capacity-warning-banner')
+        expect(warningBanner).toBeDefined()
+        expect(screen.getByTestId('capacity-warning-text').textContent).toContain('Sĩ số lớp vượt sức chứa phòng.')
+        expect(screen.getByTestId('capacity-warning-text').textContent).toContain('Lớp: 30 học viên – Phòng: 20 chỗ')
+    })
+
+    it('TC221-07: Phòng online -> không áp physical capacity warning nếu không có capacity', async () => {
+        renderClassroomsPage({
+            initialRooms: [sampleOnlineRoom],
+            activeCapacityWarning: {
+                room_id: sampleOnlineRoom.id,
+                room_code: sampleOnlineRoom.room_code,
+                room_type: 'online',
+                room_capacity: null,
+                class_id: 'cls-01',
+                class_code: 'CNTT-K21',
+                class_size: 50,
+                basis: 'CLASS_MAX_CAPACITY',
+                is_exceeded: false,
+                warning: false,
+                warning_message: null,
+            },
+        })
+
+        expect(await screen.findByTestId(`room-code-${sampleOnlineRoom.id}`)).toBeDefined()
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+    })
+
+    it('TC221-08: Reload -> room data persist đúng', async () => {
+        const { rerender } = renderClassroomsPage({ initialRooms: [samplePhysicalRoom] })
+        expect(await screen.findByTestId(`room-code-${samplePhysicalRoom.id}`)).toBeDefined()
+
+        // Rerender / reload với phòng khác
+        const updatedRoom = { ...samplePhysicalRoom, room_name: 'Phòng thực hành C3' }
+        rerender(
+            <MemoryRouter>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="training_manager" permissions={['course.view', 'course.manage']}>
+                        <ClassroomsPage initialRooms={[updatedRoom]} />
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        expect(screen.getByTestId(`room-name-${samplePhysicalRoom.id}`).textContent).toBe('Phòng thực hành C3')
+    })
 })
