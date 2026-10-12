@@ -185,6 +185,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
     {
+        key: 'classrooms',
+        label: 'Phòng học',
+        path: '/classrooms',
+        icon: 'door-open',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
         key: 'students',
         label: 'Học viên',
         path: '/students',
