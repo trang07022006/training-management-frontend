@@ -93,7 +93,7 @@ const assistant2: User = {
     status: 'active',
 }
 
-const _traineeUser: User = {
+const traineeUser: User = {
     id: 'trainee-01',
     name: 'Học viên E',
     email: 'trainee.e@ictu.edu.vn',
@@ -101,7 +101,7 @@ const _traineeUser: User = {
     status: 'active',
 }
 
-const _consultantUser: User = {
+const consultantUser: User = {
     id: 'consultant-01',
     name: 'Tư vấn viên F',
     email: 'consultant.f@ictu.edu.vn',
@@ -399,5 +399,89 @@ describe('SCRUM-220: Phân công giảng viên và trợ giảng theo từng mô
             expect(mainCell.textContent).not.toContain(trainerA.name)
         })
     })
+    // =========================================================================
+    // 220-02: LỌC TÀI KHOẢN THEO VAI TRÒ & BACKEND VALIDATION (TC220-05 -> TC220-07)
+    // =========================================================================
+    it('TC220-05: Dropdown giảng viên chính chỉ hiển thị tài khoản có role trainer', async () => {
+        renderWithRole(
+            <ClassesPage
+                initialClasses={[sampleClass]}
+                initialPrograms={[sampleProgram]}
+                // Danh sách gồm trainer, trainee và consultant
+                initialInstructors={[trainerA, trainerB, traineeUser, consultantUser]}
+            />,
+        )
 
+        fireEvent.click(screen.getByTestId(`view-class-${sampleClass.id}`))
+        fireEvent.click(await screen.findByTestId(`assign-instructor-btn-${sampleSubject1.id}`))
+
+        const selectMain = screen.getByTestId('main-instructor-select') as HTMLSelectElement
+        const optionValues = Array.from(selectMain.options).map((o) => o.value)
+
+        // Trainer A và Trainer B có trong dropdown
+        expect(optionValues).toContain(String(trainerA.id))
+        expect(optionValues).toContain(String(trainerB.id))
+
+        // Trainee và Consultant KHÔNG có trong dropdown
+        expect(optionValues).not.toContain(String(traineeUser.id))
+        expect(optionValues).not.toContain(String(consultantUser.id))
+    })
+
+    it('TC220-06: Danh sách chọn trợ giảng chỉ hiển thị tài khoản đúng vai trò', async () => {
+        renderWithRole(
+            <ClassesPage
+                initialClasses={[sampleClass]}
+                initialPrograms={[sampleProgram]}
+                initialInstructors={[trainerA, trainerB, assistant1, traineeUser, consultantUser]}
+            />,
+        )
+
+        fireEvent.click(screen.getByTestId(`view-class-${sampleClass.id}`))
+        fireEvent.click(await screen.findByTestId(`assign-instructor-btn-${sampleSubject1.id}`))
+
+        // Các checkbox trợ giảng
+        expect(screen.getByTestId(`assistant-checkbox-${assistant1.id}`)).toBeDefined()
+        expect(screen.getByTestId(`assistant-checkbox-${trainerB.id}`)).toBeDefined()
+
+        // Trainee và Consultant KHÔNG có checkbox
+        expect(screen.queryByTestId(`assistant-checkbox-${traineeUser.id}`)).toBeNull()
+        expect(screen.queryByTestId(`assistant-checkbox-${consultantUser.id}`)).toBeNull()
+    })
+
+    it('TC220-07: Call API với user sai role -> backend từ chối và frontend hiển thị lỗi tiếng Việt', async () => {
+        const mockRequest = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+            if (url.includes('/instructors') && init?.method === 'POST') {
+                return new Response(
+                    JSON.stringify({
+                        status: 'error',
+                        code: 'INVALID_INSTRUCTOR_ROLE',
+                        message: 'Chỉ tài khoản có vai trò Giảng viên mới được phân công làm giảng viên chính.',
+                    }),
+                    { status: 400, headers: { 'Content-Type': 'application/json' } },
+                )
+            }
+            return new Response(JSON.stringify({ status: 'success', data: {} }), { status: 200 })
+        })
+
+        renderWithRole(
+            <ClassesPage
+                initialClasses={[sampleClass]}
+                initialPrograms={[sampleProgram]}
+                initialInstructors={[trainerA]}
+                customRequest={mockRequest}
+            />,
+        )
+
+        fireEvent.click(screen.getByTestId(`view-class-${sampleClass.id}`))
+        fireEvent.click(await screen.findByTestId(`assign-instructor-btn-${sampleSubject1.id}`))
+
+        fireEvent.change(screen.getByTestId('main-instructor-select'), { target: { value: trainerA.id } })
+        fireEvent.click(screen.getByTestId('save-assignment-btn'))
+
+        // Bắt thông báo lỗi tiếng Việt hiển thị trên modal
+        await waitFor(() => {
+            const errBanner = screen.getByTestId('assign-modal-error')
+            expect(errBanner.textContent).toContain('Chỉ tài khoản có vai trò Giảng viên mới được phân công làm giảng viên chính.')
+        })
+    })
 })
