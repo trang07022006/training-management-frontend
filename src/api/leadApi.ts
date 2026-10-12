@@ -33,6 +33,7 @@ export interface Lead {
     source: string
     status: LeadStatus
     rejection_reason?: string | null
+    callback_date?: string | null
     assigned_to_user_id?: string | null
     assigned_at?: string | null
     assigned_to_name?: string | null
@@ -759,4 +760,161 @@ export async function getLeadStatusHistory(
 
     return body.data ?? []
 }
+
+export type InteractionType = 'call' | 'message' | 'meeting'
+
+export const INTERACTION_TYPES: { type: InteractionType; label: string }[] = [
+    { type: 'call', label: 'Gọi' },
+    { type: 'message', label: 'Nhắn' },
+    { type: 'meeting', label: 'Gặp' },
+]
+
+export const INTERACTION_TYPE_LABELS: Record<InteractionType, string> = {
+    call: 'Gọi',
+    message: 'Nhắn',
+    meeting: 'Gặp',
+}
+
+export function getInteractionTypeLabel(type: string): string {
+    return INTERACTION_TYPE_LABELS[type as InteractionType] || type
+}
+
+export interface LeadCareLog {
+    id: string
+    lead_id: string
+    interaction_type: InteractionType
+    interaction_type_label: string
+    content: string
+    interaction_at: string
+    performed_by_user_id?: string | null
+    performed_by_name?: string | null
+    created_at?: string | null
+}
+
+export interface CreateLeadCareLogInput {
+    interaction_type: InteractionType
+    content: string
+    interaction_at?: string
+}
+
+/**
+ * Ghi nhận một tương tác chăm sóc Lead (SCRUM-214 - Activity A1).
+ * POST /api/v1/leads/<id>/care-logs
+ * Yêu cầu quyền: course.manage
+ */
+export async function createLeadCareLog(
+    requestFn: RequestFunction,
+    leadId: string,
+    payload: CreateLeadCareLogInput,
+): Promise<LeadCareLog> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/care-logs`
+    const res = await requestFn(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể ghi nhận nhật ký chăm sóc Lead.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Lấy danh sách nhật ký chăm sóc Lead (SCRUM-214 - Activity A1).
+ * GET /api/v1/leads/<id>/care-logs
+ * Yêu cầu quyền: course.manage
+ */
+export async function getLeadCareLogs(
+    requestFn: RequestFunction,
+    leadId: string,
+): Promise<LeadCareLog[]> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/care-logs`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể tải nhật ký chăm sóc Lead.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data ?? []
+}
+
+/**
+ * Cập nhật ngày nhắc gọi lại của Lead (SCRUM-214 - Activity A2).
+ * PATCH /api/v1/leads/<id>/callback-date
+ * Yêu cầu quyền: course.manage
+ */
+export async function updateLeadCallbackDate(
+    requestFn: RequestFunction,
+    leadId: string,
+    callbackDate: string | null,
+): Promise<Lead> {
+    const path = `/api/v1/leads/${encodeURIComponent(leadId.trim())}/callback-date`
+    const res = await requestFn(path, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callback_date: callbackDate }),
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể cập nhật ngày nhắc gọi lại.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Kiểm tra Lead có quá hạn gọi lại hay không (SCRUM-214 - Activity A3).
+ * So sánh ngày callback_date với ngày hiện tại theo timezone Asia/Ho_Chi_Minh.
+ */
+export function isLeadCallbackOverdue(callbackDate?: string | null): boolean {
+    if (!callbackDate) return false
+    const dateStr = callbackDate.slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false
+
+    // Lấy ngày hiện tại theo múi giờ Asia/Ho_Chi_Minh (YYYY-MM-DD)
+    const now = new Date()
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    })
+    const todayVn = formatter.format(now)
+
+    return dateStr < todayVn
+}
+
+/**
+ * Format ngày nhắc gọi lại theo định dạng dd/mm/yyyy.
+ */
+export function formatCallbackDateDisplay(callbackDate?: string | null): string {
+    if (!callbackDate) return ''
+    const dateStr = callbackDate.slice(0, 10)
+    const parts = dateStr.split('-')
+    if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`
+    }
+    return dateStr
+}
+
 

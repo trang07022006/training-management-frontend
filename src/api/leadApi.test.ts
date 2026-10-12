@@ -16,6 +16,9 @@ import {
     deleteLead,
     getLeadPipeline,
     getLeadStatusHistory,
+    createLeadCareLog,
+    getLeadCareLogs,
+    updateLeadCallbackDate,
     type Lead,
     type AssignableUser,
     ApiError,
@@ -626,6 +629,102 @@ describe('leadApi - API Client (SCRUM-126 Activity A6)', () => {
             expect(res[0].new_status).toBe('contacted')
         })
     })
+
+    describe('SCRUM-214 - Lead Care Logs & Callback Reminder API', () => {
+        it('createLeadCareLog gửi interaction_type, content, interaction_at tới POST /api/v1/leads/<id>/care-logs', async () => {
+            const careLogData = {
+                id: 'log-1',
+                lead_id: mockLead.id,
+                interaction_type: 'call',
+                interaction_type_label: 'Gọi',
+                content: 'Gọi tư vấn khóa học',
+                interaction_at: '2026-10-12T09:00:00Z',
+                performed_by_name: 'Tư vấn viên',
+            }
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 201,
+                json: async () => ({
+                    status: 'success',
+                    data: careLogData,
+                }),
+            })
+
+            const res = await createLeadCareLog(mockRequest, mockLead.id, {
+                interaction_type: 'call',
+                content: 'Gọi tư vấn khóa học',
+                interaction_at: '2026-10-12T09:00:00Z',
+            })
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}/care-logs`,
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        interaction_type: 'call',
+                        content: 'Gọi tư vấn khóa học',
+                        interaction_at: '2026-10-12T09:00:00Z',
+                    }),
+                }),
+            )
+            expect(res.id).toBe('log-1')
+            expect(res.interaction_type).toBe('call')
+            expect(res.content).toBe('Gọi tư vấn khóa học')
+        })
+
+        it('getLeadCareLogs gọi GET /api/v1/leads/<id>/care-logs', async () => {
+            const careLogs = [
+                {
+                    id: 'log-1',
+                    lead_id: mockLead.id,
+                    interaction_type: 'message',
+                    interaction_type_label: 'Nhắn',
+                    content: 'Nhắn qua Zalo',
+                    interaction_at: '2026-10-12T10:00:00Z',
+                },
+            ]
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    data: careLogs,
+                }),
+            })
+
+            const res = await getLeadCareLogs(mockRequest, mockLead.id)
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}/care-logs`,
+                expect.objectContaining({ method: 'GET' }),
+            )
+            expect(res).toHaveLength(1)
+            expect(res[0].interaction_type).toBe('message')
+        })
+
+        it('updateLeadCallbackDate gửi PATCH /api/v1/leads/<id>/callback-date', async () => {
+            const mockRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                status: 200,
+                json: async () => ({
+                    status: 'success',
+                    data: { ...mockLead, callback_date: '2026-10-20' },
+                }),
+            })
+
+            const res = await updateLeadCallbackDate(mockRequest, mockLead.id, '2026-10-20')
+
+            expect(mockRequest).toHaveBeenCalledWith(
+                `/api/v1/leads/${mockLead.id}/callback-date`,
+                expect.objectContaining({
+                    method: 'PATCH',
+                    body: JSON.stringify({ callback_date: '2026-10-20' }),
+                }),
+            )
+            expect(res.callback_date).toBe('2026-10-20')
+        })
+    })
 })
+
 
 

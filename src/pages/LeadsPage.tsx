@@ -20,6 +20,11 @@ import {
     getLeadStatusHistory,
     PIPELINE_STATUS_KEYS,
     REJECTION_REASONS,
+    createLeadCareLog,
+    getLeadCareLogs,
+    updateLeadCallbackDate,
+    formatCallbackDateDisplay,
+    isLeadCallbackOverdue,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -28,6 +33,8 @@ import {
     type LeadStatusHistoryItem,
     type PipelineData,
     type RejectionReason,
+    type InteractionType,
+    type LeadCareLog,
 } from '../api/leadApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
@@ -126,6 +133,23 @@ export function LeadsPage() {
     const [statusHistory, setStatusHistory] = useState<LeadStatusHistoryItem[]>([])
     const [isLoadingStatusHistory, setIsLoadingStatusHistory] = useState<boolean>(false)
     const [statusHistoryError, setStatusHistoryError] = useState<string | null>(null)
+
+    // Nhật ký chăm sóc Lead (SCRUM-214)
+    const [careLogs, setCareLogs] = useState<LeadCareLog[]>([])
+    const [isLoadingCareLogs, setIsLoadingCareLogs] = useState<boolean>(false)
+    const [careLogsError, setCareLogsError] = useState<string | null>(null)
+    const [isAddCareLogOpen, setIsAddCareLogOpen] = useState<boolean>(false)
+    const [careLogType, setCareLogType] = useState<InteractionType>('call')
+    const [careLogContent, setCareLogContent] = useState<string>('')
+    const [careLogTime, setCareLogTime] = useState<string>('')
+    const [isSubmittingCareLog, setIsSubmittingCareLog] = useState<boolean>(false)
+    const [careLogFormError, setCareLogFormError] = useState<string | null>(null)
+
+    // Ngày nhắc gọi lại (SCRUM-214 - Sub-task 214-02)
+    const [callbackDateInput, setCallbackDateInput] = useState<string>('')
+    const [isUpdatingCallbackDate, setIsUpdatingCallbackDate] = useState<boolean>(false)
+    const [callbackDateError, setCallbackDateError] = useState<string | null>(null)
+    const [callbackDateSuccess, setCallbackDateSuccess] = useState<string | null>(null)
 
     // Chương trình đào tạo (SCRUM-126)
     const [trainingPrograms, setTrainingPrograms] = useState<TrainingProgram[]>([])
@@ -367,6 +391,19 @@ export function LeadsPage() {
         }
     }
 
+    const loadCareLogs = async (leadId: string) => {
+        setIsLoadingCareLogs(true)
+        setCareLogsError(null)
+        try {
+            const logs = await getLeadCareLogs(request, leadId)
+            setCareLogs(logs)
+        } catch (err: unknown) {
+            setCareLogsError(getErrorMessage(err, 'Không thể tải nhật ký chăm sóc.'))
+        } finally {
+            setIsLoadingCareLogs(false)
+        }
+    }
+
     const handleOpenDetail = async (leadId: string) => {
         setStatusError(null)
         setStatusSuccess(null)
@@ -386,9 +423,13 @@ export function LeadsPage() {
             setSelectedLead(detail)
             setSelectedStatus(detail.status)
             setSelectedAssigneeId(detail.assigned_to_user_id || '')
+            setCallbackDateInput(detail.callback_date ? detail.callback_date.slice(0, 10) : '')
+            setCallbackDateError(null)
+            setCallbackDateSuccess(null)
             setIsDetailModalOpen(true)
             void loadAssignmentHistory(leadId)
             void loadStatusHistory(leadId)
+            void loadCareLogs(leadId)
         } catch (err: unknown) {
             const message = getErrorMessage(err, 'Không thể tải chi tiết tư vấn.')
             setPageError(message)
@@ -408,6 +449,138 @@ export function LeadsPage() {
         setStatusSuccess(null)
         setAssignmentError(null)
         setAssignmentSuccess(null)
+        setCareLogs([])
+        setIsLoadingCareLogs(false)
+        setCareLogsError(null)
+        setIsAddCareLogOpen(false)
+        setCareLogType('call')
+        setCareLogContent('')
+        setCareLogTime('')
+        setCareLogFormError(null)
+        setCallbackDateInput('')
+        setCallbackDateError(null)
+        setCallbackDateSuccess(null)
+        setIsUpdatingCallbackDate(false)
+    }
+
+    const handleAddCareLogSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!selectedLead || isSubmittingCareLog) return
+
+        if (!careLogType || !['call', 'message', 'meeting'].includes(careLogType)) {
+            setCareLogFormError('Vui lòng chọn loại tương tác hợp lệ (Gọi, Nhắn hoặc Gặp).')
+            return
+        }
+
+        if (!careLogContent.trim()) {
+            setCareLogFormError('Vui lòng nhập nội dung tương tác.')
+            return
+        }
+
+        if (!careLogTime.trim()) {
+            setCareLogFormError('Vui lòng chọn thời điểm tương tác.')
+            return
+        }
+
+        setIsSubmittingCareLog(true)
+        setCareLogFormError(null)
+
+        try {
+            const created = await createLeadCareLog(request, selectedLead.id, {
+                interaction_type: careLogType,
+                content: careLogContent.trim(),
+                interaction_at: careLogTime.trim(),
+            })
+
+            setCareLogs((prev) => [created, ...prev])
+            setIsAddCareLogOpen(false)
+            setCareLogContent('')
+            setCareLogFormError(null)
+        } catch (err: unknown) {
+            setCareLogFormError(getErrorMessage(err, 'Không thể lưu nhật ký tương tác.'))
+        } finally {
+            setIsSubmittingCareLog(false)
+        }
+    }
+
+    const handleSaveCallbackDate = async () => {
+        if (!selectedLead || isUpdatingCallbackDate) return
+        setIsUpdatingCallbackDate(true)
+        setCallbackDateError(null)
+        setCallbackDateSuccess(null)
+
+        const targetDate = callbackDateInput.trim() || null
+        try {
+            const updated = await updateLeadCallbackDate(request, selectedLead.id, targetDate)
+            setSelectedLead(updated)
+            setLeads((prev) =>
+                prev.map((l) => (l.id === updated.id ? { ...l, callback_date: updated.callback_date } : l)),
+            )
+            if (pipelineData) {
+                setPipelineData((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              leads: prev.leads.map((l) =>
+                                  l.id === updated.id ? { ...l, callback_date: updated.callback_date } : l,
+                              ),
+                              columns: prev.columns.map((col) => ({
+                                  ...col,
+                                  leads: col.leads.map((l) =>
+                                      l.id === updated.id ? { ...l, callback_date: updated.callback_date } : l,
+                                  ),
+                              })),
+                          }
+                        : null,
+                )
+            }
+            setCallbackDateSuccess(targetDate ? 'Lưu ngày nhắc gọi lại thành công.' : 'Đã xóa ngày nhắc gọi lại.')
+            setTimeout(() => setCallbackDateSuccess(null), 4000)
+        } catch (err: unknown) {
+            setCallbackDateError(getErrorMessage(err, 'Không thể lưu ngày nhắc gọi lại.'))
+        } finally {
+            setIsUpdatingCallbackDate(false)
+        }
+    }
+
+    const handleClearCallbackDate = async () => {
+        if (!selectedLead || isUpdatingCallbackDate) return
+        setCallbackDateInput('')
+        setIsUpdatingCallbackDate(true)
+        setCallbackDateError(null)
+        setCallbackDateSuccess(null)
+
+        try {
+            const updated = await updateLeadCallbackDate(request, selectedLead.id, null)
+            setSelectedLead(updated)
+            setLeads((prev) =>
+                prev.map((l) => (l.id === updated.id ? { ...l, callback_date: null } : l)),
+            )
+            if (pipelineData) {
+                setPipelineData((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              leads: prev.leads.map((l) =>
+                                  l.id === updated.id ? { ...l, callback_date: null } : l,
+                              ),
+                              columns: prev.columns.map((col) => ({
+                                  ...col,
+                                  leads: col.leads.map((l) =>
+                                      l.id === updated.id ? { ...l, callback_date: null } : l,
+                                  ),
+                              })),
+                          }
+                        : null,
+                )
+            }
+            setCallbackDateSuccess('Đã xóa ngày nhắc gọi lại.')
+            setTimeout(() => setCallbackDateSuccess(null), 4000)
+        } catch (err: unknown) {
+            setCallbackDateError(getErrorMessage(err, 'Không thể xóa ngày nhắc gọi lại.'))
+        } finally {
+            setIsUpdatingCallbackDate(false)
+        }
     }
 
     const handleDeleteClick = (lead: Lead) => {
@@ -1140,11 +1313,15 @@ export function LeadsPage() {
 
                                     const isRead = readLeadIds.has(lead.id)
                                     const isRecent = isWithin24Hours(lead.created_at)
+                                    const isOverdue = isLeadCallbackOverdue(lead.callback_date)
                                     let rowClass = 'lead-row--read'
                                     if (!isRead) {
                                         rowClass = isRecent
                                             ? 'lead-row--unread lead-row--unread-recent'
                                             : 'lead-row--unread lead-row--unread-older'
+                                    }
+                                    if (isOverdue) {
+                                        rowClass += ' row-overdue'
                                     }
 
                                     return (
@@ -1163,6 +1340,15 @@ export function LeadsPage() {
                                             <td>
                                                 <div className="lead-name-cell">
                                                     <strong>{lead.full_name}</strong>
+                                                    {isOverdue && (
+                                                        <span
+                                                            className="lead-overdue-badge"
+                                                            data-testid={`overdue-badge-${lead.id}`}
+                                                            title={`Quá hạn gọi lại (${formatCallbackDateDisplay(lead.callback_date)})`}
+                                                        >
+                                                            ⚠️ Quá hạn gọi lại ({formatCallbackDateDisplay(lead.callback_date)})
+                                                        </span>
+                                                    )}
                                                     {!isRead && (
                                                         <span
                                                             className={`lead-unread-badge ${!isRecent ? 'lead-unread-badge--older' : ''}`}
@@ -1325,6 +1511,7 @@ export function LeadsPage() {
                                         ) : (
                                             col.leads.map((lead) => {
                                                 const isBeingDragged = draggedLead?.id === lead.id
+                                                const isOverdue = isLeadCallbackOverdue(lead.callback_date)
                                                 return (
                                                     <div
                                                         key={lead.id}
@@ -1334,7 +1521,7 @@ export function LeadsPage() {
                                                         onClick={() => void handleOpenDetail(lead.id)}
                                                         className={`pipeline-lead-card ${
                                                             isBeingDragged ? 'is-dragging' : ''
-                                                        }`}
+                                                        } ${isOverdue ? 'pipeline-card--overdue' : ''}`}
                                                         data-testid={`lead-card-${lead.id}`}
                                                     >
                                                         <div className="pipeline-card-header">
@@ -1342,6 +1529,14 @@ export function LeadsPage() {
                                                                 {lead.full_name}
                                                             </span>
                                                         </div>
+                                                        {isOverdue && (
+                                                            <div
+                                                                className="pipeline-card-overdue"
+                                                                data-testid={`kanban-overdue-badge-${lead.id}`}
+                                                            >
+                                                                ⚠️ Quá hạn gọi lại ({formatCallbackDateDisplay(lead.callback_date)})
+                                                            </div>
+                                                        )}
                                                         <div className="pipeline-card-phone">
                                                             <svg
                                                                 width="13"
@@ -1551,6 +1746,71 @@ export function LeadsPage() {
                                 </div>
                             </div>
 
+                            {/* Khu vực Ngày nhắc gọi lại (SCRUM-214 - Sub-task 214-02) */}
+                            <div className="leads-modal-section" data-testid="callback-reminder-section" style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #e2e8f0' }}>
+                                <label htmlFor="callback-date-input" className="section-subheading-label">
+                                    Ngày nhắc gọi lại:
+                                </label>
+                                <div className="callback-date-row" style={{ marginTop: '6px' }}>
+                                    <input
+                                        type="date"
+                                        id="callback-date-input"
+                                        className="callback-date-input"
+                                        data-testid="callback-date-input"
+                                        value={callbackDateInput}
+                                        onChange={(e) => {
+                                            setCallbackDateInput(e.target.value)
+                                            setCallbackDateError(null)
+                                            setCallbackDateSuccess(null)
+                                        }}
+                                        disabled={isUpdatingCallbackDate}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="btn-save-callback-date"
+                                        data-testid="save-callback-date-btn"
+                                        onClick={() => void handleSaveCallbackDate()}
+                                        disabled={isUpdatingCallbackDate}
+                                    >
+                                        {isUpdatingCallbackDate ? 'Đang lưu...' : 'Lưu ngày nhắc'}
+                                    </button>
+                                    {selectedLead.callback_date && (
+                                        <button
+                                            type="button"
+                                            className="btn-clear-callback-date"
+                                            data-testid="clear-callback-date-btn"
+                                            onClick={() => void handleClearCallbackDate()}
+                                            disabled={isUpdatingCallbackDate}
+                                        >
+                                            Xóa nhắc
+                                        </button>
+                                    )}
+                                </div>
+                                {callbackDateSuccess && (
+                                    <div className="leads-alert-success" data-testid="callback-date-success" style={{ marginTop: '6px' }}>
+                                        {callbackDateSuccess}
+                                    </div>
+                                )}
+                                {callbackDateError && (
+                                    <div className="leads-alert-error" data-testid="callback-date-error" style={{ marginTop: '6px' }}>
+                                        {callbackDateError}
+                                    </div>
+                                )}
+                                {selectedLead.callback_date && (
+                                    <div className="callback-date-display" data-testid="callback-date-display" style={{ marginTop: '6px' }}>
+                                        Ngày nhắc đã đặt: <strong>{formatCallbackDateDisplay(selectedLead.callback_date)}</strong>
+                                        {isLeadCallbackOverdue(selectedLead.callback_date) && (
+                                            <span
+                                                className="lead-overdue-tag"
+                                                data-testid="detail-overdue-tag"
+                                            >
+                                                ⚠️ Quá hạn gọi lại
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Khu vực phân công nhân sự phụ trách (SCRUM-127) */}
                             <div className="leads-modal-assign-section">
                                 <label
@@ -1717,6 +1977,163 @@ export function LeadsPage() {
                                                         Ghi chú: {item.notes}
                                                     </div>
                                                 )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+
+                            {/* Khu vực Nhật ký chăm sóc (SCRUM-214) */}
+                            <div className="leads-modal-history-section" data-testid="care-logs-section">
+                                <div className="care-logs-header">
+                                    <span className="section-subheading-label">Nhật ký chăm sóc:</span>
+                                    {!isAddCareLogOpen && (
+                                        <button
+                                            type="button"
+                                            className="btn-add-care-log"
+                                            data-testid="add-care-log-btn"
+                                            onClick={() => {
+                                                setIsAddCareLogOpen(true)
+                                                setCareLogType('call')
+                                                setCareLogContent('')
+                                                const now = new Date()
+                                                const pad = (n: number) => String(n).padStart(2, '0')
+                                                const localIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+                                                setCareLogTime(localIso)
+                                                setCareLogFormError(null)
+                                            }}
+                                        >
+                                            + Ghi nhận tương tác
+                                        </button>
+                                    )}
+                                </div>
+
+                                {isAddCareLogOpen && (
+                                    <form
+                                        className="care-log-form"
+                                        data-testid="care-log-form"
+                                        onSubmit={(e) => void handleAddCareLogSubmit(e)}
+                                        noValidate
+                                    >
+                                        {careLogFormError && (
+                                            <div className="leads-alert-error" data-testid="care-log-error">
+                                                {careLogFormError}
+                                            </div>
+                                        )}
+                                        <div className="form-field-group">
+                                            <label htmlFor="care-log-type-select" className="care-log-label">
+                                                Loại tương tác *
+                                            </label>
+                                            <select
+                                                id="care-log-type-select"
+                                                data-testid="care-log-type-select"
+                                                className="assign-select-input"
+                                                value={careLogType}
+                                                onChange={(e) => setCareLogType(e.target.value as InteractionType)}
+                                                disabled={isSubmittingCareLog}
+                                            >
+                                                <option value="call">Gọi</option>
+                                                <option value="message">Nhắn</option>
+                                                <option value="meeting">Gặp</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="form-field-group" style={{ marginTop: '8px' }}>
+                                            <label htmlFor="care-log-content-input" className="care-log-label">
+                                                Nội dung *
+                                            </label>
+                                            <textarea
+                                                id="care-log-content-input"
+                                                data-testid="care-log-content-input"
+                                                className="assign-select-input"
+                                                style={{ width: '100%', height: '70px', paddingTop: '6px', resize: 'vertical' }}
+                                                placeholder="Nhập nội dung tương tác..."
+                                                value={careLogContent}
+                                                onChange={(e) => {
+                                                    setCareLogContent(e.target.value)
+                                                    if (careLogFormError) setCareLogFormError(null)
+                                                }}
+                                                disabled={isSubmittingCareLog}
+                                            />
+                                        </div>
+
+                                        <div className="form-field-group" style={{ marginTop: '8px' }}>
+                                            <label htmlFor="care-log-time-input" className="care-log-label">
+                                                Thời điểm *
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                id="care-log-time-input"
+                                                data-testid="care-log-time-input"
+                                                className="assign-select-input"
+                                                value={careLogTime}
+                                                onChange={(e) => {
+                                                    setCareLogTime(e.target.value)
+                                                    if (careLogFormError) setCareLogFormError(null)
+                                                }}
+                                                disabled={isSubmittingCareLog}
+                                            />
+                                        </div>
+
+                                        <div className="care-log-form-actions" style={{ marginTop: '10px', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            <button
+                                                type="button"
+                                                className="btn-modal-close"
+                                                data-testid="care-log-cancel-btn"
+                                                onClick={() => {
+                                                    setIsAddCareLogOpen(false)
+                                                    setCareLogContent('')
+                                                    setCareLogFormError(null)
+                                                }}
+                                                disabled={isSubmittingCareLog}
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="btn-save-assign"
+                                                data-testid="care-log-submit-btn"
+                                                disabled={isSubmittingCareLog}
+                                            >
+                                                {isSubmittingCareLog ? 'Đang lưu...' : 'Lưu'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {isLoadingCareLogs ? (
+                                    <div className="history-loading-text" data-testid="care-logs-loading">
+                                        Đang tải nhật ký chăm sóc...
+                                    </div>
+                                ) : careLogsError ? (
+                                    <div className="history-error-text" data-testid="care-logs-error">
+                                        {careLogsError}
+                                    </div>
+                                ) : careLogs.length === 0 ? (
+                                    <p className="history-empty-text" data-testid="care-log-empty">
+                                        Chưa có nhật ký chăm sóc.
+                                    </p>
+                                ) : (
+                                    <ul className="assignment-history-list" data-testid="care-log-list">
+                                        {careLogs.map((log) => (
+                                            <li key={log.id} className="history-item" data-testid={`care-log-item-${log.id}`}>
+                                                <div className="history-item-header">
+                                                    <span className="history-time" data-testid={`care-log-time-${log.id}`}>
+                                                        {formatDate(log.interaction_at)}
+                                                    </span>
+                                                    <span
+                                                        className={`care-log-badge care-log-badge--${log.interaction_type}`}
+                                                        data-testid={`care-log-type-${log.id}`}
+                                                    >
+                                                        {log.interaction_type_label || (log.interaction_type === 'call' ? 'Gọi' : log.interaction_type === 'message' ? 'Nhắn' : 'Gặp')}
+                                                    </span>
+                                                </div>
+                                                <div className="care-log-content-text" data-testid={`care-log-content-${log.id}`}>
+                                                    {log.content}
+                                                </div>
+                                                <div className="history-item-actor" data-testid={`care-log-actor-${log.id}`}>
+                                                    Người thực hiện: {log.performed_by_name || 'Hệ thống'}
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>
