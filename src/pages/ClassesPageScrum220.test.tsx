@@ -484,4 +484,141 @@ describe('SCRUM-220: Phân công giảng viên và trợ giảng theo từng mô
             expect(errBanner.textContent).toContain('Chỉ tài khoản có vai trò Giảng viên mới được phân công làm giảng viên chính.')
         })
     })
+    // =========================================================================
+    // 220-03: GIẢNG VIÊN THẤY LỚP CỦA MÌNH & SCOPE CLASS LIST (TC220-08 -> TC220-10)
+    // =========================================================================
+    it('TC220-08: Giảng viên A đăng nhập -> chỉ thấy các lớp được phân công', async () => {
+        const assignedClassA: TrainingClass = {
+            ...sampleClass,
+            id: 'cls-assigned-to-a',
+            class_code: 'CNTT-A-01',
+        }
+
+        const mockRequest = vi.fn().mockImplementation(async (url: string) => {
+            if (url.includes('/api/v1/classes')) {
+                return new Response(
+                    JSON.stringify({
+                        status: 'success',
+                        data: {
+                            items: [assignedClassA],
+                            total: 1,
+                            page: 1,
+                            page_size: 50,
+                            total_pages: 1,
+                        },
+                    }),
+                    { status: 200, headers: { 'Content-Type': 'application/json' } },
+                )
+            }
+            return new Response(JSON.stringify({ status: 'success', data: {} }), { status: 200 })
+        })
+
+        // Login as trainer
+        renderWithRole(
+            <ClassesPage
+                initialClasses={[assignedClassA]}
+                initialTotal={1}
+                customRequest={mockRequest}
+            />,
+            'trainer',
+            ['trainer'],
+        )
+
+        // Class A xuất hiện
+        expect(await screen.findByTestId(`class-code-${assignedClassA.id}`)).toBeDefined()
+        expect(screen.getByTestId(`class-code-${assignedClassA.id}`).textContent).toBe('CNTT-A-01')
+
+        // Giảng viên không có nút "Mở lớp mới"
+        expect(screen.queryByTestId('create-class-btn')).toBeNull()
+    })
+
+    it('TC220-09: Giảng viên B không được phân công -> không thấy lớp Class A', async () => {
+        // Mock API trả về danh sách rỗng cho trainer B
+        const mockRequest = vi.fn().mockImplementation(async (url: string) => {
+            if (url.includes('/api/v1/classes')) {
+                return new Response(
+                    JSON.stringify({
+                        status: 'success',
+                        data: {
+                            items: [],
+                            total: 0,
+                            page: 1,
+                            page_size: 50,
+                            total_pages: 0,
+                        },
+                    }),
+                    { status: 200, headers: { 'Content-Type': 'application/json' } },
+                )
+            }
+            return new Response(JSON.stringify({ status: 'success', data: {} }), { status: 200 })
+        })
+
+        renderWithRole(
+            <ClassesPage
+                initialClasses={[]}
+                initialTotal={0}
+                customRequest={mockRequest}
+            />,
+            'trainer',
+            ['trainer'],
+        )
+
+        // Không thấy lớp nào
+        expect(await screen.findByTestId('empty-state')).toBeDefined()
+        expect(screen.queryByTestId(`class-row-${sampleClass.id}`)).toBeNull()
+    })
+
+    it('TC220-10: Gỡ assignment -> cập nhật danh sách lớp của giảng viên', async () => {
+        let trainerClasses: TrainingClass[] = [sampleClass]
+
+        const mockRequest = vi.fn().mockImplementation(async (url: string) => {
+            if (url.includes('/api/v1/classes')) {
+                return new Response(
+                    JSON.stringify({
+                        status: 'success',
+                        data: {
+                            items: trainerClasses,
+                            total: trainerClasses.length,
+                            page: 1,
+                            page_size: 50,
+                            total_pages: 1,
+                        },
+                    }),
+                    { status: 200, headers: { 'Content-Type': 'application/json' } },
+                )
+            }
+            return new Response(JSON.stringify({ status: 'success', data: {} }), { status: 200 })
+        })
+
+        const { rerender } = renderWithRole(
+            <ClassesPage
+                initialClasses={trainerClasses}
+                initialTotal={1}
+                customRequest={mockRequest}
+            />,
+            'trainer',
+            ['trainer'],
+        )
+
+        expect(screen.getByTestId(`class-code-${sampleClass.id}`)).toBeDefined()
+
+        // Gỡ assignment -> danh sách của trainer trở thành rỗng
+        trainerClasses = []
+        rerender(
+            <MemoryRouter>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="trainer" roles={['trainer']}>
+                        <ClassesPage
+                            initialClasses={[]}
+                            initialTotal={0}
+                            customRequest={mockRequest}
+                        />
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        expect(screen.queryByTestId(`class-code-${sampleClass.id}`)).toBeNull()
+        expect(screen.getByTestId('empty-state')).toBeDefined()
+    })
 })
