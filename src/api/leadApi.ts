@@ -8,11 +8,13 @@ import { getErrorMessage } from '../utils/errorMessages'
 import { ApiError, type RequestFunction } from './userApi'
 
 export { ApiError, type RequestFunction }
+export { convertLeadToStudent, type Student, type ConvertLeadResult } from './studentApi'
 
 export type LeadStatus =
     | 'new'
     | 'contacted'
     | 'qualified'
+    | 'won'
     | 'converted'
     | 'lost'
     | 'cancelled'
@@ -60,7 +62,6 @@ export interface BulkAssignResult {
     message: string
 }
 
-
 export interface LeadListParams {
     page?: number
     page_size?: number
@@ -87,6 +88,7 @@ export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
     new: 'Mới tiếp nhận',
     contacted: 'Đã liên hệ',
     qualified: 'Tiềm năng',
+    won: 'Chốt',
     converted: 'Đã nhập học',
     lost: 'Không thành công',
     cancelled: 'Đã hủy',
@@ -96,6 +98,7 @@ export const LEAD_STATUS_BADGE_CLASSES: Record<LeadStatus, string> = {
     new: 'status-badge--new',
     contacted: 'status-badge--contacted',
     qualified: 'status-badge--qualified',
+    won: 'status-badge--won',
     converted: 'status-badge--converted',
     lost: 'status-badge--lost',
     cancelled: 'status-badge--cancelled',

@@ -1382,6 +1382,56 @@
   color: #64748b;
 }
 
+/* SCRUM-215: Convert Lead to Student */
+.status-badge--won {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.btn-action-convert {
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-action-convert:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-action-convert:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-modal-convert {
+  background: #10b981;
+  color: #ffffff;
+  border: 1px solid #059669;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-modal-convert:hover:not(:disabled) {
+  background: #059669;
+}
+
+.btn-modal-convert:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
 
 
 

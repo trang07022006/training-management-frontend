@@ -16,6 +16,7 @@ import {
     deleteLead,
     checkLeadPhone,
     LEAD_STATUS_BADGE_CLASSES,
+    convertLeadToStudent,
     ApiError,
     type Lead,
     type LeadStatus,
@@ -121,6 +122,11 @@ export function LeadsPage() {
     // Modal Xác nhận xóa Lead (Custom Centered Modal)
     const [deletingLead, setDeletingLead] = useState<Lead | null>(null)
     const [isDeletingLead, setIsDeletingLead] = useState<boolean>(false)
+
+    // Chuyển đổi Lead sang Hồ sơ học viên (SCRUM-215)
+    const [isConverting, setIsConverting] = useState<boolean>(false)
+    const [convertSuccess, setConvertSuccess] = useState<string | null>(null)
+    const [convertError, setConvertError] = useState<string | null>(null)
 
     // Trigger refetch để đồng bộ danh sách sau mutations khi đang có bộ lọc (SCRUM-128)
     const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
@@ -339,6 +345,31 @@ export function LeadsPage() {
         setStatusSuccess(null)
         setAssignmentError(null)
         setAssignmentSuccess(null)
+        setConvertError(null)
+        setConvertSuccess(null)
+    }
+
+    const handleConvertToStudent = async (leadId: string) => {
+        if (isConverting) return
+        setIsConverting(true)
+        setConvertError(null)
+        setConvertSuccess(null)
+
+        try {
+            await convertLeadToStudent(request, leadId)
+            setConvertSuccess('Chuyển đổi khách hàng thành học viên thành công.')
+            setSelectedLead((prev) =>
+                prev && prev.id === leadId ? { ...prev, status: 'converted' } : prev,
+            )
+            setLeads((prev) =>
+                prev.map((l) => (l.id === leadId ? { ...l, status: 'converted' } : l)),
+            )
+            setTimeout(() => setConvertSuccess(null), 5000)
+        } catch (err: unknown) {
+            setConvertError(getErrorMessage(err, 'Không thể chuyển đổi khách hàng thành học viên.'))
+        } finally {
+            setIsConverting(false)
+        }
     }
 
     const handleDeleteClick = (lead: Lead) => {
@@ -942,6 +973,17 @@ export function LeadsPage() {
                                                     >
                                                         Xem chi tiết
                                                     </button>
+                                                    {lead.status === 'won' && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn-action-convert"
+                                                            data-testid={`convert-lead-${lead.id}`}
+                                                            onClick={() => void handleConvertToStudent(lead.id)}
+                                                            disabled={isConverting}
+                                                        >
+                                                            Chuyển HV
+                                                        </button>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         className="btn-action-edit"
@@ -1075,6 +1117,24 @@ export function LeadsPage() {
                                     data-testid="assignment-error-alert"
                                 >
                                     {assignmentError}
+                                </div>
+                            )}
+
+                            {convertSuccess && (
+                                <div
+                                    className="leads-alert-success"
+                                    data-testid="convert-success-alert"
+                                >
+                                    {convertSuccess}
+                                </div>
+                            )}
+
+                            {convertError && (
+                                <div
+                                    className="leads-alert-error"
+                                    data-testid="convert-error-alert"
+                                >
+                                    {convertError}
                                 </div>
                             )}
 
@@ -1274,6 +1334,17 @@ export function LeadsPage() {
                         </div>
 
                         <footer className="leads-modal-footer">
+                            {selectedLead.status === 'won' && (
+                                <button
+                                    type="button"
+                                    className="btn-modal-convert"
+                                    data-testid="convert-lead-to-student-btn"
+                                    onClick={() => void handleConvertToStudent(selectedLead.id)}
+                                    disabled={isConverting}
+                                >
+                                    {isConverting ? 'Đang chuyển...' : 'Chuyển thành học viên'}
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 className="btn-modal-edit"
