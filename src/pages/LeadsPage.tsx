@@ -127,6 +127,7 @@ export function LeadsPage() {
     const [isConverting, setIsConverting] = useState<boolean>(false)
     const [convertSuccess, setConvertSuccess] = useState<string | null>(null)
     const [convertError, setConvertError] = useState<string | null>(null)
+    const [convertedStudentCode, setConvertedStudentCode] = useState<string | null>(null)
 
     // Trigger refetch để đồng bộ danh sách sau mutations khi đang có bộ lọc (SCRUM-128)
     const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
@@ -347,6 +348,7 @@ export function LeadsPage() {
         setAssignmentSuccess(null)
         setConvertError(null)
         setConvertSuccess(null)
+        setConvertedStudentCode(null)
     }
 
     const handleConvertToStudent = async (leadId: string) => {
@@ -356,8 +358,13 @@ export function LeadsPage() {
         setConvertSuccess(null)
 
         try {
-            await convertLeadToStudent(request, leadId)
-            setConvertSuccess('Chuyển đổi khách hàng thành học viên thành công.')
+            const res = await convertLeadToStudent(request, leadId)
+            const code = res?.student?.student_code
+            const successMsg = code
+                ? `Chuyển đổi khách hàng thành học viên thành công! Mã học viên: ${code}`
+                : 'Chuyển đổi khách hàng thành học viên thành công.'
+            setConvertSuccess(successMsg)
+            setConvertedStudentCode(code || null)
             setSelectedLead((prev) =>
                 prev && prev.id === leadId ? { ...prev, status: 'converted' } : prev,
             )
@@ -1139,6 +1146,17 @@ export function LeadsPage() {
                             )}
 
                             <div className="detail-info-grid">
+                                {convertedStudentCode && (
+                                    <div className="detail-row" data-testid="detail-student-code">
+                                        <span className="detail-label">Mã học viên:</span>
+                                        <span
+                                            className="detail-value student-code-highlight"
+                                            data-testid="generated-student-code"
+                                        >
+                                            {convertedStudentCode}
+                                        </span>
+                                    </div>
+                                )}
                                 <div className="detail-row">
                                     <span className="detail-label">Họ và tên:</span>
                                     <span className="detail-value" data-testid="detail-fullname">

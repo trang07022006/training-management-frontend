@@ -147,11 +147,11 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
         })
     })
 
-    it('TC215-02: Bấm "Chuyển thành học viên" -> gọi API convert và hiển thị thành công', async () => {
+    it('TC215-02: Bấm "Chuyển thành học viên" -> gọi API convert và hiển thị thành công kèm mã học viên tự sinh', async () => {
         vi.mocked(convertLeadToStudent).mockResolvedValue({
             student: {
                 id: 'student-215-01',
-                student_code: 'HV20260001',
+                student_code: 'STU000001',
                 full_name: sampleWonLead.full_name,
                 phone: sampleWonLead.phone,
                 email: sampleWonLead.email,
@@ -182,8 +182,10 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
             expect(convertLeadToStudent).toHaveBeenCalledWith(mockRequest, sampleWonLead.id)
             expect(screen.getByTestId('convert-success-alert')).toBeDefined()
             expect(screen.getByTestId('convert-success-alert').textContent).toContain(
-                'Chuyển đổi khách hàng thành học viên thành công.',
+                'Chuyển đổi khách hàng thành học viên thành công! Mã học viên: STU000001',
             )
+            expect(screen.getByTestId('detail-student-code')).toBeDefined()
+            expect(screen.getByTestId('generated-student-code').textContent).toBe('STU000001')
         })
     })
 
@@ -217,4 +219,17 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
             )
         })
     })
+
+    it('TC215-05: Giao diện không yêu cầu người dùng tự nhập mã học viên (mã được sinh tự động)', async () => {
+        render(<LeadsPage />)
+        await waitFor(() => expect(screen.getByTestId(`view-lead-${sampleWonLead.id}`)).toBeDefined())
+
+        fireEvent.click(screen.getByTestId(`view-lead-${sampleWonLead.id}`))
+        await waitFor(() => expect(screen.getByTestId('convert-lead-to-student-btn')).toBeDefined())
+
+        // Xác nhận không có input nào để người dùng nhập student_code
+        expect(screen.queryByPlaceholderText(/mã học viên/i)).toBeNull()
+        expect(screen.queryByLabelText(/mã học viên/i)).toBeNull()
+    })
 })
+
