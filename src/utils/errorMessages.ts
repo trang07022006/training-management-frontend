@@ -217,6 +217,17 @@ export const ERROR_MESSAGES: Record<string, string> = {
     OBJECTIVE_REQUIRED: 'Mục tiêu buổi học là bắt buộc.',
     OBJECTIVE_TOO_LONG: 'Mục tiêu buổi học không được vượt quá 5000 ký tự.',
     REORDER_SESSIONS_FAILED: 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
+
+    // ----------------------------------------------------
+    // 18. QUẢN LÝ LỚP HỌC (SCRUM-217)
+    // ----------------------------------------------------
+    CLASS_CODE_ALREADY_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    CLASS_CODE_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    DUPLICATE_CLASS_CODE: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    CLASS_CODE_REQUIRED: 'Mã lớp học là bắt buộc.',
+    PROGRAM_REQUIRED: 'Chương trình đào tạo là bắt buộc.',
+    INVALID_CLASS_STATUS: 'Trạng thái lớp không hợp lệ. Chỉ chấp nhận 4 trạng thái: Chuẩn bị, Đang học, Kết thúc, Huỷ.',
+    CLASS_NOT_FOUND: 'Không tìm thấy lớp học.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công

@@ -212,31 +212,101 @@ describe('SCRUM-217: Mở lớp từ chương trình đào tạo (TC217-01 -> TC
     })
 
     // =========================================================================
-    // 217-02: MÃ LỚP DUY NHẤT
+    // 217-02: MÃ LỚP DUY NHẤT & XỬ LÝ LỖI TRÙNG MÃ
     // =========================================================================
-    describe('217-02: Mã lớp duy nhất', () => {
-        it('TC217-03: Tạo CLASS001 thành công', async () => {
+    describe('217-02: Mã lớp duy nhất & Xử lý lỗi trùng mã lớp', () => {
+        it('TC-01 / TC217-03: Tạo lớp với mã chưa tồn tại -> tạo thành công', async () => {
+            const mockCustomRequest = vi.fn().mockImplementation((_path: string, init?: RequestInit) => {
+                if (init?.method === 'POST') {
+                    const body = JSON.parse(init.body as string)
+                    return Promise.resolve({
+                        ok: true,
+                        json: () =>
+                            Promise.resolve({
+                                status: 'success',
+                                data: {
+                                    id: 'cls-new-001',
+                                    class_code: body.class_code,
+                                    program_id: body.program_id,
+                                    program_name: 'Công nghệ thông tin',
+                                    status: 'preparing',
+                                    status_label: 'Chuẩn bị',
+                                    enrolled_count: 0,
+                                    max_capacity: 30,
+                                    learning_mode: 'offline',
+                                    copied_subjects_count: 0,
+                                },
+                            }),
+                    })
+                }
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+                })
+            })
+
             renderWithSession(
                 <ClassesPage
-                    initialClasses={[sampleClassPreparing]}
-                    initialTotal={1}
+                    initialClasses={[]}
+                    initialTotal={0}
+                    initialPrograms={[sampleProgram]}
+                    customRequest={mockCustomRequest as any}
                     canManageOverride={true}
                 />,
             )
 
-            expect(screen.getByTestId('class-code-cls-uuid-001').textContent).toBe('CNTT-K21A')
+            fireEvent.click(screen.getByTestId('create-class-btn'))
+            fireEvent.change(screen.getByTestId('class-code-input'), { target: { value: 'CNTT-K23M' } })
+            fireEvent.change(screen.getByTestId('program-select'), { target: { value: sampleProgram.id } })
+            fireEvent.click(screen.getByTestId('submit-class-btn'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('success-alert').textContent).toContain("Mở lớp học 'CNTT-K23M' thành công")
+            })
         })
 
-        it('TC217-04: Tạo lớp khác trùng mã bị chặn và hiển thị thông báo tiếng Việt', async () => {
-            const mockCustomRequest = vi.fn().mockResolvedValue({
-                ok: false,
-                status: 409,
-                json: () =>
-                    Promise.resolve({
-                        status: 'error',
-                        code: 'CLASS_CODE_ALREADY_EXISTS',
-                        message: "Mã lớp học 'CNTT-K21A' đã tồn tại trong hệ thống. Vui lòng chọn mã khác.",
-                    }),
+        it('TC-02 & TC-03 / TC217-04: Tạo lớp trùng mã bị chặn, modal vẫn mở, hiện tiếng Việt chuẩn, đổi mã submit lại thành công', async () => {
+            let attemptCount = 0
+            const mockCustomRequest = vi.fn().mockImplementation((_path: string, init?: RequestInit) => {
+                if (init?.method === 'POST') {
+                    attemptCount++
+                    const body = JSON.parse(init.body as string)
+                    if (body.class_code === 'CNTT-K23M') {
+                        return Promise.resolve({
+                            ok: false,
+                            status: 409,
+                            json: () =>
+                                Promise.resolve({
+                                    status: 'error',
+                                    code: 'CLASS_CODE_ALREADY_EXISTS',
+                                    message: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+                                }),
+                        })
+                    }
+                    return Promise.resolve({
+                        ok: true,
+                        json: () =>
+                            Promise.resolve({
+                                status: 'success',
+                                data: {
+                                    id: 'cls-unique-002',
+                                    class_code: body.class_code,
+                                    program_id: body.program_id,
+                                    program_name: 'Công nghệ thông tin',
+                                    status: 'preparing',
+                                    status_label: 'Chuẩn bị',
+                                    enrolled_count: 0,
+                                    max_capacity: 30,
+                                    learning_mode: 'offline',
+                                    copied_subjects_count: 0,
+                                },
+                            }),
+                    })
+                }
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+                })
             })
 
             renderWithSession(
@@ -249,16 +319,54 @@ describe('SCRUM-217: Mở lớp từ chương trình đào tạo (TC217-01 -> TC
                 />,
             )
 
+            // Bước 1: Mở modal
             fireEvent.click(screen.getByTestId('create-class-btn'))
-            fireEvent.change(screen.getByTestId('class-code-input'), { target: { value: 'CNTT-K21A' } })
+            expect(screen.getByTestId('create-class-modal')).toBeDefined()
+
+            // Bước 2: Nhập mã lớp trùng 'CNTT-K23M'
+            const classCodeInput = screen.getByTestId('class-code-input') as HTMLInputElement
+            fireEvent.change(classCodeInput, { target: { value: 'CNTT-K23M' } })
             fireEvent.change(screen.getByTestId('program-select'), { target: { value: sampleProgram.id } })
 
+            // Bước 3: Submit -> TC-02: Bị chặn
             fireEvent.click(screen.getByTestId('submit-class-btn'))
 
+            // Kiểm tra:
+            // - Bị chặn, không tạo bản ghi mới (total vẫn là 1)
+            // - Modal vẫn mở
+            // - Dữ liệu người dùng nhập vẫn giữ nguyên
+            // - Hiển thị: "Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác."
             await waitFor(() => {
-                expect(screen.getByTestId('error-alert')).toBeDefined()
-                expect(screen.getByTestId('error-alert').textContent).toContain('đã tồn tại trong hệ thống')
+                expect(screen.getByTestId('class-code-error').textContent).toBe(
+                    'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+                )
+                expect(screen.getByTestId('create-modal-error').textContent).toBe(
+                    'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+                )
             })
+
+            expect(screen.getByTestId('create-class-modal')).toBeDefined()
+            expect(classCodeInput.value).toBe('CNTT-K23M')
+            expect(screen.getByTestId('stat-total-classes').textContent).toContain('1')
+
+            // Bước 4: TC-03: Đổi sang mã khác 'CNTT-K23N' rồi submit lại
+            fireEvent.change(classCodeInput, { target: { value: 'CNTT-K23N' } })
+
+            // Lỗi biến mất khi người dùng chỉnh sửa mã lớp
+            expect(screen.queryByTestId('class-code-error')).toBeNull()
+            expect(screen.queryByTestId('create-modal-error')).toBeNull()
+
+            // Submit lại
+            fireEvent.click(screen.getByTestId('submit-class-btn'))
+
+            // TC-03 Expected: tạo thành công, modal đóng, danh sách tăng thêm 1
+            await waitFor(() => {
+                expect(screen.queryByTestId('create-class-modal')).toBeNull()
+                expect(screen.getByTestId('success-alert').textContent).toContain("Mở lớp học 'CNTT-K23N' thành công")
+            })
+
+            expect(screen.getByTestId('stat-total-classes').textContent).toContain('2')
+            expect(attemptCount).toBe(2)
         })
     })
 

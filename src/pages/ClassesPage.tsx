@@ -60,6 +60,8 @@ export function ClassesPage({
     // Modal tạo lớp học mới
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
+    const [createModalError, setCreateModalError] = useState<string | null>(null)
+    const [classCodeError, setClassCodeError] = useState<string | null>(null)
     const [createForm, setCreateForm] = useState({
         class_code: '',
         program_id: '',
@@ -156,6 +158,8 @@ export function ClassesPage({
 
     // Mở modal tạo lớp
     const handleOpenCreateModal = () => {
+        setCreateModalError(null)
+        setClassCodeError(null)
         setCreateForm({
             class_code: '',
             program_id: programs.length > 0 ? programs[0].id : '',
@@ -170,6 +174,8 @@ export function ClassesPage({
     const handleCreateClass = async (e: FormEvent) => {
         e.preventDefault()
         setIsCreating(true)
+        setCreateModalError(null)
+        setClassCodeError(null)
         setAlertMessage(null)
 
         try {
@@ -190,8 +196,40 @@ export function ClassesPage({
             })
             setIsCreateModalOpen(false)
         } catch (err: unknown) {
-            const msg = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi mở lớp học mới.')
-            setAlertMessage({ type: 'error', text: msg })
+            let msg = 'Lỗi khi mở lớp học mới.'
+            let isDuplicateClassCode = false
+
+            if (err instanceof ApiError) {
+                if (
+                    err.code === 'CLASS_CODE_ALREADY_EXISTS' ||
+                    err.code === 'CLASS_CODE_EXISTS' ||
+                    err.code === 'DUPLICATE_CLASS_CODE' ||
+                    err.status === 409
+                ) {
+                    isDuplicateClassCode = true
+                    msg = 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.'
+                } else {
+                    msg = err.message
+                }
+            } else {
+                msg = getErrorMessage(err, 'Lỗi khi mở lớp học mới.')
+                if (
+                    msg.includes('đã tồn tại') ||
+                    msg.includes('CLASS_CODE_ALREADY_EXISTS') ||
+                    msg.includes('trùng mã')
+                ) {
+                    isDuplicateClassCode = true
+                    msg = 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.'
+                }
+            }
+
+            if (isDuplicateClassCode) {
+                setClassCodeError(msg)
+                setCreateModalError(msg)
+            } else {
+                setCreateModalError(msg)
+            }
+            // Không đóng modal khi lỗi. Giữ nguyên createForm để người dùng sửa mã lớp.
         } finally {
             setIsCreating(false)
         }
@@ -385,19 +423,44 @@ export function ClassesPage({
 
                         <form onSubmit={handleCreateClass}>
                             <div className="modal-body">
+                                {createModalError && (
+                                    <div
+                                        className="modal-alert error"
+                                        data-testid="create-modal-error"
+                                        role="alert"
+                                    >
+                                        <span>{createModalError}</span>
+                                    </div>
+                                )}
                                 <div className="form-grid">
                                     <div className="form-group">
                                         <label htmlFor="class-code">Mã lớp * (Duy nhất)</label>
                                         <input
                                             id="class-code"
                                             type="text"
-                                            className="form-input"
+                                            className={`form-input ${classCodeError ? 'input-error' : ''}`}
                                             placeholder="Ví dụ: CNTT-K21A"
                                             value={createForm.class_code}
-                                            onChange={(e) => setCreateForm({ ...createForm, class_code: e.target.value })}
+                                            onChange={(e) => {
+                                                setCreateForm({ ...createForm, class_code: e.target.value })
+                                                if (classCodeError) setClassCodeError(null)
+                                                if (createModalError) setCreateModalError(null)
+                                            }}
                                             required
                                             data-testid="class-code-input"
+                                            aria-invalid={!!classCodeError}
+                                            aria-describedby={classCodeError ? 'class-code-error' : undefined}
                                         />
+                                        {classCodeError && (
+                                            <div
+                                                id="class-code-error"
+                                                className="form-field-error"
+                                                data-testid="class-code-error"
+                                                role="alert"
+                                            >
+                                                {classCodeError}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="form-group">
