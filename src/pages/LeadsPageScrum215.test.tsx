@@ -235,5 +235,94 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
         expect(screen.queryByPlaceholderText(/mã học viên/i)).toBeNull()
         expect(screen.queryByLabelText(/mã học viên/i)).toBeNull()
     })
+
+    describe('Sub-task 215-04: Đã nhập học và khóa Lead (Immutable)', () => {
+        const sampleConvertedLead: Lead = {
+            id: 'lead-converted-215-04',
+            full_name: 'Nguyễn Văn Đã Nhập Học',
+            phone: '0977889900',
+            email: 'enrolled@example.com',
+            interested_program_id: 'prog-01',
+            interested_program_name: 'Lập trình Web',
+            message: 'Đã hoàn tất thủ tục',
+            source: 'direct',
+            status: 'converted',
+            assigned_to_user_id: 'user-cons-01',
+            assigned_to_name: 'Lê Tư Vấn',
+            created_at: '2026-10-12T08:00:00Z',
+            updated_at: '2026-10-12T08:30:00Z',
+        }
+
+        beforeEach(() => {
+            vi.mocked(getLeads).mockResolvedValue({
+                items: [sampleConvertedLead],
+                total: 1,
+                page: 1,
+                page_size: 10,
+                total_pages: 1,
+            })
+            vi.mocked(getLead).mockResolvedValue(sampleConvertedLead)
+        })
+
+        it('TC215-17: Lead có trạng thái Đã nhập học hiển thị đúng badge và nhãn tiếng Việt', async () => {
+            render(<LeadsPage />)
+            await waitFor(() => {
+                expect(screen.getByTestId(`status-badge-${sampleConvertedLead.id}`)).toBeDefined()
+            })
+
+            const badge = screen.getByTestId(`status-badge-${sampleConvertedLead.id}`)
+            expect(badge.textContent).toBe('Đã nhập học')
+            expect(badge.className).toContain('status-badge--converted')
+        })
+
+        it('TC215-18: Lead Đã nhập học bị khóa chỉnh sửa (nút Sửa ở bảng và modal bị disabled, dropdowns disabled)', async () => {
+            render(<LeadsPage />)
+            await waitFor(() => {
+                expect(screen.getByTestId(`edit-lead-${sampleConvertedLead.id}`)).toBeDefined()
+            })
+
+            // 1. Nút Sửa ở table bị disabled
+            const tableEditBtn = screen.getByTestId(`edit-lead-${sampleConvertedLead.id}`) as HTMLButtonElement
+            expect(tableEditBtn.disabled).toBe(true)
+
+            // Mở modal chi tiết
+            fireEvent.click(screen.getByTestId(`view-lead-${sampleConvertedLead.id}`))
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-detail-modal')).toBeDefined()
+            })
+
+            // 2. Nút Sửa trong modal bị disabled
+            const modalEditBtn = screen.getByTestId('edit-lead-btn') as HTMLButtonElement
+            expect(modalEditBtn.disabled).toBe(true)
+
+            // 3. Dropdown trạng thái bị disabled
+            const statusSelect = screen.getByTestId('status-select') as HTMLSelectElement
+            expect(statusSelect.disabled).toBe(true)
+
+            // 4. Dropdown phân công bị disabled
+            const assigneeSelect = screen.getByTestId('assignee-select') as HTMLSelectElement
+            expect(assigneeSelect.disabled).toBe(true)
+        })
+
+        it('TC215-20: Lead Đã nhập học KHÔNG hiển thị nút chuyển đổi (không cho convert lại)', async () => {
+            render(<LeadsPage />)
+            await waitFor(() => {
+                expect(screen.getByTestId(`view-lead-${sampleConvertedLead.id}`)).toBeDefined()
+            })
+
+            // Không có nút Chuyển HV ở bảng
+            expect(screen.queryByTestId(`convert-lead-${sampleConvertedLead.id}`)).toBeNull()
+
+            // Mở modal chi tiết
+            fireEvent.click(screen.getByTestId(`view-lead-${sampleConvertedLead.id}`))
+            await waitFor(() => {
+                expect(screen.getByTestId('lead-detail-modal')).toBeDefined()
+            })
+
+            // Không có nút Chuyển thành học viên trong modal
+            expect(screen.queryByTestId('convert-lead-to-student-btn')).toBeNull()
+        })
+    })
 })
+
 

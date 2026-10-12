@@ -355,6 +355,11 @@ export function LeadsPage() {
 
     const handleConvertToStudent = async (leadId: string) => {
         if (isConverting) return
+        const targetLead = leads.find((l) => l.id === leadId) || (selectedLead?.id === leadId ? selectedLead : null)
+        if (targetLead && (targetLead.status === 'converted' || targetLead.status !== 'won')) {
+            setConvertError('Khách hàng đã nhập học hoặc chưa chốt, không thể chuyển đổi.')
+            return
+        }
         setIsConverting(true)
         setConvertError(null)
         setConvertSuccess(null)
@@ -444,6 +449,10 @@ export function LeadsPage() {
 
     const handleStatusChange = async (newStatus: LeadStatus) => {
         if (!selectedLead || isUpdatingStatus) return
+        if (selectedLead.status === 'converted') {
+            setStatusError('Khách hàng đã nhập học, không thể thay đổi trạng thái.')
+            return
+        }
         if (newStatus === selectedLead.status) return
 
         const previousStatus = selectedStatus
@@ -473,6 +482,10 @@ export function LeadsPage() {
 
     const handleAssigneeChange = async (newAssigneeId: string) => {
         if (!selectedLead || isAssigning) return
+        if (selectedLead.status === 'converted') {
+            setAssignmentError('Khách hàng đã nhập học, không thể thay đổi phân công.')
+            return
+        }
         const currentAssigneeId = selectedLead.assigned_to_user_id || ''
         if (newAssigneeId === currentAssigneeId) return
 
@@ -573,6 +586,10 @@ export function LeadsPage() {
     }
 
     const handleOpenEditModal = (leadToEdit: Lead) => {
+        if (leadToEdit.status === 'converted') {
+            setPageError('Khách hàng đã nhập học, không thể chỉnh sửa thông tin.')
+            return
+        }
         setEditingLead(leadToEdit)
         setFormFullName(leadToEdit.full_name || '')
         setFormPhone(leadToEdit.phone || '')
@@ -638,6 +655,11 @@ export function LeadsPage() {
 
         try {
             if (editingLead) {
+                if (editingLead.status === 'converted') {
+                    setFormApiError('Khách hàng đã nhập học, không thể chỉnh sửa thông tin.')
+                    setIsSubmittingForm(false)
+                    return
+                }
                 const res = await updateLead(request, editingLead.id, payload)
                 setSelectedLead((prev) => (prev && prev.id === editingLead.id ? res.lead : prev))
                 setPageSuccess('Cập nhật khách hàng tiềm năng thành công.')
@@ -1009,6 +1031,8 @@ export function LeadsPage() {
                                                         className="btn-action-edit"
                                                         data-testid={`edit-lead-${lead.id}`}
                                                         onClick={() => handleOpenEditModal(lead)}
+                                                        disabled={lead.status === 'converted'}
+                                                        title={lead.status === 'converted' ? 'Khách hàng đã nhập học, không thể chỉnh sửa' : 'Sửa'}
                                                     >
                                                         Sửa
                                                     </button>
@@ -1280,7 +1304,7 @@ export function LeadsPage() {
                                         onChange={(e) =>
                                             void handleAssigneeChange(e.target.value)
                                         }
-                                        disabled={isAssigning}
+                                        disabled={isAssigning || selectedLead.status === 'converted'}
                                     >
                                         <option value="">-- Chưa phân công / Gỡ phân công --</option>
                                         {assignableUsers.map((u) => (
@@ -1317,7 +1341,7 @@ export function LeadsPage() {
                                         onChange={(e) =>
                                             void handleStatusChange(e.target.value as LeadStatus)
                                         }
-                                        disabled={isUpdatingStatus}
+                                        disabled={isUpdatingStatus || selectedLead.status === 'converted'}
                                     >
                                         <option value="new">Mới tiếp nhận</option>
                                         <option value="contacted">Đã liên hệ</option>
@@ -1397,6 +1421,8 @@ export function LeadsPage() {
                                 className="btn-modal-edit"
                                 data-testid="edit-lead-btn"
                                 onClick={() => handleOpenEditModal(selectedLead)}
+                                disabled={selectedLead.status === 'converted'}
+                                title={selectedLead.status === 'converted' ? 'Khách hàng đã nhập học, không thể chỉnh sửa' : 'Sửa'}
                             >
                                 Sửa
                             </button>
