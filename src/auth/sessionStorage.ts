@@ -12,6 +12,7 @@ export type StoredSessionData = {
     userName?: string | null
     userEmail?: string | null
     userAvatar?: string | null
+    mustChangePassword?: boolean
 }
 
 export const SESSION_STORAGE_KEY = 'tms_session_data'
@@ -100,6 +101,10 @@ export function loadStoredSession(): StoredSessionData | null {
             const userName = 'userName' in parsed && typeof parsed.userName === 'string' ? parsed.userName : null
             const userEmail = 'userEmail' in parsed && typeof parsed.userEmail === 'string' ? parsed.userEmail : null
             const userAvatar = 'userAvatar' in parsed && typeof parsed.userAvatar === 'string' ? parsed.userAvatar : null
+            const mustChangePassword =
+                'mustChangePassword' in parsed && typeof parsed.mustChangePassword === 'boolean'
+                    ? parsed.mustChangePassword
+                    : false
 
             return {
                 tokens: {
@@ -113,6 +118,7 @@ export function loadStoredSession(): StoredSessionData | null {
                 userName,
                 userEmail,
                 userAvatar,
+                mustChangePassword,
             }
         }
 
