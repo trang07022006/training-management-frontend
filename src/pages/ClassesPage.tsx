@@ -44,12 +44,17 @@ export function ClassesPage({
 
     // Phân quyền
     const effectiveRoles = roles && roles.length > 0 ? roles : (role ? [role] : [])
+    const normalizedRoles = effectiveRoles.map((r) => (typeof r === 'string' ? r.trim().toLowerCase() : ''))
     const effectivePerms =
         permissions && permissions.length > 0 ? permissions : getRolePermissions(effectiveRoles)
     const canManage =
         canManageOverride !== undefined
             ? canManageOverride
-            : (effectivePerms.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) || effectiveRoles.includes('admin') || effectiveRoles.includes('training_manager'))
+            : (
+                effectivePerms.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
+                normalizedRoles.includes('admin') ||
+                normalizedRoles.includes('training_manager')
+            )
 
     // State danh sách lớp học
     const [classes, setClasses] = useState<TrainingClass[]>(initialClasses ?? [])
@@ -67,6 +72,8 @@ export function ClassesPage({
     // Modal tạo lớp học mới (SCRUM-217)
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [isCreating, setIsCreating] = useState(false)
+    const [createModalError, setCreateModalError] = useState<string | null>(null)
+    const [classCodeError, setClassCodeError] = useState<string | null>(null)
     const [createForm, setCreateForm] = useState({
         class_code: '',
         program_id: '',
@@ -169,6 +176,25 @@ export function ClassesPage({
         }
     }, [initialPrograms])
 
+    // Load students for enroll modal
+    useEffect(() => {
+        let isMounted = true
+        if (initialStudents === undefined) {
+            listStudents(requestFnRef.current, { page: 1, page_size: 100 })
+                .then((res) => {
+                    if (isMounted && res.items) {
+                        setStudents(res.items)
+                    }
+                })
+                .catch(() => {
+                    // Ignore student load failure in background
+                })
+        }
+        return () => {
+            isMounted = false
+        }
+    }, [initialStudents])
+
     // Xử lý tìm kiếm lớp học
     const handleSearchSubmit = (e: FormEvent) => {
         e.preventDefault()
@@ -178,6 +204,8 @@ export function ClassesPage({
 
     // Mở modal tạo lớp
     const handleOpenCreateModal = () => {
+        setCreateModalError(null)
+        setClassCodeError(null)
         setCreateForm({
             class_code: '',
             program_id: programs.length > 0 ? programs[0].id : '',
@@ -192,6 +220,8 @@ export function ClassesPage({
     const handleCreateClass = async (e: FormEvent) => {
         e.preventDefault()
         setIsCreating(true)
+        setCreateModalError(null)
+        setClassCodeError(null)
         setAlertMessage(null)
 
         try {
@@ -211,8 +241,40 @@ export function ClassesPage({
             })
             setIsCreateModalOpen(false)
         } catch (err: unknown) {
-            const msg = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi mở lớp học mới.')
-            setAlertMessage({ type: 'error', text: msg })
+            let msg = 'Lỗi khi mở lớp học mới.'
+            let isDuplicateClassCode = false
+
+            if (err instanceof ApiError) {
+                if (
+                    err.code === 'CLASS_CODE_ALREADY_EXISTS' ||
+                    err.code === 'CLASS_CODE_EXISTS' ||
+                    err.code === 'DUPLICATE_CLASS_CODE' ||
+                    err.status === 409
+                ) {
+                    isDuplicateClassCode = true
+                    msg = 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.'
+                } else {
+                    msg = err.message
+                }
+            } else {
+                msg = getErrorMessage(err, 'Lỗi khi mở lớp học mới.')
+                if (
+                    msg.includes('đã tồn tại') ||
+                    msg.includes('CLASS_CODE_ALREADY_EXISTS') ||
+                    msg.includes('trùng mã')
+                ) {
+                    isDuplicateClassCode = true
+                    msg = 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.'
+                }
+            }
+
+            if (isDuplicateClassCode) {
+                setClassCodeError(msg)
+                setCreateModalError(msg)
+            } else {
+                setCreateModalError(msg)
+            }
+            // Không đóng modal khi lỗi. Giữ nguyên createForm để người dùng sửa mã lớp.
         } finally {
             setIsCreating(false)
         }
@@ -487,6 +549,14 @@ export function ClassesPage({
                                     </td>
                                     <td>
                                         <div className="action-buttons-group">
+                                            <button
+                                                type="button"
+                                                className="btn-action-view"
+                                                onClick={() => handleOpenDetailModal(cls)}
+                                                data-testid={`view-class-${cls.id}`}
+                                            >
+                                                Môn học lớp
+                                            </button>
                                             {canManage && (
                                                 <button
                                                     type="button"
@@ -505,15 +575,7 @@ export function ClassesPage({
                                                 data-testid={`roster-class-${cls.id}`}
                                                 title="Xem danh sách học viên của lớp"
                                             >
-                                                DS lớp ({cls.enrolled_count ?? 0})
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-action-view"
-                                                onClick={() => handleOpenDetailModal(cls)}
-                                                data-testid={`view-class-${cls.id}`}
-                                            >
-                                                Môn học
+                                                Danh sách lớp
                                             </button>
                                         </div>
                                     </td>
@@ -543,19 +605,44 @@ export function ClassesPage({
 
                         <form onSubmit={handleCreateClass}>
                             <div className="modal-body">
+                                {createModalError && (
+                                    <div
+                                        className="modal-alert error"
+                                        data-testid="create-modal-error"
+                                        role="alert"
+                                    >
+                                        <span>{createModalError}</span>
+                                    </div>
+                                )}
                                 <div className="form-grid">
                                     <div className="form-group">
                                         <label htmlFor="class-code">Mã lớp * (Duy nhất)</label>
                                         <input
                                             id="class-code"
                                             type="text"
-                                            className="form-input"
+                                            className={`form-input ${classCodeError ? 'input-error' : ''}`}
                                             placeholder="Ví dụ: CNTT-K21A"
                                             value={createForm.class_code}
-                                            onChange={(e) => setCreateForm({ ...createForm, class_code: e.target.value })}
+                                            onChange={(e) => {
+                                                setCreateForm({ ...createForm, class_code: e.target.value })
+                                                if (classCodeError) setClassCodeError(null)
+                                                if (createModalError) setCreateModalError(null)
+                                            }}
                                             required
                                             data-testid="class-code-input"
+                                            aria-invalid={!!classCodeError}
+                                            aria-describedby={classCodeError ? 'class-code-error' : undefined}
                                         />
+                                        {classCodeError && (
+                                            <div
+                                                id="class-code-error"
+                                                className="form-field-error"
+                                                data-testid="class-code-error"
+                                                role="alert"
+                                            >
+                                                {classCodeError}
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="form-group">

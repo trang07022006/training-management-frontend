@@ -94,10 +94,19 @@ export async function createClass(
 
     if (!res.ok) {
         const code = body.code || 'API_ERROR'
-        const message = getErrorMessage(
-            { code, message: body.message, status: res.status },
-            body.message || 'Không thể tạo lớp học mới.',
-        )
+        let message = ''
+        if (
+            code === 'CLASS_CODE_ALREADY_EXISTS' ||
+            code === 'CLASS_CODE_EXISTS' ||
+            code === 'DUPLICATE_CLASS_CODE'
+        ) {
+            message = 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.'
+        } else {
+            message = getErrorMessage(
+                { code, message: body.message, status: res.status },
+                body.message || 'Không thể tạo lớp học mới.',
+            )
+        }
         throw new ApiError(message, code, res.status)
     }
 

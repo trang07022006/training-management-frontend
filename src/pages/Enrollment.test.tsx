@@ -618,4 +618,221 @@ describe('SCRUM-218: Ghi danh học viên vào lớp (TC218-01 -> TC218-10)', ()
         expect(screen.queryByTestId('student-item-st-01')).toBeNull()
         expect(screen.queryByTestId('student-item-st-03')).toBeNull()
     })
+
+    // =========================================================================
+    // TC218-UI-01 -> TC218-UI-05: Manual UAT Integration Verification
+    // =========================================================================
+
+    describe('SCRUM-218 UAT Action Visibility & Regression (TC218-UI-01 -> TC218-UI-05)', () => {
+        const testPreparingClass: TrainingClass = {
+            id: 'cls-uat-01',
+            class_code: 'CNTT-K24A',
+            program_id: 'prog-001',
+            program_code: 'PROG-CNTT',
+            program_name: 'Công nghệ thông tin',
+            expected_start_date: '2026-09-01',
+            max_capacity: 30,
+            learning_mode: 'offline',
+            status: 'preparing',
+            status_label: 'Chuẩn bị',
+            enrolled_count: 0,
+            subjects: [
+                {
+                    id: 'sub-uat-1',
+                    class_id: 'cls-uat-01',
+                    subject_id: 's-01',
+                    subject_code: 'IT101',
+                    subject_name: 'Tin học đại cương',
+                    credits: 3,
+                    semester: 1,
+                    is_mandatory: true,
+                    order_index: 1,
+                    created_at: '2026-01-01T00:00:00Z',
+                    updated_at: '2026-01-01T00:00:00Z',
+                },
+            ],
+            created_at: '2026-05-01T00:00:00Z',
+            updated_at: '2026-05-01T00:00:00Z',
+        }
+
+        it('TC218-UI-01: Mở /classes - thấy action Ghi danh, Môn học lớp, Danh sách lớp ở lớp Chuẩn bị 0/30', async () => {
+            renderWithSession(
+                <ClassesPage
+                    initialClasses={[testPreparingClass]}
+                    initialStudents={sampleStudents}
+                    canManageOverride={true}
+                />,
+            )
+
+            // Cột Thao tác phải có tối thiểu: [Môn học lớp], [Ghi danh], [Danh sách lớp]
+            expect(screen.getByTestId(`view-class-${testPreparingClass.id}`)).toBeDefined()
+            expect(screen.getByTestId(`view-class-${testPreparingClass.id}`).textContent).toBe('Môn học lớp')
+
+            expect(screen.getByTestId(`enroll-class-${testPreparingClass.id}`)).toBeDefined()
+            expect(screen.getByTestId(`enroll-class-${testPreparingClass.id}`).textContent).toBe('Ghi danh')
+
+            expect(screen.getByTestId(`roster-class-${testPreparingClass.id}`)).toBeDefined()
+            expect(screen.getByTestId(`roster-class-${testPreparingClass.id}`).textContent).toBe('Danh sách lớp')
+
+            // Sĩ số 0 / 30 hiển thị đúng
+            expect(screen.getByTestId(`class-capacity-${testPreparingClass.id}`).textContent).toContain('0 / 30')
+        })
+
+        it('TC218-UI-02: Bấm Ghi danh - modal mở', async () => {
+            renderWithSession(
+                <ClassesPage
+                    initialClasses={[testPreparingClass]}
+                    initialStudents={sampleStudents}
+                    canManageOverride={true}
+                />,
+            )
+
+            const enrollBtn = screen.getByTestId(`enroll-class-${testPreparingClass.id}`)
+            fireEvent.click(enrollBtn)
+
+            await waitFor(() => {
+                expect(screen.getByTestId('enroll-modal')).toBeDefined()
+                expect(screen.getByText(`Ghi danh học viên - Lớp ${testPreparingClass.class_code}`)).toBeDefined()
+            })
+        })
+
+        it('TC218-UI-03: Modal hiển thị Student thật, có thể chọn 1 hoặc nhiều học viên', async () => {
+            renderWithSession(
+                <ClassesPage
+                    initialClasses={[testPreparingClass]}
+                    initialStudents={sampleStudents}
+                    canManageOverride={true}
+                />,
+            )
+
+            fireEvent.click(screen.getByTestId(`enroll-class-${testPreparingClass.id}`))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('enroll-modal')).toBeDefined()
+            })
+
+            // Hiển thị các Student thật
+            expect(screen.getByText(/Nguyễn Văn A/)).toBeDefined()
+            expect(screen.getByText(/Trần Thị B/)).toBeDefined()
+            expect(screen.getByText(/Lê Văn C/)).toBeDefined()
+
+            // Chọn 1 học viên
+            fireEvent.click(screen.getByTestId('student-checkbox-st-01'))
+            expect(screen.getByTestId('selected-count').textContent).toBe('1')
+
+            // Chọn thêm học viên thứ 2
+            fireEvent.click(screen.getByTestId('student-checkbox-st-02'))
+            expect(screen.getByTestId('selected-count').textContent).toBe('2')
+        })
+
+        it('TC218-UI-04: Bấm Danh sách lớp - roster mở', async () => {
+            const mockRequest = vi.fn().mockImplementation((path: string) => {
+                if (path.includes('/enrollments')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () =>
+                            Promise.resolve({
+                                status: 'success',
+                                data: {
+                                    class: testPreparingClass,
+                                    items: sampleRosterItems,
+                                    total: 1,
+                                },
+                            }),
+                    })
+                }
+                return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'success', data: {} }) })
+            })
+
+            renderWithSession(
+                <ClassesPage
+                    initialClasses={[testPreparingClass]}
+                    customRequest={mockRequest}
+                    canManageOverride={true}
+                />,
+            )
+
+            const rosterBtn = screen.getByTestId(`roster-class-${testPreparingClass.id}`)
+            fireEvent.click(rosterBtn)
+
+            await waitFor(() => {
+                expect(screen.getByTestId('roster-modal')).toBeDefined()
+                expect(screen.getByTestId('roster-table')).toBeDefined()
+                expect(screen.getByText('HV001')).toBeDefined()
+            })
+        })
+
+        it('TC218-UI-05: SCRUM-217 regression - Môn học lớp, lifecycle, tạo lớp vẫn hoạt động', async () => {
+            const mockRequest = vi.fn().mockImplementation((path: string, options?: RequestInit) => {
+                if (path.includes('/status') && options?.method === 'PUT') {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () =>
+                            Promise.resolve({
+                                status: 'success',
+                                data: {
+                                    ...testPreparingClass,
+                                    status: 'in_progress',
+                                    status_label: 'Đang học',
+                                },
+                            }),
+                    })
+                }
+                if (path === '/api/v1/classes' && options?.method === 'POST') {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () =>
+                            Promise.resolve({
+                                status: 'success',
+                                data: {
+                                    id: 'cls-created-new',
+                                    class_code: 'CNTT-NEW',
+                                    program_id: 'prog-001',
+                                    program_name: 'Công nghệ thông tin',
+                                    status: 'preparing',
+                                    status_label: 'Chuẩn bị',
+                                    enrolled_count: 0,
+                                    max_capacity: 30,
+                                    copied_subjects_count: 1,
+                                },
+                            }),
+                    })
+                }
+                return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: 'success', data: {} }) })
+            })
+
+            renderWithSession(
+                <ClassesPage
+                    initialClasses={[testPreparingClass]}
+                    initialPrograms={[{ id: 'prog-001', code: 'PROG-CNTT', name: 'CNTT', description: 'Chương trình CNTT', duration_semesters: 8, standard_tuition_fee: 10000000, status: 'active', created_at: '', updated_at: '' }]}
+                    customRequest={mockRequest}
+                    canManageOverride={true}
+                />,
+            )
+
+            // 1. Môn học lớp vẫn mở modal chi tiết
+            fireEvent.click(screen.getByTestId(`view-class-${testPreparingClass.id}`))
+            await waitFor(() => {
+                expect(screen.getByTestId('class-detail-modal')).toBeDefined()
+                expect(screen.getByText('Tin học đại cương')).toBeDefined()
+            })
+            fireEvent.click(screen.getByTestId('close-detail-modal-btn'))
+
+            // 2. Lifecycle vẫn hoạt động
+            const statusSelect = screen.getByTestId(`status-select-${testPreparingClass.id}`)
+            fireEvent.change(statusSelect, { target: { value: 'in_progress' } })
+            await waitFor(() => {
+                expect(screen.getByTestId('success-alert')).toBeDefined()
+            })
+
+            // 3. Tạo lớp vẫn mở modal và hoạt động
+            fireEvent.click(screen.getByTestId('create-class-btn'))
+            expect(screen.getByTestId('create-class-modal')).toBeDefined()
+            fireEvent.change(screen.getByTestId('class-code-input'), { target: { value: 'CNTT-NEW' } })
+            fireEvent.click(screen.getByTestId('submit-class-btn'))
+            await waitFor(() => {
+                expect(screen.getByTestId('success-alert').textContent).toContain("Mở lớp học 'CNTT-NEW' thành công")
+            })
+        })
+    })
 })
