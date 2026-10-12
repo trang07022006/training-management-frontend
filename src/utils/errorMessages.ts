@@ -219,7 +219,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
     REORDER_SESSIONS_FAILED: 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
 
     // ----------------------------------------------------
-    // 18. QUẢN LÝ LỚP HỌC (SCRUM-217)
+    // 18. QUẢN LÝ LỚP HỌC & GHI DANH (SCRUM-217 & SCRUM-218)
     // ----------------------------------------------------
     CLASS_CODE_ALREADY_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
     CLASS_CODE_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
@@ -227,7 +227,11 @@ export const ERROR_MESSAGES: Record<string, string> = {
     CLASS_CODE_REQUIRED: 'Mã lớp học là bắt buộc.',
     PROGRAM_REQUIRED: 'Chương trình đào tạo là bắt buộc.',
     INVALID_CLASS_STATUS: 'Trạng thái lớp không hợp lệ. Chỉ chấp nhận 4 trạng thái: Chuẩn bị, Đang học, Kết thúc, Huỷ.',
-    CLASS_NOT_FOUND: 'Không tìm thấy lớp học.',
+    CLASS_NOT_FOUND: 'Không tìm thấy thông tin lớp học.',
+    CLASS_CAPACITY_FULL: 'Lớp học đã đủ số lượng học viên tối đa.',
+    STUDENT_ALREADY_ENROLLED: 'Học viên đã được ghi danh vào lớp học này.',
+    STUDENT_NOT_FOUND: 'Không tìm thấy thông tin học viên.',
+    INVALID_STUDENT_LIST: 'Vui lòng chọn ít nhất một học viên để ghi danh.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
