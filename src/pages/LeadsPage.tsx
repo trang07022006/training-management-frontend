@@ -128,6 +128,7 @@ export function LeadsPage() {
     const [convertSuccess, setConvertSuccess] = useState<string | null>(null)
     const [convertError, setConvertError] = useState<string | null>(null)
     const [convertedStudentCode, setConvertedStudentCode] = useState<string | null>(null)
+    const [accountResult, setAccountResult] = useState<{ accountCreated?: boolean; emailSent?: boolean } | null>(null)
 
     // Trigger refetch để đồng bộ danh sách sau mutations khi đang có bộ lọc (SCRUM-128)
     const [refreshTrigger, setRefreshTrigger] = useState<number>(0)
@@ -349,6 +350,7 @@ export function LeadsPage() {
         setConvertError(null)
         setConvertSuccess(null)
         setConvertedStudentCode(null)
+        setAccountResult(null)
     }
 
     const handleConvertToStudent = async (leadId: string) => {
@@ -360,11 +362,22 @@ export function LeadsPage() {
         try {
             const res = await convertLeadToStudent(request, leadId)
             const code = res?.student?.student_code
-            const successMsg = code
-                ? `Chuyển đổi khách hàng thành học viên thành công! Mã học viên: ${code}`
-                : 'Chuyển đổi khách hàng thành học viên thành công.'
+            const accountCreated = res?.account_created
+            const emailSent = res?.email_sent
+
+            let successMsg = 'Chuyển đổi khách hàng thành học viên thành công.'
+            if (code) {
+                successMsg += ` Mã học viên: ${code}.`
+            }
+            if (accountCreated) {
+                successMsg += emailSent
+                    ? ' Đã tạo tài khoản và gửi email thông báo.'
+                    : ' Đã tạo tài khoản đăng nhập.'
+            }
+
             setConvertSuccess(successMsg)
             setConvertedStudentCode(code || null)
+            setAccountResult({ accountCreated, emailSent })
             setSelectedLead((prev) =>
                 prev && prev.id === leadId ? { ...prev, status: 'converted' } : prev,
             )
@@ -1154,6 +1167,22 @@ export function LeadsPage() {
                                             data-testid="generated-student-code"
                                         >
                                             {convertedStudentCode}
+                                        </span>
+                                    </div>
+                                )}
+                                {accountResult && (
+                                    <div className="detail-row" data-testid="detail-account-status">
+                                        <span className="detail-label">Tài khoản học viên:</span>
+                                        <span
+                                            className="detail-value"
+                                            data-testid="account-creation-result"
+                                            style={{ color: '#059669', fontWeight: 600 }}
+                                        >
+                                            {accountResult.accountCreated
+                                                ? accountResult.emailSent
+                                                    ? 'Đã tạo tài khoản & gửi email'
+                                                    : 'Đã tạo tài khoản'
+                                                : 'Đã liên kết tài khoản'}
                                         </span>
                                     </div>
                                 )}

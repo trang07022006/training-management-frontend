@@ -26,6 +26,9 @@ export interface Student {
 export interface ConvertLeadResult {
     student: Student
     lead: Lead
+    user_id?: string | null
+    account_created?: boolean
+    email_sent?: boolean
 }
 
 /**

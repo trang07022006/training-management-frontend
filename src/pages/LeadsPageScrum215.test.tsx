@@ -147,7 +147,7 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
         })
     })
 
-    it('TC215-02: Bấm "Chuyển thành học viên" -> gọi API convert và hiển thị thành công kèm mã học viên tự sinh', async () => {
+    it('TC215-02: Bấm "Chuyển thành học viên" -> gọi API convert và hiển thị thành công kèm mã học viên và trạng thái tài khoản', async () => {
         vi.mocked(convertLeadToStudent).mockResolvedValue({
             student: {
                 id: 'student-215-01',
@@ -156,7 +156,7 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
                 phone: sampleWonLead.phone,
                 email: sampleWonLead.email,
                 program_id: sampleWonLead.interested_program_id,
-                user_id: null,
+                user_id: 'user-215-01',
                 lead_id: sampleWonLead.id,
                 status: 'enrolled',
                 created_at: '2026-10-12T09:00:00Z',
@@ -166,6 +166,9 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
                 ...sampleWonLead,
                 status: 'converted',
             },
+            user_id: 'user-215-01',
+            account_created: true,
+            email_sent: true,
         })
 
         render(<LeadsPage />)
@@ -181,11 +184,12 @@ describe('SCRUM-215: Sub-task 215-01 – Chuyển dữ liệu Lead sang hồ sơ
         await waitFor(() => {
             expect(convertLeadToStudent).toHaveBeenCalledWith(mockRequest, sampleWonLead.id)
             expect(screen.getByTestId('convert-success-alert')).toBeDefined()
-            expect(screen.getByTestId('convert-success-alert').textContent).toContain(
-                'Chuyển đổi khách hàng thành học viên thành công! Mã học viên: STU000001',
-            )
+            expect(screen.getByTestId('convert-success-alert').textContent).toContain('Mã học viên: STU000001')
+            expect(screen.getByTestId('convert-success-alert').textContent).toContain('Đã tạo tài khoản và gửi email thông báo')
             expect(screen.getByTestId('detail-student-code')).toBeDefined()
             expect(screen.getByTestId('generated-student-code').textContent).toBe('STU000001')
+            expect(screen.getByTestId('detail-account-status')).toBeDefined()
+            expect(screen.getByTestId('account-creation-result').textContent).toBe('Đã tạo tài khoản & gửi email')
         })
     })
 
