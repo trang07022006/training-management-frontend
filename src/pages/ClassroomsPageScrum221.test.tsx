@@ -7,11 +7,50 @@ import { MemoryRouter } from 'react-router'
 import { SessionProvider, useSession } from '../auth/SessionProvider'
 import { ClassroomsPage } from './ClassroomsPage'
 import type { Classroom } from '../api/classroomApi'
+import type { TrainingClass } from '../api/classApi'
 
 afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
 })
+
+const sampleClass30: TrainingClass = {
+    id: 'cls-30',
+    class_code: 'CNTT-K21',
+    program_id: 'prog-01',
+    expected_start_date: null,
+    max_capacity: 30,
+    learning_mode: 'offline',
+    status: 'in_progress',
+    status_label: 'Đang học',
+    enrolled_count: 0,
+    created_at: '2026-10-13T08:00:00Z',
+    updated_at: '2026-10-13T08:00:00Z',
+}
+
+const sampleRoom20: Classroom = {
+    id: 'room-20',
+    room_code: 'UAT-P20',
+    room_name: 'Phòng 20 chỗ',
+    room_type: 'physical',
+    capacity: 20,
+    online_link: null,
+    status: 'active',
+    created_at: '2026-10-13T08:00:00Z',
+    updated_at: '2026-10-13T08:00:00Z',
+}
+
+const sampleRoom30: Classroom = {
+    id: 'room-30',
+    room_code: 'UAT-P30',
+    room_name: 'Phòng 30 chỗ',
+    room_type: 'physical',
+    capacity: 30,
+    online_link: null,
+    status: 'active',
+    created_at: '2026-10-13T08:00:00Z',
+    updated_at: '2026-10-13T08:00:00Z',
+}
 
 const samplePhysicalRoom: Classroom = {
     id: 'room-phy-01',
@@ -337,5 +376,285 @@ describe('SCRUM-221: Quản lý phòng học vật lý và trực tuyến (TC221
         )
 
         expect(screen.getByTestId(`room-name-${samplePhysicalRoom.id}`).textContent).toBe('Phòng thực hành C3')
+    })
+
+    // =========================================================================
+    // 221-03: LUỒNG TƯƠNG TÁC KIỂM TRA SỨC CHỨA THỰC TẾ (TC221-09 -> TC221-14)
+    // =========================================================================
+
+    it('TC221-09: Chọn lớp tối đa 30 (0 hv) và phòng 20 chỗ -> gọi API -> cảnh báo 30 > 20', async () => {
+        const mockRequest = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('/api/v1/rooms/room-20/check-capacity') && url.includes('class_id=cls-30')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () =>
+                        Promise.resolve({
+                            status: 'success',
+                            data: {
+                                room_id: 'room-20',
+                                room_code: 'UAT-P20',
+                                room_type: 'physical',
+                                room_capacity: 20,
+                                class_id: 'cls-30',
+                                class_code: 'CNTT-K21',
+                                class_size: 30,
+                                basis: 'CLASS_MAX_CAPACITY',
+                                is_exceeded: true,
+                                warning: true,
+                                warning_message: 'Sĩ số lớp vượt sức chứa phòng. (Lớp: 30 học viên – Phòng: 20 chỗ)',
+                            },
+                        }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+            })
+        })
+
+        renderClassroomsPage({
+            initialRooms: [sampleRoom20],
+            initialClasses: [sampleClass30],
+            customRequest: mockRequest,
+        })
+
+        // Chọn lớp và chọn phòng
+        fireEvent.change(screen.getByTestId('select-check-class'), { target: { value: 'cls-30' } })
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-20' } })
+
+        // Bấm nút kiểm tra
+        fireEvent.click(screen.getByTestId('check-capacity-btn'))
+
+        await waitFor(() => {
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.stringContaining('/api/v1/rooms/room-20/check-capacity?class_id=cls-30'),
+            )
+        })
+
+        const banner = await screen.findByTestId('room-capacity-warning-banner')
+        expect(banner).toBeDefined()
+        expect(screen.getByTestId('capacity-warning-text').textContent).toContain('Sĩ số lớp vượt sức chứa phòng.')
+        expect(screen.getByTestId('capacity-warning-text').textContent).toContain('Lớp: 30 học viên – Phòng: 20 chỗ')
+    })
+
+    it('TC221-10: Lớp 30, phòng 30 -> gọi đúng API -> không cảnh báo vượt (hiển thị thông báo phù hợp)', async () => {
+        const mockRequest = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('/api/v1/rooms/room-30/check-capacity') && url.includes('class_id=cls-30')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () =>
+                        Promise.resolve({
+                            status: 'success',
+                            data: {
+                                room_id: 'room-30',
+                                room_code: 'UAT-P30',
+                                room_type: 'physical',
+                                room_capacity: 30,
+                                class_id: 'cls-30',
+                                class_code: 'CNTT-K21',
+                                class_size: 30,
+                                basis: 'CLASS_MAX_CAPACITY',
+                                is_exceeded: false,
+                                warning: false,
+                                warning_message: null,
+                            },
+                        }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+            })
+        })
+
+        renderClassroomsPage({
+            initialRooms: [sampleRoom30],
+            initialClasses: [sampleClass30],
+            customRequest: mockRequest,
+        })
+
+        fireEvent.change(screen.getByTestId('select-check-class'), { target: { value: 'cls-30' } })
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-30' } })
+        fireEvent.click(screen.getByTestId('check-capacity-btn'))
+
+        const successBanner = await screen.findByTestId('room-capacity-success-banner')
+        expect(successBanner).toBeDefined()
+        expect(screen.getByTestId('capacity-success-text').textContent).toContain('Sức chứa phù hợp')
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+    })
+
+    it('TC221-11: Lớp 30, phòng 40 -> gọi đúng API -> không cảnh báo vượt', async () => {
+        const mockRequest = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('/api/v1/rooms/room-phy-01/check-capacity') && url.includes('class_id=cls-30')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () =>
+                        Promise.resolve({
+                            status: 'success',
+                            data: {
+                                room_id: 'room-phy-01',
+                                room_code: 'A2-201',
+                                room_type: 'physical',
+                                room_capacity: 40,
+                                class_id: 'cls-30',
+                                class_code: 'CNTT-K21',
+                                class_size: 30,
+                                basis: 'CLASS_MAX_CAPACITY',
+                                is_exceeded: false,
+                                warning: false,
+                                warning_message: null,
+                            },
+                        }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+            })
+        })
+
+        renderClassroomsPage({
+            initialRooms: [samplePhysicalRoom],
+            initialClasses: [sampleClass30],
+            customRequest: mockRequest,
+        })
+
+        fireEvent.change(screen.getByTestId('select-check-class'), { target: { value: 'cls-30' } })
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-phy-01' } })
+        fireEvent.click(screen.getByTestId('check-capacity-btn'))
+
+        const successBanner = await screen.findByTestId('room-capacity-success-banner')
+        expect(successBanner).toBeDefined()
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+    })
+
+    it('TC221-12: Phòng trực tuyến -> gọi API -> hiển thị thông tin online, không cảnh báo sức chứa vật lý', async () => {
+        const mockRequest = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('/api/v1/rooms/room-onl-01/check-capacity') && url.includes('class_id=cls-30')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () =>
+                        Promise.resolve({
+                            status: 'success',
+                            data: {
+                                room_id: 'room-onl-01',
+                                room_code: 'MEET-01',
+                                room_type: 'online',
+                                room_capacity: null,
+                                class_id: 'cls-30',
+                                class_code: 'CNTT-K21',
+                                class_size: 30,
+                                basis: 'CLASS_MAX_CAPACITY',
+                                is_exceeded: false,
+                                warning: false,
+                                warning_message: null,
+                            },
+                        }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+            })
+        })
+
+        renderClassroomsPage({
+            initialRooms: [sampleOnlineRoom],
+            initialClasses: [sampleClass30],
+            customRequest: mockRequest,
+        })
+
+        fireEvent.change(screen.getByTestId('select-check-class'), { target: { value: 'cls-30' } })
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-onl-01' } })
+        fireEvent.click(screen.getByTestId('check-capacity-btn'))
+
+        const onlineBanner = await screen.findByTestId('room-capacity-online-info')
+        expect(onlineBanner).toBeDefined()
+        expect(screen.getByTestId('capacity-online-text').textContent).toContain('không giới hạn sức chứa vật lý')
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+    })
+
+    it('TC221-13: Đổi lựa chọn sau khi có cảnh báo -> xóa ngay kết quả cũ', async () => {
+        const mockRequest = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('/api/v1/rooms/room-20/check-capacity')) {
+                return Promise.resolve({
+                    ok: true,
+                    json: () =>
+                        Promise.resolve({
+                            status: 'success',
+                            data: {
+                                room_id: 'room-20',
+                                room_code: 'UAT-P20',
+                                room_type: 'physical',
+                                room_capacity: 20,
+                                class_id: 'cls-30',
+                                class_code: 'CNTT-K21',
+                                class_size: 30,
+                                basis: 'CLASS_MAX_CAPACITY',
+                                is_exceeded: true,
+                                warning: true,
+                                warning_message: 'Sĩ số lớp vượt sức chứa phòng. (Lớp: 30 học viên – Phòng: 20 chỗ)',
+                            },
+                        }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+            })
+        })
+
+        renderClassroomsPage({
+            initialRooms: [sampleRoom20, sampleRoom30],
+            initialClasses: [sampleClass30],
+            customRequest: mockRequest,
+        })
+
+        fireEvent.change(screen.getByTestId('select-check-class'), { target: { value: 'cls-30' } })
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-20' } })
+        fireEvent.click(screen.getByTestId('check-capacity-btn'))
+
+        expect(await screen.findByTestId('room-capacity-warning-banner')).toBeDefined()
+
+        // Đổi lựa chọn phòng -> lập tức xóa kết quả cũ
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-30' } })
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+    })
+
+    it('TC221-14: API kiểm tra sức chứa lỗi -> hiển thị thông báo lỗi rõ ràng, không hiển thị kết quả giả', async () => {
+        const mockRequest = vi.fn().mockImplementation((url: string) => {
+            if (url.includes('check-capacity')) {
+                return Promise.resolve({
+                    ok: false,
+                    status: 500,
+                    json: () =>
+                        Promise.resolve({
+                            status: 'error',
+                            code: 'SERVER_ERROR',
+                            message: 'Lỗi máy chủ khi kiểm tra sức chứa.',
+                        }),
+                })
+            }
+            return Promise.resolve({
+                ok: true,
+                json: () => Promise.resolve({ status: 'success', data: { items: [], total: 0 } }),
+            })
+        })
+
+        renderClassroomsPage({
+            initialRooms: [sampleRoom20],
+            initialClasses: [sampleClass30],
+            customRequest: mockRequest,
+        })
+
+        fireEvent.change(screen.getByTestId('select-check-class'), { target: { value: 'cls-30' } })
+        fireEvent.change(screen.getByTestId('select-check-room'), { target: { value: 'room-20' } })
+        fireEvent.click(screen.getByTestId('check-capacity-btn'))
+
+        const errorBanner = await screen.findByTestId('capacity-check-error')
+        expect(errorBanner).toBeDefined()
+        expect(errorBanner.textContent).toContain('Lỗi máy chủ khi kiểm tra sức chứa.')
+        expect(screen.queryByTestId('room-capacity-warning-banner')).toBeNull()
+        expect(screen.queryByTestId('room-capacity-success-banner')).toBeNull()
     })
 })
