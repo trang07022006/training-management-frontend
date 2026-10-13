@@ -355,3 +355,103 @@ export async function cancelClassScheduleItem(
     return body.data
 }
 
+// SCRUM-227: Lịch tuần / tháng (Calendar View)
+
+export interface CalendarScheduleItem {
+    id: string
+    class_id: string
+    class_code: string
+    class_subject_id?: string | null
+    subject_id?: string | null
+    subject_name?: string
+    subject_code?: string
+    subject_session_id?: string | null
+    session_number: number
+    topic: string
+    learning_date: string
+    day_of_week?: string
+    shift?: string | null
+    start_time: string
+    end_time: string
+    room_id?: string | null
+    instructor_id?: string | null
+    instructor_name?: string | null
+    instructor_email?: string | null
+    status: string
+    cancellation_reason?: string | null
+    attendance_checked: boolean
+}
+
+export interface CalendarScheduleParams {
+    date_from?: string
+    date_to?: string
+    class_id?: string
+    instructor_id?: string
+    room_id?: string
+    view_mode?: 'week' | 'month'
+}
+
+export interface CalendarScheduleResponse {
+    total: number
+    date_from?: string | null
+    date_to?: string | null
+    view_mode: 'week' | 'month'
+    filters: {
+        class_id?: string | null
+        instructor_id?: string | null
+        room_id?: string | null
+    }
+    schedules: CalendarScheduleItem[]
+}
+
+/**
+ * Lấy danh sách thời khóa biểu dạng lịch tuần/tháng kèm bộ lọc (SCRUM-227 AC 1, 2, 4).
+ */
+export async function getCalendarSchedules(
+    requestFn: RequestFunction,
+    params: CalendarScheduleParams = {}
+): Promise<CalendarScheduleResponse> {
+    const query = new URLSearchParams()
+    if (params.date_from) query.set('date_from', params.date_from)
+    if (params.date_to) query.set('date_to', params.date_to)
+    if (params.class_id) query.set('class_id', params.class_id)
+    if (params.instructor_id) query.set('instructor_id', params.instructor_id)
+    if (params.room_id) query.set('room_id', params.room_id)
+    if (params.view_mode) query.set('view_mode', params.view_mode)
+
+    const path = `/api/v1/schedules/calendar?${query.toString()}`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể tải lịch thời khóa biểu.'
+        )
+        throw new ApiError(message, code, res.status)
+    }
+    return body.data
+}
+
+/**
+ * Lấy chi tiết một buổi học theo ID khi bấm vào buổi trên lịch (SCRUM-227 AC 3).
+ */
+export async function getScheduleDetail(
+    requestFn: RequestFunction,
+    scheduleId: string
+): Promise<CalendarScheduleItem> {
+    const path = `/api/v1/schedules/${encodeURIComponent(scheduleId.trim())}`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể tải chi tiết buổi học.'
+        )
+        throw new ApiError(message, code, res.status)
+    }
+    return body.data
+}
+
+

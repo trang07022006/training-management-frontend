@@ -185,6 +185,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
     {
+        key: 'schedules_calendar',
+        label: 'Thời khóa biểu',
+        path: '/schedules',
+        icon: 'calendar',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
         key: 'students',
         label: 'Học viên',
         path: '/students',
