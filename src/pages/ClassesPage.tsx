@@ -15,6 +15,8 @@ import {
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
 import { enrollStudents, getClassRoster, type EnrollmentItem } from '../api/enrollmentApi'
 import { listStudents, type Student } from '../api/studentApi'
+import { ScheduleGenerationModal } from '../components/ScheduleGenerationModal'
+import { HolidaysManagementModal } from '../components/HolidaysManagementModal'
 import { getErrorMessage } from '../utils/errorMessages'
 import './ClassesPage.css'
 
@@ -103,6 +105,10 @@ export function ClassesPage({
 
     // Alert feedback
     const [alertMessage, setAlertMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+    // Modal Thời khóa biểu & Ngày nghỉ lễ (SCRUM-224)
+    const [scheduleModalClass, setScheduleModalClass] = useState<TrainingClass | null>(null)
+    const [isHolidaysModalOpen, setIsHolidaysModalOpen] = useState(false)
 
     // Tải danh sách lớp học
     const loadClasses = useCallback(
@@ -437,14 +443,36 @@ export function ClassesPage({
                         Tổng số lớp: <strong>{total}</strong>
                     </div>
                     {canManage && (
-                        <button
-                            type="button"
-                            className="btn-open-class"
-                            onClick={handleOpenCreateModal}
-                            data-testid="create-class-btn"
-                        >
-                            + Mở lớp mới
-                        </button>
+                        <>
+                            <button
+                                type="button"
+                                className="btn-holidays"
+                                onClick={() => setIsHolidaysModalOpen(true)}
+                                data-testid="open-holidays-btn"
+                                style={{
+                                    padding: '8px 14px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #cbd5e1',
+                                    background: '#ffffff',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    fontSize: '0.9rem',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                }}
+                            >
+                                🏖️ Ngày nghỉ lễ
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-open-class"
+                                onClick={handleOpenCreateModal}
+                                data-testid="create-class-btn"
+                            >
+                                + Mở lớp mới
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -556,6 +584,25 @@ export function ClassesPage({
                                                 data-testid={`view-class-${cls.id}`}
                                             >
                                                 Môn học lớp
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn-action-schedule"
+                                                onClick={() => setScheduleModalClass(cls)}
+                                                data-testid={`schedule-class-${cls.id}`}
+                                                title="Xem và sinh thời khóa biểu tự động (SCRUM-224)"
+                                                style={{
+                                                    backgroundColor: '#0284c7',
+                                                    color: '#ffffff',
+                                                    border: 'none',
+                                                    padding: '6px 10px',
+                                                    borderRadius: '4px',
+                                                    fontWeight: 600,
+                                                    fontSize: '0.8rem',
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                Thời khóa biểu
                                             </button>
                                             {canManage && (
                                                 <button
@@ -1032,6 +1079,26 @@ export function ClassesPage({
                     </div>
                 </div>
             )}
+
+            {/* Modal Thời khóa biểu (SCRUM-224) */}
+            {scheduleModalClass && (
+                <ScheduleGenerationModal
+                    classItem={scheduleModalClass}
+                    requestFn={requestFn}
+                    canManage={canManage}
+                    onClose={() => setScheduleModalClass(null)}
+                />
+            )}
+
+            {/* Modal Quản lý ngày nghỉ lễ (SCRUM-224) */}
+            {isHolidaysModalOpen && (
+                <HolidaysManagementModal
+                    requestFn={requestFn}
+                    canManage={canManage}
+                    onClose={() => setIsHolidaysModalOpen(false)}
+                />
+            )}
         </div>
     )
 }
+
