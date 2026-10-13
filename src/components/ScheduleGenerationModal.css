@@ -378,9 +378,140 @@
     font-style: italic;
 }
 
-.preview-table-wrapper {
-    max-height: 400px;
-    overflow-y: auto;
+.schedule-meta-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.room-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.inst-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* SCRUM-225: Schedule Conflicts Styling */
+.schedule-conflicts-card {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 5px solid #ef4444;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 18px;
+}
+
+.conflict-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.conflict-badge {
+    background: #dc2626;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.conflict-title-text {
+    font-weight: 600;
+    color: #991b1b;
+    font-size: 0.95rem;
+}
+
+.conflict-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.conflict-item-card {
+    background: #ffffff;
+    border: 1px solid #fee2e2;
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.conflict-item-badge {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.conflict-item-content {
+    flex: 1;
+}
+
+.conflict-item-target {
+    font-size: 0.875rem;
+    color: #1f2937;
+    margin-bottom: 2px;
+}
+
+.conflict-item-detail {
+    font-size: 0.825rem;
+    color: #b91c1c;
+    font-weight: 500;
+}
+
+.conflict-override-wrapper {
+    background: #ffffff;
+    border: 1px dashed #f87171;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 10px;
+}
+
+.conflict-override-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #7f1d1d;
+}
+
+.conflict-override-label input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+    accent-color: #dc2626;
+    cursor: pointer;
+}
+
+.btn-confirm-save.btn-save-blocked {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-confirm-save.btn-save-blocked:hover {
+    background-color: #9ca3af;
 }
 
 @media (max-width: 768px) {

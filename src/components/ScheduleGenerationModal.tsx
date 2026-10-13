@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import type { RequestFunction as RequestFn } from '../api/userApi'
+import { fetchUsersApi, type RequestFunction as RequestFn, type User } from '../api/userApi'
 import { getClassSubjects, type ClassSubjectItem } from '../api/classApi'
 import {
     previewClassSchedule,
@@ -7,6 +7,7 @@ import {
     getClassSchedules,
     type ClassScheduleItem,
     type SkippedHolidayItem,
+    type ScheduleConflictItem,
     type ScheduleGeneratePayload,
 } from '../api/scheduleApi'
 import './ScheduleGenerationModal.css'
@@ -71,6 +72,13 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
     const [totalSessions, setTotalSessions] = useState<number>(60) // Mặc định 60 buổi theo User Story
     const [overwriteExisting, setOverwriteExisting] = useState<boolean>(false)
 
+    // Giảng viên & Phòng học (SCRUM-225)
+    const [instructors, setInstructors] = useState<User[]>([])
+    const [selectedInstructorId, setSelectedInstructorId] = useState<string>('')
+    const [selectedRoomId, setSelectedRoomId] = useState<string>('')
+    const [conflicts, setConflicts] = useState<ScheduleConflictItem[]>([])
+    const [allowConflictOverride, setAllowConflictOverride] = useState<boolean>(false)
+
     // Kết quả xem trước (Preview)
     const [previewList, setPreviewList] = useState<ClassScheduleItem[]>([])
     const [skippedHolidays, setSkippedHolidays] = useState<SkippedHolidayItem[]>([])
@@ -82,15 +90,18 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
         setLoading(true)
         setError(null)
         try {
-            const [subs, schedRes] = await Promise.all([
+            const [subs, schedRes, usersRes] = await Promise.all([
                 getClassSubjects(requestFn, classItem.id).catch(() => []),
                 getClassSchedules(requestFn, classItem.id).catch(() => ({ schedules: [] })),
+                fetchUsersApi(requestFn, { page: 1, page_size: 100 }).catch(() => ({ items: [], users: [] })),
             ])
             setSubjects(subs)
-            if (subs.length > 0 && !selectedSubjectId) {
-                setSelectedSubjectId(subs[0].subject_id)
+            if (subs.length > 0) {
+                setSelectedSubjectId((prev) => (prev ? prev : subs[0].subject_id))
             }
             setExistingSchedules(schedRes.schedules || [])
+            const uList = (usersRes as any).items || (usersRes as any).users || []
+            setInstructors(uList)
             if ((schedRes.schedules || []).length === 0) {
                 // Nếu chưa có lịch, mở tab sinh lịch
                 setActiveTab('generate')
@@ -114,7 +125,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
         }
     }
 
-    // Xem trước thời khóa biểu (AC 3)
+    // Xem trước thời khóa biểu (AC 3, SCRUM-225 AC 1, 2)
     const handlePreview = async () => {
         setError(null)
         setSuccessMessage(null)
@@ -140,6 +151,8 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
             start_date: startDate,
             total_sessions: Number(totalSessions),
             subject_id: selectedSubjectId || undefined,
+            instructor_id: selectedInstructorId || undefined,
+            room_id: selectedRoomId.trim() || undefined,
             overwrite: overwriteExisting,
         }
 
@@ -148,6 +161,8 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
             const res = await previewClassSchedule(requestFn, classItem.id, payload)
             setPreviewList(res.schedules || [])
             setSkippedHolidays(res.skipped_holidays || [])
+            setConflicts(res.conflicts || [])
+            setAllowConflictOverride(false)
             setIsPreviewDone(true)
         } catch (err: any) {
             setError(err?.message || 'Lỗi khi xem trước thời khóa biểu.')
@@ -157,7 +172,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
         }
     }
 
-    // Xác nhận lưu thời khóa biểu (AC 1, 2, 4)
+    // Xác nhận lưu thời khóa biểu (AC 1, 2, 4, SCRUM-225 AC 3)
     const handleConfirmSave = async () => {
         setError(null)
         setSuccessMessage(null)
@@ -170,7 +185,10 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
             start_date: startDate,
             total_sessions: Number(totalSessions),
             subject_id: selectedSubjectId || undefined,
+            instructor_id: selectedInstructorId || undefined,
+            room_id: selectedRoomId.trim() || undefined,
             overwrite: overwriteExisting,
+            allow_conflict_override: allowConflictOverride,
         }
 
         setIsSaving(true)
@@ -179,10 +197,17 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
             setSuccessMessage(`Đã lưu thành công ${res.total_saved} buổi học vào thời khóa biểu!`)
             setExistingSchedules(res.schedules || [])
             setIsPreviewDone(false)
+            setConflicts([])
+            setAllowConflictOverride(false)
             setActiveTab('view')
             if (onSuccess) onSuccess()
         } catch (err: any) {
-            if (err?.code === 'SCHEDULE_ALREADY_EXISTS') {
+            if (err?.code === 'SCHEDULE_CONFLICT_DETECTED') {
+                const details = err?.details || {}
+                const cList = details.conflicts || []
+                setConflicts(cList)
+                setError(err.message || 'Phát hiện xung đột lịch. Quản lý đào tạo cần xác nhận ghi đè để tiếp tục lưu.')
+            } else if (err?.code === 'SCHEDULE_ALREADY_EXISTS') {
                 setError(err.message + ' Hãy đánh dấu chọn "Ghi đè lịch đã có" để tiếp tục.')
             } else {
                 setError(err?.message || 'Lỗi khi lưu thời khóa biểu.')
@@ -284,6 +309,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                 <th style={{ width: '120px' }}>Ngày học</th>
                                                 <th style={{ width: '100px' }}>Ca / Giờ</th>
                                                 <th>Nội dung bài học</th>
+                                                <th style={{ width: '130px' }}>Phòng / GV</th>
                                                 <th style={{ width: '100px' }}>Trạng thái</th>
                                             </tr>
                                         </thead>
@@ -307,6 +333,15 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                     </td>
                                                     <td>
                                                         <span className="topic-text">{item.topic}</span>
+                                                    </td>
+                                                    <td>
+                                                        <div className="schedule-meta-col">
+                                                            {item.room_id ? <span className="room-badge">🏫 {item.room_id}</span> : null}
+                                                            {item.instructor_name || item.instructor_id ? (
+                                                                <span className="inst-badge">👨‍🏫 {item.instructor_name || item.instructor_id}</span>
+                                                            ) : null}
+                                                            {!item.room_id && !item.instructor_name && !item.instructor_id ? '-' : null}
+                                                        </div>
                                                     </td>
                                                     <td>
                                                         <span className={`status-tag status-${item.status || 'scheduled'}`}>
@@ -333,7 +368,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                 <h3>Khai báo mẫu sinh thời khóa biểu</h3>
                                 <p className="form-helper">
                                     Hệ thống sẽ tự động tính toán các buổi học liên tiếp theo các thứ trong tuần đã chọn,
-                                    tự động bỏ qua các ngày nghỉ lễ đã khai báo và gắn từng bài học trong môn vào từng buổi.
+                                    tự động bỏ qua các ngày nghỉ lễ đã khai báo, kiểm tra trùng lịch giảng viên/phòng học và gắn từng bài học trong môn vào từng buổi.
                                 </p>
 
                                 <div className="form-grid">
@@ -445,6 +480,39 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                         />
                                     </div>
 
+                                    {/* Giảng viên phụ trách (SCRUM-225 AC 1) */}
+                                    <div className="form-field">
+                                        <label htmlFor="gen-instructor-select">Giảng viên phụ trách (SCRUM-225):</label>
+                                        <select
+                                            id="gen-instructor-select"
+                                            className="form-control"
+                                            value={selectedInstructorId}
+                                            onChange={(e) => setSelectedInstructorId(e.target.value)}
+                                            data-testid="schedule-instructor-select"
+                                        >
+                                            <option value="">-- Chưa phân công giảng viên --</option>
+                                            {instructors.map((inst) => (
+                                                <option key={inst.id} value={inst.id}>
+                                                    {inst.name} ({inst.email})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Phòng học (SCRUM-225 AC 1) */}
+                                    <div className="form-field">
+                                        <label htmlFor="gen-room-input">Phòng học (SCRUM-225):</label>
+                                        <input
+                                            id="gen-room-input"
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Ví dụ: P201, Lab 3, UAT-P20..."
+                                            value={selectedRoomId}
+                                            onChange={(e) => setSelectedRoomId(e.target.value)}
+                                            data-testid="schedule-room-input"
+                                        />
+                                    </div>
+
                                     {/* Ghi đè lịch cũ */}
                                     {existingSchedules.length > 0 && (
                                         <div className="form-field full-width checkbox-field">
@@ -483,14 +551,67 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                         <h4>Kết quả xem trước ({previewList.length} buổi học)</h4>
                                         <button
                                             type="button"
-                                            className="btn-confirm-save"
+                                            className={`btn-confirm-save ${conflicts.length > 0 && !allowConflictOverride ? 'btn-save-blocked' : ''}`}
                                             onClick={handleConfirmSave}
-                                            disabled={isSaving}
+                                            disabled={isSaving || (conflicts.length > 0 && !allowConflictOverride)}
                                             data-testid="btn-confirm-save-schedule"
+                                            title={conflicts.length > 0 && !allowConflictOverride ? 'Bị chặn do có xung đột lịch. Vui lòng xác nhận ghi đè để lưu.' : undefined}
                                         >
-                                            {isSaving ? 'Đang lưu vào hệ thống...' : '💾 Xác nhận lưu lịch học chính thức'}
+                                            {isSaving
+                                                ? 'Đang lưu vào hệ thống...'
+                                                : conflicts.length > 0
+                                                ? allowConflictOverride
+                                                    ? '⚠️ Xác nhận ghi đè & Lưu lịch học'
+                                                    : '🚫 Chặn lưu do xung đột lịch (AC 3)'
+                                                : '💾 Xác nhận lưu lịch học chính thức'}
                                         </button>
                                     </div>
+
+                                    {/* Banner cảnh báo xung đột lịch giảng viên / phòng học (SCRUM-225 AC 2, AC 3) */}
+                                    {conflicts.length > 0 && (
+                                        <div className="schedule-conflicts-card" data-testid="schedule-conflicts-card">
+                                            <div className="conflict-card-header">
+                                                <span className="conflict-badge">⚠️ CẢNH BÁO XUNG ĐỘT ({conflicts.length} BUỔI)</span>
+                                                <span className="conflict-title-text">
+                                                    Phát hiện trùng lịch giảng viên hoặc phòng học (AC 1, AC 2)
+                                                </span>
+                                            </div>
+                                            <div className="conflict-list" data-testid="conflict-list">
+                                                {conflicts.map((c, idx) => (
+                                                    <div key={idx} className="conflict-item-card" data-testid={`conflict-item-${idx}`}>
+                                                        <div className="conflict-item-badge">
+                                                            {c.conflict_type === 'instructor' ? '👨‍🏫 Trùng Giảng Viên' : '🏫 Trùng Phòng Học'}
+                                                        </div>
+                                                        <div className="conflict-item-content">
+                                                            <div className="conflict-item-target">
+                                                                <strong>Buổi #{c.session_number}</strong> ngày <strong>{c.learning_date}</strong> ({c.start_time.slice(0, 5)} - {c.end_time.slice(0, 5)})
+                                                            </div>
+                                                            <div className="conflict-item-detail">
+                                                                {c.message}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            {/* Xác nhận ghi đè cho Quản lý đào tạo (SCRUM-225 AC 3) */}
+                                            {canManage && (
+                                                <div className="conflict-override-wrapper" data-testid="conflict-override-box">
+                                                    <label className="checkbox-label conflict-override-label">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={allowConflictOverride}
+                                                            onChange={(e) => setAllowConflictOverride(e.target.checked)}
+                                                            data-testid="schedule-conflict-override-checkbox"
+                                                        />
+                                                        <span>
+                                                            <strong>Xác nhận ghi đè (Quản lý đào tạo):</strong> Tôi xác nhận cho phép lưu thời khóa biểu dù có xung đột lịch nêu trên (AC 3).
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Banner thông báo ngày nghỉ lễ đã bỏ qua (AC 2) */}
                                     {skippedHolidays.length > 0 && (
@@ -518,7 +639,8 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                     <th style={{ width: '60px' }}>Buổi</th>
                                                     <th style={{ width: '120px' }}>Ngày học</th>
                                                     <th style={{ width: '100px' }}>Thứ</th>
-                                                    <th style={{ width: '150px' }}>Ca / Giờ học</th>
+                                                    <th style={{ width: '130px' }}>Ca / Giờ học</th>
+                                                    <th style={{ width: '140px' }}>Phòng / GV</th>
                                                     <th>Bài học gắn kèm (AC 4)</th>
                                                 </tr>
                                             </thead>
@@ -532,6 +654,17 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                         <td>{item.day_of_week}</td>
                                                         <td>
                                                             <span className="shift-label">{item.shift || `${item.start_time} - ${item.end_time}`}</span>
+                                                        </td>
+                                                        <td>
+                                                            <div className="schedule-meta-col">
+                                                                {selectedRoomId ? <span className="room-badge">🏫 {selectedRoomId}</span> : null}
+                                                                {selectedInstructorId ? (
+                                                                    <span className="inst-badge">
+                                                                        👨‍🏫 {instructors.find(i => String(i.id) === String(selectedInstructorId))?.name || selectedInstructorId}
+                                                                    </span>
+                                                                ) : null}
+                                                                {!selectedRoomId && !selectedInstructorId ? '-' : null}
+                                                            </div>
                                                         </td>
                                                         <td>
                                                             <span className="topic-text">{item.topic}</span>

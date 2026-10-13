@@ -23,6 +23,7 @@ export interface ClassScheduleItem {
     end_time: string
     room_id?: string | null
     instructor_id?: string | null
+    instructor_name?: string | null
     status?: string
     cancellation_reason?: string | null
     attendance_checked?: boolean
@@ -35,6 +36,24 @@ export interface SkippedHolidayItem {
     reason?: string
 }
 
+export interface ScheduleConflictItem {
+    conflict_type: 'instructor' | 'room'
+    session_number: number
+    learning_date: string
+    start_time: string
+    end_time: string
+    instructor_id?: string | null
+    instructor_name?: string | null
+    room_id?: string | null
+    conflicting_schedule_id?: string
+    conflicting_class_id?: string
+    conflicting_class_code?: string
+    conflicting_session_number?: number
+    conflicting_start_time?: string
+    conflicting_end_time?: string
+    message: string
+}
+
 export interface SchedulePreviewResponse {
     class_id: string
     class_code: string
@@ -44,6 +63,8 @@ export interface SchedulePreviewResponse {
     end_date: string | null
     schedules: ClassScheduleItem[]
     skipped_holidays: SkippedHolidayItem[]
+    conflicts?: ScheduleConflictItem[]
+    has_conflicts?: boolean
 }
 
 export interface ScheduleGenerateResponse {
@@ -54,6 +75,8 @@ export interface ScheduleGenerateResponse {
     end_date: string | null
     schedules: ClassScheduleItem[]
     skipped_holidays: SkippedHolidayItem[]
+    conflicts?: ScheduleConflictItem[]
+    overridden_conflicts_count?: number
 }
 
 export interface ScheduleGeneratePayload {
@@ -68,6 +91,7 @@ export interface ScheduleGeneratePayload {
     room_id?: string
     instructor_id?: string
     overwrite?: boolean
+    allow_conflict_override?: boolean
 }
 
 export interface HolidayItem {
@@ -132,7 +156,7 @@ export async function generateClassSchedule(
             { code, message: body.message, status: res.status },
             body.message || 'Không thể lưu thời khóa biểu lớp học.'
         )
-        throw new ApiError(message, code, res.status)
+        throw new ApiError(message, code, res.status, undefined, body.data)
     }
     return body.data
 }
