@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { Link } from 'react-router'
+import { getApiOrigin } from '../utils/apiConfig'
 import './ForgotPasswordPage.css'
 
 export interface ForgotPasswordPageProps {
@@ -107,14 +108,8 @@ export function ForgotPasswordPage({ onSubmit, apiOrigin }: ForgotPasswordPagePr
         }
       } else {
         try {
-          const origin =
-            apiOrigin ||
-            import.meta.env.VITE_API_ORIGIN ||
-            import.meta.env.VITE_API_BASE_URL ||
-            (typeof window !== 'undefined' && window.location.port === '5173'
-              ? `http://${window.location.hostname}:5000`
-              : (typeof window !== 'undefined' ? window.location.origin : ''))
-          const url = new URL('/api/auth/forgot-password', origin || 'http://localhost:5000').href
+          const origin = apiOrigin || getApiOrigin()
+          const url = new URL('/api/auth/forgot-password', origin || (typeof window !== 'undefined' ? window.location.origin : '')).href
           const res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
