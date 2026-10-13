@@ -37,6 +37,7 @@ import { LeadsPage } from './pages/LeadsPage'
 import { StudentsPage } from './pages/StudentsPage'
 import { ClassesPage } from './pages/ClassesPage'
 import { ScheduleCalendarPage } from './pages/ScheduleCalendarPage'
+import { StudentSchedulePage } from './pages/StudentSchedulePage'
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -138,6 +139,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/students/:studentId" element={<StudentsPage />} />
                 <Route path="/classes" element={<ClassesPage />} />
                 <Route path="/schedules" element={<ScheduleCalendarPage />} />
+                <Route path="/my-schedule" element={<StudentSchedulePage />} />
               </Route>
               <Route
                 element={

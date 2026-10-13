@@ -454,4 +454,84 @@ export async function getScheduleDetail(
     return body.data
 }
 
+// SCRUM-228: Lịch học cá nhân của học viên (Student Personal Schedule)
+
+export interface StudentSessionItem {
+    id: string
+    class_id: string
+    class_code: string
+    class_subject_id?: string | null
+    subject_id?: string | null
+    subject_name?: string
+    subject_code?: string
+    subject_session_id?: string | null
+    session_number: number
+    topic: string
+    learning_date: string
+    day_of_week?: string
+    shift?: string | null
+    start_time: string
+    end_time: string
+    room_id?: string | null
+    is_online: boolean
+    online_url?: string | null
+    room_name?: string | null
+    instructor_id?: string | null
+    instructor_name?: string | null
+    instructor_email?: string | null
+    status: string
+    cancellation_reason?: string | null
+    attendance_checked: boolean
+}
+
+export interface StudentPersonalScheduleResponse {
+    student: {
+        id: string
+        student_code: string
+        full_name: string
+        email: string
+        phone?: string | null
+        program_name?: string | null
+    } | null
+    enrolled_classes: Array<{
+        class_id: string
+        class_code: string
+        enrollment_status?: string
+        learning_mode?: string
+        program_name?: string
+    }>
+    next_session: StudentSessionItem | null
+    week_sessions: StudentSessionItem[]
+    total_week_sessions: number
+    date_from: string
+    date_to: string
+    period_title: string
+}
+
+/**
+ * Lấy lịch học cá nhân của học viên đăng nhập (SCRUM-228 AC 1, 2).
+ */
+export async function getMyPersonalSchedule(
+    requestFn: RequestFunction,
+    params: { date_from?: string; date_to?: string } = {}
+): Promise<StudentPersonalScheduleResponse> {
+    const query = new URLSearchParams()
+    if (params.date_from) query.set('date_from', params.date_from)
+    if (params.date_to) query.set('date_to', params.date_to)
+    const qs = query.toString()
+    const path = `/api/v1/students/my-schedule${qs ? `?${qs}` : ''}`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể tải lịch học cá nhân.'
+        )
+        throw new ApiError(message, code, res.status)
+    }
+    return body.data
+}
+
+
 
