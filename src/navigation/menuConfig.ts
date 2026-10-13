@@ -178,6 +178,20 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
     {
+        key: 'classes',
+        label: 'Lớp học',
+        path: '/classes',
+        icon: 'chalkboard-teacher',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
+        key: 'students',
+        label: 'Học viên',
+        path: '/students',
+        icon: 'user-graduate',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
         key: 'leads',
         label: 'Tư vấn tuyển sinh',
         path: '/leads',
@@ -313,7 +327,16 @@ export function isMenuActive(item: MenuItem, currentPathname: string): boolean {
         )
     }
 
-    // 4. Các menu khác có route con tương ứng (loại trừ root / và /dashboard)
+    // 4. Module "Lớp học":
+    // Active khi ở /classes hoặc bất kỳ route con nào (như /classes/:classId)
+    if (item.key === 'classes' || item.path === '/classes') {
+        return Boolean(
+            current === '/classes' ||
+            current.startsWith('/classes/')
+        )
+    }
+
+    // 5. Các menu khác có route con tương ứng (loại trừ root / và /dashboard)
     if (itemPath !== '/' && itemPath !== '/dashboard' && current.startsWith(itemPath + '/')) {
         return true
     }

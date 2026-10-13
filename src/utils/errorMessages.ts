@@ -217,6 +217,21 @@ export const ERROR_MESSAGES: Record<string, string> = {
     OBJECTIVE_REQUIRED: 'Mục tiêu buổi học là bắt buộc.',
     OBJECTIVE_TOO_LONG: 'Mục tiêu buổi học không được vượt quá 5000 ký tự.',
     REORDER_SESSIONS_FAILED: 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
+
+    // ----------------------------------------------------
+    // 18. QUẢN LÝ LỚP HỌC & GHI DANH (SCRUM-217 & SCRUM-218)
+    // ----------------------------------------------------
+    CLASS_CODE_ALREADY_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    CLASS_CODE_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    DUPLICATE_CLASS_CODE: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    CLASS_CODE_REQUIRED: 'Mã lớp học là bắt buộc.',
+    PROGRAM_REQUIRED: 'Chương trình đào tạo là bắt buộc.',
+    INVALID_CLASS_STATUS: 'Trạng thái lớp không hợp lệ. Chỉ chấp nhận 4 trạng thái: Chuẩn bị, Đang học, Kết thúc, Huỷ.',
+    CLASS_NOT_FOUND: 'Không tìm thấy thông tin lớp học.',
+    CLASS_CAPACITY_FULL: 'Lớp học đã đủ số lượng học viên tối đa.',
+    STUDENT_ALREADY_ENROLLED: 'Học viên đã được ghi danh vào lớp học này.',
+    STUDENT_NOT_FOUND: 'Không tìm thấy thông tin học viên.',
+    INVALID_STUDENT_LIST: 'Vui lòng chọn ít nhất một học viên để ghi danh.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -268,6 +283,17 @@ export function isTechnicalCode(str?: string | null): boolean {
 export function isNetworkError(text?: string | null): boolean {
     if (!text || typeof text !== 'string') return false
     const lower = text.toLowerCase()
+    if (
+        lower.includes('400') ||
+        lower.includes('401') ||
+        lower.includes('403') ||
+        lower.includes('404') ||
+        lower.includes('500') ||
+        lower.includes('status code 4') ||
+        lower.includes('status code 5')
+    ) {
+        return false
+    }
     return (
         lower.includes('failed to fetch') ||
         lower.includes('networkerror') ||
@@ -344,6 +370,12 @@ export function getErrorMessage(
         if (errorOrCode === 403) {
             return ERROR_MESSAGES.FORBIDDEN
         }
+        if (errorOrCode === 404) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (errorOrCode === 500) {
+            return 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
         const str = String(errorOrCode)
         if (str in ERROR_MESSAGES) {
             return ERROR_MESSAGES[str]
@@ -380,6 +412,13 @@ export function getErrorMessage(
             return ERROR_MESSAGES.FORBIDDEN
         }
 
+        if (trimmed === '404') {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (trimmed === '500') {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+
         if (trimmed in ERROR_MESSAGES) {
             return ERROR_MESSAGES[trimmed]
         }
@@ -412,8 +451,8 @@ export function getErrorMessage(
         }
     }
 
-    // Kiểm tra lỗi mạng
-    if (rawMessage && isNetworkError(rawMessage)) {
+    // Kiểm tra lỗi mạng (chỉ khi không có HTTP status code hợp lệ)
+    if ((!status || status === 0) && rawMessage && isNetworkError(rawMessage)) {
         return NETWORK_ERROR_MESSAGE
     }
 
@@ -488,6 +527,34 @@ export function getErrorMessage(
         upperMsg.includes('401')
     ) {
         return ERROR_MESSAGES['401']
+    }
+
+    if (
+        status === 404 ||
+        normCode === '404' ||
+        normCode === 'NOT_FOUND' ||
+        upperMsg.startsWith('404')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (fallback && fallback !== DEFAULT_FALLBACK_ERROR) {
+            return fallback
+        }
+        return 'Không tìm thấy dữ liệu yêu cầu.'
+    }
+
+    if (
+        status === 500 ||
+        normCode === '500' ||
+        normCode === 'INTERNAL_SERVER_ERROR' ||
+        normCode === 'INTERNAL_ERROR' ||
+        upperMsg.startsWith('500')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        return 'Có lỗi máy chủ, vui lòng thử lại.'
     }
 
     if (upperMsg === 'UNAUTHORIZED' || upperMsg.includes('UNAUTHORIZED')) {
