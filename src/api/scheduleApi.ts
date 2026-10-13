@@ -266,3 +266,92 @@ export async function deleteHoliday(
     }
     return body.data
 }
+
+export interface UpdateSchedulePayload {
+    learning_date?: string
+    start_time?: string
+    end_time?: string
+    shift?: string
+    room_id?: string
+    instructor_id?: string
+    topic?: string
+    allow_conflict_override?: boolean
+}
+
+export interface UpdateScheduleResponse {
+    schedule: ClassScheduleItem
+    notifications_sent: number
+    overridden_conflicts_count?: number
+    conflicts?: ScheduleConflictItem[]
+}
+
+export interface CancelSchedulePayload {
+    reason: string
+}
+
+export interface CancelScheduleResponse {
+    schedule: ClassScheduleItem
+    notifications_sent: number
+    cancellation_reason: string
+}
+
+/**
+ * Sửa hoặc dời một buổi học đơn lẻ (SCRUM-226 AC 1, AC 3, AC 4).
+ */
+export async function updateClassScheduleItem(
+    requestFn: RequestFunction,
+    classId: string,
+    scheduleId: string,
+    payload: UpdateSchedulePayload
+): Promise<UpdateScheduleResponse> {
+    const path = `/api/v1/classes/${encodeURIComponent(classId.trim())}/schedules/${encodeURIComponent(scheduleId.trim())}`
+    const res = await requestFn(path, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể cập nhật buổi học.'
+        )
+        throw new ApiError(message, code, res.status, undefined, body.data)
+    }
+    return body.data
+}
+
+/**
+ * Hủy một buổi học đơn lẻ với lý do bắt buộc (SCRUM-226 AC 2, AC 3, AC 4).
+ */
+export async function cancelClassScheduleItem(
+    requestFn: RequestFunction,
+    classId: string,
+    scheduleId: string,
+    payload: CancelSchedulePayload
+): Promise<CancelScheduleResponse> {
+    const path = `/api/v1/classes/${encodeURIComponent(classId.trim())}/schedules/${encodeURIComponent(scheduleId.trim())}/cancel`
+    const res = await requestFn(path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể hủy buổi học.'
+        )
+        throw new ApiError(message, code, res.status, undefined, body.data)
+    }
+    return body.data
+}
+

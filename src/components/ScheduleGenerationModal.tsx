@@ -5,10 +5,13 @@ import {
     previewClassSchedule,
     generateClassSchedule,
     getClassSchedules,
+    updateClassScheduleItem,
+    cancelClassScheduleItem,
     type ClassScheduleItem,
     type SkippedHolidayItem,
     type ScheduleConflictItem,
     type ScheduleGeneratePayload,
+    type UpdateSchedulePayload,
 } from '../api/scheduleApi'
 import './ScheduleGenerationModal.css'
 
@@ -78,6 +81,25 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
     const [selectedRoomId, setSelectedRoomId] = useState<string>('')
     const [conflicts, setConflicts] = useState<ScheduleConflictItem[]>([])
     const [allowConflictOverride, setAllowConflictOverride] = useState<boolean>(false)
+
+    // SCRUM-226: Sửa/dời và hủy buổi học đơn lẻ
+    const [editingSchedule, setEditingSchedule] = useState<ClassScheduleItem | null>(null)
+    const [editDate, setEditDate] = useState<string>('')
+    const [editShift, setEditShift] = useState<string>('')
+    const [editStartTime, setEditStartTime] = useState<string>('')
+    const [editEndTime, setEditEndTime] = useState<string>('')
+    const [editRoomId, setEditRoomId] = useState<string>('')
+    const [editInstructorId, setEditInstructorId] = useState<string>('')
+    const [editTopic, setEditTopic] = useState<string>('')
+    const [editConflictOverride, setEditConflictOverride] = useState<boolean>(false)
+    const [editConflicts, setEditConflicts] = useState<ScheduleConflictItem[]>([])
+    const [isUpdating, setIsUpdating] = useState<boolean>(false)
+    const [editError, setEditError] = useState<string | null>(null)
+
+    const [cancellingSchedule, setCancellingSchedule] = useState<ClassScheduleItem | null>(null)
+    const [cancelReason, setCancelReason] = useState<string>('')
+    const [isCancelling, setIsCancelling] = useState<boolean>(false)
+    const [cancelError, setCancelError] = useState<string | null>(null)
 
     // Kết quả xem trước (Preview)
     const [previewList, setPreviewList] = useState<ClassScheduleItem[]>([])
@@ -217,6 +239,103 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
         }
     }
 
+    // SCRUM-226: Mở form dời / sửa buổi học
+    const handleOpenEdit = (item: ClassScheduleItem) => {
+        setEditingSchedule(item)
+        setEditDate(item.learning_date)
+        setEditShift(item.shift || '')
+        setEditStartTime(item.start_time ? item.start_time.slice(0, 5) : '07:30')
+        setEditEndTime(item.end_time ? item.end_time.slice(0, 5) : '09:30')
+        setEditRoomId(item.room_id || '')
+        setEditInstructorId(item.instructor_id || '')
+        setEditTopic(item.topic || '')
+        setEditConflictOverride(false)
+        setEditConflicts([])
+        setEditError(null)
+    }
+
+    const handleSaveEdit = async () => {
+        if (!editingSchedule || !editingSchedule.id) return
+        setEditError(null)
+
+        if (!editDate) {
+            setEditError('Vui lòng chọn ngày học.')
+            return
+        }
+
+        const payload: UpdateSchedulePayload = {
+            learning_date: editDate,
+            start_time: editStartTime,
+            end_time: editEndTime,
+            shift: editShift || undefined,
+            room_id: editRoomId.trim() || undefined,
+            instructor_id: editInstructorId || undefined,
+            topic: editTopic.trim() || undefined,
+            allow_conflict_override: editConflictOverride,
+        }
+
+        setIsUpdating(true)
+        try {
+            const res = await updateClassScheduleItem(requestFn, classItem.id, editingSchedule.id, payload)
+            setSuccessMessage(
+                `Đã cập nhật buổi #${res.schedule.session_number} thành công và phát thông báo tới ${res.notifications_sent} học viên & giảng viên!`
+            )
+            setEditingSchedule(null)
+            loadData()
+            if (onSuccess) onSuccess()
+        } catch (err: any) {
+            if (err?.code === 'SCHEDULE_CONFLICT_DETECTED') {
+                const cList = (err?.details as any)?.conflicts || err?.details || []
+                setEditConflicts(cList)
+                setEditError('Phát hiện xung đột lịch. Vui lòng xác nhận ghi đè để lưu thay đổi.')
+            } else if (err?.code === 'SCHEDULE_ATTENDANCE_ALREADY_CHECKED') {
+                setEditError('Không thể sửa hoặc dời buổi học đã được điểm danh (AC 4).')
+            } else {
+                setEditError(err?.message || 'Lỗi khi cập nhật buổi học.')
+            }
+        } finally {
+            setIsUpdating(false)
+        }
+    }
+
+    const handleOpenCancel = (item: ClassScheduleItem) => {
+        setCancellingSchedule(item)
+        setCancelReason('')
+        setCancelError(null)
+    }
+
+    const handleConfirmCancel = async () => {
+        if (!cancellingSchedule || !cancellingSchedule.id) return
+        setCancelError(null)
+
+        const trimmedReason = cancelReason.trim()
+        if (!trimmedReason) {
+            setCancelError('Lý do hủy buổi học là bắt buộc (AC 2).')
+            return
+        }
+
+        setIsCancelling(true)
+        try {
+            const res = await cancelClassScheduleItem(requestFn, classItem.id, cancellingSchedule.id, {
+                reason: trimmedReason,
+            })
+            setSuccessMessage(
+                `Đã hủy buổi #${res.schedule.session_number} và phát thông báo tới ${res.notifications_sent} học viên & giảng viên!`
+            )
+            setCancellingSchedule(null)
+            loadData()
+            if (onSuccess) onSuccess()
+        } catch (err: any) {
+            if (err?.code === 'SCHEDULE_ATTENDANCE_ALREADY_CHECKED') {
+                setCancelError('Không thể hủy buổi học đã được điểm danh (AC 4).')
+            } else {
+                setCancelError(err?.message || 'Lỗi khi hủy buổi học.')
+            }
+        } finally {
+            setIsCancelling(false)
+        }
+    }
+
     return (
         <div className="modal-overlay" role="dialog" aria-modal="true" data-testid="schedule-modal">
             <div className="schedule-modal-card">
@@ -310,7 +429,8 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                 <th style={{ width: '100px' }}>Ca / Giờ</th>
                                                 <th>Nội dung bài học</th>
                                                 <th style={{ width: '130px' }}>Phòng / GV</th>
-                                                <th style={{ width: '100px' }}>Trạng thái</th>
+                                                <th style={{ width: '120px' }}>Trạng thái</th>
+                                                {canManage && <th style={{ width: '150px' }}>Thao tác</th>}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -351,7 +471,44 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                                 ? 'Đã dời'
                                                                 : 'Đã lên lịch'}
                                                         </span>
+                                                        {item.status === 'cancelled' && item.cancellation_reason && (
+                                                            <div className="cancel-reason-subtext" title={item.cancellation_reason}>
+                                                                Lý do: {item.cancellation_reason}
+                                                            </div>
+                                                        )}
                                                     </td>
+                                                    {canManage && (
+                                                        <td>
+                                                            <div className="action-buttons-cell">
+                                                                {item.attendance_checked ? (
+                                                                    <span className="badge-locked" title="Buổi học đã điểm danh, không thể dời hoặc hủy (AC 4)">
+                                                                        🔒 Đã điểm danh
+                                                                    </span>
+                                                                ) : item.status === 'cancelled' ? (
+                                                                    <span className="text-muted" style={{ fontSize: '12px' }}>Không khả dụng</span>
+                                                                ) : (
+                                                                    <div className="schedule-row-actions">
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-action-small btn-edit"
+                                                                            onClick={() => handleOpenEdit(item)}
+                                                                            data-testid={`btn-edit-schedule-${item.session_number}`}
+                                                                        >
+                                                                            ✏️ Dời/Sửa
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn-action-small btn-cancel"
+                                                                            onClick={() => handleOpenCancel(item)}
+                                                                            data-testid={`btn-cancel-schedule-${item.session_number}`}
+                                                                        >
+                                                                            ❌ Hủy
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    )}
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -679,6 +836,267 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                         </div>
                     )}
                 </div>
+
+                {/* SCRUM-226: SUB-MODAL DỜI / SỬA BUỔI HỌC */}
+                {editingSchedule && (
+                    <div className="sub-modal-backdrop" data-testid="edit-schedule-modal">
+                        <div className="sub-modal-card">
+                            <div className="modal-header">
+                                <h3>✏️ Sửa / Dời buổi học #{editingSchedule.session_number}</h3>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setEditingSchedule(null)}
+                                    aria-label="Đóng"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <div className="sub-modal-body">
+                                {editError && (
+                                    <div className="schedule-alert error" style={{ margin: '0 0 16px 0' }} data-testid="edit-schedule-error">
+                                        <span>⚠️ {editError}</span>
+                                    </div>
+                                )}
+
+                                <div className="form-grid">
+                                    <div className="form-field">
+                                        <label htmlFor="edit-learning-date">Ngày học mới (AC 1):</label>
+                                        <input
+                                            id="edit-learning-date"
+                                            type="date"
+                                            className="form-control"
+                                            value={editDate}
+                                            onChange={(e) => setEditDate(e.target.value)}
+                                            data-testid="edit-date-input"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="edit-shift-select">Ca học:</label>
+                                        <select
+                                            id="edit-shift-select"
+                                            className="form-control"
+                                            value={editShift}
+                                            onChange={(e) => {
+                                                const s = e.target.value
+                                                setEditShift(s)
+                                                const found = PREDEFINED_SHIFTS.find((p) => p.code === s)
+                                                if (found) {
+                                                    setEditStartTime(found.start)
+                                                    setEditEndTime(found.end)
+                                                }
+                                            }}
+                                            data-testid="edit-shift-select"
+                                        >
+                                            <option value="">-- Tùy chỉnh giờ --</option>
+                                            {PREDEFINED_SHIFTS.map((sh) => (
+                                                <option key={sh.code} value={sh.code}>
+                                                    {sh.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="edit-start-time">Giờ bắt đầu:</label>
+                                        <input
+                                            id="edit-start-time"
+                                            type="time"
+                                            className="form-control"
+                                            value={editStartTime}
+                                            onChange={(e) => setEditStartTime(e.target.value)}
+                                            data-testid="edit-start-time-input"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="edit-end-time">Giờ kết thúc:</label>
+                                        <input
+                                            id="edit-end-time"
+                                            type="time"
+                                            className="form-control"
+                                            value={editEndTime}
+                                            onChange={(e) => setEditEndTime(e.target.value)}
+                                            data-testid="edit-end-time-input"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="edit-room-select">Phòng học:</label>
+                                        <input
+                                            id="edit-room-select"
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Ví dụ: P201, Lab 3, UAT-P20..."
+                                            value={editRoomId}
+                                            onChange={(e) => setEditRoomId(e.target.value)}
+                                            data-testid="edit-room-select"
+                                        />
+                                    </div>
+
+                                    <div className="form-field">
+                                        <label htmlFor="edit-instructor-select">Giảng viên (hỗ trợ dạy thay):</label>
+                                        <select
+                                            id="edit-instructor-select"
+                                            className="form-control"
+                                            value={editInstructorId}
+                                            onChange={(e) => setEditInstructorId(e.target.value)}
+                                            data-testid="edit-instructor-select"
+                                        >
+                                            <option value="">-- Chưa gán giảng viên --</option>
+                                            {instructors.map((inst) => (
+                                                <option key={inst.id} value={inst.id}>
+                                                    {inst.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="form-field full-width">
+                                        <label htmlFor="edit-topic-input">Chủ đề bài học:</label>
+                                        <input
+                                            id="edit-topic-input"
+                                            type="text"
+                                            className="form-control"
+                                            value={editTopic}
+                                            onChange={(e) => setEditTopic(e.target.value)}
+                                            placeholder="Nhập nội dung bài học..."
+                                            data-testid="edit-topic-input"
+                                        />
+                                    </div>
+                                </div>
+
+                                {editConflicts.length > 0 && (
+                                    <div className="conflict-warning-card" style={{ marginTop: '16px' }} data-testid="edit-conflict-warning">
+                                        <div className="conflict-header">
+                                            <span className="conflict-icon">⚠️</span>
+                                            <div>
+                                                <h4>Phát hiện xung đột lịch ({editConflicts.length})</h4>
+                                                <p>Khung giờ hoặc phòng học/giảng viên này đã có lịch dạy khác trùng lặp.</p>
+                                            </div>
+                                        </div>
+                                        <ul className="conflict-list">
+                                            {editConflicts.map((c, idx) => (
+                                                <li key={idx}>
+                                                    <strong>[{c.conflict_type === 'instructor' ? 'Giảng viên trùng' : 'Phòng học trùng'}]</strong>{' '}
+                                                    {c.message || `${c.instructor_name || c.room_id || ''} đã có lịch lớp ${c.conflicting_class_code || ''}`}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <div className="conflict-override-action">
+                                            <label className="checkbox-container">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={editConflictOverride}
+                                                    onChange={(e) => setEditConflictOverride(e.target.checked)}
+                                                    data-testid="edit-conflict-override-checkbox"
+                                                />
+                                                <span className="override-label">
+                                                    Tôi xác nhận ghi đè xung đột lịch này (SCRUM-225)
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid #e2e8f0' }}>
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={() => setEditingSchedule(null)}
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-primary"
+                                    onClick={handleSaveEdit}
+                                    disabled={isUpdating}
+                                    data-testid="btn-save-edit-schedule"
+                                >
+                                    {isUpdating ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* SCRUM-226: SUB-MODAL HỦY BUỔI HỌC (AC 2, AC 3) */}
+                {cancellingSchedule && (
+                    <div className="sub-modal-backdrop" data-testid="cancel-schedule-modal">
+                        <div className="sub-modal-card" style={{ maxWidth: '500px' }}>
+                            <div className="modal-header">
+                                <h3>❌ Hủy buổi học #{cancellingSchedule.session_number}</h3>
+                                <button
+                                    type="button"
+                                    className="btn-close"
+                                    onClick={() => setCancellingSchedule(null)}
+                                    aria-label="Đóng"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                            <div className="sub-modal-body">
+                                <p style={{ marginBottom: '16px', color: '#475569' }}>
+                                    Bạn có chắc chắn muốn hủy buổi học ngày <strong>{cancellingSchedule.learning_date}</strong> (Buổi #{cancellingSchedule.session_number})?
+                                    <br />
+                                    <small style={{ color: '#64748b' }}>
+                                        Thông báo hủy sẽ được tự động gửi đến toàn bộ học viên và giảng viên của lớp.
+                                    </small>
+                                </p>
+
+                                {cancelError && (
+                                    <div className="schedule-alert error" style={{ margin: '0 0 16px 0' }} data-testid="cancel-schedule-error">
+                                        <span>⚠️ {cancelError}</span>
+                                    </div>
+                                )}
+
+                                <div className="form-field full-width">
+                                    <label htmlFor="cancel-reason-textarea">
+                                        Lý do hủy buổi học <span style={{ color: '#ef4444' }}>* (bắt buộc)</span>:
+                                    </label>
+                                    <textarea
+                                        id="cancel-reason-textarea"
+                                        className="form-control"
+                                        rows={3}
+                                        value={cancelReason}
+                                        onChange={(e) => setCancelReason(e.target.value)}
+                                        placeholder="Nhập lý do hủy buổi học (ví dụ: Giảng viên bận công tác đột xuất, phòng học sửa chữa...)"
+                                        data-testid="cancel-reason-input"
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid #e2e8f0' }}>
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={() => setCancellingSchedule(null)}
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-danger"
+                                    onClick={handleConfirmCancel}
+                                    disabled={isCancelling}
+                                    style={{
+                                        background: '#dc2626',
+                                        color: '#ffffff',
+                                        border: 'none',
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                    }}
+                                    data-testid="btn-confirm-cancel-schedule"
+                                >
+                                    {isCancelling ? 'Đang xử lý...' : 'Xác nhận hủy buổi học'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
