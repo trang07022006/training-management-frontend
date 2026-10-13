@@ -18,7 +18,7 @@ class CareLog {
     }
 }
 
-# SCRUM-214-2: Ham ghi nhat ky cham soc
+# SCRUM-214-2 & SCRUM-214-3: Ham ghi nhat ky va Dat lich goi lai
 function Add-CareLog {
     param (
         [Parameter(Mandatory = $true)] [string]$LeadId,
@@ -29,6 +29,20 @@ function Add-CareLog {
 
     $log = [CareLog]::new($LeadId, $Type, $Content, $NextCallDate)
     $script:CareLogs.Add($log)
-    Write-Host "[THANH CONG] Da ghi nhat ky $Type cho Lead $LeadId" -ForegroundColor Green
+    
+    if ($NextCallDate) {
+        Write-Host "[THANH CONG] Da ghi nhat ky $Type va DAT LICH GOI LAI vao: $($NextCallDate.ToString('dd/MM/yyyy HH:mm')) cho Lead $LeadId" -ForegroundColor Green
+    } else {
+        Write-Host "[THANH CONG] Da ghi nhat ky $Type cho Lead $LeadId" -ForegroundColor Green
+    }
     return $log
+}
+
+# SCRUM-214-4: Ham lay lich su cham soc theo Lead
+function Get-CareLogsByLead {
+    param (
+        [Parameter(Mandatory = $true)] [string]$LeadId
+    )
+
+    return $script:CareLogs | Where-Object { $_.LeadId -eq $LeadId } | Sort-Object Timestamp -Descending
 }

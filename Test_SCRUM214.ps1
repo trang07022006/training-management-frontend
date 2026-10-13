@@ -1,11 +1,15 @@
 ﻿. D:\Scrum-Project\LeadCareManagement.ps1
 
 Write-Host "=================================================" -ForegroundColor Cyan
-Write-Host "      TEST SUBTASK 2: HAM GHI NHAT KY (Add-CareLog) " -ForegroundColor Cyan
+Write-Host "   TEST SUBTASK 3 & 4: LỊCH NHẮC & LỊCH SỬ LEAD  " -ForegroundColor Cyan
 Write-Host "=================================================" -ForegroundColor Cyan
 
-Add-CareLog -LeadId "LEAD01" -Type "Goi" -Content "Cuoc goi tu van khoa hoc CNTT"
-Add-CareLog -LeadId "LEAD02" -Type "Nhan" -Content "Gui tin nhan Zalo bao gia hoc phi"
+# Test Subtask 3: Ghi nhật ký và đặt lịch nhắc
+$nextWeek = (Get-Date).AddDays(7)
+Add-CareLog -LeadId "LEAD01" -Type "Goi" -Content "Khach dang suy nghi, hen tuan sau goi lai" -NextCallDate $nextWeek
+Add-CareLog -LeadId "LEAD01" -Type "Nhan" -Content "Da gui Zalo brochure chi tiet"
+Add-CareLog -LeadId "LEAD02" -Type "Gap" -Content "Tu van truc tiep tai trung tam"
 
-Write-Host "`n--- Danh sach tat ca Nhat ky da luu trong system ---" -ForegroundColor Gray
-$script:CareLogs | Format-Table -AutoSize
+# Test Subtask 4: Truy vấn lịch sử chăm sóc riêng của LEAD01
+Write-Host "`n--- Lich su tuong tac cua LEAD01 (Sắp xếp mới nhất trước) ---" -ForegroundColor Yellow
+Get-CareLogsByLead -LeadId "LEAD01" | Format-Table LeadId, Type, Content, Timestamp, NextCallDate -AutoSize
