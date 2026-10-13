@@ -1,9 +1,11 @@
 /* ClassroomsPage.css - Styles for SCRUM-221 */
 
 .classrooms-container {
-    padding: 24px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 0 0 24px 0;
+    max-width: none;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
     font-family: inherit;
 }
 
@@ -75,6 +77,8 @@
     margin-bottom: 24px;
     flex-wrap: wrap;
     align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .filter-item {
@@ -115,6 +119,8 @@
     border: 1px solid #e2e8f0;
     overflow-x: auto;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .classrooms-table {
@@ -122,6 +128,7 @@
     border-collapse: collapse;
     text-align: left;
     font-size: 14px;
+    min-width: 650px;
 }
 
 .classrooms-table th {
@@ -232,6 +239,8 @@
     padding: 20px 24px;
     margin-bottom: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .capacity-checker-header h3 {

@@ -1,9 +1,11 @@
 /* ClassesPage.css - Giao diện Mở lớp từ chương trình đào tạo (SCRUM-217) */
 
 .classes-container {
-    padding: 24px 32px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 0 0 24px 0;
+    max-width: none;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
     font-family: inherit;
     color: #1e293b;
 }
@@ -15,6 +17,8 @@
     margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .classes-header-left h1 {
@@ -77,19 +81,82 @@
     color: #991b1b;
 }
 
+/* Search Bar (SCRUM-217) */
+.students-search-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    background: #ffffff;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.students-search-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.students-search-input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.students-search-input:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.btn-search {
+    padding: 10px 20px;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-search:hover {
+    background: #0369a1;
+}
+
 /* Table Card */
 .classes-table-card {
     background: #ffffff;
     border-radius: 10px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow-x: auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .classes-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    min-width: 800px;
 }
 
 .classes-table th {

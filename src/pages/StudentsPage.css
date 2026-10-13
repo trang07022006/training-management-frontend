@@ -1,9 +1,11 @@
 /* StudentsPage.css - Giao diện Quản lý hồ sơ học viên (SCRUM-216) */
 
 .students-container {
-    padding: 24px 32px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 0 0 24px 0;
+    max-width: none;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
     font-family: inherit;
     color: #1e293b;
 }
@@ -15,6 +17,8 @@
     margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .students-header-left h1 {
@@ -83,6 +87,8 @@
     border-radius: 10px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .students-search-input-wrapper {
@@ -152,13 +158,16 @@
     border-radius: 10px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
+    overflow-x: auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .students-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    min-width: 700px;
 }
 
 .students-table th {
