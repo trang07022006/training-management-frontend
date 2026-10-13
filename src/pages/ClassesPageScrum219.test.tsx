@@ -118,26 +118,39 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
     // =========================================================================
     // 219-01: BỘ LỌC DANH SÁCH LỚP (TC219-01 -> TC219-06)
     // =========================================================================
-    describe('219-01: Bộ lọc danh sách lớp', () => {
-        it('TC219-01: Lọc trạng thái lớp học -> gọi API với status tương ứng', async () => {
-            const mockCustomRequest = vi.fn().mockImplementation((path: string) => {
-                if (path.includes('/api/v1/classes')) {
-                    return Promise.resolve({
-                        ok: true,
-                        json: () =>
-                            Promise.resolve({
-                                status: 'success',
-                                data: {
-                                    items: [mockClass1],
-                                    total: 1,
-                                    page: 1,
-                                    page_size: 50,
-                                    total_pages: 1,
-                                },
-                            }),
-                    })
-                }
-                return Promise.resolve({ ok: true, json: () => Promise.resolve({ data: [] }) })
+    // =========================================================================
+    // 219-01: BỘ LỌC DANH SÁCH LỚP TỰ ĐỘNG (TC1 -> TC7)
+    // =========================================================================
+    describe('219-01: Tự động áp dụng bộ lọc danh sách lớp & debounce tìm kiếm', () => {
+        it('Xóa hoàn toàn nút "Lọc danh sách" khỏi giao diện', () => {
+            renderClassesPage(
+                <ClassesPage
+                    initialClasses={[mockClass1, mockClass2]}
+                    initialPrograms={[mockProgramA, mockProgramB]}
+                />,
+            )
+
+            // Nút "Lọc danh sách" không còn tồn tại
+            expect(screen.queryByTestId('class-search-btn')).toBeNull()
+            expect(screen.queryByText('Lọc danh sách')).toBeNull()
+            // Nút "Xóa bộ lọc" vẫn được giữ lại
+            expect(screen.getByTestId('reset-filter-btn')).toBeDefined()
+        })
+
+        it('TC1: Chọn Huỷ -> danh sách tự động lọc ngay mà không cần bấm nút', async () => {
+            const mockCustomRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        status: 'success',
+                        data: {
+                            items: [mockClass2],
+                            total: 1,
+                            page: 1,
+                            page_size: 50,
+                            total_pages: 1,
+                        },
+                    }),
             })
 
             renderClassesPage(
@@ -149,22 +162,67 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
                 />,
             )
 
-            // Chọn trạng thái 'Chuẩn bị' (preparing)
+            // Chọn trạng thái 'Huỷ' (cancelled)
             const statusSelect = screen.getByTestId('filter-status')
+            fireEvent.change(statusSelect, { target: { value: 'cancelled' } })
+
+            // Danh sách tự động gọi API lọc ngay mà không bấm thêm nút nào
+            await waitFor(() => {
+                expect(mockCustomRequest).toHaveBeenCalledWith(
+                    expect.stringContaining('status=cancelled'),
+                    expect.anything(),
+                )
+            })
+        })
+
+        it('TC2: Chọn Chuẩn bị -> danh sách đổi ngay; Chọn lại Tất cả trạng thái -> danh sách tự cập nhật ngay', async () => {
+            const mockCustomRequest = vi.fn().mockResolvedValue({
+                ok: true,
+                json: () =>
+                    Promise.resolve({
+                        status: 'success',
+                        data: {
+                            items: [mockClass1],
+                            total: 1,
+                            page: 1,
+                            page_size: 50,
+                            total_pages: 1,
+                        },
+                    }),
+            })
+
+            renderClassesPage(
+                <ClassesPage
+                    initialClasses={[mockClass1, mockClass2]}
+                    initialPrograms={[mockProgramA, mockProgramB]}
+                    initialInstructors={[mockInstructor]}
+                    customRequest={mockCustomRequest as any}
+                />,
+            )
+
+            const statusSelect = screen.getByTestId('filter-status')
+
+            // Chọn 'Chuẩn bị'
             fireEvent.change(statusSelect, { target: { value: 'preparing' } })
-
-            // Click nút Lọc
-            fireEvent.click(screen.getByTestId('class-search-btn'))
-
             await waitFor(() => {
                 expect(mockCustomRequest).toHaveBeenCalledWith(
                     expect.stringContaining('status=preparing'),
                     expect.anything(),
                 )
             })
+
+            // Chọn lại 'Tất cả trạng thái' (rỗng) -> tự động gọi lại API không có status
+            fireEvent.change(statusSelect, { target: { value: '' } })
+            await waitFor(() => {
+                const classCalls = mockCustomRequest.mock.calls.filter(
+                    (c: any[]) => typeof c[0] === 'string' && c[0].includes('/api/v1/classes'),
+                )
+                const lastCallUrl = classCalls[classCalls.length - 1][0] as string
+                expect(lastCallUrl).not.toContain('status=')
+            })
         })
 
-        it('TC219-02: Lọc theo chương trình đào tạo -> gọi API với program_id', async () => {
+        it('TC3: Chọn chương trình -> lọc ngay; Chọn lại Tất cả chương trình -> tự cập nhật ngay', async () => {
             const mockCustomRequest = vi.fn().mockResolvedValue({
                 ok: true,
                 json: () =>
@@ -190,19 +248,28 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
             )
 
             const programSelect = screen.getByTestId('filter-program')
+
+            // Chọn chương trình
             fireEvent.change(programSelect, { target: { value: 'prog-uuid-001' } })
-
-            fireEvent.click(screen.getByTestId('class-search-btn'))
-
             await waitFor(() => {
                 expect(mockCustomRequest).toHaveBeenCalledWith(
                     expect.stringContaining('program_id=prog-uuid-001'),
                     expect.anything(),
                 )
             })
+
+            // Chọn lại 'Tất cả chương trình'
+            fireEvent.change(programSelect, { target: { value: '' } })
+            await waitFor(() => {
+                const classCalls = mockCustomRequest.mock.calls.filter(
+                    (c: any[]) => typeof c[0] === 'string' && c[0].includes('/api/v1/classes'),
+                )
+                const lastCallUrl = classCalls[classCalls.length - 1][0] as string
+                expect(lastCallUrl).not.toContain('program_id=')
+            })
         })
 
-        it('TC219-03: Lọc giảng viên -> gọi API với instructor_id', async () => {
+        it('TC4: Chọn giảng viên -> lọc ngay; Chọn lại Tất cả giảng viên -> tự cập nhật ngay', async () => {
             const mockCustomRequest = vi.fn().mockResolvedValue({
                 ok: true,
                 json: () =>
@@ -228,19 +295,28 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
             )
 
             const instructorSelect = screen.getByTestId('filter-instructor')
+
+            // Chọn giảng viên
             fireEvent.change(instructorSelect, { target: { value: 'user-inst-001' } })
-
-            fireEvent.click(screen.getByTestId('class-search-btn'))
-
             await waitFor(() => {
                 expect(mockCustomRequest).toHaveBeenCalledWith(
                     expect.stringContaining('instructor_id=user-inst-001'),
                     expect.anything(),
                 )
             })
+
+            // Chọn lại 'Tất cả giảng viên'
+            fireEvent.change(instructorSelect, { target: { value: '' } })
+            await waitFor(() => {
+                const classCalls = mockCustomRequest.mock.calls.filter(
+                    (c: any[]) => typeof c[0] === 'string' && c[0].includes('/api/v1/classes'),
+                )
+                const lastCallUrl = classCalls[classCalls.length - 1][0] as string
+                expect(lastCallUrl).not.toContain('instructor_id=')
+            })
         })
 
-        it('TC219-04: Lọc khoảng thời gian (Từ ngày - Đến ngày) -> gọi API với date_from và date_to', async () => {
+        it('TC5: Chọn ngày -> lọc ngay', async () => {
             const mockCustomRequest = vi.fn().mockResolvedValue({
                 ok: true,
                 json: () =>
@@ -266,15 +342,15 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
             )
 
             fireEvent.change(screen.getByTestId('filter-date-from'), { target: { value: '2026-06-01' } })
-            fireEvent.change(screen.getByTestId('filter-date-to'), { target: { value: '2026-06-30' } })
-
-            fireEvent.click(screen.getByTestId('class-search-btn'))
-
             await waitFor(() => {
                 expect(mockCustomRequest).toHaveBeenCalledWith(
                     expect.stringContaining('date_from=2026-06-01'),
                     expect.anything(),
                 )
+            })
+
+            fireEvent.change(screen.getByTestId('filter-date-to'), { target: { value: '2026-06-30' } })
+            await waitFor(() => {
                 expect(mockCustomRequest).toHaveBeenCalledWith(
                     expect.stringContaining('date_to=2026-06-30'),
                     expect.anything(),
@@ -282,7 +358,7 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
             })
         })
 
-        it('TC219-05: Kết hợp nhiều filter cùng lúc -> API nhận đủ tất cả tham số', async () => {
+        it('TC6: Nhập tìm kiếm -> sau debounce 350ms danh sách tự động lọc', async () => {
             const mockCustomRequest = vi.fn().mockResolvedValue({
                 ok: true,
                 json: () =>
@@ -307,29 +383,22 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
                 />,
             )
 
-            fireEvent.change(screen.getByTestId('filter-status'), { target: { value: 'preparing' } })
-            fireEvent.change(screen.getByTestId('filter-program'), { target: { value: 'prog-uuid-001' } })
-            fireEvent.change(screen.getByTestId('filter-instructor'), { target: { value: 'user-inst-001' } })
-            fireEvent.change(screen.getByTestId('filter-date-from'), { target: { value: '2026-05-01' } })
-            fireEvent.change(screen.getByTestId('filter-date-to'), { target: { value: '2026-06-30' } })
+            // Nhập từ khóa tìm kiếm mà không bấm Enter, không bấm nút
+            fireEvent.change(screen.getByTestId('class-search-input'), { target: { value: 'CNTT-K21' } })
 
-            fireEvent.click(screen.getByTestId('class-search-btn'))
-
-            await waitFor(() => {
-                const classCalls = mockCustomRequest.mock.calls.filter(
-                    (c: any[]) => typeof c[0] === 'string' && c[0].includes('/api/v1/classes'),
-                )
-                expect(classCalls.length).toBeGreaterThan(0)
-                const calledUrl = classCalls[classCalls.length - 1][0] as string
-                expect(calledUrl).toContain('status=preparing')
-                expect(calledUrl).toContain('program_id=prog-uuid-001')
-                expect(calledUrl).toContain('instructor_id=user-inst-001')
-                expect(calledUrl).toContain('date_from=2026-05-01')
-                expect(calledUrl).toContain('date_to=2026-06-30')
-            })
+            // Sau debounce, API được gọi tự động với search=CNTT-K21
+            await waitFor(
+                () => {
+                    expect(mockCustomRequest).toHaveBeenCalledWith(
+                        expect.stringContaining('search=CNTT-K21'),
+                        expect.anything(),
+                    )
+                },
+                { timeout: 1500 },
+            )
         })
 
-        it('TC219-06: Xóa filter -> reset inputs và trở về danh sách đầy đủ', async () => {
+        it('TC7: Bấm Xóa bộ lọc -> mọi input trở về mặc định và toàn bộ lớp xuất hiện ngay', async () => {
             const mockCustomRequest = vi.fn().mockResolvedValue({
                 ok: true,
                 json: () =>
@@ -358,12 +427,16 @@ describe('SCRUM-219: Danh sách lớp, bộ lọc và chỉ số nhanh', () => {
             fireEvent.change(screen.getByTestId('filter-status'), { target: { value: 'preparing' } })
             fireEvent.change(screen.getByTestId('class-search-input'), { target: { value: 'CNTT' } })
 
-            // Click nút Xóa bộ lọc
+            // Bấm nút Xóa bộ lọc
             fireEvent.click(screen.getByTestId('reset-filter-btn'))
 
-            // Inputs được reset về rỗng
+            // Mọi inputs được reset về rỗng
             expect((screen.getByTestId('filter-status') as HTMLSelectElement).value).toBe('')
             expect((screen.getByTestId('class-search-input') as HTMLInputElement).value).toBe('')
+            expect((screen.getByTestId('filter-program') as HTMLSelectElement).value).toBe('')
+            expect((screen.getByTestId('filter-instructor') as HTMLSelectElement).value).toBe('')
+            expect((screen.getByTestId('filter-date-from') as HTMLInputElement).value).toBe('')
+            expect((screen.getByTestId('filter-date-to') as HTMLInputElement).value).toBe('')
 
             // Đã gọi API tải lại không chứa filter
             await waitFor(() => {

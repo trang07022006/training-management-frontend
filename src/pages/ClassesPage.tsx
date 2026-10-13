@@ -65,7 +65,7 @@ export function ClassesPage({
     const [total, setTotal] = useState<number>(initialTotal ?? initialClasses?.length ?? 0)
     const [loading, setLoading] = useState(initialClasses === undefined)
     const [searchKeyword, setSearchKeyword] = useState('')
-    const [activeSearch, setActiveSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
 
     // State bộ lọc lớp học (SCRUM-219)
     const [filterStatus, setFilterStatus] = useState<string>('')
@@ -74,6 +74,14 @@ export function ClassesPage({
     const [filterDateFrom, setFilterDateFrom] = useState<string>('')
     const [filterDateTo, setFilterDateTo] = useState<string>('')
     const [instructors, setInstructors] = useState<User[]>(initialInstructors ?? [])
+
+    // Debounce searchKeyword 350ms (SCRUM-219 Auto Apply Filter)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchKeyword.trim())
+        }, 350)
+        return () => clearTimeout(timer)
+    }, [searchKeyword])
 
     // State danh sách chương trình đào tạo để chọn khi mở lớp
     const [programs, setPrograms] = useState<TrainingProgram[]>(initialPrograms ?? [])
@@ -129,7 +137,7 @@ export function ClassesPage({
             setLoading(true)
             setAlertMessage(null)
             try {
-                const searchVal = customParams && 'search' in customParams ? customParams.search : activeSearch
+                const searchVal = customParams && 'search' in customParams ? customParams.search : debouncedSearch
                 const statusVal = customParams && 'status' in customParams ? customParams.status : filterStatus
                 const progVal = customParams && 'program_id' in customParams ? customParams.program_id : filterProgramId
                 const insVal = customParams && 'instructor_id' in customParams ? customParams.instructor_id : filterInstructorId
@@ -156,7 +164,7 @@ export function ClassesPage({
                 setLoading(false)
             }
         },
-        [activeSearch, filterStatus, filterProgramId, filterInstructorId, filterDateFrom, filterDateTo],
+        [debouncedSearch, filterStatus, filterProgramId, filterInstructorId, filterDateFrom, filterDateTo],
     )
 
     // Tải danh sách giảng viên để lọc (SCRUM-219)
@@ -246,23 +254,34 @@ export function ClassesPage({
         }
     }, [initialStudents])
 
-    // Xử lý tìm kiếm & bộ lọc lớp học (SCRUM-219)
-    const handleApplyFilters = (e?: FormEvent) => {
-        if (e) e.preventDefault()
-        setActiveSearch(searchKeyword.trim())
+    // Ref theo dõi lần render đầu tiên và trạng thái reset (SCRUM-219 Auto Apply Filter)
+    const isFirstRender = useRef(true)
+    const isResettingRef = useRef(false)
+
+    // Tự động áp dụng bộ lọc và tìm kiếm ngay khi thay đổi điều kiện (SCRUM-219 Auto Apply Filter)
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false
+            return
+        }
+        if (isResettingRef.current) {
+            return
+        }
+
         loadClasses({
-            search: searchKeyword.trim(),
+            search: debouncedSearch,
             status: filterStatus,
             program_id: filterProgramId,
             instructor_id: filterInstructorId,
             date_from: filterDateFrom,
             date_to: filterDateTo,
         })
-    }
+    }, [debouncedSearch, filterStatus, filterProgramId, filterInstructorId, filterDateFrom, filterDateTo, loadClasses])
 
     const handleResetFilters = () => {
+        isResettingRef.current = true
         setSearchKeyword('')
-        setActiveSearch('')
+        setDebouncedSearch('')
         setFilterStatus('')
         setFilterProgramId('')
         setFilterInstructorId('')
@@ -275,6 +294,8 @@ export function ClassesPage({
             instructor_id: '',
             date_from: '',
             date_to: '',
+        }).finally(() => {
+            isResettingRef.current = false
         })
     }
 
@@ -545,7 +566,13 @@ export function ClassesPage({
 
             {/* Bộ lọc và Tìm kiếm danh sách lớp (SCRUM-219) */}
             <div className="classes-filter-card" data-testid="classes-filter-section">
-                <form className="classes-filter-form" onSubmit={handleApplyFilters} data-testid="search-form">
+                <form
+                    className="classes-filter-form"
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                    }}
+                    data-testid="search-form"
+                >
                     <div className="classes-filter-grid">
                         <div className="classes-filter-field search-field">
                             <label htmlFor="search-input">Tìm kiếm</label>
@@ -633,9 +660,6 @@ export function ClassesPage({
                         </div>
                     </div>
                     <div className="classes-filter-actions">
-                        <button type="submit" className="btn-filter-apply" data-testid="class-search-btn">
-                            Lọc danh sách
-                        </button>
                         <button
                             type="button"
                             className="btn-filter-reset"
