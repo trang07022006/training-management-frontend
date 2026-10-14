@@ -721,4 +721,178 @@ describe('SCRUM-120: Frontend Hồ sơ cá nhân (Activity A6)', () => {
         expect(modalStayBtn.classList.contains('btn-modal-stay')).toBe(true)
         expect(modalConfirmBtn.classList.contains('btn-modal-confirm-cancel')).toBe(true)
     })
+
+    // 31. Tab navigation: chuyển giữa Thông tin cá nhân và Đổi mật khẩu
+    it('31. Tab navigation: chuyển giữa Thông tin cá nhân và Đổi mật khẩu thay đổi nội dung khung bên phải mà không chuyển trang', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('tab-personal-info')).toBeDefined()
+            expect(screen.getByTestId('tab-change-password')).toBeDefined()
+        })
+
+        // Ban đầu ở tab Thông tin cá nhân
+        expect(screen.getByTestId('profile-form')).toBeDefined()
+        expect(screen.queryByTestId('change-password-form')).toBeNull()
+
+        // Bấm chuyển sang tab Đổi mật khẩu
+        fireEvent.click(screen.getByTestId('tab-change-password'))
+        expect(screen.queryByTestId('profile-form')).toBeNull()
+        expect(screen.getByTestId('change-password-form')).toBeDefined()
+
+        // Bấm chuyển lại tab Thông tin cá nhân
+        fireEvent.click(screen.getByTestId('tab-personal-info'))
+        expect(screen.getByTestId('profile-form')).toBeDefined()
+        expect(screen.queryByTestId('change-password-form')).toBeNull()
+
+        // Không điều hướng sang trang khác
+        expect(mockNavigate).not.toHaveBeenCalled()
+    })
+
+    // 32. Tab Đổi mật khẩu hiển thị đủ 3 trường mật khẩu
+    it('32. Tab Đổi mật khẩu hiển thị đủ 3 trường mật khẩu và nút Cập nhật mật khẩu', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('tab-change-password')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('tab-change-password'))
+
+        expect(screen.getByTestId('input-current-password')).toBeDefined()
+        expect(screen.getByTestId('input-new-password')).toBeDefined()
+        expect(screen.getByTestId('input-confirm-password')).toBeDefined()
+        expect(screen.getByTestId('btn-change-password')).toBeDefined()
+    })
+
+    // 33. Validation đổi mật khẩu
+    it('33. Validation đổi mật khẩu: báo lỗi khi thiếu mật khẩu hiện tại, mật khẩu mới không hợp lệ hoặc không khớp', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('tab-change-password')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('tab-change-password'))
+
+        const currentInput = screen.getByTestId('input-current-password')
+        const newInput = screen.getByTestId('input-new-password')
+        const confirmInput = screen.getByTestId('input-confirm-password')
+        const submitBtn = screen.getByTestId('btn-change-password')
+
+        // Thiếu mật khẩu hiện tại
+        fireEvent.change(newInput, { target: { value: 'Secret123' } })
+        fireEvent.change(confirmInput, { target: { value: 'Secret123' } })
+        fireEvent.click(submitBtn)
+
+        expect(screen.getByTestId('password-error-message').textContent).toContain('Mật khẩu hiện tại là bắt buộc')
+
+        // Mật khẩu mới quá ngắn (< 8 ký tự)
+        fireEvent.change(currentInput, { target: { value: 'OldPass123' } })
+        fireEvent.change(newInput, { target: { value: 'Short1' } })
+        fireEvent.change(confirmInput, { target: { value: 'Short1' } })
+        fireEvent.click(submitBtn)
+
+        expect(screen.getByTestId('password-error-message').textContent).toContain('tối thiểu 8 ký tự')
+
+        // Mật khẩu mới không có số
+        fireEvent.change(newInput, { target: { value: 'OnlyLetters' } })
+        fireEvent.change(confirmInput, { target: { value: 'OnlyLetters' } })
+        fireEvent.click(submitBtn)
+
+        expect(screen.getByTestId('password-error-message').textContent).toContain('cả chữ cái và chữ số')
+
+        // Xác nhận mật khẩu không khớp
+        fireEvent.change(newInput, { target: { value: 'Secret123' } })
+        fireEvent.change(confirmInput, { target: { value: 'Different123' } })
+        fireEvent.click(submitBtn)
+
+        expect(screen.getByTestId('password-error-message').textContent).toContain('không trùng khớp')
+    })
+
+    // 34. Đổi mật khẩu thành công gọi POST /api/auth/change-password và xóa form
+    it('34. Đổi mật khẩu thành công gọi POST /api/auth/change-password và xóa sạch mật khẩu', async () => {
+        mockRequest.mockImplementation((path, init) => {
+            if (path === '/api/auth/change-password' && init?.method === 'POST') {
+                return Promise.resolve(
+                    mockResponse({
+                        status: 'success',
+                        message: 'Đổi mật khẩu thành công.',
+                    }),
+                )
+            }
+            return Promise.resolve(mockResponse({ status: 'success', data: sampleProfile }))
+        })
+
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('tab-change-password')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('tab-change-password'))
+
+        const currentInput = screen.getByTestId('input-current-password') as HTMLInputElement
+        const newInput = screen.getByTestId('input-new-password') as HTMLInputElement
+        const confirmInput = screen.getByTestId('input-confirm-password') as HTMLInputElement
+        const submitBtn = screen.getByTestId('btn-change-password')
+
+        fireEvent.change(currentInput, { target: { value: 'OldPass123' } })
+        fireEvent.change(newInput, { target: { value: 'NewPass123' } })
+        fireEvent.change(confirmInput, { target: { value: 'NewPass123' } })
+
+        fireEvent.click(submitBtn)
+
+        await waitFor(() => {
+            expect(mockRequest).toHaveBeenCalledWith(
+                '/api/auth/change-password',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        current_password: 'OldPass123',
+                        new_password: 'NewPass123',
+                    }),
+                }),
+            )
+            expect(screen.getByTestId('password-success-message').textContent).toContain('Đổi mật khẩu thành công.')
+        })
+
+        // Giá trị mật khẩu được xóa sạch sau khi đổi thành công
+        expect(currentInput.value).toBe('')
+        expect(newInput.value).toBe('')
+        expect(confirmInput.value).toBe('')
+    })
+
+    // 35. Không để giá trị mật khẩu tồn tại khi rời tab
+    it('35. Không để giá trị mật khẩu tồn tại khi rời tab', async () => {
+        renderProfilePage()
+
+        await waitFor(() => {
+            expect(screen.getByTestId('tab-change-password')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('tab-change-password'))
+
+        const currentInput = screen.getByTestId('input-current-password') as HTMLInputElement
+        const newInput = screen.getByTestId('input-new-password') as HTMLInputElement
+        const confirmInput = screen.getByTestId('input-confirm-password') as HTMLInputElement
+
+        fireEvent.change(currentInput, { target: { value: 'TempOld123' } })
+        fireEvent.change(newInput, { target: { value: 'TempNew123' } })
+        fireEvent.change(confirmInput, { target: { value: 'TempNew123' } })
+
+        // Rời tab sang Thông tin cá nhân
+        fireEvent.click(screen.getByTestId('tab-personal-info'))
+
+        // Quay lại tab Đổi mật khẩu
+        fireEvent.click(screen.getByTestId('tab-change-password'))
+
+        const reloadedCurrent = screen.getByTestId('input-current-password') as HTMLInputElement
+        const reloadedNew = screen.getByTestId('input-new-password') as HTMLInputElement
+        const reloadedConfirm = screen.getByTestId('input-confirm-password') as HTMLInputElement
+
+        expect(reloadedCurrent.value).toBe('')
+        expect(reloadedNew.value).toBe('')
+        expect(reloadedConfirm.value).toBe('')
+    })
 })

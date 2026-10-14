@@ -43,7 +43,7 @@ function setupTestApp(initialPath = '/login') {
                         <Route path="/login" element={<LoginPage />} />
 
                         <Route element={<RequireSession />}>
-                            <Route path="/" element={<h1>Trang chủ hệ thống</h1>} />
+                            <Route path="/dashboard" element={<h1>Trang chủ hệ thống</h1>} />
                             <Route path="/admin" element={<RoleDashboard role="admin" />} />
                             <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
                             <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
@@ -167,7 +167,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         ).toBeDefined()
     })
 
-    it('đăng nhập thành công với vai trò user mặc định thì điều hướng về /', async () => {
+    it('đăng nhập thành công với vai trò user mặc định thì điều hướng về /dashboard', async () => {
         const fetcher = setupTestApp('/login')
 
         fetcher.mockResolvedValueOnce(
@@ -186,7 +186,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         await fillAndSubmitLoginForm('default.user@test.vn', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/')
+            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
         })
 
         expect(screen.getByTestId('current-session').textContent).toBe('active')
@@ -312,7 +312,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         fireEvent.click(backLink)
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/')
+            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
         })
     })
 })

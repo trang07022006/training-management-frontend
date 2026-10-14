@@ -6,6 +6,13 @@ import './index.css'
 import App from './App.tsx'
 import { SessionProvider } from './auth/SessionProvider.tsx'
 import { SessionNotice } from './auth/SessionNotice.tsx'
+import { PublicLayout } from './layouts/PublicLayout'
+import { HomePage } from './pages/HomePage'
+import { AboutPage } from './pages/AboutPage'
+import { PublicProgramsPage } from './pages/PublicProgramsPage'
+import { PublicProgramDetailPage } from './pages/PublicProgramDetailPage'
+import { AdmissionsPage } from './pages/AdmissionsPage'
+import { ContactPage } from './pages/ContactPage'
 import { LoginPage } from './pages/LoginPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
@@ -20,8 +27,18 @@ import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { RoleDashboard } from './pages/RoleDashboard'
 import { UserManagementPage } from './pages/UserManagementPage'
 import { CourseManagementPage } from './pages/CourseManagementPage'
+import { TrainingProgramsPage } from './pages/TrainingProgramsPage'
+import { SubjectsPage } from './pages/SubjectsPage'
 import { UserProfilePage } from './pages/UserProfilePage'
+
 import { SessionManagementPage } from './pages/SessionManagementPage'
+import { ProgramStructurePage } from './pages/ProgramStructurePage'
+import { PublicConsultationPage } from './pages/PublicConsultationPage'
+import { SubjectSessionsPage } from './pages/SubjectSessionsPage'
+import { LeadsPage } from './pages/LeadsPage'
+import { StudentsPage } from './pages/StudentsPage'
+import { ClassesPage } from './pages/ClassesPage'
+
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -37,15 +54,28 @@ createRoot(document.getElementById('root')!).render(
         <SessionNotice />
 
         <Routes>
+          {/* Public Website Routes (Không yêu cầu đăng nhập) */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/programs" element={<PublicProgramsPage />} />
+            <Route path="/programs/:id" element={<PublicProgramDetailPage />} />
+            <Route path="/admissions" element={<AdmissionsPage />} />
+            <Route path="/consultation" element={<PublicConsultationPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+          </Route>
+
+          {/* Standalone Public Auth Pages */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/401" element={<UnauthorizedPage />} />
 
+          {/* Protected Internal Routes */}
           <Route element={<RequireSession />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<App />} />
+              <Route path="/dashboard" element={<App />} />
               <Route path="/forbidden" element={<ForbiddenPage />} />
               <Route path="/403" element={<ForbiddenPage />} />
               <Route
@@ -101,6 +131,24 @@ createRoot(document.getElementById('root')!).render(
                 }
               >
                 <Route path="/courses" element={<CourseManagementPage />} />
+                <Route path="/training-programs" element={<TrainingProgramsPage />} />
+                <Route path="/training-programs/:programId/structure" element={<ProgramStructurePage />} />
+                <Route path="/training-programs/:id/structure" element={<ProgramStructurePage />} />
+                <Route path="/subjects" element={<SubjectsPage />} />
+                <Route path="/subjects/:subjectId/sessions" element={<SubjectSessionsPage />} />
+                <Route path="/students" element={<StudentsPage />} />
+                <Route path="/students/:studentId" element={<StudentsPage />} />
+                <Route path="/classes" element={<ClassesPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_MANAGE}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/leads" element={<LeadsPage />} />
               </Route>
               <Route
                 element={

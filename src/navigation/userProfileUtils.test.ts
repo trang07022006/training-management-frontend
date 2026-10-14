@@ -40,6 +40,8 @@ describe('SCRUM-23 Phase 3: User Profile & Role Utils', () => {
             expect(getUserRoleDisplay('trainer')).toBe('Giảng viên')
             expect(getUserRoleDisplay('trainee')).toBe('Học viên')
             expect(getUserRoleDisplay('user')).toBe('Người dùng')
+            expect(getUserRoleDisplay('consultant')).toBe('Tư vấn tuyển sinh')
+            expect(getUserRoleDisplay('training_manager')).toBe('Quản lý đào tạo')
         })
 
         it('2. hỗ trợ nhiều vai trò (multiple roles dạng mảng hoặc chuỗi phân tách dấu phẩy)', () => {

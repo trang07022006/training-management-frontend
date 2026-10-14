@@ -1,4 +1,5 @@
 import { type User, getStatusInfo } from '../api/userApi'
+import { getRoleLabel } from '../auth/roleRouting'
 import './UserTable.css'
 
 export interface UserTableProps {
@@ -17,6 +18,8 @@ const ROLE_LABELS: Record<string, string> = {
     trainer: 'Giảng viên',
     trainee: 'Học viên',
     user: 'Người dùng',
+    consultant: 'Tư vấn tuyển sinh',
+    training_manager: 'Quản lý đào tạo',
 }
 
 export function UserTable({
@@ -45,18 +48,18 @@ export function UserTable({
                 <table className="user-table" data-testid="user-table">
                     <thead>
                         <tr>
-                            <th scope="col">Họ và tên</th>
-                            <th scope="col">Email</th>
-                            <th scope="col">Số điện thoại</th>
-                            <th scope="col">Vai trò</th>
-                            <th scope="col">Trạng thái</th>
-                            {canManage && <th scope="col" style={{ textAlign: 'right' }}>Thao tác</th>}
+                            <th scope="col" className="col-user-name">Họ và tên</th>
+                            <th scope="col" className="col-user-email">Email</th>
+                            <th scope="col" className="col-user-phone">Số điện thoại</th>
+                            <th scope="col" className="col-user-role">Vai trò</th>
+                            <th scope="col" className="col-user-status">Trạng thái</th>
+                            {canManage && <th scope="col" className="col-user-actions" style={{ textAlign: 'right' }}>Thao tác</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {users.map((u) => {
                             const roleKey = (u.role || 'user').toLowerCase()
-                            const roleText = ROLE_LABELS[roleKey] || u.role || 'Người dùng'
+                            const roleText = ROLE_LABELS[roleKey] || getRoleLabel(u.role) || 'Người dùng'
                             const { key: statusKey, label: statusText } = getStatusInfo(u.status)
 
                             return (

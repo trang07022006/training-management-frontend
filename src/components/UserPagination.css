@@ -7,19 +7,19 @@
     flex-wrap: wrap;
     gap: 16px;
     padding: 14px 20px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background-color: var(--color-surface, #ffffff);
+    border-radius: var(--radius-lg, 12px);
+    border: 1px solid var(--color-border, #e2e8f0);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.05));
 }
 
 .pagination-info {
     font-size: 0.875rem;
-    color: #64748b;
+    color: var(--color-text-secondary, #64748b);
 }
 
 .pagination-info strong {
-    color: #0f172a;
+    color: var(--color-navy, #0b2852);
     font-weight: 600;
 }
 
@@ -36,19 +36,19 @@
     padding: 6px 12px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #334155;
+    color: var(--color-text-primary, #334155);
     background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    border: 1px solid var(--color-border, #cbd5e1);
+    border-radius: var(--radius-md, 8px);
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
 }
 
 .btn-pagination-nav:hover:not(:disabled) {
-    background-color: #f1f5f9;
-    border-color: #94a3b8;
-    color: #0f172a;
+    background-color: var(--color-primary-subtle, #f0f7ff);
+    border-color: var(--color-primary, #0874c9);
+    color: var(--color-primary, #0874c9);
 }
 
 .btn-pagination-nav:disabled {
@@ -69,10 +69,10 @@
     padding: 0 6px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #334155;
+    color: var(--color-text-primary, #334155);
     background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
+    border: 1px solid var(--color-border, #cbd5e1);
+    border-radius: var(--radius-md, 8px);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -81,16 +81,18 @@
 }
 
 .btn-page-number:hover:not(.active):not(:disabled) {
-    background-color: #f1f5f9;
-    color: #0f172a;
+    background-color: var(--color-primary-subtle, #f0f7ff);
+    color: var(--color-primary, #0874c9);
+    border-color: var(--color-primary, #0874c9);
 }
 
 .btn-page-number.active {
-    background-color: #2563eb;
-    border-color: #1d4ed8;
+    background-color: var(--color-primary, #0874c9);
+    border-color: var(--color-primary-dark, #064b8e);
     color: #ffffff;
     font-weight: 600;
     cursor: default;
+    box-shadow: 0 2px 4px rgba(8, 116, 201, 0.25);
 }
 
 .pagination-ellipsis {

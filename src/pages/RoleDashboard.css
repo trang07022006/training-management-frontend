@@ -1,25 +1,27 @@
 /* UI Standard: Blue (#2563eb), White, Gray (#f8fafc, #f1f5f9), soft rounded card (14px) */
 .role-dashboard-container {
-    min-height: 100vh;
+    min-height: calc(100vh - 130px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    background: transparent;
     padding: 24px;
     font-family: inherit;
     color: #1e293b;
 }
 
 .role-dashboard-card {
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     width: 100%;
     max-width: 600px;
     border-radius: 14px;
     box-shadow:
-        0 10px 25px -5px rgba(37, 99, 235, 0.08),
-        0 8px 10px -6px rgba(0, 0, 0, 0.04);
-    border: 1px solid #e2e8f0;
+        0 16px 40px rgba(11, 40, 82, 0.1),
+        0 4px 12px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(226, 232, 240, 0.85);
     padding: 40px;
     box-sizing: border-box;
     text-align: center;
@@ -35,17 +37,17 @@
     justify-content: center;
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    background: linear-gradient(135deg, var(--color-navy, #0b2852) 0%, var(--color-primary, #0874c9) 100%);
     color: #ffffff;
-    border-radius: 14px;
+    border-radius: var(--radius-lg, 14px);
     margin-bottom: 16px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 4px 12px rgba(8, 116, 201, 0.25);
 }
 
 .role-system-title {
     font-size: 0.9rem;
     font-weight: 700;
-    color: #2563eb;
+    color: var(--color-primary, #0874c9);
     text-transform: uppercase;
     letter-spacing: 0.06em;
     margin-bottom: 8px;
@@ -53,8 +55,8 @@
 
 .role-heading {
     font-size: 1.65rem;
-    font-weight: 700;
-    color: #0f172a;
+    font-weight: 800;
+    color: var(--color-navy, #0b2852);
     margin: 0 0 8px 0;
     line-height: 1.25;
 }
@@ -130,18 +132,20 @@
     align-items: center;
     justify-content: center;
     padding: 10px 22px;
-    border-radius: 8px;
+    border-radius: var(--radius-md, 8px);
     font-size: 0.95rem;
     font-weight: 600;
     text-decoration: none;
-    background-color: #2563eb;
+    background: linear-gradient(135deg, var(--color-primary, #0874c9) 0%, var(--color-primary-dark, #064b8e) 100%);
     color: #ffffff;
     transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
 }
 
 .role-action-link:hover {
-    background-color: #1d4ed8;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    background: linear-gradient(135deg, #0765b0 0%, #053f78 100%);
+    box-shadow: 0 4px 12px rgba(8, 116, 201, 0.35);
+    transform: translateY(-1px);
 }
 
 .role-dashboard-footer {

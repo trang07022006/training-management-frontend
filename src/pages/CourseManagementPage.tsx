@@ -112,7 +112,7 @@ export function CourseManagementPage() {
             </section>
 
             <div className="courses-bottom-nav">
-                <Link to="/" className="btn-nav-home">
+                <Link to="/dashboard" className="btn-nav-home">
                     ← Về trang tổng quan
                 </Link>
                 {canViewUsers && (
