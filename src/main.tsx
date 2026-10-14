@@ -21,6 +21,7 @@ import { RoleDashboard } from './pages/RoleDashboard'
 import { UserManagementPage } from './pages/UserManagementPage'
 import { CourseManagementPage } from './pages/CourseManagementPage'
 import { UserProfilePage } from './pages/UserProfilePage'
+import { SessionManagementPage } from './pages/SessionManagementPage'
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -100,6 +101,16 @@ createRoot(document.getElementById('root')!).render(
                 }
               >
                 <Route path="/courses" element={<CourseManagementPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.SESSION_VIEW}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/sessions" element={<SessionManagementPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/profile" element={<UserProfilePage />} />

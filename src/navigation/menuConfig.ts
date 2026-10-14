@@ -149,6 +149,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
     {
+        key: 'sessions',
+        label: 'Quản lý lịch học',
+        path: '/sessions',
+        icon: 'chalkboard-teacher',
+        requiredPermission: SYSTEM_PERMISSIONS.SESSION_VIEW,
+    },
+    {
         key: 'change_password',
         label: 'Đổi mật khẩu',
         path: '/change-password',
