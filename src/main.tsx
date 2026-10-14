@@ -30,12 +30,15 @@ import { CourseManagementPage } from './pages/CourseManagementPage'
 import { TrainingProgramsPage } from './pages/TrainingProgramsPage'
 import { SubjectsPage } from './pages/SubjectsPage'
 import { UserProfilePage } from './pages/UserProfilePage'
+
+import { SessionManagementPage } from './pages/SessionManagementPage'
 import { ProgramStructurePage } from './pages/ProgramStructurePage'
 import { PublicConsultationPage } from './pages/PublicConsultationPage'
 import { SubjectSessionsPage } from './pages/SubjectSessionsPage'
 import { LeadsPage } from './pages/LeadsPage'
 import { StudentsPage } from './pages/StudentsPage'
 import { ClassesPage } from './pages/ClassesPage'
+
 
 const apiOrigin =
   import.meta.env.VITE_API_ORIGIN ||
@@ -146,6 +149,16 @@ createRoot(document.getElementById('root')!).render(
                 }
               >
                 <Route path="/leads" element={<LeadsPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.SESSION_VIEW}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/sessions" element={<SessionManagementPage />} />
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/profile" element={<UserProfilePage />} />

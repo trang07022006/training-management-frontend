@@ -163,6 +163,15 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         icon: 'book',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
+    
+
+        {
+        key: 'sessions',
+        label: 'Quản lý lịch học',
+        path: '/sessions',
+        icon: 'chalkboard-teacher',
+        requiredPermission: SYSTEM_PERMISSIONS.SESSION_VIEW,
+    },
     {
         key: 'training_programs',
         label: 'Chương trình đào tạo',
@@ -191,7 +200,7 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         icon: 'user-graduate',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
-    {
+        {
         key: 'leads',
         label: 'Tư vấn tuyển sinh',
         path: '/leads',
