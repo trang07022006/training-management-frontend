@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRoleHomePath } from '../auth/roleRouting'
@@ -19,6 +19,29 @@ export function PublicLayout() {
   const role = session?.role
 
   const closeMenu = () => setMobileMenuOpen(false)
+
+  // Đóng mobile menu khi nhấn ESC
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [mobileMenuOpen])
+
+  // Đóng mobile menu khi chuyển về màn hình desktop lớn
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 1120 && mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [mobileMenuOpen])
 
   const dashboardPath = role ? getRoleHomePath(role) : '/dashboard'
 
@@ -166,89 +189,114 @@ export function PublicLayout() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Navigation Drawer & Backdrop */}
         {mobileMenuOpen && (
-          <div
-            className="public-nav-mobile"
-            data-testid="public-mobile-menu"
-            aria-label="Menu di động"
-          >
-            <div className="public-nav-mobile-inner">
-              <NavLink
-                to="/"
-                end
-                className={({ isActive }) =>
-                  `public-mobile-link ${isActive ? 'is-active' : ''}`
-                }
-                onClick={closeMenu}
-              >
-                Trang chủ
-              </NavLink>
-              <NavLink
-                to="/about"
-                className={({ isActive }) =>
-                  `public-mobile-link ${isActive ? 'is-active' : ''}`
-                }
-                onClick={closeMenu}
-              >
-                Giới thiệu
-              </NavLink>
-              <NavLink
-                to="/programs"
-                className={({ isActive }) =>
-                  `public-mobile-link ${isActive ? 'is-active' : ''}`
-                }
-                onClick={closeMenu}
-              >
-                Chương trình đào tạo
-              </NavLink>
-              <NavLink
-                to="/admissions"
-                className={({ isActive }) =>
-                  `public-mobile-link ${isActive ? 'is-active' : ''}`
-                }
-                onClick={closeMenu}
-              >
-                Tuyển sinh
-              </NavLink>
-              <NavLink
-                to="/contact"
-                className={({ isActive }) =>
-                  `public-mobile-link ${isActive ? 'is-active' : ''}`
-                }
-                onClick={closeMenu}
-              >
-                Liên hệ
-              </NavLink>
+          <>
+            <div
+              className="public-mobile-backdrop"
+              onClick={closeMenu}
+              aria-hidden="true"
+            />
+            <div
+              className="public-nav-mobile"
+              data-testid="public-mobile-menu"
+              aria-label="Menu di động"
+            >
+              <div className="public-nav-mobile-inner">
+                <nav className="public-mobile-links-group" aria-label="Điều hướng di động">
+                  <NavLink
+                    to="/"
+                    end
+                    className={({ isActive }) =>
+                      `public-mobile-link ${isActive ? 'is-active' : ''}`
+                    }
+                    onClick={closeMenu}
+                  >
+                    <span className="public-mobile-link-text">Trang chủ</span>
+                    <span className="public-mobile-link-arrow" aria-hidden="true">→</span>
+                  </NavLink>
+                  <NavLink
+                    to="/about"
+                    className={({ isActive }) =>
+                      `public-mobile-link ${isActive ? 'is-active' : ''}`
+                    }
+                    onClick={closeMenu}
+                  >
+                    <span className="public-mobile-link-text">Giới thiệu</span>
+                    <span className="public-mobile-link-arrow" aria-hidden="true">→</span>
+                  </NavLink>
+                  <NavLink
+                    to="/programs"
+                    className={({ isActive }) =>
+                      `public-mobile-link ${isActive ? 'is-active' : ''}`
+                    }
+                    onClick={closeMenu}
+                  >
+                    <span className="public-mobile-link-text">Chương trình đào tạo</span>
+                    <span className="public-mobile-link-arrow" aria-hidden="true">→</span>
+                  </NavLink>
+                  <NavLink
+                    to="/admissions"
+                    className={({ isActive }) =>
+                      `public-mobile-link ${isActive ? 'is-active' : ''}`
+                    }
+                    onClick={closeMenu}
+                  >
+                    <span className="public-mobile-link-text">Tuyển sinh</span>
+                    <span className="public-mobile-link-arrow" aria-hidden="true">→</span>
+                  </NavLink>
+                  <NavLink
+                    to="/contact"
+                    className={({ isActive }) =>
+                      `public-mobile-link ${isActive ? 'is-active' : ''}`
+                    }
+                    onClick={closeMenu}
+                  >
+                    <span className="public-mobile-link-text">Liên hệ</span>
+                    <span className="public-mobile-link-arrow" aria-hidden="true">→</span>
+                  </NavLink>
+                </nav>
 
-              <div className="public-mobile-actions">
-                <Link
-                  to="/consultation"
-                  className="public-mobile-cta public-cta-consultation"
-                  onClick={closeMenu}
-                >
-                  Đăng ký tư vấn
-                </Link>
-                {hasSession ? (
+                <div className="public-mobile-actions">
                   <Link
-                    to={dashboardPath}
-                    className="public-mobile-cta public-cta-login"
+                    to="/consultation"
+                    className="public-mobile-cta public-cta-consultation"
                     onClick={closeMenu}
                   >
-                    Vào hệ thống
+                    Đăng ký tư vấn
                   </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="public-mobile-cta public-cta-login"
-                    onClick={closeMenu}
-                  >
-                    Đăng nhập
-                  </Link>
-                )}
+                  {hasSession ? (
+                    <Link
+                      to={dashboardPath}
+                      className="public-mobile-cta public-cta-login"
+                      onClick={closeMenu}
+                    >
+                      Vào hệ thống
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/login"
+                      className="public-mobile-cta public-cta-login"
+                      onClick={closeMenu}
+                    >
+                      Đăng nhập
+                    </Link>
+                  )}
+                </div>
+
+                <div className="public-mobile-quick-info">
+                  <div className="public-mobile-info-item">
+                    <span className="public-mobile-info-label">Hotline:</span>
+                    <a href="tel:02083846254" className="public-mobile-info-val">0208.3846.254</a>
+                  </div>
+                  <div className="public-mobile-info-item">
+                    <span className="public-mobile-info-label">Email:</span>
+                    <a href="mailto:contact@ictu.edu.vn" className="public-mobile-info-val">contact@ictu.edu.vn</a>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
       </header>
 

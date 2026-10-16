@@ -28,14 +28,15 @@
 }
 
 .public-header-container {
-  max-width: 1320px;
+  max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 28px;
   height: 76px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Brand */
@@ -46,13 +47,15 @@
   text-decoration: none;
   color: inherit;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .public-brand-logo {
   height: 48px;
   width: auto;
-  max-width: 54px;
+  max-width: 52px;
   object-fit: contain;
+  flex-shrink: 0;
   transition: transform 0.2s ease;
 }
 
@@ -63,15 +66,17 @@
 .public-brand-titles {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .public-brand-uni {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: #64748b;
   text-transform: uppercase;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .public-brand-name {
@@ -80,14 +85,16 @@
   letter-spacing: -0.01em;
   color: #0b2852;
   line-height: 1.25;
+  white-space: nowrap;
 }
 
 .public-brand-abbr {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  color: #0874c9;
+  color: #0284c7;
   letter-spacing: 0.04em;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 /* Desktop Nav */
@@ -95,29 +102,33 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .public-nav-link {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
+  justify-content: center;
+  padding: 8px 15px;
   font-size: 0.92rem;
   font-weight: 500;
   color: #334155;
   text-decoration: none;
   border-radius: 8px;
+  white-space: nowrap !important;
   transition: all 0.18s ease;
 }
 
 .public-nav-link:hover {
-  color: #0874c9;
+  color: #0284c7;
   background-color: #f1f5f9;
 }
 
 .public-nav-link.is-active {
-  color: #0874c9;
+  color: #0284c7;
   background-color: #eff6ff;
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.2);
 }
 
 /* Header Action Buttons */
@@ -138,78 +149,119 @@
   border-radius: 8px;
   text-decoration: none;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  white-space: nowrap !important;
 }
 
 .public-cta-consultation {
-  background: linear-gradient(135deg, #0874c9, #0284c7);
+  background: linear-gradient(135deg, #0284c7, #0369a1);
   color: #ffffff;
   border: 1px solid transparent;
-  box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.28);
 }
 
 .public-cta-consultation:hover {
-  background: linear-gradient(135deg, #065b9e, #0369a1);
-  box-shadow: 0 4px 10px rgba(8, 116, 201, 0.35);
+  background: linear-gradient(135deg, #0369a1, #075985);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.38);
   transform: translateY(-1px);
 }
 
 .public-cta-login {
   background-color: #ffffff;
   color: #0b2852;
-  border: 1px solid #cbd5e1;
+  border: 1.5px solid #cbd5e1;
 }
 
 .public-cta-login:hover {
-  background-color: #f8fafc;
-  border-color: #94a3b8;
-  color: #0874c9;
+  background-color: #f0f9ff;
+  border-color: #0284c7;
+  color: #0284c7;
 }
 
-/* Mobile Toggle */
+/* Mobile Toggle Button */
 .public-mobile-toggle {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e2e8f0;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   background-color: #ffffff;
-  color: #334155;
+  color: #1e293b;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .public-mobile-toggle:hover {
-  background-color: #f1f5f9;
+  background-color: #eff6ff;
+  border-color: #0874c9;
   color: #0874c9;
+}
+
+/* Backdrop Overlay for Mobile Drawer */
+.public-mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  top: 76px;
+  background: rgba(11, 31, 58, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 998;
+  animation: fadeInBackdrop 0.22s ease-out;
 }
 
 /* Mobile Nav Drawer */
 .public-nav-mobile {
-  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   background-color: #ffffff;
   border-bottom: 1px solid #e2e8f0;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 36px rgba(11, 31, 58, 0.12);
+  z-index: 999;
+  animation: slideDownMenu 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: calc(100vh - 76px);
+  overflow-y: auto;
 }
 
 .public-nav-mobile-inner {
-  padding: 16px 24px 24px 24px;
+  padding: 16px 20px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.public-mobile-links-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .public-mobile-link {
-  display: block;
-  padding: 10px 14px;
-  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-size: 0.96rem;
   font-weight: 500;
   color: #334155;
   text-decoration: none;
-  border-radius: 8px;
-  transition: background-color 0.15s ease;
+  border-radius: 10px;
+  transition: all 0.16s ease;
+}
+
+.public-mobile-link-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.public-mobile-link-arrow {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  transition: transform 0.16s ease, color 0.16s ease;
 }
 
 .public-mobile-link:hover,
@@ -219,23 +271,86 @@
   font-weight: 600;
 }
 
+.public-mobile-link:hover .public-mobile-link-arrow,
+.public-mobile-link.is-active .public-mobile-link-arrow {
+  color: #0874c9;
+  transform: translateX(3px);
+}
+
 .public-mobile-actions {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .public-mobile-cta {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 11px;
-  font-size: 0.92rem;
+  padding: 12px 16px;
+  font-size: 0.94rem;
   font-weight: 600;
   border-radius: 8px;
   text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.public-mobile-quick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.82rem;
+  margin-top: 4px;
+}
+
+.public-mobile-info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.public-mobile-info-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.public-mobile-info-val {
+  color: #0874c9;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.public-mobile-info-val:hover {
+  text-decoration: underline;
+}
+
+/* Animations */
+@keyframes slideDownMenu {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* -------------------------------------------------------------------------
@@ -400,27 +515,43 @@
 /* -------------------------------------------------------------------------
    RESPONSIVE BREAKPOINTS
    ------------------------------------------------------------------------- */
-@media (max-width: 1100px) {
-  .public-brand-uni,
+@media (max-width: 1380px) {
+  .public-header-container {
+    padding: 0 18px;
+    gap: 12px;
+  }
+
+  /* Ẩn dòng phụ dưới để giữ thương hiệu trường sắc nét và gọn */
   .public-brand-abbr {
     display: none;
   }
 
   .public-brand-name {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
+  }
+
+  .public-nav-desktop {
+    gap: 2px;
+  }
+
+  .public-nav-link {
+    padding: 7px 11px;
+    font-size: 0.88rem;
+  }
+
+  .public-cta-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
   }
 
   .public-footer-container {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.5fr 1fr 1.5fr;
     gap: 36px;
-  }
-
-  .footer-col-contact {
-    grid-column: span 2;
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1120px) {
+  /* Chuyển hoàn toàn sang Mobile Drawer trên Tablet và màn hình hẹp */
   .public-nav-desktop {
     display: none;
   }
@@ -433,23 +564,75 @@
     display: flex;
   }
 
-  .public-nav-mobile {
-    display: block;
+  .public-header-actions {
+    gap: 8px;
+  }
+
+  .public-brand-uni {
+    display: none;
+  }
+
+  .public-brand-name {
+    font-size: 0.82rem;
+  }
+
+  .public-cta-login {
+    padding: 8px 14px;
+    font-size: 0.84rem;
+  }
+
+  .public-footer-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+
+  .footer-col-contact {
+    grid-column: span 2;
   }
 }
 
 @media (max-width: 640px) {
   .public-header-container {
     height: 64px;
-    padding: 0 16px;
+    padding: 0 14px;
+    gap: 10px;
+  }
+
+  .public-brand {
+    gap: 8px;
+    min-width: 0;
   }
 
   .public-brand-logo {
-    height: 40px;
+    height: 38px;
+  }
+
+  .public-brand-titles {
+    min-width: 0;
   }
 
   .public-brand-name {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
+    line-height: 1.25;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  /* Ẩn nút đăng nhập trên thanh header điện thoại vì đã có đầy đủ ở menu drawer */
+  .public-cta-login {
+    display: none;
+  }
+
+  .public-mobile-backdrop {
+    top: 64px;
+  }
+
+  .public-nav-mobile {
+    max-height: calc(100vh - 64px);
   }
 
   .public-footer-container {
@@ -466,5 +649,25 @@
     flex-direction: column;
     text-align: center;
     gap: 8px;
+  }
+}
+
+@media (max-width: 380px) {
+  .public-header-container {
+    padding: 0 10px;
+  }
+
+  .public-brand-logo {
+    height: 34px;
+  }
+
+  .public-brand-name {
+    font-size: 0.68rem;
+    max-width: 170px;
+  }
+
+  .public-mobile-toggle {
+    width: 38px;
+    height: 38px;
   }
 }
