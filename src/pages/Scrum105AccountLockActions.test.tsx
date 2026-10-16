@@ -289,7 +289,7 @@ describe('SCRUM-105: Thao tác khóa / mở khóa tài khoản người dùng', 
 
         await waitFor(() => {
             const errorBanner = screen.getByTestId('lock-modal-error')
-            expect(errorBanner.textContent).toContain('Bạn cần đăng nhập để tiếp tục.')
+            expect(errorBanner.textContent).toContain('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
         })
     })
 

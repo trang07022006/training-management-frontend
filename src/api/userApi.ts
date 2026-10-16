@@ -78,12 +78,22 @@ export type RequestFunction = (path: string, init?: RequestInit) => Promise<Resp
 export class ApiError extends Error {
     code: string
     status: number
+    reason?: string
+    details?: unknown
 
-    constructor(message: string, code = 'API_ERROR', status = 500) {
+    constructor(
+        message: string,
+        code = 'API_ERROR',
+        status = 500,
+        reason?: string,
+        details?: unknown,
+    ) {
         super(message)
         this.name = 'ApiError'
         this.code = code
         this.status = status
+        this.reason = reason
+        this.details = details
     }
 }
 
@@ -159,6 +169,28 @@ export async function updateUserApi(
     if (!res.ok) {
         const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 409 ? 'DUPLICATE_EMAIL' : res.status === 403 ? 'FORBIDDEN' : 'UPDATE_ERROR')
         const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi cập nhật người dùng.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Lấy chi tiết một người dùng theo ID (SCRUM-83).
+ */
+export async function fetchUserByIdApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+): Promise<User> {
+    const res = await requestFn(`/api/users/${encodeURIComponent(String(userId).trim())}`, {
+        method: 'GET',
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'API_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tải chi tiết người dùng.')
         throw new ApiError(message, code, res.status)
     }
 
@@ -303,6 +335,7 @@ export interface UserProfileData {
     address?: string | null
     role: string
     status?: string
+    avatar_url?: string | null
 }
 
 export interface UpdateProfilePayload {
@@ -510,3 +543,24 @@ export async function importUsersBulkApi(
         data: body.data,
     }
 }
+
+// ----------------------------------------------------
+// ẢNH ĐẠI DIỆN NGƯỜI DÙNG (SCRUM-121 Activity A5)
+// ----------------------------------------------------
+export {
+    type AvatarUploadResponseData,
+    type AvatarUploadResult,
+    type AvatarDeleteResult,
+    type AvatarValidationError,
+    validateAvatarFile,
+    getProfileAvatarApi,
+    uploadProfileAvatarApi,
+    deleteProfileAvatarApi,
+    createSafeObjectUrl,
+    revokeSafeObjectUrl,
+    AvatarUrlManager,
+    useAvatarObjectUrl,
+    isAvatarNotFoundError,
+    shouldFallbackAvatar,
+} from './userAvatarApi'
+

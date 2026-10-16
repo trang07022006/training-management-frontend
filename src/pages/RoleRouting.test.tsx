@@ -43,7 +43,7 @@ function setupTestApp(initialPath = '/login') {
                         <Route path="/login" element={<LoginPage />} />
 
                         <Route element={<RequireSession />}>
-                            <Route path="/" element={<h1>Trang chủ hệ thống</h1>} />
+                            <Route path="/dashboard" element={<h1>Trang chủ hệ thống</h1>} />
                             <Route path="/admin" element={<RoleDashboard role="admin" />} />
                             <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
                             <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
@@ -80,7 +80,7 @@ afterEach(() => {
 })
 
 describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', () => {
-    it('đăng nhập thành công với vai trò admin thì điều hướng tới /admin', async () => {
+    it('đăng nhập thành công với vai trò admin thì điều hướng tới /dashboard', async () => {
         const fetcher = setupTestApp('/login')
 
         fetcher.mockResolvedValueOnce(
@@ -99,13 +99,13 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         await fillAndSubmitLoginForm('admin.super@test.vn', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/admin')
+            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
         })
 
         expect(screen.getByTestId('current-session').textContent).toBe('active')
         expect(screen.getByTestId('current-role').textContent).toBe('admin')
         expect(
-            screen.getByRole('heading', { name: 'Bảng điều khiển Quản trị viên' }),
+            screen.getByRole('heading', { name: 'Trang chủ hệ thống' }),
         ).toBeDefined()
     })
 
@@ -167,7 +167,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         ).toBeDefined()
     })
 
-    it('đăng nhập thành công với vai trò user mặc định thì điều hướng về /', async () => {
+    it('đăng nhập thành công với vai trò user mặc định thì điều hướng về /dashboard', async () => {
         const fetcher = setupTestApp('/login')
 
         fetcher.mockResolvedValueOnce(
@@ -186,7 +186,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         await fillAndSubmitLoginForm('default.user@test.vn', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/')
+            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
         })
 
         expect(screen.getByTestId('current-session').textContent).toBe('active')
@@ -195,7 +195,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         ).toBeDefined()
     })
 
-    it('không hard-code vai trò theo email (email trainee nhưng role admin vẫn sang /admin)', async () => {
+    it('không hard-code vai trò theo email (email trainee nhưng role admin vẫn sang /dashboard)', async () => {
         const fetcher = setupTestApp('/login')
 
         fetcher.mockResolvedValueOnce(
@@ -214,7 +214,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         await fillAndSubmitLoginForm('trainee-named-email@example.com', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/admin')
+            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
         })
 
         expect(screen.getByTestId('current-role').textContent).toBe('admin')
@@ -290,21 +290,21 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
 
         fetcher.mockResolvedValueOnce(
             jsonResponse({
-                access_token: 'jwt-access-admin',
-                refresh_token: 'jwt-refresh-admin',
+                access_token: 'jwt-access-trainer',
+                refresh_token: 'jwt-refresh-trainer',
                 token_type: 'Bearer',
                 user: {
-                    id: 'usr-admin-test',
-                    email: 'admin@test.vn',
-                    role: 'admin',
+                    id: 'usr-trainer-test',
+                    email: 'trainer@test.vn',
+                    role: 'trainer',
                 },
             }),
         )
 
-        await fillAndSubmitLoginForm('admin@test.vn', 'Secret123!')
+        await fillAndSubmitLoginForm('trainer@test.vn', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/admin')
+            expect(screen.getByTestId('current-path').textContent).toBe('/trainer')
         })
 
         const backLink = screen.getByRole('link', { name: 'Về trang tổng quan' })
@@ -312,7 +312,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         fireEvent.click(backLink)
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/')
+            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
         })
     })
 })

@@ -2,6 +2,12 @@
 
 import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('../api/userAvatarApi', () => ({
+    getProfileAvatarApi: vi.fn().mockRejectedValue(new Error('Avatar mock')),
+    createSafeObjectUrl: vi.fn().mockReturnValue(''),
+    revokeSafeObjectUrl: vi.fn(),
+}))
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 

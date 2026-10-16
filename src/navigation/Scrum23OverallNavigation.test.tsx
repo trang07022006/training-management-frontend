@@ -99,8 +99,10 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
             })
             const keys = filtered.map((i) => i.key)
             expect(keys).toContain('overview')
-            expect(keys).toContain('admin_dashboard')
-            expect(keys).toContain('courses')
+            expect(keys).toContain('users')
+            expect(keys).toContain('training_programs')
+            expect(keys).not.toContain('admin_dashboard')
+            expect(keys).not.toContain('courses')
         })
 
         it('3. loading -> không flash menu trái phép khi trạng thái đang tải', () => {
@@ -123,7 +125,7 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
                 </MemoryRouter>,
             )
 
-            expect(screen.getByTestId('menu-item-admin_dashboard')).toBeDefined()
+            expect(screen.getByTestId('menu-item-users')).toBeDefined()
 
             // Giả lập phiên kết thúc (thu hồi hoặc hết hạn)
             const expireBtn = screen.getByTestId('expire-session-btn')
@@ -131,7 +133,7 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
 
             // Header và menu quản trị biến mất
             expect(screen.queryByTestId('app-header')).toBeNull()
-            expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
+            expect(screen.queryByTestId('menu-item-users')).toBeNull()
         })
     })
 
@@ -145,8 +147,9 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
                 permissions: [SYSTEM_PERMISSIONS.COURSE_VIEW],
             })
             const keys = menu.map((m) => m.key)
-            expect(keys).toContain('courses')
+            expect(keys).toContain('training_programs')
             expect(keys).toContain('overview')
+            expect(keys).not.toContain('courses')
         })
 
         it('6. thiếu quyền -> menu bị ẩn', () => {
@@ -217,14 +220,14 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
                 </MemoryRouter>,
             )
 
-            expect(screen.getByTestId('menu-item-admin_dashboard')).toBeDefined()
+            expect(screen.getByTestId('menu-item-users')).toBeDefined()
             expect(screen.queryByTestId('menu-item-trainer_dashboard')).toBeNull()
 
             // Chuyển sang Trainer
             const switchBtn = screen.getByTestId('switch-user-btn')
             fireEvent.click(switchBtn)
 
-            expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
+            expect(screen.queryByTestId('menu-item-users')).toBeNull()
             expect(screen.getByTestId('menu-item-trainer_dashboard')).toBeDefined()
             expect(screen.getByTestId('user-role-badge').textContent).toBe('Giảng viên')
         })
@@ -235,7 +238,8 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
             const traineeMenu = filterMenuItems(APP_MENU_CONFIG, { hasSession: true, role: 'trainee' })
             const userMenu = filterMenuItems(APP_MENU_CONFIG, { hasSession: true, role: 'user' })
 
-            expect(adminMenu.map((m) => m.key)).toContain('admin_dashboard')
+            expect(adminMenu.map((m) => m.key)).toContain('users')
+            expect(adminMenu.map((m) => m.key)).not.toContain('admin_dashboard')
             expect(trainerMenu.map((m) => m.key)).toContain('trainer_dashboard')
             expect(traineeMenu.map((m) => m.key)).toContain('trainee_dashboard')
 
@@ -251,8 +255,8 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
     // =========================================================================
     describe('D. Điều hướng và Tính nhất quán Menu / Route', () => {
         it('13. đường dẫn menu path chính xác', () => {
-            const adminItem = APP_MENU_CONFIG.find((i) => i.key === 'admin_dashboard')
-            expect(adminItem?.path).toBe('/admin')
+            const usersItem = APP_MENU_CONFIG.find((i) => i.key === 'users')
+            expect(usersItem?.path).toBe('/users')
 
             const trainerItem = APP_MENU_CONFIG.find((i) => i.key === 'trainer_dashboard')
             expect(trainerItem?.path).toBe('/trainer')
@@ -263,7 +267,7 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
 
         it('14. active state đánh dấu chính xác menu đang mở', () => {
             render(
-                <MemoryRouter initialEntries={['/admin']}>
+                <MemoryRouter initialEntries={['/users']}>
                     <SessionProvider apiOrigin="http://localhost:5000">
                         <SessionStateController role="admin">
                             <AppLayout />
@@ -272,9 +276,9 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
                 </MemoryRouter>,
             )
 
-            const adminLink = screen.getByTestId('menu-item-admin_dashboard')
-            expect(adminLink.classList.contains('is-active')).toBe(true)
-            expect(adminLink.getAttribute('aria-current')).toBe('page')
+            const usersLink = screen.getByTestId('menu-item-users')
+            expect(usersLink.classList.contains('is-active')).toBe(true)
+            expect(usersLink.getAttribute('aria-current')).toBe('page')
 
             const overviewLink = screen.getByTestId('menu-item-overview')
             expect(overviewLink.classList.contains('is-active')).toBe(false)
