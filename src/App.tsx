@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { useSession } from './auth/SessionProvider'
 import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
 import { getTrainingPrograms } from './api/trainingProgramApi'
+import { getMyScheduleNotifications, type ScheduleNotificationItem } from './api/scheduleApi'
 import './App.css'
 
 export function App() {
@@ -13,6 +14,8 @@ export function App() {
   const [activeCalendarDay, setActiveCalendarDay] = useState(today)
   const [totalPrograms, setTotalPrograms] = useState<number | null>(null)
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(false)
+  const [notifications, setNotifications] = useState<ScheduleNotificationItem[]>([])
+  const [isLoadingNotifs, setIsLoadingNotifs] = useState(false)
 
   let session: ReturnType<typeof useSession> | null = null
   try {
@@ -25,6 +28,33 @@ export function App() {
   const request = session?.request
   const hasSession = session?.hasSession
   const permissions = session?.permissions
+
+  useEffect(() => {
+    if (!hasSession || !request) return
+
+    let isMounted = true
+    setIsLoadingNotifs(true)
+    getMyScheduleNotifications(request)
+      .then((data) => {
+        if (isMounted) {
+          setNotifications(Array.isArray(data) ? data : [])
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setNotifications([])
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingNotifs(false)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [hasSession, request])
 
   useEffect(() => {
     if (!hasSession || !request || !permissions?.includes(SYSTEM_PERMISSIONS.COURSE_VIEW)) {
@@ -228,22 +258,52 @@ export function App() {
               </span>
               <h2 className="card-header-title">Thông báo mới nhất</h2>
             </div>
-            <Link to="/courses" className="card-view-all-link">
+            <Link to="/schedules" className="card-view-all-link">
               Xem tất cả →
             </Link>
           </div>
 
-          {/* Empty State for Notifications (No Hardcoded Announcements) */}
-          <div className="notification-list notification-empty-list">
-            <div className="ictu-empty-state" style={{ padding: '36px 16px' }}>
-              <svg className="ictu-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '40px', height: '40px', margin: '0 auto 10px auto' }}>
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              <p className="ictu-empty-title" style={{ fontSize: '0.95rem' }}>Chưa có thông báo</p>
-              <p className="ictu-empty-desc" style={{ fontSize: '0.8rem', margin: 0 }}>Hiện tại chưa có thông báo mới nào từ hệ thống đào tạo.</p>
+          {/* Danh sách thông báo thực tế từ hệ thống hoặc trạng thái rỗng */}
+          {isLoadingNotifs ? (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>Đang tải thông báo...</div>
+          ) : notifications.length > 0 ? (
+            <div className="notification-list" data-testid="dashboard-notification-list" style={{ maxHeight: '320px', overflowY: 'auto' }}>
+              {notifications.map((n) => (
+                <div key={n.id} className="notification-item" style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#1e293b' }}>{n.title}</span>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontWeight: 600,
+                        backgroundColor: n.change_type === 'cancelled' ? '#fee2e2' : n.change_type === 'rescheduled' ? '#fef3c7' : '#e0e7ff',
+                        color: n.change_type === 'cancelled' ? '#dc2626' : n.change_type === 'rescheduled' ? '#b45309' : '#3730a3',
+                      }}
+                    >
+                      {n.change_type === 'cancelled' ? 'Hủy buổi' : n.change_type === 'rescheduled' ? 'Đổi lịch' : 'Cập nhật'}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>{n.message}</p>
+                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                    {n.created_at ? new Date(n.created_at).toLocaleString('vi-VN') : ''}
+                  </span>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="notification-list notification-empty-list">
+              <div className="ictu-empty-state" style={{ padding: '36px 16px' }}>
+                <svg className="ictu-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ width: '40px', height: '40px', margin: '0 auto 10px auto' }}>
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <p className="ictu-empty-title" style={{ fontSize: '0.95rem' }}>Chưa có thông báo</p>
+                <p className="ictu-empty-desc" style={{ fontSize: '0.8rem', margin: 0 }}>Hiện tại chưa có thông báo mới nào từ hệ thống đào tạo.</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Card 3: Lịch công tác */}
@@ -327,7 +387,7 @@ export function App() {
             </span>
             <h2 className="card-header-title">Danh sách lớp học phần đang mở</h2>
           </div>
-          <Link to="/courses" className="card-view-all-link">
+          <Link to="/classes" className="card-view-all-link">
             Xem tất cả →
           </Link>
         </div>

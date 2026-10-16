@@ -17,6 +17,7 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
     const [holidays, setHolidays] = useState<HolidayItem[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [loadError, setLoadError] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     // Form thêm ngày nghỉ lễ mới
@@ -27,12 +28,16 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
 
     const loadHolidays = useCallback(async () => {
         setLoading(true)
+        setLoadError(null)
         setError(null)
         try {
             const data = await listHolidays(requestFn)
-            setHolidays(data)
+            const items = Array.isArray(data) ? data : ((data as any)?.items || [])
+            setHolidays(items)
         } catch (err: any) {
-            setError(err?.message || 'Lỗi khi tải danh sách ngày nghỉ lễ.')
+            const msg = err?.message || 'Lỗi khi tải danh sách ngày nghỉ lễ.'
+            setLoadError(msg)
+            setError(msg)
         } finally {
             setLoading(false)
         }
@@ -58,13 +63,13 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
                 name: newName.trim(),
                 description: newDesc.trim() || undefined,
             })
-            setHolidays([...holidays, created].sort((a, b) => a.holiday_date.localeCompare(b.holiday_date)))
             setSuccessMessage(`Đã thêm ngày nghỉ lễ '${created.name}' (${created.holiday_date}) thành công.`)
             setNewDate('')
             setNewName('')
             setNewDesc('')
+            await loadHolidays()
         } catch (err: any) {
-            if (err?.code === 'HOLIDAY_DATE_ALREADY_EXISTS') {
+            if (err?.code === 'HOLIDAY_ALREADY_EXISTS' || err?.code === 'HOLIDAY_DATE_ALREADY_EXISTS') {
                 setError('Ngày này đã được khai báo là ngày nghỉ lễ trong hệ thống.')
             } else {
                 setError(err?.message || 'Lỗi khi thêm ngày nghỉ lễ.')
@@ -93,7 +98,7 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
             <div className="holidays-modal-card">
                 <div className="modal-header">
                     <div className="modal-title-wrap">
-                        <h2>Quản lý ngày nghỉ lễ (SCRUM-224)</h2>
+                        <h2>Quản lý ngày nghỉ lễ</h2>
                         <span className="modal-subtitle">
                             Các ngày nghỉ lễ được khai báo tại đây sẽ được tự động bỏ qua khi sinh thời khóa biểu
                         </span>
@@ -185,9 +190,22 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
 
                     {/* Bảng danh sách */}
                     <div className="holiday-list-section">
-                        <h4>Danh sách ngày nghỉ lễ đã khai báo ({holidays.length})</h4>
+                        <h4>Danh sách ngày nghỉ lễ đã khai báo {loadError ? '(Lỗi tải)' : `(${holidays.length})`}</h4>
                         {loading ? (
                             <div className="holiday-empty">Đang tải danh sách...</div>
+                        ) : loadError ? (
+                            <div className="holiday-empty error-text" data-testid="load-error-state" style={{ color: '#ef4444', textAlign: 'center', padding: '24px' }}>
+                                <p style={{ fontWeight: 600, marginBottom: '6px' }}>Không thể tải danh sách ngày nghỉ lễ</p>
+                                <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>{loadError}</p>
+                                <button
+                                    type="button"
+                                    onClick={loadHolidays}
+                                    className="btn-secondary"
+                                    data-testid="btn-retry-load-holidays"
+                                >
+                                    🔄 Thử lại
+                                </button>
+                            </div>
                         ) : holidays.length === 0 ? (
                             <div className="holiday-empty" data-testid="empty-holidays-state">
                                 Chưa có ngày nghỉ lễ nào được khai báo.

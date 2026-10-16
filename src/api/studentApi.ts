@@ -28,18 +28,26 @@ export interface Student {
 }
 
 export interface StudentClassItem {
-    id: string
+    id?: string
+    class_id?: string
     class_code: string
     name?: string
+    class_name?: string
     start_date?: string | null
+    expected_start_date?: string | null
     status?: string
+    class_status?: string
+    enrollment_status?: string
     enrolled_at?: string | null
+    program_code?: string | null
+    program_name?: string | null
 }
 
 export interface StudentDetail extends Student {
     entry_level: string | null
     notes: string | null
     current_class: StudentClassItem | null
+    current_classes?: StudentClassItem[]
     class_history: StudentClassItem[]
 }
 

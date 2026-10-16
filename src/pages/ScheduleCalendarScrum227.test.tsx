@@ -253,7 +253,7 @@ describe('SCRUM-227: Thời khóa biểu dạng lịch tuần và tháng', () =>
         expect(screen.getByTestId('detail-topic').textContent).toContain('Bài 2: Thiết kế giao diện React')
         expect(screen.getByTestId('detail-room').textContent).toContain('Lab 3')
         expect(screen.getByTestId('detail-instructor').textContent).toContain('ThS. Trần Thị B')
-        expect(screen.getByTestId('detail-status').textContent).toContain('Đã huỷ')
+        expect(screen.getByTestId('detail-status').textContent).toContain('Đã hủy')
         expect(screen.getByTestId('detail-cancelled-alert')).toBeDefined()
         expect(screen.getByText(/Giảng viên bận công tác đột xuất/)).toBeDefined()
 

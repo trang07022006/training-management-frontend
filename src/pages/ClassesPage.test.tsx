@@ -402,7 +402,7 @@ describe('SCRUM-217: Mở lớp từ chương trình đào tạo (TC217-01 -> TC
             expect(options).toContain('Chuẩn bị')
             expect(options).toContain('Đang học')
             expect(options).toContain('Kết thúc')
-            expect(options).toContain('Huỷ')
+            expect(options.some((o) => o === 'Hủy' || o === 'Huỷ')).toBe(true)
         })
 
         it('TC217-07: Chuyển trạng thái -> gọi API và persist cập nhật', async () => {

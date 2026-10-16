@@ -1,3 +1,4 @@
+import { useInRouterContext, Link } from 'react-router'
 import { type User, getStatusInfo } from '../api/userApi'
 import { getRoleLabel } from '../auth/roleRouting'
 import './UserTable.css'
@@ -32,6 +33,7 @@ export function UserTable({
     emptyMessage = 'Không có dữ liệu người dùng.',
     isActionLoading = false,
 }: UserTableProps) {
+    const inRouter = useInRouterContext()
     if (!users || users.length === 0) {
         return (
             <div className="user-table-container" data-testid="user-table-empty-container">
@@ -65,7 +67,18 @@ export function UserTable({
                             return (
                                 <tr key={u.id} data-testid={`user-row-${u.id}`}>
                                     <td className="user-cell-name" title={u.name}>
-                                        {u.name}
+                                        {inRouter ? (
+                                            <Link
+                                                to={`/users/${u.id}`}
+                                                className="user-name-link"
+                                                style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'none' }}
+                                                data-testid={`user-link-${u.id}`}
+                                            >
+                                                {u.name}
+                                            </Link>
+                                        ) : (
+                                            u.name
+                                        )}
                                     </td>
                                     <td className="user-cell-email" title={u.email}>
                                         {u.email}

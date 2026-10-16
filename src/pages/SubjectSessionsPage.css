@@ -544,7 +544,7 @@
     padding: 1rem;
 }
 
-.modal-content {
+.modal-overlay .modal-content {
     background: #ffffff;
     border-radius: 0.75rem;
     width: 100%;

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
     getCalendarSchedules,
@@ -6,6 +7,12 @@ import {
 } from '../api/scheduleApi'
 import { listClasses, type TrainingClass } from '../api/classApi'
 import { fetchUsersApi, type User } from '../api/userApi'
+import {
+    formatShiftLabel,
+    formatRoomLabel,
+    formatInstructorLabel,
+    formatScheduleStatus,
+} from '../utils/scheduleDisplayUtils'
 import './ScheduleCalendarPage.css'
 
 function formatDateISO(d: Date): string {
@@ -31,6 +38,7 @@ function addDays(d: Date, days: number): Date {
 const WEEKDAY_NAMES = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật']
 
 export function ScheduleCalendarPage() {
+    const navigate = useNavigate()
     const session = useSession()
     const requestFn = session.request
 
@@ -533,35 +541,45 @@ export function ScheduleCalendarPage() {
                                 <div className="detail-row">
                                     <span className="detail-label">Khung giờ học:</span>
                                     <span className="detail-value" data-testid="detail-time">
-                                        {selectedSchedule.start_time.slice(0, 5)} - {selectedSchedule.end_time.slice(0, 5)}
-                                        {selectedSchedule.shift ? ` (${selectedSchedule.shift})` : ''}
+                                        {formatShiftLabel(selectedSchedule.shift, selectedSchedule.start_time, selectedSchedule.end_time)}
                                     </span>
                                 </div>
 
                                 <div className="detail-row">
                                     <span className="detail-label">Phòng học:</span>
                                     <span className="detail-value" data-testid="detail-room">
-                                        {selectedSchedule.room_id ? `🏫 ${selectedSchedule.room_id}` : 'Chưa xếp phòng'}
+                                        {formatRoomLabel(selectedSchedule.room_id, selectedSchedule.room_name, Boolean(selectedSchedule.online_link), selectedSchedule.online_link)}
+                                        {selectedSchedule.online_link && (
+                                            <a
+                                                href={selectedSchedule.online_link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ marginLeft: 8, color: '#2563eb', textDecoration: 'underline' }}
+                                            >
+                                                🔗 Học trực tuyến
+                                            </a>
+                                        )}
                                     </span>
                                 </div>
 
                                 <div className="detail-row">
                                     <span className="detail-label">Giảng viên:</span>
                                     <span className="detail-value" data-testid="detail-instructor">
-                                        {selectedSchedule.instructor_name ? `👨‍🏫 ${selectedSchedule.instructor_name}` : 'Chưa phân công'}
+                                        {formatInstructorLabel(selectedSchedule.instructor_name, selectedSchedule.instructor_id)}
                                     </span>
                                 </div>
 
                                 <div className="detail-row">
                                     <span className="detail-label">Trạng thái buổi học:</span>
                                     <span className="detail-value" data-testid="detail-status">
-                                        <span className={`status-tag status-${selectedSchedule.status}`}>
-                                            {selectedSchedule.status === 'cancelled'
-                                                ? 'Đã huỷ'
-                                                : selectedSchedule.status === 'rescheduled'
-                                                ? 'Đã dời'
-                                                : 'Đã lên lịch'}
-                                        </span>
+                                        {(() => {
+                                            const st = formatScheduleStatus(selectedSchedule.status)
+                                            return (
+                                                <span className={`status-tag status-${st.className}`}>
+                                                    {st.label}
+                                                </span>
+                                            )
+                                        })()}
                                     </span>
                                 </div>
 
@@ -586,6 +604,18 @@ export function ScheduleCalendarPage() {
                             >
                                 Đóng
                             </button>
+                            {selectedSchedule.class_id && (
+                                <button
+                                    type="button"
+                                    className="btn-primary"
+                                    data-testid="btn-view-schedule-detail"
+                                    onClick={() => {
+                                        navigate(`/classes/${selectedSchedule.class_id}/schedules/${selectedSchedule.id}`)
+                                    }}
+                                >
+                                    Xem chi tiết buổi học
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

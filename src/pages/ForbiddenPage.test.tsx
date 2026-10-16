@@ -58,7 +58,7 @@ describe('ForbiddenPage & 403 Flow (SCRUM-78)', () => {
         )
     })
 
-    it('2. nút về trang chủ điều hướng đúng theo role (admin -> /admin, trainer -> /trainer, trainee -> /trainee)', () => {
+    it('2. nút về trang chủ điều hướng đúng theo role (admin -> /dashboard, trainer -> /trainer, trainee -> /trainee)', () => {
         // Test role Trainee
         const { unmount } = render(
             <MemoryRouter initialEntries={['/forbidden']}>
@@ -104,7 +104,7 @@ describe('ForbiddenPage & 403 Flow (SCRUM-78)', () => {
         )
 
         const homeActionAdmin = screen.getByTestId('error-primary-action')
-        expect(homeActionAdmin.getAttribute('href')).toBe('/admin')
+        expect(homeActionAdmin.getAttribute('href')).toBe('/dashboard')
     })
 
     it('3. nút quay lại hoạt động an toàn', () => {

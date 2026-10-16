@@ -68,8 +68,8 @@ export function RoleDashboard({ role: roleProp }: RoleDashboardProps) {
                         </Link>
                     )}
                     {(activeRole === 'trainer' || activeRole === 'trainee') && (
-                        <Link to="/courses" className="role-action-link role-action-primary">
-                            Quản lý Khóa học
+                        <Link to="/training-programs" className="role-action-link role-action-primary">
+                            Chương trình đào tạo
                         </Link>
                     )}
                     <Link to="/change-password" className="role-action-link">

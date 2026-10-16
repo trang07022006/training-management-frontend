@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useNavigate, useInRouterContext } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
     getLeads,
@@ -48,9 +49,23 @@ import {
     emitUnreadCount,
     countUnreadLeads,
 } from '../utils/leadReadStorage'
+import { ToastPortal } from '../components/ToastPortal'
 import './LeadsPage.css'
 
 export function LeadsPage() {
+    const inRouter = useInRouterContext()
+    if (inRouter) {
+        return <LeadsPageRouted />
+    }
+    return <LeadsPageBase />
+}
+
+function LeadsPageRouted() {
+    const navigate = useNavigate()
+    return <LeadsPageBase navigate={navigate} />
+}
+
+function LeadsPageBase({ navigate }: { navigate?: (path: string) => void }) {
     const { request, role, roles = [], permissions = [] } = useSession()
 
     const userRoles = useMemo(() => {
@@ -78,6 +93,7 @@ export function LeadsPage() {
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [pageError, setPageError] = useState<string | null>(null)
     const [pageSuccess, setPageSuccess] = useState<string | null>(null)
+    const [pageWarning, setPageWarning] = useState<string | null>(null)
 
     // Filter & Search states (SCRUM-128)
     const [search, setSearch] = useState<string>('')
@@ -130,6 +146,9 @@ export function LeadsPage() {
     const [rejectionReason, setRejectionReason] = useState<RejectionReason>('Không còn nhu cầu')
     const [rejectionNotes, setRejectionNotes] = useState<string>('')
     const [rejectionError, setRejectionError] = useState<string | null>(null)
+    const [isSubmittingRejection, setIsSubmittingRejection] = useState<boolean>(false)
+    const [rejectionReasonError, setRejectionReasonError] = useState<string | null>(null)
+    const [rejectionNotesError, setRejectionNotesError] = useState<string | null>(null)
 
     // Lịch sử trạng thái Lead (SCRUM-213)
     const [statusHistory, setStatusHistory] = useState<LeadStatusHistoryItem[]>([])
@@ -426,6 +445,11 @@ export function LeadsPage() {
             next.add(leadId)
             return next
         })
+
+        if (navigate) {
+            navigate(`/leads/${leadId}`)
+            return
+        }
 
         try {
             const detail = await getLead(request, leadId)
@@ -739,17 +763,6 @@ export function LeadsPage() {
         }
     }
 
-    // Đóng modal xác nhận xóa khi bấm Escape
-    useEffect(() => {
-        if (!deletingLead) return
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !isDeletingLead) {
-                setDeletingLead(null)
-            }
-        }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => window.removeEventListener('keydown', handleKeyDown)
-    }, [deletingLead, isDeletingLead])
 
     const executeStatusUpdate = async (
         lead: Lead,
@@ -758,8 +771,9 @@ export function LeadsPage() {
         notes?: string,
     ) => {
         if (lead.status === 'converted') {
-            setPageError('Khách hàng đã nhập học, không thể chuyển trạng thái.')
-            return
+            const err = new ApiError('Khách hàng đã nhập học, không thể chuyển trạng thái.', 'CONVERTED_LEAD', 400)
+            setPageError(err.message)
+            throw err
         }
 
         const oldStatus = lead.status
@@ -813,8 +827,17 @@ export function LeadsPage() {
                 setSelectedStatus(updated.status)
                 void loadStatusHistory(lead.id)
             }
+            if (targetStatus === 'rejected') {
+                setPageSuccess('Đã chuyển khách hàng tiềm năng sang trạng thái Từ chối.')
+                setTimeout(() => {
+                    setPageSuccess((curr) =>
+                        curr === 'Đã chuyển khách hàng tiềm năng sang trạng thái Từ chối.' ? null : curr,
+                    )
+                }, 5000)
+            }
             setRefreshTrigger((prev) => prev + 1)
-        } catch {
+            return updated
+        } catch (err: unknown) {
             // Rollback on failure!
             if (previousPipelineData) {
                 setPipelineData(previousPipelineData)
@@ -824,6 +847,7 @@ export function LeadsPage() {
             )
             setPageError('Không thể cập nhật trạng thái Lead. Vui lòng thử lại.')
             setTimeout(() => setPageError(null), 5000)
+            throw err
         }
     }
 
@@ -840,6 +864,8 @@ export function LeadsPage() {
             setRejectionReason('Không còn nhu cầu')
             setRejectionNotes('')
             setRejectionError(null)
+            setRejectionReasonError(null)
+            setRejectionNotesError(null)
             setIsRejectionModalOpen(true)
             return
         }
@@ -870,27 +896,54 @@ export function LeadsPage() {
     }
 
     const handleConfirmRejection = async () => {
-        if (!rejectionTargetLead) return
-        if (!rejectionReason) {
+        if (!rejectionTargetLead || isSubmittingRejection) return
+
+        let hasError = false
+        const trimmedReason = (rejectionReason || '').trim()
+        const trimmedNotes = (rejectionNotes || '').trim()
+
+        if (!trimmedReason) {
+            setRejectionReasonError('Vui lòng chọn lý do từ chối.')
             setRejectionError('Vui lòng chọn lý do từ chối.')
-            return
+            hasError = true
         }
-        if (rejectionReason === 'Khác' && !rejectionNotes.trim()) {
+
+        if (trimmedReason === 'Khác' && !trimmedNotes) {
+            setRejectionNotesError('Vui lòng nhập lý do cụ thể khi chọn "Khác".')
             setRejectionError('Vui lòng nhập lý do cụ thể khi chọn "Khác".')
+            hasError = true
+        }
+
+        if (hasError) {
             return
         }
+
+        setRejectionError(null)
+        setRejectionReasonError(null)
+        setRejectionNotesError(null)
+        setIsSubmittingRejection(true)
 
         const targetLead = rejectionTargetLead
-        const reason = rejectionReason
-        const notes = rejectionNotes.trim() || undefined
+        const reason = trimmedReason
+        const notes = trimmedNotes || undefined
 
-        setIsRejectionModalOpen(false)
-        setRejectionTargetLead(null)
-
-        await executeStatusUpdate(targetLead, 'rejected', reason, notes)
+        try {
+            await executeStatusUpdate(targetLead, 'rejected', reason, notes)
+            setIsRejectionModalOpen(false)
+            setRejectionTargetLead(null)
+            setRejectionReason('Không còn nhu cầu')
+            setRejectionNotes('')
+        } catch (err: unknown) {
+            // Giữ modal mở, giữ nguyên lý do và ghi chú để người dùng thử lại
+            const errorMsg = getErrorMessage(err, 'Không thể cập nhật trạng thái Lead. Vui lòng thử lại.')
+            setRejectionError(errorMsg)
+        } finally {
+            setIsSubmittingRejection(false)
+        }
     }
 
-    const handleCancelRejection = () => {
+    const handleCancelRejection = useCallback(() => {
+        if (isSubmittingRejection) return
         if (selectedLead && rejectionTargetLead?.id === selectedLead.id) {
             setSelectedStatus(selectedLead.status)
         }
@@ -899,6 +952,37 @@ export function LeadsPage() {
         setRejectionReason('Không còn nhu cầu')
         setRejectionNotes('')
         setRejectionError(null)
+        setRejectionReasonError(null)
+        setRejectionNotesError(null)
+    }, [isSubmittingRejection, selectedLead, rejectionTargetLead])
+
+    // Đóng modal xác nhận xóa hoặc modal từ chối khi bấm Escape
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (deletingLead && !isDeletingLead) {
+                    setDeletingLead(null)
+                } else if (isRejectionModalOpen && !isSubmittingRejection) {
+                    handleCancelRejection()
+                }
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [deletingLead, isDeletingLead, isRejectionModalOpen, isSubmittingRejection, handleCancelRejection])
+
+    const handleOpenRejectionFromList = (lead: Lead) => {
+        if (lead.status === 'converted') {
+            setPageError('Khách hàng đã nhập học, không thể chuyển trạng thái.')
+            return
+        }
+        setRejectionTargetLead(lead)
+        setRejectionReason('Không còn nhu cầu')
+        setRejectionNotes('')
+        setRejectionError(null)
+        setRejectionReasonError(null)
+        setRejectionNotesError(null)
+        setIsRejectionModalOpen(true)
     }
 
     // Drag & Drop handlers (SCRUM-213)
@@ -939,11 +1023,17 @@ export function LeadsPage() {
             setRejectionReason('Không còn nhu cầu')
             setRejectionNotes('')
             setRejectionError(null)
+            setRejectionReasonError(null)
+            setRejectionNotesError(null)
             setIsRejectionModalOpen(true)
             return
         }
 
-        await executeStatusUpdate(lead, targetStatus)
+        try {
+            await executeStatusUpdate(lead, targetStatus)
+        } catch {
+            // Lỗi đã được xử lý và hiển thị trong executeStatusUpdate
+        }
     }
 
     const handleAssigneeChange = async (newAssigneeId: string) => {
@@ -1039,6 +1129,10 @@ export function LeadsPage() {
     const formatDate = formatVietnamDateTime
 
     const handleOpenCreateModal = () => {
+        if (navigate) {
+            navigate('/leads/new')
+            return
+        }
         setEditingLead(null)
         setFormFullName('')
         setFormPhone('')
@@ -1054,6 +1148,10 @@ export function LeadsPage() {
     const handleOpenEditModal = (leadToEdit: Lead) => {
         if (leadToEdit.status === 'converted') {
             setPageError('Khách hàng đã nhập học, không thể chỉnh sửa thông tin.')
+            return
+        }
+        if (navigate) {
+            navigate(`/leads/${leadToEdit.id}/edit`)
             return
         }
         setEditingLead(leadToEdit)
@@ -1216,17 +1314,14 @@ export function LeadsPage() {
                 </div>
             </header>
 
-            {pageError && (
-                <div className="leads-alert-error" role="alert" data-testid="page-error">
-                    {pageError}
-                </div>
-            )}
-
-            {pageSuccess && (
-                <div className="leads-alert-success" role="status" data-testid="page-success">
-                    {pageSuccess}
-                </div>
-            )}
+            <ToastPortal
+                success={pageSuccess}
+                error={pageError}
+                warning={pageWarning}
+                onCloseSuccess={() => setPageSuccess(null)}
+                onCloseError={() => setPageError(null)}
+                onCloseWarning={() => setPageWarning(null)}
+            />
 
             {/* Danh sách List View (SCRUM-128 / SCRUM-126) */}
             {viewMode === 'list' && (
@@ -1560,6 +1655,17 @@ export function LeadsPage() {
                                                     >
                                                         Sửa
                                                     </button>
+                                                    {lead.status !== 'rejected' && lead.status !== 'converted' && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn-action-reject"
+                                                            data-testid={`reject-lead-${lead.id}`}
+                                                            onClick={() => handleOpenRejectionFromList(lead)}
+                                                            title="Từ chối khách hàng tiềm năng"
+                                                        >
+                                                            Từ chối
+                                                        </button>
+                                                    )}
                                                     {canDeleteLead && (
                                                         <button
                                                             type="button"
@@ -2703,6 +2809,11 @@ export function LeadsPage() {
                     aria-modal="true"
                     aria-labelledby="rejection-modal-title"
                     data-testid="rejection-modal"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !isSubmittingRejection) {
+                            handleCancelRejection()
+                        }
+                    }}
                 >
                     <div className="leads-modal-card rejection-modal-card">
                         <header className="leads-modal-header">
@@ -2715,6 +2826,7 @@ export function LeadsPage() {
                                 onClick={handleCancelRejection}
                                 aria-label="Đóng"
                                 data-testid="rejection-modal-close-btn"
+                                disabled={isSubmittingRejection}
                             >
                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -2740,21 +2852,33 @@ export function LeadsPage() {
                                 </label>
                                 <select
                                     id="rejection-reason-select"
-                                    className="status-select-input"
+                                    className={`status-select-input ${rejectionReasonError ? 'is-invalid' : ''}`}
                                     style={{ width: '100%', height: '38px' }}
                                     data-testid="rejection-reason-select"
                                     value={rejectionReason}
+                                    disabled={isSubmittingRejection}
                                     onChange={(e) => {
                                         setRejectionReason(e.target.value as RejectionReason)
                                         setRejectionError(null)
+                                        setRejectionReasonError(null)
                                     }}
                                 >
+                                    <option value="">-- Chọn lý do từ chối --</option>
                                     {REJECTION_REASONS.map((r) => (
                                         <option key={r} value={r}>
                                             {r}
                                         </option>
                                     ))}
                                 </select>
+                                {rejectionReasonError && (
+                                    <span
+                                        className="lead-form-error"
+                                        data-testid="rejection-reason-error"
+                                        style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}
+                                    >
+                                        {rejectionReasonError}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="form-field-group" style={{ marginTop: '14px' }}>
@@ -2763,16 +2887,27 @@ export function LeadsPage() {
                                 </label>
                                 <textarea
                                     id="rejection-notes-input"
-                                    className="assign-select-input"
+                                    className={`assign-select-input ${rejectionNotesError ? 'is-invalid' : ''}`}
                                     style={{ width: '100%', height: '80px', paddingTop: '8px', paddingBottom: '8px', resize: 'vertical' }}
                                     data-testid="rejection-notes-input"
                                     placeholder={rejectionReason === 'Khác' ? 'Vui lòng nhập lý do cụ thể...' : 'Nhập ghi chú thêm nếu có...'}
                                     value={rejectionNotes}
+                                    disabled={isSubmittingRejection}
                                     onChange={(e) => {
                                         setRejectionNotes(e.target.value)
                                         setRejectionError(null)
+                                        setRejectionNotesError(null)
                                     }}
                                 />
+                                {rejectionNotesError && (
+                                    <span
+                                        className="lead-form-error"
+                                        data-testid="rejection-notes-error"
+                                        style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}
+                                    >
+                                        {rejectionNotesError}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
@@ -2782,16 +2917,27 @@ export function LeadsPage() {
                                 className="btn-modal-close"
                                 onClick={handleCancelRejection}
                                 data-testid="rejection-cancel-btn"
+                                disabled={isSubmittingRejection}
                             >
-                                Hủy
+                                Hủy bỏ
                             </button>
                             <button
                                 type="button"
                                 className="btn-save-assign btn-unassign"
                                 onClick={() => void handleConfirmRejection()}
                                 data-testid="rejection-confirm-btn"
+                                disabled={isSubmittingRejection}
                             >
-                                Xác nhận từ chối
+                                {isSubmittingRejection ? (
+                                    <>
+                                        <svg className="loading-spinner-sm" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeLinecap="round" />
+                                        </svg>
+                                        <span>Đang xử lý...</span>
+                                    </>
+                                ) : (
+                                    'Xác nhận từ chối'
+                                )}
                             </button>
                         </footer>
                     </div>

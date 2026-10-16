@@ -22,7 +22,7 @@ describe('Login Account Restrictions & Security UX (Part A)', () => {
                 <SessionProvider apiOrigin="https://api.test">
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
-                        <Route path="/admin" element={<div>Admin Home</div>} />
+                        <Route path="/dashboard" element={<div>Admin Home</div>} />
                     </Routes>
                 </SessionProvider>
             </MemoryRouter>,

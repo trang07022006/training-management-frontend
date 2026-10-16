@@ -22,6 +22,14 @@ export interface ClassScheduleItem {
     start_time: string
     end_time: string
     room_id?: string | null
+    classroom_id?: string | null
+    room_code?: string | null
+    room_name?: string | null
+    room_type?: string | null
+    online_link?: string | null
+    is_online?: boolean
+    is_legacy_room?: boolean
+    legacy_room_raw?: string | null
     instructor_id?: string | null
     instructor_name?: string | null
     status?: string
@@ -130,7 +138,12 @@ export async function previewClassSchedule(
             { code, message: body.message, status: res.status },
             body.message || 'Không thể xem trước thời khóa biểu.'
         )
-        throw new ApiError(message, code, res.status)
+        const details = {
+            ...(typeof body.data === 'object' && body.data !== null ? body.data : {}),
+            field: body.field,
+            error_ref: body.error_ref,
+        }
+        throw new ApiError(message, code, res.status, undefined, details)
     }
     return body.data
 }
@@ -156,7 +169,13 @@ export async function generateClassSchedule(
             { code, message: body.message, status: res.status },
             body.message || 'Không thể lưu thời khóa biểu lớp học.'
         )
-        throw new ApiError(message, code, res.status, undefined, body.data)
+        const details = {
+            ...(typeof body.data === 'object' && body.data !== null ? body.data : {}),
+            field: body.field,
+            error_ref: body.error_ref,
+            conflicts: body.data?.conflicts,
+        }
+        throw new ApiError(message, code, res.status, undefined, details)
     }
     return body.data
 }
@@ -203,8 +222,19 @@ export async function deleteClassSchedules(
     return body.data
 }
 
-export async function listHolidays(requestFn: RequestFunction): Promise<HolidayItem[]> {
-    const path = '/api/v1/holidays'
+export async function listHolidays(
+    requestFn: RequestFunction,
+    params?: { from_date?: string; to_date?: string; year?: number }
+): Promise<HolidayItem[]> {
+    let path = '/api/v1/holidays'
+    if (params) {
+        const q = new URLSearchParams()
+        if (params.from_date) q.set('from_date', params.from_date)
+        if (params.to_date) q.set('to_date', params.to_date)
+        if (params.year) q.set('year', String(params.year))
+        const qs = q.toString()
+        if (qs) path += `?${qs}`
+    }
     const res = await requestFn(path, {
         method: 'GET',
     })
@@ -218,7 +248,14 @@ export async function listHolidays(requestFn: RequestFunction): Promise<HolidayI
         )
         throw new ApiError(message, code, res.status)
     }
-    return body.data
+
+    if (body.data && Array.isArray(body.data.items)) {
+        return body.data.items
+    }
+    if (Array.isArray(body.data)) {
+        return body.data
+    }
+    return []
 }
 
 export async function createHoliday(
@@ -272,8 +309,8 @@ export interface UpdateSchedulePayload {
     start_time?: string
     end_time?: string
     shift?: string
-    room_id?: string
-    instructor_id?: string
+    room_id?: string | null
+    instructor_id?: string | null
     topic?: string
     allow_conflict_override?: boolean
 }
@@ -283,6 +320,7 @@ export interface UpdateScheduleResponse {
     notifications_sent: number
     overridden_conflicts_count?: number
     conflicts?: ScheduleConflictItem[]
+    capacity_warning?: string | null
 }
 
 export interface CancelSchedulePayload {
@@ -374,6 +412,10 @@ export interface CalendarScheduleItem {
     start_time: string
     end_time: string
     room_id?: string | null
+    room_name?: string | null
+    room_type?: string | null
+    online_link?: string | null
+    is_online?: boolean
     instructor_id?: string | null
     instructor_name?: string | null
     instructor_email?: string | null
@@ -482,9 +524,16 @@ export interface StudentSessionItem {
     status: string
     cancellation_reason?: string | null
     attendance_checked: boolean
+    teaching_role?: string
+    teaching_role_label?: string
 }
 
 export interface StudentPersonalScheduleResponse {
+    user_type?: 'trainee' | 'trainer'
+    active_context?: 'learning' | 'teaching'
+    available_contexts?: string[]
+    assignment_status?: 'not_assigned' | 'assigned_no_schedule' | 'has_schedule'
+    profile_linked?: boolean
     student: {
         id: string
         student_code: string
@@ -493,6 +542,18 @@ export interface StudentPersonalScheduleResponse {
         phone?: string | null
         program_name?: string | null
     } | null
+    instructor?: {
+        id: string
+        full_name: string
+        email: string
+    } | null
+    assigned_classes?: Array<{
+        class_id: string
+        class_code: string
+        learning_mode?: string
+        class_status?: string
+        program_name?: string
+    }>
     enrolled_classes: Array<{
         class_id: string
         class_code: string
@@ -509,15 +570,17 @@ export interface StudentPersonalScheduleResponse {
 }
 
 /**
- * Lấy lịch học cá nhân của học viên đăng nhập (SCRUM-228 AC 1, 2).
+ * Lấy lịch học cá nhân của học viên hoặc lịch giảng dạy của giảng viên (SCRUM-228).
+ * Hỗ trợ tài khoản nhiều vai trò (trainer + trainee) thông qua param context ('learning' | 'teaching').
  */
 export async function getMyPersonalSchedule(
     requestFn: RequestFunction,
-    params: { date_from?: string; date_to?: string } = {}
+    params: { date_from?: string; date_to?: string; context?: 'learning' | 'teaching' } = {}
 ): Promise<StudentPersonalScheduleResponse> {
     const query = new URLSearchParams()
     if (params.date_from) query.set('date_from', params.date_from)
     if (params.date_to) query.set('date_to', params.date_to)
+    if (params.context) query.set('context', params.context)
     const qs = query.toString()
     const path = `/api/v1/students/my-schedule${qs ? `?${qs}` : ''}`
     const res = await requestFn(path, { method: 'GET' })
@@ -526,12 +589,43 @@ export async function getMyPersonalSchedule(
         const code = body.code || 'API_ERROR'
         const message = getErrorMessage(
             { code, message: body.message, status: res.status },
-            body.message || 'Không thể tải lịch học cá nhân.'
+            body.message || 'Không thể tải lịch cá nhân.'
         )
         throw new ApiError(message, code, res.status)
     }
     return body.data
 }
 
+export interface ScheduleNotificationItem {
+    id: string
+    schedule_id: string
+    class_id: string
+    recipient_type: 'student' | 'instructor'
+    recipient_id: string
+    recipient_name: string
+    recipient_email?: string | null
+    change_type: 'rescheduled' | 'cancelled' | 'updated'
+    title: string
+    message: string
+    created_at: string
+}
 
-
+/**
+ * Lấy danh sách thông báo thay đổi thời khóa biểu của người dùng hiện tại (SCRUM-226).
+ */
+export async function getMyScheduleNotifications(
+    requestFn: RequestFunction
+): Promise<ScheduleNotificationItem[]> {
+    const path = '/api/v1/schedules/notifications/my'
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể tải thông báo thời khóa biểu.'
+        )
+        throw new ApiError(message, code, res.status)
+    }
+    return body.data || []
+}

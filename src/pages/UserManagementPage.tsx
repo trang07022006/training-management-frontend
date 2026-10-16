@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { useInRouterContext, useSearchParams } from 'react-router'
+import { useInRouterContext, useSearchParams, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { fetchUsersApi, type User, type UserListParams, type RoleItem } from '../api/userApi'
@@ -35,6 +35,7 @@ export interface UserManagementPageProps {
 interface UserManagementPageInternalProps extends UserManagementPageProps {
     activeTab: 'list' | 'import'
     onSelectTab: (tab: 'list' | 'import') => void
+    navigateFn?: (path: string) => void
 }
 
 function UserManagementPageContent({
@@ -54,6 +55,7 @@ function UserManagementPageContent({
     pageSize: initialPageSize = 10,
     activeTab,
     onSelectTab,
+    navigateFn,
 }: UserManagementPageInternalProps) {
     const { request: sessionRequest, role } = useSession()
     const requestFn = customRequest ?? sessionRequest
@@ -181,9 +183,13 @@ function UserManagementPageContent({
         setSuccessMessage(msg)
     }
 
+    const isDedicated = Boolean(navigateFn) && initialUsers === undefined && customRequest === undefined
+
     const handleOpenCreate = () => {
         if (onOpenCreateModal) {
             onOpenCreateModal()
+        } else if (isDedicated && navigateFn) {
+            navigateFn('/users/new')
         } else {
             setIsCreateOpen(true)
         }
@@ -404,8 +410,20 @@ function UserManagementPageContent({
                             ) : (
                                 <UserTable
                                     users={users}
-                                    onEdit={(u) => setEditingUser(u)}
-                                    onManageRoles={(u) => setRoleManagingUser(u)}
+                                    onEdit={(u) => {
+                                        if (isDedicated && navigateFn) {
+                                            navigateFn(`/users/${u.id}/edit`)
+                                        } else {
+                                            setEditingUser(u)
+                                        }
+                                    }}
+                                    onManageRoles={(u) => {
+                                        if (isDedicated && navigateFn) {
+                                            navigateFn(`/users/${u.id}/roles`)
+                                        } else {
+                                            setRoleManagingUser(u)
+                                        }
+                                    }}
                                     onLockUser={handleOpenLock}
                                     onUnlockUser={handleOpenUnlock}
                                     canManage={canManageUsers}
@@ -488,6 +506,7 @@ function UserManagementPageContent({
 }
 
 function UserManagementPageWithRouter(props: UserManagementPageProps) {
+    const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const tabParam = searchParams.get('tab')
     const activeTab = tabParam === 'import' ? 'import' : 'list'
@@ -500,7 +519,14 @@ function UserManagementPageWithRouter(props: UserManagementPageProps) {
         }
     }
 
-    return <UserManagementPageContent {...props} activeTab={activeTab} onSelectTab={handleSelectTab} />
+    return (
+        <UserManagementPageContent
+            {...props}
+            navigateFn={navigate}
+            activeTab={activeTab}
+            onSelectTab={handleSelectTab}
+        />
+    )
 }
 
 function UserManagementPageStandalone(props: UserManagementPageProps) {

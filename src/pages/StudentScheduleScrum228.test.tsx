@@ -216,7 +216,7 @@ describe('SCRUM-228: Lịch học riêng của học viên', () => {
         })
 
         const cancelAlert = screen.getByTestId('card-cancelled-sch-week-03')
-        expect(cancelAlert.textContent).toContain('Đã huỷ buổi học')
+        expect(cancelAlert.textContent).toContain('Đã hủy buổi học')
         expect(cancelAlert.textContent).toContain('Phòng Lab 3 bảo trì máy tính')
     })
 
@@ -280,5 +280,264 @@ describe('SCRUM-228: Lịch học riêng của học viên', () => {
         })
 
         expect(screen.getByText(/Chưa có lớp học nào được ghi danh/)).toBeDefined()
+    })
+
+    it('hiển thị trạng thái chưa liên kết hồ sơ học viên khi profile_linked là false hoặc student là null (SCRUM-228 Requirement 5)', async () => {
+        mockRequest.mockImplementationOnce(() =>
+            Promise.resolve(
+                makeMockResponse({
+                    code: 'MY_SCHEDULE_RETRIEVED',
+                    data: {
+                        user_type: 'trainee',
+                        profile_linked: false,
+                        student: null,
+                        enrolled_classes: [],
+                        next_session: null,
+                        week_sessions: [],
+                        total_week_sessions: 0,
+                        date_from: '2026-10-12',
+                        date_to: '2026-10-18',
+                        period_title: 'Tuần từ 12/10/2026 đến 18/10/2026',
+                    },
+                })
+            )
+        )
+
+        render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('unlinked-profile-state')).toBeDefined()
+        })
+
+        expect(screen.getByText(/Tài khoản chưa được liên kết hồ sơ học viên/)).toBeDefined()
+        // Không được hiển thị sai thành "Chưa có lớp học nào được ghi danh"
+        expect(screen.queryByTestId('no-enrollments-state')).toBeNull()
+    })
+
+    it('hiển thị trạng thái không có quyền (403) khi tài khoản quản trị truy cập nhầm và có nút đến Thời khóa biểu (SCRUM-228 Requirement 5)', async () => {
+        mockRequest.mockImplementationOnce(() =>
+            Promise.reject({
+                status: 403,
+                code: 'FORBIDDEN',
+                message: 'Tài khoản quản trị không sử dụng lịch cá nhân. Vui lòng truy cập trang Thời khóa biểu.',
+            })
+        )
+
+        render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('schedule-forbidden-state')).toBeDefined()
+        })
+
+        expect(screen.getByText(/Không có quyền truy cập lịch học cá nhân/)).toBeDefined()
+        expect(screen.getByText(/Đến Thời khóa biểu/)).toBeDefined()
+        // Tuyệt đối không biến lỗi 403 thành "Chưa có lớp học nào được ghi danh"
+        expect(screen.queryByTestId('no-enrollments-state')).toBeNull()
+        expect(screen.queryByTestId('unlinked-profile-state')).toBeNull()
+    })
+
+    it('hiển thị giao diện Lịch giảng dạy của tôi đối với tài khoản Giảng viên (SCRUM-228 Requirement 2 & 3)', async () => {
+        mockRequest.mockImplementationOnce(() =>
+            Promise.resolve(
+                makeMockResponse({
+                    code: 'MY_SCHEDULE_RETRIEVED',
+                    data: {
+                        user_type: 'trainer',
+                        profile_linked: true,
+                        student: null,
+                        instructor: {
+                            id: 'u-trainer-01',
+                            full_name: 'TS. Nguyễn Văn Giảng Viên',
+                            email: 'giangvien@ictu.edu.vn',
+                        },
+                        assigned_classes: [
+                            { class_id: 'cls-101', class_code: 'CNTT-K21A', program_name: 'CNTT' }
+                        ],
+                        enrolled_classes: [
+                            { class_id: 'cls-101', class_code: 'CNTT-K21A', program_name: 'CNTT' }
+                        ],
+                        next_session: mockNextSession,
+                        week_sessions: [mockNextSession],
+                        total_week_sessions: 1,
+                        date_from: '2026-10-12',
+                        date_to: '2026-10-18',
+                        period_title: 'Tuần từ 12/10/2026 đến 18/10/2026',
+                    },
+                })
+            )
+        )
+
+        render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByText('Lịch giảng dạy của tôi')).toBeDefined()
+        })
+
+        expect(screen.getByTestId('trainer-profile-pill')).toBeDefined()
+        expect(screen.getByText(/TS. Nguyễn Văn Giảng Viên/)).toBeDefined()
+        expect(screen.queryByTestId('no-enrollments-state')).toBeNull()
+    })
+
+    it('hiển thị bộ chuyển đổi ngữ cảnh (Context Switcher) khi tài khoản có cả vai trò trainer + trainee', async () => {
+        mockRequest.mockImplementationOnce(() =>
+            Promise.resolve(
+                makeMockResponse({
+                    code: 'MY_SCHEDULE_RETRIEVED',
+                    data: {
+                        user_type: 'trainee',
+                        active_context: 'learning',
+                        available_contexts: ['learning', 'teaching'],
+                        profile_linked: true,
+                        student: mockStudent,
+                        enrolled_classes: mockEnrolledClasses,
+                        next_session: mockNextSession,
+                        week_sessions: mockWeekSessions,
+                        total_week_sessions: 1,
+                        date_from: '2026-10-12',
+                        date_to: '2026-10-18',
+                    },
+                })
+            )
+        )
+
+        render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('schedule-context-switcher')).toBeDefined()
+        })
+
+        expect(screen.getByTestId('switch-context-learning')).toBeDefined()
+        expect(screen.getByTestId('switch-context-teaching')).toBeDefined()
+        expect(screen.getByTestId('switch-context-learning').className).toContain('btn-primary')
+    })
+
+    it('phân biệt rõ trạng thái chưa phân công (not_assigned) với đã phân công nhưng chưa có lịch (assigned_no_schedule)', async () => {
+        // TH1: not_assigned
+        mockRequest.mockImplementationOnce(() =>
+            Promise.resolve(
+                makeMockResponse({
+                    code: 'MY_SCHEDULE_RETRIEVED',
+                    data: {
+                        user_type: 'trainer',
+                        active_context: 'teaching',
+                        available_contexts: ['teaching'],
+                        assignment_status: 'not_assigned',
+                        profile_linked: true,
+                        instructor: { id: 'u-trainer-01', full_name: 'TS. Giảng Viên' },
+                        assigned_classes: [],
+                        enrolled_classes: [],
+                        next_session: null,
+                        week_sessions: [],
+                        total_week_sessions: 0,
+                    },
+                })
+            )
+        )
+
+        const { unmount } = render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('no-assigned-classes-state')).toBeDefined()
+        })
+        expect(screen.getByText('Chưa có lịch phân công giảng dạy')).toBeDefined()
+
+        unmount()
+
+        // TH2: assigned_no_schedule
+        mockRequest.mockImplementationOnce(() =>
+            Promise.resolve(
+                makeMockResponse({
+                    code: 'MY_SCHEDULE_RETRIEVED',
+                    data: {
+                        user_type: 'trainer',
+                        active_context: 'teaching',
+                        available_contexts: ['teaching'],
+                        assignment_status: 'assigned_no_schedule',
+                        profile_linked: true,
+                        instructor: { id: 'u-trainer-01', full_name: 'TS. Giảng Viên' },
+                        assigned_classes: [{ class_id: 'cls-101', class_code: 'CNTT-K21A' }],
+                        enrolled_classes: [{ class_id: 'cls-101', class_code: 'CNTT-K21A' }],
+                        next_session: null,
+                        week_sessions: [],
+                        total_week_sessions: 0,
+                    },
+                })
+            )
+        )
+
+        render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('assigned-no-sessions-state')).toBeDefined()
+        })
+        expect(screen.getByText('Chưa có buổi dạy nào trong tuần này')).toBeDefined()
+        expect(screen.getByText(/Bạn đã được phân công/)).toBeDefined()
+    })
+
+    it('hiển thị nhãn vai trò giảng dạy (Trợ giảng, Dạy thay) trên thẻ buổi học của Giảng viên', async () => {
+        const assistantSession = {
+            ...mockNextSession,
+            teaching_role: 'assistant',
+            teaching_role_label: 'Trợ giảng',
+        }
+
+        mockRequest.mockImplementationOnce(() =>
+            Promise.resolve(
+                makeMockResponse({
+                    code: 'MY_SCHEDULE_RETRIEVED',
+                    data: {
+                        user_type: 'trainer',
+                        active_context: 'teaching',
+                        available_contexts: ['teaching'],
+                        assignment_status: 'has_schedule',
+                        profile_linked: true,
+                        instructor: { id: 'u-trainer-assistant', full_name: 'ThS. Trợ Giảng' },
+                        assigned_classes: [{ class_id: 'cls-101', class_code: 'CNTT-K21A' }],
+                        enrolled_classes: [{ class_id: 'cls-101', class_code: 'CNTT-K21A' }],
+                        next_session: assistantSession,
+                        week_sessions: [assistantSession],
+                        total_week_sessions: 1,
+                    },
+                })
+            )
+        )
+
+        render(
+            <MemoryRouter>
+                <StudentSchedulePage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('next-session-hero')).toBeDefined()
+        })
+
+        // Phải có nhãn Trợ giảng
+        const assistantBadges = screen.getAllByText('Trợ giảng')
+        expect(assistantBadges.length).toBeGreaterThan(0)
     })
 })

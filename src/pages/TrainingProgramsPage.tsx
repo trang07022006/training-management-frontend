@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -42,6 +42,7 @@ export function TrainingProgramsPage({
     pageSize: initialPageSize = 10,
     canManageOverride,
 }: TrainingProgramsPageProps) {
+    const navigate = useNavigate()
     const { request: sessionRequest, role, roles, permissions } = useSession()
     const requestFn: RequestFunction = customRequest ?? sessionRequest
 
@@ -170,8 +171,12 @@ export function TrainingProgramsPage({
         void loadPrograms(newPage, search, statusFilter)
     }
 
-    // Modal Handlers
+    // Modal / Navigation Handlers
     const openCreateModal = () => {
+        if (initialPrograms === undefined) {
+            navigate('/training-programs/new')
+            return
+        }
         setFormCode('')
         setFormName('')
         setFormDescription('')
@@ -191,6 +196,10 @@ export function TrainingProgramsPage({
     }
 
     const openEditModal = (prog: TrainingProgram) => {
+        if (initialPrograms === undefined) {
+            navigate(`/training-programs/${prog.id}/edit`)
+            return
+        }
         setEditingProgram(prog)
         setFormCode(prog.code)
         setFormName(prog.name)
@@ -543,6 +552,14 @@ export function TrainingProgramsPage({
                                         {canManage && (
                                             <td>
                                                 <div className="program-actions-group">
+                                                    <Link
+                                                        to={`/training-programs/${prog.id}`}
+                                                        className="btn-action-view"
+                                                        data-testid={`btn-view-${prog.id}`}
+                                                        aria-label={`Xem chi tiết chương trình ${prog.code}`}
+                                                    >
+                                                        Xem
+                                                    </Link>
                                                     <Link
                                                         to={`/training-programs/${prog.id}/structure`}
                                                         className="btn-action-structure"

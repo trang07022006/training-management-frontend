@@ -288,7 +288,7 @@ export function UserImportTab({
                     </button>
 
                     <div className="import-workspace-meta-tag">
-                        <span>Quy trình SCRUM-119 chuẩn hóa</span>
+                        <span>Quy trình nhập dữ liệu chuẩn hóa</span>
                     </div>
                 </div>
 

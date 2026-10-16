@@ -164,7 +164,7 @@ describe('SCRUM-23 Phase 4: Route / Menu Consistency (RequirePermission)', () =>
                 <SessionProvider apiOrigin="http://localhost:5000">
                     <TestAppWrapper role="admin">
                         <Routes>
-                            <Route path="/admin" element={<h1>Admin Home</h1>} />
+                            <Route path="/dashboard" element={<h1>Admin Home</h1>} />
                             <Route
                                 element={
                                     <RequirePermission
@@ -181,6 +181,6 @@ describe('SCRUM-23 Phase 4: Route / Menu Consistency (RequirePermission)', () =>
         )
 
         expect(screen.queryByText('Trang bí mật')).toBeNull()
-        expect(screen.getByTestId('location-display').textContent).toBe('/admin')
+        expect(screen.getByTestId('location-display').textContent).toBe('/dashboard')
     })
 })

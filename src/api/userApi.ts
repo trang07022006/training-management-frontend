@@ -175,6 +175,28 @@ export async function updateUserApi(
     return body.data
 }
 
+/**
+ * Lấy chi tiết một người dùng theo ID (SCRUM-83).
+ */
+export async function fetchUserByIdApi(
+    requestFn: RequestFunction,
+    userId: string | number,
+): Promise<User> {
+    const res = await requestFn(`/api/users/${encodeURIComponent(String(userId).trim())}`, {
+        method: 'GET',
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 404 ? 'USER_NOT_FOUND' : res.status === 403 ? 'FORBIDDEN' : 'API_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Lỗi khi tải chi tiết người dùng.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
 export interface RoleItem {
     id: string | number
     code: string

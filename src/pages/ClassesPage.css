@@ -1,9 +1,8 @@
 /* ClassesPage.css - Giao diện Mở lớp từ chương trình đào tạo (SCRUM-217) */
 
 .classes-container {
-    padding: 24px 32px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 0;
+    width: 100%;
     font-family: inherit;
     color: #1e293b;
 }
@@ -587,3 +586,46 @@
     color: #94a3b8;
     font-weight: 500;
 }
+
+/* Instructor Assignment (SCRUM-220) */
+.btn-action-small {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-action-small:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.assistants-checkbox-list {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: #ffffff;
+}
+
+.assistant-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 13px;
+    color: #334155;
+    cursor: pointer;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.assistant-checkbox-label:last-child {
+    border-bottom: none;
+}
+

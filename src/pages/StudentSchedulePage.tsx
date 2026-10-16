@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
     getMyPersonalSchedule,
     type StudentPersonalScheduleResponse,
 } from '../api/scheduleApi'
+import { formatVietnamDate } from '../utils/dateUtils'
 import './StudentSchedulePage.css'
 
 function formatDateISO(d: Date): string {
@@ -29,14 +31,34 @@ function addDays(d: Date, days: number): Date {
 export function StudentSchedulePage() {
     const session = useSession()
     const requestFn = session.request
+    const { role, roles } = session
+
+    // Chuẩn hóa danh sách roles của người dùng (multi-role aware)
+    const userRoles = useMemo(() => {
+        const list: string[] = []
+        if (roles && Array.isArray(roles) && roles.length > 0) {
+            for (const r of roles) {
+                if (typeof r === 'string' && r.trim()) list.push(r.trim().toLowerCase())
+            }
+        } else if (role && typeof role === 'string' && role.trim()) {
+            list.push(role.trim().toLowerCase())
+        }
+        return list
+    }, [role, roles])
 
     // Ngày mốc của tuần đang xem (mặc định hôm nay)
     const [currentDate, setCurrentDate] = useState<Date>(new Date())
+
+    // Ngữ cảnh vai trò đang xem: 'learning' (học viên) hoặc 'teaching' (giảng viên)
+    const [selectedContext, setSelectedContext] = useState<'learning' | 'teaching'>(
+        userRoles.includes('trainer') && !userRoles.includes('trainee') ? 'teaching' : 'learning'
+    )
 
     // Dữ liệu từ API
     const [scheduleData, setScheduleData] = useState<StudentPersonalScheduleResponse | null>(null)
     const [loading, setLoading] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
+    const [isForbidden, setIsForbidden] = useState<boolean>(false)
 
     // Tính khoảng ngày Thứ 2 -> Chủ nhật của tuần đang chọn
     const { dateFrom, dateTo, periodTitle } = useMemo(() => {
@@ -53,18 +75,26 @@ export function StudentSchedulePage() {
         if (!requestFn) return
         setLoading(true)
         setError(null)
+        setIsForbidden(false)
         try {
             const data = await getMyPersonalSchedule(requestFn, {
                 date_from: dateFrom,
                 date_to: dateTo,
+                context: selectedContext,
             })
             setScheduleData(data)
         } catch (err: any) {
+            const status = err?.status || err?.statusCode
+            const msg = (err?.message || '').toLowerCase()
+            const code = err?.code || ''
+            if (status === 403 || code === 'FORBIDDEN' || msg.includes('không có quyền') || msg.includes('forbidden')) {
+                setIsForbidden(true)
+            }
             setError(err?.message || 'Không thể tải thời khóa biểu cá nhân.')
         } finally {
             setLoading(false)
         }
-    }, [requestFn, dateFrom, dateTo])
+    }, [requestFn, dateFrom, dateTo, selectedContext])
 
     useEffect(() => {
         loadSchedule()
@@ -84,21 +114,53 @@ export function StudentSchedulePage() {
     }
 
     const todayISO = formatDateISO(new Date())
+    const activeContext = scheduleData?.active_context || selectedContext
+    const isTrainer = activeContext === 'teaching' || scheduleData?.user_type === 'trainer'
+    const availableContexts = scheduleData?.available_contexts || (userRoles.includes('trainer') && userRoles.includes('trainee') ? ['learning', 'teaching'] : [])
     const nextSession = scheduleData?.next_session
     const weekSessions = scheduleData?.week_sessions || []
     const student = scheduleData?.student
-    const enrolledClasses = scheduleData?.enrolled_classes || []
+    const instructor = scheduleData?.instructor
+    const enrolledClasses = scheduleData?.enrolled_classes || scheduleData?.assigned_classes || []
 
     return (
         <div className="student-schedule-container" data-testid="student-schedule-page">
             {/* Header */}
             <div className="schedule-header">
                 <div>
-                    <h1>Lịch học của tôi</h1>
-                    <p>Theo dõi buổi học sắp diễn ra và lịch học trong tuần theo các lớp đã ghi danh</p>
+                    <h1>{isTrainer ? 'Lịch giảng dạy của tôi' : 'Lịch học của tôi'}</h1>
+                    <p>
+                        {isTrainer
+                            ? 'Theo dõi lịch giảng dạy và các buổi học được phân công theo tuần'
+                            : 'Theo dõi buổi học sắp diễn ra và lịch học trong tuần theo các lớp đã ghi danh'}
+                    </p>
                 </div>
 
-                {student && (
+                {/* Chuyển đổi ngữ cảnh khi tài khoản có nhiều vai trò (Trainer + Trainee) */}
+                {availableContexts.length > 1 && (
+                    <div className="schedule-context-switcher" data-testid="schedule-context-switcher" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                            type="button"
+                            className={`context-switch-btn ${activeContext === 'learning' ? 'btn-primary' : 'btn-secondary'}`}
+                            data-testid="switch-context-learning"
+                            onClick={() => setSelectedContext('learning')}
+                            style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
+                        >
+                            🎓 Lịch học của tôi
+                        </button>
+                        <button
+                            type="button"
+                            className={`context-switch-btn ${activeContext === 'teaching' ? 'btn-primary' : 'btn-secondary'}`}
+                            data-testid="switch-context-teaching"
+                            onClick={() => setSelectedContext('teaching')}
+                            style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}
+                        >
+                            👨‍🏫 Lịch giảng dạy của tôi
+                        </button>
+                    </div>
+                )}
+
+                {student && !isTrainer && (
                     <div className="student-profile-pill" data-testid="student-profile-pill">
                         <div className="student-avatar">
                             {student.full_name ? student.full_name.charAt(0).toUpperCase() : 'H'}
@@ -111,24 +173,70 @@ export function StudentSchedulePage() {
                         </div>
                     </div>
                 )}
+
+                {isTrainer && instructor && (
+                    <div className="student-profile-pill" data-testid="trainer-profile-pill">
+                        <div className="student-avatar" style={{ backgroundColor: '#2563eb' }}>
+                            {instructor.full_name ? instructor.full_name.charAt(0).toUpperCase() : 'G'}
+                        </div>
+                        <div className="student-info-meta">
+                            <span className="student-name-text">{instructor.full_name}</span>
+                            <span className="student-code-text">
+                                Giảng viên • {instructor.email}
+                            </span>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* Error Alert */}
-            {error && (
+            {/* Trạng thái 1: Không có quyền truy cập (403 Forbidden) (SCRUM-228 Requirement 5) */}
+            {isForbidden && (
+                <div className="schedule-empty-state schedule-forbidden-state" data-testid="schedule-forbidden-state">
+                    <span className="empty-state-icon">🚫</span>
+                    <h3>Không có quyền truy cập lịch học cá nhân</h3>
+                    <p>
+                        Trang lịch cá nhân chỉ dành riêng cho tài khoản có vai trò học viên hoặc giảng viên.
+                        Tài khoản Quản trị viên và Quản lý đào tạo vui lòng sử dụng phân hệ Thời khóa biểu toàn trường.
+                    </p>
+                    <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                        <Link to="/schedules" className="btn-primary" style={{ padding: '8px 16px', textDecoration: 'none', borderRadius: '6px' }}>
+                            Đến Thời khóa biểu
+                        </Link>
+                        <Link to="/dashboard" className="btn-secondary" style={{ padding: '8px 16px', textDecoration: 'none', borderRadius: '6px' }}>
+                            Về Tổng quan
+                        </Link>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Alert khi không phải 403 */}
+            {!isForbidden && error && (
                 <div className="schedule-alert-error" data-testid="schedule-error-alert">
                     <span>⚠️ {error}</span>
                 </div>
             )}
 
             {/* Loading Indicator */}
-            {loading && !scheduleData && (
+            {loading && !scheduleData && !isForbidden && (
                 <div className="schedule-loading-bar" data-testid="schedule-loading">
-                    Đang tải thời khóa biểu của bạn...
+                    Đang tải thời khóa biểu...
                 </div>
             )}
 
-            {/* Trường hợp chưa ghi danh lớp nào */}
-            {scheduleData && enrolledClasses.length === 0 && (
+            {/* Trạng thái 2: Tài khoản chưa được liên kết với hồ sơ học viên (SCRUM-228 Requirement 5) */}
+            {!isForbidden && scheduleData && !isTrainer && (scheduleData.profile_linked === false || !student) && (
+                <div className="schedule-empty-state" data-testid="unlinked-profile-state">
+                    <span className="empty-state-icon">👤</span>
+                    <h3>Tài khoản chưa được liên kết hồ sơ học viên</h3>
+                    <p>
+                        Tài khoản của bạn chưa được liên kết với hồ sơ học viên nào trong hệ thống.
+                        Vui lòng liên hệ Quản trị viên hoặc Phòng đào tạo để hoàn tất liên kết thông tin.
+                    </p>
+                </div>
+            )}
+
+            {/* Trạng thái 3: Học viên đã có hồ sơ nhưng chưa ghi danh lớp nào (SCRUM-228 Requirement 5) */}
+            {!isForbidden && scheduleData && !isTrainer && student && enrolledClasses.length === 0 && (
                 <div className="schedule-empty-state" data-testid="no-enrollments-state">
                     <span className="empty-state-icon">📚</span>
                     <h3>Chưa có lớp học nào được ghi danh</h3>
@@ -139,8 +247,34 @@ export function StudentSchedulePage() {
                 </div>
             )}
 
-            {/* Nội dung chính khi đã có thông tin lớp */}
-            {scheduleData && (enrolledClasses.length > 0 || weekSessions.length > 0 || nextSession) && (
+            {/* Trạng thái 4a: Giảng viên chưa có phân công lớp nào */}
+            {!isForbidden && scheduleData && isTrainer && enrolledClasses.length === 0 && weekSessions.length === 0 && !nextSession && (
+                <div className="schedule-empty-state" data-testid="no-assigned-classes-state">
+                    <span className="empty-state-icon">📋</span>
+                    <h3>Chưa có lịch phân công giảng dạy</h3>
+                    <p>
+                        Bạn hiện chưa được phân công lớp học hoặc buổi giảng dạy nào trong hệ thống.
+                        Vui lòng liên hệ Quản lý đào tạo để được xếp lịch giảng dạy.
+                    </p>
+                </div>
+            )}
+
+            {/* Trạng thái 4b: Giảng viên đã được phân công lớp nhưng tuần này chưa có lịch dạy */}
+            {!isForbidden && scheduleData && isTrainer && enrolledClasses.length > 0 && weekSessions.length === 0 && !nextSession && (
+                <div className="schedule-empty-state" data-testid="assigned-no-sessions-state">
+                    <span className="empty-state-icon">📅</span>
+                    <h3>Chưa có buổi dạy nào trong tuần này</h3>
+                    <p>
+                        Bạn đã được phân công phụ trách {enrolledClasses.length} lớp học: {enrolledClasses.map(c => c.class_code).join(', ')}, nhưng hiện không có buổi dạy nào diễn ra trong tuần được chọn.
+                    </p>
+                </div>
+            )}
+
+            {/* Nội dung chính khi đã có thông tin lớp hoặc buổi học */}
+            {!isForbidden && scheduleData && (
+                (student && enrolledClasses.length > 0) ||
+                (isTrainer && (enrolledClasses.length > 0 || weekSessions.length > 0 || nextSession))
+            ) && (
                 <>
                     {/* Hero Section: Buổi học kế tiếp (SCRUM-228 AC 1) */}
                     {nextSession ? (
@@ -150,8 +284,20 @@ export function StudentSchedulePage() {
                                 <div className="hero-main-info">
                                     <div className="hero-date-time">
                                         <span className="hero-day-tag">{nextSession.day_of_week || 'Buổi học'}</span>
+                                        {nextSession.teaching_role_label && (
+                                            <span
+                                                className="hero-day-tag"
+                                                data-testid="hero-teaching-role-badge"
+                                                style={{
+                                                    backgroundColor: nextSession.teaching_role === 'assistant' ? '#f59e0b' : '#0284c7',
+                                                    color: '#ffffff',
+                                                }}
+                                            >
+                                                {nextSession.teaching_role_label}
+                                            </span>
+                                        )}
                                         <span className="hero-date-str">
-                                            {nextSession.learning_date} ({nextSession.start_time.substring(0, 5)} - {nextSession.end_time.substring(0, 5)})
+                                            {formatVietnamDate(nextSession.learning_date)} ({nextSession.start_time.substring(0, 5)} - {nextSession.end_time.substring(0, 5)})
                                         </span>
                                     </div>
                                     <h2 className="hero-topic-title" data-testid="hero-topic-title">
@@ -259,12 +405,31 @@ export function StudentSchedulePage() {
                                         <div>
                                             <div className="card-top-row">
                                                 <span className="card-date-badge">
-                                                    {sessionItem.day_of_week || 'Lịch'} • {sessionItem.learning_date}
+                                                    {sessionItem.day_of_week || 'Lịch'} • {formatVietnamDate(sessionItem.learning_date)}
                                                 </span>
                                                 <span className="card-time-text">
                                                     {sessionItem.start_time.substring(0, 5)} - {sessionItem.end_time.substring(0, 5)}
                                                 </span>
                                             </div>
+
+                                            {sessionItem.teaching_role_label && (
+                                                <div style={{ marginBottom: '6px' }}>
+                                                    <span
+                                                        className="card-role-tag"
+                                                        data-testid={`session-role-${sessionItem.id}`}
+                                                        style={{
+                                                            fontSize: '11px',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '4px',
+                                                            backgroundColor: sessionItem.teaching_role === 'assistant' ? '#fef3c7' : '#e0f2fe',
+                                                            color: sessionItem.teaching_role === 'assistant' ? '#92400e' : '#0369a1',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        {sessionItem.teaching_role_label}
+                                                    </span>
+                                                </div>
+                                            )}
 
                                             <h3 className="card-topic-title">
                                                 {sessionItem.topic || `Buổi số ${sessionItem.session_number}`}
@@ -322,7 +487,7 @@ export function StudentSchedulePage() {
                                             {/* Cảnh báo buổi bị hủy kèm lý do */}
                                             {isCancelled && (
                                                 <div className="card-cancelled-alert" data-testid={`card-cancelled-${sessionItem.id}`}>
-                                                    <strong>🚫 Đã huỷ buổi học</strong>
+                                                    <strong>🚫 Đã hủy buổi học</strong>
                                                     {sessionItem.cancellation_reason && (
                                                         <div>Lý do: {sessionItem.cancellation_reason}</div>
                                                     )}

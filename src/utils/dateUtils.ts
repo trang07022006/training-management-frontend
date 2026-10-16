@@ -82,3 +82,31 @@ export function isWithin24Hours(isoString?: string | null, referenceNowMs?: numb
     }
 }
 
+/**
+ * Định dạng ngày thuần túy (dd/MM/yyyy) tránh lệch ngày do timezone.
+ * Nhận chuỗi 'YYYY-MM-DD' hoặc ISO string.
+ */
+export function formatVietnamDate(dateString?: string | null): string {
+    if (!dateString) return '-'
+    const trimmed = String(dateString).trim()
+    if (!trimmed) return '-'
+
+    // Nếu có định dạng YYYY-MM-DD (tránh lệch ngày do timezone)
+    const dateMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (dateMatch) {
+        const [, year, month, day] = dateMatch
+        return `${day}/${month}/${year}`
+    }
+
+    try {
+        const d = new Date(trimmed)
+        if (isNaN(d.getTime())) return dateString
+        const day = String(d.getDate()).padStart(2, '0')
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const year = d.getFullYear()
+        return `${day}/${month}/${year}`
+    } catch {
+        return dateString
+    }
+}
+
