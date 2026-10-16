@@ -95,7 +95,7 @@ export function ScheduleCalendarPage() {
             })
             .catch(() => {})
 
-        fetchUsersApi(requestFn, { page: 1, page_size: 100 })
+        fetchUsersApi(requestFn, { page: 1, page_size: 100, role: 'trainer' })
             .then((res) => {
                 const list = (res as any).items || (res as any).users || []
                 setInstructorsList(list)

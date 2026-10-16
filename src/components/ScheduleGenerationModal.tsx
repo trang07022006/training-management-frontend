@@ -117,7 +117,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
             const [subs, schedRes, usersRes] = await Promise.all([
                 getClassSubjects(requestFn, classItem.id).catch(() => []),
                 getClassSchedules(requestFn, classItem.id).catch(() => ({ schedules: [] })),
-                fetchUsersApi(requestFn, { page: 1, page_size: 100 }).catch(() => ({ items: [], users: [] })),
+                fetchUsersApi(requestFn, { page: 1, page_size: 100, role: 'trainer' }).catch(() => ({ items: [], users: [] })),
             ])
             setSubjects(subs)
             if (subs.length > 0) {
