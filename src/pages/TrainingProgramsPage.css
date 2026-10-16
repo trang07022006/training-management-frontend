@@ -393,6 +393,7 @@
     align-items: center;
 }
 
+.btn-action-view,
 .btn-action-structure,
 .btn-action-edit,
 .btn-action-delete {
@@ -406,6 +407,17 @@
     cursor: pointer;
     text-decoration: none;
     transition: all 0.15s ease;
+}
+
+.btn-action-view {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.btn-action-view:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
 }
 
 .btn-action-structure {

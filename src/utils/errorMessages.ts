@@ -232,6 +232,24 @@ export const ERROR_MESSAGES: Record<string, string> = {
     STUDENT_ALREADY_ENROLLED: 'Học viên đã được ghi danh vào lớp học này.',
     STUDENT_NOT_FOUND: 'Không tìm thấy thông tin học viên.',
     INVALID_STUDENT_LIST: 'Vui lòng chọn ít nhất một học viên để ghi danh.',
+
+    // ----------------------------------------------------
+    // 13. THỜI KHÓA BIỂU & LỊCH HỌC (SCRUM-224 / SCRUM-225)
+    // ----------------------------------------------------
+    SUBJECT_NOT_IN_CLASS: 'Môn học đã chọn không thuộc lớp này. Vui lòng chọn lại.',
+    INSTRUCTOR_CONFLICT: 'Phát hiện xung đột lịch giảng viên.',
+    ROOM_CONFLICT: 'Phát hiện xung đột lịch phòng học.',
+    SCHEDULE_CONFLICT_DETECTED: 'Phát hiện xung đột lịch về giảng viên hoặc phòng học.',
+    SCHEDULE_ALREADY_EXISTS: 'Lớp học đã có thời khóa biểu.',
+    DAYS_OF_WEEK_REQUIRED: 'Vui lòng chọn ít nhất một thứ trong tuần để sinh lịch học.',
+    INVALID_DAYS_OF_WEEK: 'Danh sách thứ trong tuần không hợp lệ. Vui lòng chọn lại.',
+    START_DATE_REQUIRED: 'Ngày bắt đầu học không được để trống. Vui lòng chọn ngày bắt đầu.',
+    INVALID_START_DATE: 'Ngày bắt đầu không đúng định dạng YYYY-MM-DD. Vui lòng chọn lại.',
+    TOTAL_SESSIONS_REQUIRED: 'Số buổi học không được để trống. Vui lòng nhập số buổi học.',
+    SHIFT_REQUIRED: 'Vui lòng chọn ca học hoặc nhập giờ bắt đầu và kết thúc hợp lệ.',
+    INVALID_SHIFT_TIME: 'Vui lòng chọn ca học hoặc nhập giờ bắt đầu và kết thúc hợp lệ.',
+    SCHEDULE_NOT_FOUND: 'Không tìm thấy buổi học.',
+    SCHEDULE_ATTENDANCE_ALREADY_CHECKED: 'Không thể sửa hoặc hủy buổi học đã được điểm danh.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
@@ -492,7 +510,10 @@ export function getErrorMessage(
             return rawMessage
         }
         if (
-            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR', 'AVATAR_REQUIRED', 'AVATAR_TOO_LARGE', 'INVALID_AVATAR_TYPE', 'AVATAR_NOT_FOUND', 'AVATAR_STORAGE_ERROR', 'AVATAR_UPLOAD_FAILED'].includes(code) &&
+            [
+                'INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR', 'AVATAR_REQUIRED', 'AVATAR_TOO_LARGE', 'INVALID_AVATAR_TYPE', 'AVATAR_NOT_FOUND', 'AVATAR_STORAGE_ERROR', 'AVATAR_UPLOAD_FAILED',
+                'SCHEDULE_ALREADY_EXISTS', 'INSTRUCTOR_CONFLICT', 'ROOM_CONFLICT', 'SCHEDULE_CONFLICT_DETECTED', 'SUBJECT_NOT_IN_CLASS', 'DAYS_OF_WEEK_REQUIRED', 'START_DATE_REQUIRED', 'INVALID_START_DATE', 'TOTAL_SESSIONS_REQUIRED', 'INVALID_TOTAL_SESSIONS', 'SHIFT_REQUIRED', 'INVALID_SHIFT_TIME', 'SCHEDULE_NOT_FOUND', 'SCHEDULE_ATTENDANCE_ALREADY_CHECKED',
+            ].includes(code) &&
             rawMessage &&
             isFriendlyVietnamese(rawMessage)
         ) {
@@ -517,6 +538,9 @@ export function getErrorMessage(
         upperMsg.includes('403') ||
         upperMsg.includes('PERMISSION_DENIED')
     ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage) && rawMessage !== 'Forbidden') {
+            return rawMessage
+        }
         return ERROR_MESSAGES.FORBIDDEN
     }
 

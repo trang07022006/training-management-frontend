@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -48,6 +48,7 @@ export function SubjectSessionsPage({
 }: SubjectSessionsPageProps) {
     const routeParams = useParams<{ subjectId?: string }>()
     const subjectId = subjectIdProp || routeParams.subjectId || ''
+    const navigate = useNavigate()
 
     const { request: sessionRequest, role, roles, permissions: sessionPermissions } = useSession()
     const requestFn: RequestFunction = customRequest || (sessionRequest as RequestFunction)
@@ -196,6 +197,10 @@ export function SubjectSessionsPage({
     // Open Create Modal
     const handleOpenCreateModal = () => {
         if (isArchived || isFullSessions) return
+        if (initialSessions === undefined) {
+            navigate(`/subjects/${subjectId}/sessions/new`)
+            return
+        }
         const nextNum = sessions.length > 0 ? Math.max(...sessions.map((s) => s.session_number)) + 1 : 1
         setCreateNumber(String(nextNum))
         setCreateNumberError(null)
@@ -274,6 +279,10 @@ export function SubjectSessionsPage({
     // Open Edit Modal
     const handleOpenEditModal = (sess: SubjectSession) => {
         if (isArchived) return
+        if (initialSessions === undefined) {
+            navigate(`/subjects/${subjectId}/sessions/${sess.id}/edit`)
+            return
+        }
         setEditingSession(sess)
         setEditTopic(sess.topic)
         setEditObjective(sess.objective)
@@ -446,6 +455,10 @@ export function SubjectSessionsPage({
     // Open Clone Modal (SCRUM-129)
     const handleOpenCloneModal = async () => {
         if (isArchived) return
+        if (initialSessions === undefined) {
+            navigate(`/subjects/${subjectId}/sessions/clone`)
+            return
+        }
         setSelectedSourceId('')
         setSourceSessionsPreview([])
         setCloneError(null)

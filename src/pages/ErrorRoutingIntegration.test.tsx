@@ -273,7 +273,7 @@ describe('Error Routing Flow Integration (SCRUM-80)', () => {
                 </SessionProvider>
             </MemoryRouter>,
         )
-        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/admin')
+        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/dashboard')
         u1()
 
         // Trainer

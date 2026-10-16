@@ -28,6 +28,9 @@ export const SYSTEM_PERMISSIONS = {
     SESSION_VIEW: 'session.view',
     SESSION_REVOKE: 'session.revoke',
     LEAD_DELETE: 'lead.delete',
+    SCHEDULE_VIEW: 'schedule.view',
+    SCHEDULE_MANAGE: 'schedule.manage',
+    SCHEDULE_PERSONAL_VIEW: 'schedule.personal_view',
 } as const
 
 export type SystemPermission =
@@ -48,15 +51,20 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SESSION_REVOKE,
         SYSTEM_PERMISSIONS.LEAD_DELETE,
+        SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
     ],
     trainer: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.COURSE_MANAGE,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     ],
     user: [
         SYSTEM_PERMISSIONS.SESSION_VIEW,
@@ -71,6 +79,8 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.COURSE_MANAGE,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.LEAD_DELETE,
+        SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
     ],
 }
 
@@ -125,14 +135,6 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         isPublic: true,
     },
     {
-        key: 'admin_dashboard',
-        label: 'Bảng quản trị',
-        path: '/admin',
-        icon: 'shield',
-        requiredRole: 'admin',
-        requiredPermission: SYSTEM_PERMISSIONS.USER_MANAGE,
-    },
-    {
         key: 'users',
         label: 'Quản lý Người dùng',
         path: '/users',
@@ -157,22 +159,6 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
     {
-        key: 'courses',
-        label: 'Quản lý Khóa học',
-        path: '/courses',
-        icon: 'book',
-        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
-    },
-    
-
-        {
-        key: 'sessions',
-        label: 'Quản lý lịch học',
-        path: '/sessions',
-        icon: 'chalkboard-teacher',
-        requiredPermission: SYSTEM_PERMISSIONS.SESSION_VIEW,
-    },
-    {
         key: 'training_programs',
         label: 'Chương trình đào tạo',
         path: '/training-programs',
@@ -192,6 +178,34 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         path: '/classes',
         icon: 'chalkboard-teacher',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
+        key: 'classrooms',
+        label: 'Phòng học',
+        path: '/classrooms',
+        icon: 'building',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_MANAGE,
+    },
+    {
+        key: 'sessions',
+        label: 'Quản lý lịch học',
+        path: '/sessions',
+        icon: 'chalkboard-teacher',
+        requiredPermission: SYSTEM_PERMISSIONS.SESSION_VIEW,
+    },
+    {
+        key: 'schedules_calendar',
+        label: 'Thời khóa biểu',
+        path: '/schedules',
+        icon: 'calendar',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+    },
+    {
+        key: 'my_schedule',
+        label: 'Lịch học của tôi',
+        path: '/my-schedule',
+        icon: 'calendar-check',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     },
     {
         key: 'students',
@@ -265,7 +279,7 @@ export function filterMenuItems(
         userPermissions.filter((p) => typeof p === 'string' && isKnownPermission(p)),
     )
 
-    return menuItems.filter((item) => {
+    const filtered = menuItems.filter((item) => {
         // Menu công khai cho người dùng đã xác thực phiên
         if (item.isPublic) {
             return true
@@ -289,6 +303,19 @@ export function filterMenuItems(
 
         // Nếu menu không phải public và không cấu hình quyền rõ ràng -> Default Deny
         return false
+    })
+
+    // Đồng bộ tên menu theo ngữ cảnh học viên vs giảng viên (SCRUM-228 Requirement 2)
+    return filtered.map((item) => {
+        if (item.key === 'my_schedule') {
+            if (userRoles.includes('trainer') && !userRoles.includes('trainee')) {
+                return {
+                    ...item,
+                    label: 'Lịch giảng dạy của tôi',
+                }
+            }
+        }
+        return item
     })
 }
 

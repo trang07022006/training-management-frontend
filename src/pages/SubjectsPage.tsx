@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -44,6 +44,7 @@ export function SubjectsPage({
     pageSize: initialPageSize = 10,
     canManageOverride,
 }: SubjectsPageProps) {
+    const navigate = useNavigate()
     const { request: sessionRequest, role, roles, permissions } = useSession()
     const requestFn: RequestFunction = customRequest ?? sessionRequest
 
@@ -197,8 +198,12 @@ export function SubjectsPage({
         void loadSubjects(newPage, search, statusFilter)
     }
 
-    // Modal Handlers
+    // Modal / Navigation Handlers
     const openCreateModal = () => {
+        if (initialSubjects === undefined) {
+            navigate('/subjects/new')
+            return
+        }
         setFormCode('')
         setFormName('')
         setFormCredits('3')
@@ -220,6 +225,10 @@ export function SubjectsPage({
     }
 
     const openEditModal = (subj: Subject) => {
+        if (initialSubjects === undefined) {
+            navigate(`/subjects/${subj.id}/edit`)
+            return
+        }
         setEditingSubject(subj)
         setFormCode(subj.code)
         setFormName(subj.name)
@@ -256,6 +265,10 @@ export function SubjectsPage({
     }
 
     const openDetailModal = (subj: Subject) => {
+        if (initialSubjects === undefined) {
+            navigate(`/subjects/${subj.id}`)
+            return
+        }
         setViewingSubject(subj)
     }
 

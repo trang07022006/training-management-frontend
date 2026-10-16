@@ -143,7 +143,7 @@ describe('NotFoundPage (SCRUM-79)', () => {
         expect(unauthHome.getAttribute('href')).toBe('/login')
         unmount()
 
-        // Authenticated Admin -> Về /admin
+        // Authenticated Admin -> Về /dashboard
         const { unmount: uAdmin } = render(
             <MemoryRouter initialEntries={['/nowhere']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
@@ -154,7 +154,7 @@ describe('NotFoundPage (SCRUM-79)', () => {
             </MemoryRouter>,
         )
         const adminHome = screen.getByTestId('error-primary-action')
-        expect(adminHome.getAttribute('href')).toBe('/admin')
+        expect(adminHome.getAttribute('href')).toBe('/dashboard')
         uAdmin()
 
         // Authenticated Trainer -> Về /trainer

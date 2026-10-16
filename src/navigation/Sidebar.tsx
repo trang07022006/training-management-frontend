@@ -55,6 +55,20 @@ function getMenuIcon(iconName?: string) {
                     <path d="M8 22h8" />
                 </svg>
             )
+        case 'building':
+            return (
+                <svg className="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                    <line x1="9" y1="22" x2="9" y2="22.01" />
+                    <line x1="15" y1="22" x2="15" y2="22.01" />
+                    <line x1="8" y1="6" x2="10" y2="6" />
+                    <line x1="14" y1="6" x2="16" y2="6" />
+                    <line x1="8" y1="10" x2="10" y2="10" />
+                    <line x1="14" y1="10" x2="16" y2="10" />
+                    <line x1="8" y1="14" x2="10" y2="14" />
+                    <line x1="14" y1="14" x2="16" y2="14" />
+                </svg>
+            )
         case 'user-graduate':
         case 'graduation-cap':
             return (
@@ -225,7 +239,7 @@ export function Sidebar({
                     <ul className="sidebar-menu-list" role="list">
                         {visibleMenuItems.map((item) => {
                             const isActive = isMenuActive(item, location.pathname)
-                            const isExpandable = item.key === 'training_programs' || item.key === 'courses'
+                            const isExpandable = item.key === 'training_programs'
                             const isHidden = item.key === 'change_password'
 
                             return (

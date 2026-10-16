@@ -1,0 +1,89 @@
+/* DetailNavTabs.css - Thanh điều hướng ngang đồng bộ chuẩn ICTU */
+
+.detail-nav-tabs-container {
+    width: 100%;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border-radius: 8px 8px 0 0;
+}
+
+.detail-nav-tabs-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    margin: 0;
+    list-style: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.detail-nav-tabs-list::-webkit-scrollbar {
+    display: none;
+}
+
+.detail-nav-tab-item {
+    flex-shrink: 0;
+}
+
+.detail-nav-tab-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+.detail-nav-tab-link:hover {
+    color: #0284c7;
+    background-color: #f8fafc;
+}
+
+.detail-nav-tab-link.active {
+    color: #0284c7;
+    font-weight: 600;
+    border-bottom-color: #0284c7;
+    background-color: #f0f9ff;
+}
+
+.detail-nav-tab-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: 16px;
+}
+
+.detail-nav-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 9999px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.detail-nav-tab-link.active .detail-nav-tab-badge {
+    background: #bae6fd;
+    color: #0369a1;
+}
+
+@media (max-width: 640px) {
+    .detail-nav-tabs-container {
+        margin-bottom: 16px;
+    }
+    .detail-nav-tab-link {
+        padding: 12px 12px;
+        font-size: 13px;
+    }
+}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useNavigate, useInRouterContext } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -19,6 +20,7 @@ import { listStudents, type Student } from '../api/studentApi'
 import { ScheduleGenerationModal } from '../components/ScheduleGenerationModal'
 import { HolidaysManagementModal } from '../components/HolidaysManagementModal'
 import { getErrorMessage } from '../utils/errorMessages'
+import { formatVietnamDate } from '../utils/dateUtils'
 import { fetchUsersApi, type User } from '../api/userApi'
 import './ClassesPage.css'
 
@@ -32,7 +34,20 @@ export interface ClassesPageProps {
     canManageOverride?: boolean
 }
 
-export function ClassesPage({
+export function ClassesPage(props: ClassesPageProps) {
+    const inRouter = useInRouterContext()
+    if (inRouter) {
+        return <ClassesPageRouted {...props} />
+    }
+    return <ClassesPageBase {...props} />
+}
+
+function ClassesPageRouted(props: ClassesPageProps) {
+    const navigate = useNavigate()
+    return <ClassesPageBase {...props} navigate={navigate} />
+}
+
+function ClassesPageBase({
     initialClasses,
     initialTotal,
     initialPrograms,
@@ -40,7 +55,8 @@ export function ClassesPage({
     initialInstructors,
     customRequest,
     canManageOverride,
-}: ClassesPageProps) {
+    navigate,
+}: ClassesPageProps & { navigate?: (path: string) => void }) {
     const { request: sessionRequest, role, roles, permissions } = useSession()
     const requestFn: RequestFunction = customRequest ?? sessionRequest
     const requestFnRef = useRef(requestFn)
@@ -49,17 +65,24 @@ export function ClassesPage({
     }, [requestFn])
 
     // Phân quyền
+    const isDedicated = Boolean(navigate) && initialClasses === undefined && customRequest === undefined
     const effectiveRoles = roles && roles.length > 0 ? roles : (role ? [role] : [])
     const normalizedRoles = effectiveRoles.map((r) => (typeof r === 'string' ? r.trim().toLowerCase() : ''))
     const effectivePerms =
         permissions && permissions.length > 0 ? permissions : getRolePermissions(effectiveRoles)
+    const isTrainerOnly =
+        normalizedRoles.includes('trainer') &&
+        !normalizedRoles.includes('admin') &&
+        !normalizedRoles.includes('training_manager')
     const canManage =
         canManageOverride !== undefined
             ? canManageOverride
             : (
-                effectivePerms.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
-                normalizedRoles.includes('admin') ||
-                normalizedRoles.includes('training_manager')
+                !isTrainerOnly && (
+                    effectivePerms.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
+                    normalizedRoles.includes('admin') ||
+                    normalizedRoles.includes('training_manager')
+                )
             )
 
     // State danh sách lớp học
@@ -305,8 +328,12 @@ export function ClassesPage({
         })
     }
 
-    // Mở modal tạo lớp
+    // Mở modal / điều hướng tạo lớp
     const handleOpenCreateModal = () => {
+        if (isDedicated && navigate) {
+            navigate('/classes/new')
+            return
+        }
         setCreateModalError(null)
         setClassCodeError(null)
         setCreateForm({
@@ -400,8 +427,12 @@ export function ClassesPage({
         }
     }
 
-    // Mở modal xem chi tiết lớp học & môn học sao chép (217-04)
+    // Mở modal / điều hướng xem chi tiết lớp học & môn học (217-04)
     const handleOpenDetailModal = async (cls: TrainingClass) => {
+        if (isDedicated && navigate) {
+            navigate(`/classes/${cls.id}/subjects`)
+            return
+        }
         setSelectedClass(cls)
         setIsDetailModalOpen(true)
         try {
@@ -544,7 +575,13 @@ export function ClassesPage({
                             <button
                                 type="button"
                                 className="btn-holidays"
-                                onClick={() => setIsHolidaysModalOpen(true)}
+                                onClick={() => {
+                                    if (isDedicated && navigate) {
+                                        navigate('/holidays')
+                                    } else {
+                                        setIsHolidaysModalOpen(true)
+                                    }
+                                }}
                                 data-testid="open-holidays-btn"
                                 style={{
                                     padding: '8px 14px',
@@ -627,7 +664,7 @@ export function ClassesPage({
                                 <option value="preparing">Chuẩn bị</option>
                                 <option value="in_progress">Đang học</option>
                                 <option value="completed">Kết thúc</option>
-                                <option value="cancelled">Huỷ</option>
+                                <option value="cancelled">Hủy</option>
                             </select>
                         </div>
                         <div className="classes-filter-field">
@@ -708,7 +745,9 @@ export function ClassesPage({
                     </div>
                 ) : classes.length === 0 ? (
                     <div className="empty-state" data-testid="empty-state">
-                        Chưa có lớp học nào trong hệ thống.
+                        {debouncedSearch || filterStatus || filterProgramId || filterInstructorId || filterDateFrom || filterDateTo
+                            ? 'Không tìm thấy lớp học nào phù hợp với bộ lọc hiện tại.'
+                            : 'Chưa có lớp học nào trong hệ thống.'}
                     </div>
                 ) : (
                     <table className="classes-table" data-testid="classes-table">
@@ -736,7 +775,7 @@ export function ClassesPage({
                                         {cls.program_name || cls.program_code || cls.program_id}
                                     </td>
                                     <td data-testid={`class-date-${cls.id}`}>
-                                        {cls.expected_start_date || '-'}
+                                        {cls.expected_start_date ? formatVietnamDate(cls.expected_start_date) : '-'}
                                     </td>
                                     <td data-testid={`class-capacity-${cls.id}`}>
                                         {cls.enrolled_count ?? 0} / {cls.max_capacity}
@@ -745,7 +784,7 @@ export function ClassesPage({
                                         {cls.session_progress ? (
                                             <span className="session-progress-badge">{cls.session_progress}</span>
                                         ) : (
-                                            <span className="session-progress-none" title="Chưa có dữ liệu buổi học (Chờ SCRUM-224)">-</span>
+                                            <span className="session-progress-none" title="Chưa có dữ liệu buổi học">-</span>
                                         )}
                                     </td>
                                     <td data-testid={`class-mode-${cls.id}`}>
@@ -762,7 +801,7 @@ export function ClassesPage({
                                                 <option value="preparing">Chuẩn bị</option>
                                                 <option value="in_progress">Đang học</option>
                                                 <option value="completed">Kết thúc</option>
-                                                <option value="cancelled">Huỷ</option>
+                                                <option value="cancelled">Hủy</option>
                                             </select>
                                         ) : (
                                             <span className={`status-badge ${cls.status}`} data-testid={`status-badge-${cls.id}`}>
@@ -783,9 +822,15 @@ export function ClassesPage({
                                             <button
                                                 type="button"
                                                 className="btn-action-schedule"
-                                                onClick={() => setScheduleModalClass(cls)}
+                                                onClick={() => {
+                                                    if (isDedicated && navigate) {
+                                                        navigate(`/classes/${cls.id}/schedules`)
+                                                    } else {
+                                                        setScheduleModalClass(cls)
+                                                    }
+                                                }}
                                                 data-testid={`schedule-class-${cls.id}`}
-                                                title="Xem và sinh thời khóa biểu tự động (SCRUM-224)"
+                                                title="Xem và sinh thời khóa biểu tự động"
                                                 style={{
                                                     backgroundColor: '#0284c7',
                                                     color: '#ffffff',
@@ -803,7 +848,13 @@ export function ClassesPage({
                                                 <button
                                                     type="button"
                                                     className="btn-action-enroll"
-                                                    onClick={() => handleOpenEnrollModal(cls)}
+                                                    onClick={() => {
+                                                        if (isDedicated && navigate) {
+                                                            navigate(`/classes/${cls.id}/enrollments/new`)
+                                                        } else {
+                                                            handleOpenEnrollModal(cls)
+                                                        }
+                                                    }}
                                                     data-testid={`enroll-class-${cls.id}`}
                                                     title="Ghi danh học viên vào lớp"
                                                 >
@@ -813,7 +864,13 @@ export function ClassesPage({
                                             <button
                                                 type="button"
                                                 className="btn-action-roster"
-                                                onClick={() => handleOpenRosterModal(cls)}
+                                                onClick={() => {
+                                                    if (isDedicated && navigate) {
+                                                        navigate(`/classes/${cls.id}/students`)
+                                                    } else {
+                                                        handleOpenRosterModal(cls)
+                                                    }
+                                                }}
                                                 data-testid={`roster-class-${cls.id}`}
                                                 title="Xem danh sách học viên của lớp"
                                             >

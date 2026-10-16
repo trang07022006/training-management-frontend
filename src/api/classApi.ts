@@ -4,7 +4,7 @@
  */
 
 import { getErrorMessage } from '../utils/errorMessages'
-import { ApiError, type RequestFunction } from './userApi'
+import { ApiError, type RequestFunction, type User } from './userApi'
 
 export { ApiError, type RequestFunction }
 
@@ -15,6 +15,13 @@ export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
     in_progress: 'Đang học',
     completed: 'Kết thúc',
     cancelled: 'Huỷ',
+}
+
+export interface InstructorInfo {
+    id: string
+    name: string
+    email: string
+    role?: string
 }
 
 export interface ClassSubjectItem {
@@ -29,6 +36,8 @@ export interface ClassSubjectItem {
     order_index: number
     created_at: string | null
     updated_at: string | null
+    main_instructor?: InstructorInfo | null
+    assistants?: InstructorInfo[]
 }
 
 export interface TrainingClass {
@@ -232,3 +241,97 @@ export async function getClassSubjects(
 
     return body.data
 }
+
+export interface AssignInstructorsInput {
+    main_instructor_id: string | null
+    assistant_ids: string[]
+}
+
+/**
+ * Lấy thông tin phân công giảng viên chính và trợ giảng của một môn trong lớp (SCRUM-220).
+ * GET /api/v1/classes/<id>/subjects/<cs_id>/instructors
+ */
+export async function getClassSubjectInstructors(
+    requestFn: RequestFunction,
+    classId: string,
+    classSubjectId: string,
+): Promise<{
+    class_id: string
+    class_subject_id: string
+    main_instructor: InstructorInfo | null
+    assistants: InstructorInfo[]
+}> {
+    const path = `/api/v1/classes/${encodeURIComponent(classId.trim())}/subjects/${encodeURIComponent(classSubjectId.trim())}/instructors`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể tải thông tin phân công giảng viên.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Phân công giảng viên chính và trợ giảng cho một môn trong lớp (SCRUM-220).
+ * POST /api/v1/classes/<id>/subjects/<cs_id>/instructors
+ */
+export async function assignClassSubjectInstructors(
+    requestFn: RequestFunction,
+    classId: string,
+    classSubjectId: string,
+    payload: AssignInstructorsInput,
+): Promise<{
+    class_id: string
+    class_subject_id: string
+    main_instructor: InstructorInfo | null
+    assistants: InstructorInfo[]
+}> {
+    const path = `/api/v1/classes/${encodeURIComponent(classId.trim())}/subjects/${encodeURIComponent(classSubjectId.trim())}/instructors`
+    const res = await requestFn(path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể phân công giảng viên cho môn học.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Lấy danh sách ứng viên giảng viên đủ điều kiện phân công (SCRUM-220).
+ * GET /api/v1/classes/instructors/candidates
+ */
+export async function getInstructorCandidates(
+    requestFn: RequestFunction,
+): Promise<User[]> {
+    const res = await requestFn('/api/v1/classes/instructors/candidates', { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            body.message || 'Không thể tải danh sách giảng viên ứng viên.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+    return body.data || []
+}
+

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import {
@@ -10,6 +11,7 @@ import {
     ApiError,
 } from '../api/studentApi'
 import { getErrorMessage } from '../utils/errorMessages'
+import { formatVietnamDate } from '../utils/dateUtils'
 import './StudentsPage.css'
 
 export interface StudentsPageProps {
@@ -25,6 +27,7 @@ export function StudentsPage({
     customRequest,
     canManageOverride,
 }: StudentsPageProps) {
+    const navigate = useNavigate()
     const { request: sessionRequest, role, roles, permissions } = useSession()
     const requestFn: RequestFunction = customRequest ?? sessionRequest
     const requestFnRef = useRef(requestFn)
@@ -47,6 +50,9 @@ export function StudentsPage({
     const [loading, setLoading] = useState(initialStudents === undefined)
     const [searchKeyword, setSearchKeyword] = useState('')
     const [activeSearch, setActiveSearch] = useState('')
+    const [page, setPage] = useState(1)
+    const PAGE_SIZE = 10
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
     // State chi tiết / modal
     const [selectedStudent, setSelectedStudent] = useState<StudentDetail | null>(null)
@@ -67,17 +73,19 @@ export function StudentsPage({
 
     // Tải danh sách học viên
     const loadStudents = useCallback(
-        async (search?: string) => {
+        async (targetPage = 1, search?: string) => {
             setLoading(true)
             setAlertMessage(null)
             try {
+                const searchParam = search !== undefined ? search : activeSearch
                 const res = await listStudents(requestFnRef.current, {
-                    search: search !== undefined ? search : activeSearch,
-                    page: 1,
-                    page_size: 50,
+                    search: searchParam.trim() || undefined,
+                    page: targetPage,
+                    page_size: PAGE_SIZE,
                 })
                 setStudents(res.items)
                 setTotal(res.total)
+                setPage(targetPage)
             } catch (err: unknown) {
                 const msg = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi tải danh sách học viên.')
                 setAlertMessage({ type: 'error', text: msg })
@@ -94,12 +102,13 @@ export function StudentsPage({
             listStudents(requestFnRef.current, {
                 search: undefined,
                 page: 1,
-                page_size: 50,
+                page_size: PAGE_SIZE,
             })
                 .then((res) => {
                     if (isMounted) {
                         setStudents(res.items)
                         setTotal(res.total)
+                        setPage(1)
                     }
                 })
                 .catch((err: unknown) => {
@@ -122,18 +131,23 @@ export function StudentsPage({
     // Xử lý tìm kiếm
     const handleSearchSubmit = (e: FormEvent) => {
         e.preventDefault()
-        setActiveSearch(searchKeyword.trim())
-        loadStudents(searchKeyword.trim())
+        const term = searchKeyword.trim()
+        setActiveSearch(term)
+        loadStudents(1, term)
     }
 
     const handleResetSearch = () => {
         setSearchKeyword('')
         setActiveSearch('')
-        loadStudents('')
+        loadStudents(1, '')
     }
 
     // Mở xem chi tiết học viên
     const handleOpenDetail = async (student: StudentDetail) => {
+        if (initialStudents === undefined) {
+            navigate(`/students/${student.id}`)
+            return
+        }
         setSelectedStudent(student)
         setEditForm({
             full_name: student.full_name || '',
@@ -323,6 +337,40 @@ export function StudentsPage({
                 )}
             </div>
 
+            {/* Phân trang */}
+            {!loading && total > 0 && (
+                <div className="table-pagination" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', marginTop: '16px' }}>
+                    <div style={{ fontSize: '14px', color: '#64748b' }}>
+                        Hiển thị <strong>{Math.min((page - 1) * PAGE_SIZE + 1, total)}</strong>–<strong>{Math.min(page * PAGE_SIZE, total)}</strong> trên tổng số <strong>{total}</strong> học viên
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => loadStudents(page - 1)}
+                            disabled={page <= 1 || loading}
+                            style={{ padding: '6px 14px', fontSize: '13px', cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
+                            data-testid="pagination-prev-btn"
+                        >
+                            ← Trang trước
+                        </button>
+                        <span style={{ fontSize: '14px', fontWeight: 500, color: '#334155' }}>
+                            Trang {page} / {totalPages}
+                        </span>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            onClick={() => loadStudents(page + 1)}
+                            disabled={page >= totalPages || loading}
+                            style={{ padding: '6px 14px', fontSize: '13px', cursor: page >= totalPages ? 'not-allowed' : 'pointer' }}
+                            data-testid="pagination-next-btn"
+                        >
+                            Trang sau →
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Modal Chi tiết & Sửa Hồ sơ Học viên */}
             {isModalOpen && selectedStudent && (
                 <div className="modal-overlay" role="dialog" aria-modal="true" data-testid="student-profile-modal">
@@ -440,7 +488,7 @@ export function StudentsPage({
                                                     <span className="class-code-tag">{selectedStudent.current_class.class_code}</span>
                                                     <span className="class-name-tag">{selectedStudent.current_class.name || 'Lớp học hiện tại'}</span>
                                                     {selectedStudent.current_class.start_date && (
-                                                        <span className="class-date-tag">Khai giảng: {selectedStudent.current_class.start_date}</span>
+                                                        <span className="class-date-tag">Khai giảng: {formatVietnamDate(selectedStudent.current_class.start_date)}</span>
                                                     )}
                                                 </div>
                                                 <span className="student-entry-level-badge">

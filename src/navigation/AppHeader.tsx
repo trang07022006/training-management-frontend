@@ -126,7 +126,7 @@ export function AppHeader({
                 {/* Notification Bell with unread badge */}
                 <div className="header-notification-wrapper" title="Thông báo hệ thống">
                     <Link
-                        to="/leads"
+                        to={role === 'trainee' || role === 'trainer' ? '/dashboard' : '/leads'}
                         className="header-notification-btn"
                         aria-label="Xem thông báo mới"
                         data-testid="header-notification-btn"

@@ -13,6 +13,8 @@ import {
     type ScheduleGeneratePayload,
     type UpdateSchedulePayload,
 } from '../api/scheduleApi'
+import { getErrorMessage, isNetworkError, NETWORK_ERROR_MESSAGE } from '../utils/errorMessages'
+import { ClassroomSelect } from './ClassroomSelect'
 import './ScheduleGenerationModal.css'
 
 interface ScheduleGenerationModalProps {
@@ -224,15 +226,20 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
             setActiveTab('view')
             if (onSuccess) onSuccess()
         } catch (err: any) {
-            if (err?.code === 'SCHEDULE_CONFLICT_DETECTED') {
+            const errMsg = err instanceof Error ? err.message : String(err)
+            if (isNetworkError(errMsg)) {
+                setError(NETWORK_ERROR_MESSAGE)
+                return
+            }
+            if (err?.code === 'SCHEDULE_CONFLICT_DETECTED' || err?.code === 'INSTRUCTOR_CONFLICT' || err?.code === 'ROOM_CONFLICT') {
                 const details = err?.details || {}
                 const cList = details.conflicts || []
                 setConflicts(cList)
                 setError(err.message || 'Phát hiện xung đột lịch. Quản lý đào tạo cần xác nhận ghi đè để tiếp tục lưu.')
             } else if (err?.code === 'SCHEDULE_ALREADY_EXISTS') {
-                setError(err.message + ' Hãy đánh dấu chọn "Ghi đè lịch đã có" để tiếp tục.')
+                setError(err.message || 'Lớp học đã có thời khóa biểu. Hãy đánh dấu chọn "Ghi đè lịch đã có" để tiếp tục.')
             } else {
-                setError(err?.message || 'Lỗi khi lưu thời khóa biểu.')
+                setError(err?.message || getErrorMessage(err, 'Lỗi khi lưu thời khóa biểu.'))
             }
         } finally {
             setIsSaving(false)
@@ -246,7 +253,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
         setEditShift(item.shift || '')
         setEditStartTime(item.start_time ? item.start_time.slice(0, 5) : '07:30')
         setEditEndTime(item.end_time ? item.end_time.slice(0, 5) : '09:30')
-        setEditRoomId(item.room_id || '')
+        setEditRoomId(item.classroom_id || item.room_id || '')
         setEditInstructorId(item.instructor_id || '')
         setEditTopic(item.topic || '')
         setEditConflictOverride(false)
@@ -376,7 +383,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                             onClick={() => setActiveTab('generate')}
                             data-testid="tab-generate-schedule"
                         >
-                            ⚡ Sinh thời khóa biểu tự động (SCRUM-224)
+                            ⚡ Sinh thời khóa biểu tự động
                         </button>
                     )}
                 </div>
@@ -639,7 +646,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
 
                                     {/* Giảng viên phụ trách (SCRUM-225 AC 1) */}
                                     <div className="form-field">
-                                        <label htmlFor="gen-instructor-select">Giảng viên phụ trách (SCRUM-225):</label>
+                                        <label htmlFor="gen-instructor-select">Giảng viên phụ trách:</label>
                                         <select
                                             id="gen-instructor-select"
                                             className="form-control"
@@ -658,15 +665,16 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
 
                                     {/* Phòng học (SCRUM-225 AC 1) */}
                                     <div className="form-field">
-                                        <label htmlFor="gen-room-input">Phòng học (SCRUM-225):</label>
-                                        <input
+                                        <label htmlFor="gen-room-input">Phòng học:</label>
+                                        <ClassroomSelect
                                             id="gen-room-input"
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Ví dụ: P201, Lab 3, UAT-P20..."
                                             value={selectedRoomId}
-                                            onChange={(e) => setSelectedRoomId(e.target.value)}
-                                            data-testid="schedule-room-input"
+                                            onChange={(roomId) => setSelectedRoomId(roomId || '')}
+                                            classId={classItem.id}
+                                            placeholder="Chọn phòng học..."
+                                            disabled={isSaving}
+                                            testId="schedule-room-input"
+                                            customRequest={requestFn}
                                         />
                                     </div>
 
@@ -924,14 +932,17 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
 
                                     <div className="form-field">
                                         <label htmlFor="edit-room-select">Phòng học:</label>
-                                        <input
+                                        <ClassroomSelect
                                             id="edit-room-select"
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Ví dụ: P201, Lab 3, UAT-P20..."
                                             value={editRoomId}
-                                            onChange={(e) => setEditRoomId(e.target.value)}
-                                            data-testid="edit-room-select"
+                                            onChange={(roomId) => setEditRoomId(roomId || '')}
+                                            classId={classItem.id}
+                                            placeholder="Chọn phòng học..."
+                                            disabled={isUpdating}
+                                            initialRoomName={editingSchedule?.room_name || editingSchedule?.legacy_room_raw || editRoomId}
+                                            isLegacyRoom={editingSchedule?.is_legacy_room}
+                                            testId="edit-room-select"
+                                            customRequest={requestFn}
                                         />
                                     </div>
 
@@ -993,7 +1004,7 @@ export const ScheduleGenerationModal: React.FC<ScheduleGenerationModalProps> = (
                                                     data-testid="edit-conflict-override-checkbox"
                                                 />
                                                 <span className="override-label">
-                                                    Tôi xác nhận ghi đè xung đột lịch này (SCRUM-225)
+                                                    Tôi xác nhận ghi đè xung đột lịch này
                                                 </span>
                                             </label>
                                         </div>

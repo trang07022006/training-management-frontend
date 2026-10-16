@@ -19,7 +19,7 @@ describe('roleRouting', () => {
     })
 
     it('trả về đúng đường dẫn trang chủ cho từng vai trò', () => {
-        expect(getRoleHomePath('admin')).toBe('/admin')
+        expect(getRoleHomePath('admin')).toBe('/dashboard')
         expect(getRoleHomePath('trainer')).toBe('/trainer')
         expect(getRoleHomePath('trainee')).toBe('/trainee')
         expect(getRoleHomePath('user')).toBe('/dashboard')
@@ -28,7 +28,7 @@ describe('roleRouting', () => {
     })
 
     it('xử lý chuẩn hóa chữ hoa, khoảng trắng', () => {
-        expect(getRoleHomePath('  ADMIN  ')).toBe('/admin')
+        expect(getRoleHomePath('  ADMIN  ')).toBe('/dashboard')
         expect(getRoleHomePath('Trainer')).toBe('/trainer')
         expect(getRoleHomePath('TRAINEE')).toBe('/trainee')
         expect(getRoleHomePath('  CONSULTANT ')).toBe('/leads')

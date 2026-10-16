@@ -182,11 +182,11 @@ describe('Sidebar Active State for Training Programs and Child Routes', () => {
             expect(submenuLists.length).toBe(0)
 
             // Kiểm tra số lượng menu ban đầu cho role admin:
-            // overview, admin_dashboard, users, courses, training_programs, subjects, leads, change_password
+            // overview, users, training_programs, subjects, leads, change_password
             expect(screen.getByTestId('menu-item-overview')).toBeDefined()
-            expect(screen.getByTestId('menu-item-admin_dashboard')).toBeDefined()
+            expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
             expect(screen.getByTestId('menu-item-users')).toBeDefined()
-            expect(screen.getByTestId('menu-item-courses')).toBeDefined()
+            expect(screen.queryByTestId('menu-item-courses')).toBeNull()
             expect(screen.getByTestId('menu-item-training_programs')).toBeDefined()
             expect(screen.getByTestId('menu-item-subjects')).toBeDefined()
             expect(screen.getByTestId('menu-item-leads')).toBeDefined()
