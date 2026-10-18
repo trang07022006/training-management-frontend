@@ -6,7 +6,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 
 import { LoginPage } from './LoginPage'
-import { RoleDashboard } from './RoleDashboard'
+import { TrainerRedirect } from './TrainerRedirect'
+import { TraineeRedirect } from './TraineeRedirect'
 import { SessionProvider, useSession } from '../auth/SessionProvider'
 import { RequireSession } from '../auth/RequireSession'
 
@@ -44,9 +45,10 @@ function setupTestApp(initialPath = '/login') {
 
                         <Route element={<RequireSession />}>
                             <Route path="/dashboard" element={<h1>Trang chủ hệ thống</h1>} />
-                            <Route path="/admin" element={<RoleDashboard role="admin" />} />
-                            <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
-                            <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
+                            <Route path="/admin" element={<h1>Bảng quản trị</h1>} />
+                            <Route path="/my-schedule" element={<h1>Lịch học và giảng dạy</h1>} />
+                            <Route path="/trainer" element={<TrainerRedirect />} />
+                            <Route path="/trainee" element={<TraineeRedirect />} />
                         </Route>
                     </Routes>
                 </SessionProvider>
@@ -109,7 +111,7 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         ).toBeDefined()
     })
 
-    it('đăng nhập thành công với vai trò trainer thì điều hướng tới /trainer', async () => {
+    it('đăng nhập thành công với vai trò trainer thì điều hướng tới /my-schedule', async () => {
         const fetcher = setupTestApp('/login')
 
         fetcher.mockResolvedValueOnce(
@@ -128,17 +130,17 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         await fillAndSubmitLoginForm('trainer.nguyen@test.vn', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/trainer')
+            expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
         })
 
         expect(screen.getByTestId('current-session').textContent).toBe('active')
         expect(screen.getByTestId('current-role').textContent).toBe('trainer')
         expect(
-            screen.getByRole('heading', { name: 'Bảng điều khiển Giảng viên' }),
+            screen.getByRole('heading', { name: 'Lịch học và giảng dạy' }),
         ).toBeDefined()
     })
 
-    it('đăng nhập thành công với vai trò trainee thì điều hướng tới /trainee', async () => {
+    it('đăng nhập thành công với vai trò trainee thì điều hướng tới /my-schedule', async () => {
         const fetcher = setupTestApp('/login')
 
         fetcher.mockResolvedValueOnce(
@@ -157,13 +159,13 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         await fillAndSubmitLoginForm('trainee.tran@test.vn', 'Secret123!')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/trainee')
+            expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
         })
 
         expect(screen.getByTestId('current-session').textContent).toBe('active')
         expect(screen.getByTestId('current-role').textContent).toBe('trainee')
         expect(
-            screen.getByRole('heading', { name: 'Bảng điều khiển Học viên' }),
+            screen.getByRole('heading', { name: 'Lịch học và giảng dạy' }),
         ).toBeDefined()
     })
 
@@ -285,34 +287,11 @@ describe('SCRUM-35: Điều hướng trang chủ theo vai trò (Role Routing)', 
         expect(screen.getByTestId('current-session').textContent).toBe('empty')
     })
 
-    it('giao diện RoleDashboard không bịa chức năng và có đường dẫn quay về trang tổng quan', async () => {
-        const fetcher = setupTestApp('/login')
-
-        fetcher.mockResolvedValueOnce(
-            jsonResponse({
-                access_token: 'jwt-access-trainer',
-                refresh_token: 'jwt-refresh-trainer',
-                token_type: 'Bearer',
-                user: {
-                    id: 'usr-trainer-test',
-                    email: 'trainer@test.vn',
-                    role: 'trainer',
-                },
-            }),
-        )
-
-        await fillAndSubmitLoginForm('trainer@test.vn', 'Secret123!')
+    it('truy cập trực tiếp /trainee khi chưa đăng nhập thì chuyển hướng về /login', async () => {
+        setupTestApp('/trainee')
 
         await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/trainer')
-        })
-
-        const backLink = screen.getByRole('link', { name: 'Về trang tổng quan' })
-        expect(backLink).toBeDefined()
-        fireEvent.click(backLink)
-
-        await waitFor(() => {
-            expect(screen.getByTestId('current-path').textContent).toBe('/dashboard')
+            expect(screen.getByTestId('current-path').textContent).toBe('/login')
         })
     })
 })

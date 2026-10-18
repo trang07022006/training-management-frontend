@@ -30,7 +30,7 @@ describe('SCRUM-215: Force Change Password on First Login Flow', () => {
                         <Route path="/change-password" element={<ChangePasswordPage />} />
                         <Route element={<RequireSession />}>
                             <Route path="/dashboard" element={<div>Dashboard Content Area</div>} />
-                            <Route path="/trainee" element={<div>Trainee Portal Area</div>} />
+                            <Route path="/my-schedule" element={<div>Trainee Schedule Area</div>} />
                         </Route>
                     </Routes>
                 </SessionProvider>
@@ -201,7 +201,7 @@ describe('SCRUM-215: Force Change Password on First Login Flow', () => {
         })
 
         // Không bị bắt đổi mật khẩu, được điều hướng vào trainee area
-        expect(await screen.findByText('Trainee Portal Area')).toBeDefined()
+        expect(await screen.findByText('Trainee Schedule Area')).toBeDefined()
         expect(screen.queryByText('Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng hệ thống.')).toBeNull()
     })
 })

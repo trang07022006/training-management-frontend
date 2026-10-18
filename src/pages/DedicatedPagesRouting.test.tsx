@@ -40,7 +40,7 @@ import { HolidaysPage } from './HolidaysPage'
 // Stable mock references to prevent infinite re-renders in useEffect
 const mockRequest = vi.fn().mockImplementation(() => Promise.resolve(new Response('{}')))
 const mockRoles = ['admin']
-const mockPermissions = ['course.manage', 'course.view', 'user.manage', 'user.view', 'lead.delete']
+const mockPermissions = ['course.manage', 'course.view', 'user.manage', 'user.view', 'lead.delete', 'schedule.manage', 'schedule.view']
 
 // Mock useSession
 vi.mock('../auth/SessionProvider', () => ({

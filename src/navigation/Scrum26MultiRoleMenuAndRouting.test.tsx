@@ -94,71 +94,75 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
     })
 
     describe('2. Sidebar Menu Filtering (filterMenuItems)', () => {
-        it('Case A: roles = [trainee] -> hiện Góc Học viên, không hiện Không gian Giảng viên hay Admin', () => {
+        it('Case A: roles = [trainee] -> hiện Chương trình đào tạo & Lịch học của tôi, không hiện Góc Học viên, Không gian Giảng viên hay Admin', () => {
             const visible = filterMenuItems(APP_MENU_CONFIG, {
                 hasSession: true,
                 role: 'trainee',
                 roles: ['trainee'],
             })
             const keys = visible.map((i) => i.key)
-            expect(keys).toContain('trainee_dashboard')
+            expect(keys).toContain('my_schedule')
             expect(keys).toContain('training_programs')
             expect(keys).toContain('overview')
+            expect(keys).not.toContain('trainee_dashboard')
             expect(keys).not.toContain('courses')
             expect(keys).not.toContain('trainer_dashboard')
             expect(keys).not.toContain('admin_dashboard')
             expect(keys).not.toContain('users')
         })
 
-        it('Case B: roles = [trainer] -> hiện Không gian Giảng viên, không hiện Góc Học viên hay Admin', () => {
+        it('Case B: roles = [trainer] -> hiện Chương trình đào tạo & Lịch giảng dạy, không hiện Góc Học viên, Admin hay Không gian Giảng viên', () => {
             const visible = filterMenuItems(APP_MENU_CONFIG, {
                 hasSession: true,
                 role: 'trainer',
                 roles: ['trainer'],
             })
             const keys = visible.map((i) => i.key)
-            expect(keys).toContain('trainer_dashboard')
+            expect(keys).toContain('my_schedule')
             expect(keys).toContain('training_programs')
             expect(keys).toContain('overview')
+            expect(keys).not.toContain('trainer_dashboard')
             expect(keys).not.toContain('courses')
             expect(keys).not.toContain('trainee_dashboard')
             expect(keys).not.toContain('admin_dashboard')
             expect(keys).not.toContain('users')
         })
 
-        it('Case C: roles = [trainee, trainer] -> hiện CẢ HAI Góc Học viên VÀ Không gian Giảng viên, không hiện Admin', () => {
+        it('Case C: roles = [trainee, trainer] -> hiện Lịch học/dạy, không hiện Góc Học viên, Không gian Giảng viên hay Admin', () => {
             const visible = filterMenuItems(APP_MENU_CONFIG, {
                 hasSession: true,
                 role: 'trainee',
                 roles: ['trainee', 'trainer'],
             })
             const keys = visible.map((i) => i.key)
-            expect(keys).toContain('trainee_dashboard')
-            expect(keys).toContain('trainer_dashboard')
+            expect(keys).toContain('my_schedule')
             expect(keys).toContain('training_programs')
             expect(keys).toContain('overview')
+            expect(keys).not.toContain('trainee_dashboard')
+            expect(keys).not.toContain('trainer_dashboard')
             expect(keys).not.toContain('courses')
             // Không có quyền admin
             expect(keys).not.toContain('admin_dashboard')
             expect(keys).not.toContain('users')
         })
 
-        it('Case D: revoke trainer -> chỉ còn [trainee] -> Không gian Giảng viên biến mất', () => {
+        it('Case D: revoke trainer -> chỉ còn [trainee] -> cả hai mục giới thiệu đều không xuất hiện', () => {
             const visible = filterMenuItems(APP_MENU_CONFIG, {
                 hasSession: true,
                 role: 'trainee',
                 roles: ['trainee'],
             })
             const keys = visible.map((i) => i.key)
-            expect(keys).toContain('trainee_dashboard')
+            expect(keys).toContain('my_schedule')
+            expect(keys).not.toContain('trainee_dashboard')
             expect(keys).not.toContain('trainer_dashboard')
         })
     })
 
     describe('3. Route Guard Protection (RequirePermission)', () => {
-        it('user có roles [trainee, trainer] truy cập trực tiếp /trainee -> PASS', () => {
+        it('user có roles [trainee, trainer] truy cập route yêu cầu quyền trainee -> PASS', () => {
             render(
-                <MemoryRouter initialEntries={['/trainee']}>
+                <MemoryRouter initialEntries={['/trainee-feature']}>
                     <SessionProvider apiOrigin="http://localhost:5000">
                         <MultiRoleTestAppWrapper role="trainee" roles={['trainee', 'trainer']}>
                             <Routes>
@@ -171,7 +175,7 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
                                         />
                                     }
                                 >
-                                    <Route path="/trainee" element={<h1>Góc Học viên</h1>} />
+                                    <Route path="/trainee-feature" element={<h1>Chức năng Học viên</h1>} />
                                 </Route>
                                 <Route path="/forbidden" element={<h1>Bị cấm truy cập 403</h1>} />
                             </Routes>
@@ -180,13 +184,13 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
                 </MemoryRouter>,
             )
 
-            expect(screen.getByText('Góc Học viên')).toBeDefined()
-            expect(screen.getByTestId('location-display').textContent).toBe('/trainee')
+            expect(screen.getByText('Chức năng Học viên')).toBeDefined()
+            expect(screen.getByTestId('location-display').textContent).toBe('/trainee-feature')
         })
 
-        it('user có roles [trainee, trainer] truy cập trực tiếp /trainer -> PASS (không bị 403)', () => {
+        it('user có roles [trainee, trainer] truy cập route yêu cầu quyền trainer -> PASS (không bị 403)', () => {
             render(
-                <MemoryRouter initialEntries={['/trainer']}>
+                <MemoryRouter initialEntries={['/trainer-feature']}>
                     <SessionProvider apiOrigin="http://localhost:5000">
                         <MultiRoleTestAppWrapper role="trainee" roles={['trainee', 'trainer']}>
                             <Routes>
@@ -199,7 +203,7 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
                                         />
                                     }
                                 >
-                                    <Route path="/trainer" element={<h1>Không gian Giảng viên</h1>} />
+                                    <Route path="/trainer-feature" element={<h1>Chức năng Giảng viên</h1>} />
                                 </Route>
                                 <Route path="/forbidden" element={<h1>Bị cấm truy cập 403</h1>} />
                             </Routes>
@@ -208,8 +212,8 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
                 </MemoryRouter>,
             )
 
-            expect(screen.getByText('Không gian Giảng viên')).toBeDefined()
-            expect(screen.getByTestId('location-display').textContent).toBe('/trainer')
+            expect(screen.getByText('Chức năng Giảng viên')).toBeDefined()
+            expect(screen.getByTestId('location-display').textContent).toBe('/trainer-feature')
         })
 
         it('user có roles [trainee, trainer] truy cập trực tiếp /admin -> 403 Forbidden', () => {
@@ -241,9 +245,9 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
             expect(screen.getByTestId('location-display').textContent).toBe('/forbidden')
         })
 
-        it('user chỉ có role [trainee] truy cập trực tiếp /trainer -> 403 Forbidden', () => {
+        it('user chỉ có role [trainee] truy cập route yêu cầu quyền trainer -> 403 Forbidden', () => {
             render(
-                <MemoryRouter initialEntries={['/trainer']}>
+                <MemoryRouter initialEntries={['/trainer-feature']}>
                     <SessionProvider apiOrigin="http://localhost:5000">
                         <MultiRoleTestAppWrapper role="trainee" roles={['trainee']}>
                             <Routes>
@@ -256,7 +260,7 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
                                         />
                                     }
                                 >
-                                    <Route path="/trainer" element={<h1>Không gian Giảng viên</h1>} />
+                                    <Route path="/trainer-feature" element={<h1>Chức năng Giảng viên</h1>} />
                                 </Route>
                                 <Route path="/forbidden" element={<h1>Bị cấm truy cập 403</h1>} />
                             </Routes>
@@ -265,7 +269,7 @@ describe('SCRUM-26: Multi-Role Authorization & Menu Matrix', () => {
                 </MemoryRouter>,
             )
 
-            expect(screen.queryByText('Không gian Giảng viên')).toBeNull()
+            expect(screen.queryByText('Chức năng Giảng viên')).toBeNull()
             expect(screen.getByText('Bị cấm truy cập 403')).toBeDefined()
             expect(screen.getByTestId('location-display').textContent).toBe('/forbidden')
         })

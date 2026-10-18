@@ -20,8 +20,8 @@ export type AppRole = (typeof APP_ROLES)[keyof typeof APP_ROLES]
 
 export const ROLE_HOME_PATHS: Record<string, string> = {
     [APP_ROLES.ADMIN]: '/dashboard',
-    [APP_ROLES.TRAINER]: '/trainer',
-    [APP_ROLES.TRAINEE]: '/trainee',
+    [APP_ROLES.TRAINER]: '/my-schedule',
+    [APP_ROLES.TRAINEE]: '/my-schedule',
     [APP_ROLES.USER]: '/dashboard',
     [APP_ROLES.CONSULTANT]: '/leads',
     [APP_ROLES.TRAINING_MANAGER]: '/leads',

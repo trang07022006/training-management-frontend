@@ -52,7 +52,6 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SESSION_REVOKE,
         SYSTEM_PERMISSIONS.LEAD_DELETE,
         SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
-        SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
     ],
     trainer: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
@@ -143,22 +142,6 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.USER_VIEW,
     },
     {
-        key: 'trainer_dashboard',
-        label: 'Không gian Giảng viên',
-        path: '/trainer',
-        icon: 'chalkboard-teacher',
-        requiredRole: 'trainer',
-        requiredPermission: SYSTEM_PERMISSIONS.COURSE_MANAGE,
-    },
-    {
-        key: 'trainee_dashboard',
-        label: 'Góc Học viên',
-        path: '/trainee',
-        icon: 'user-graduate',
-        requiredRole: 'trainee',
-        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
-    },
-    {
         key: 'training_programs',
         label: 'Chương trình đào tạo',
         path: '/training-programs',
@@ -188,10 +171,10 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
     },
     {
         key: 'sessions',
-        label: 'Quản lý lịch học',
+        label: 'Quản lý buổi học',
         path: '/sessions',
-        icon: 'chalkboard-teacher',
-        requiredPermission: SYSTEM_PERMISSIONS.SESSION_VIEW,
+        icon: 'calendar',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
     },
     {
         key: 'schedules_calendar',

@@ -11,7 +11,7 @@ import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
-import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './ClassesPage.css'
 
 export function ScheduleSessionDetailPage() {
@@ -21,10 +21,8 @@ export function ScheduleSessionDetailPage() {
 
     const effectiveRoles = roles && roles.length > 0 ? roles : (role ? [role] : [])
     const normalizedRoles = effectiveRoles.map((r) => (typeof r === 'string' ? r.trim().toLowerCase() : ''))
-    const canManage =
-        permissions?.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
-        normalizedRoles.includes('admin') ||
-        normalizedRoles.includes('training_manager')
+    const effectivePermissions = permissions?.length ? permissions : getRolePermissions(normalizedRoles)
+    const canManage = effectivePermissions.includes(SYSTEM_PERMISSIONS.SCHEDULE_MANAGE)
 
     const [classData, setClassData] = useState<TrainingClass | null>(null)
     const [schedule, setSchedule] = useState<ClassScheduleItem | null>(null)

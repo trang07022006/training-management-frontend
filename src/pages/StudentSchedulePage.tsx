@@ -6,6 +6,7 @@ import {
     type StudentPersonalScheduleResponse,
 } from '../api/scheduleApi'
 import { formatVietnamDate } from '../utils/dateUtils'
+import { PageHeader } from '../components/PageHeader'
 import './StudentSchedulePage.css'
 
 function formatDateISO(d: Date): string {
@@ -127,14 +128,7 @@ export function StudentSchedulePage() {
         <div className="student-schedule-container" data-testid="student-schedule-page">
             {/* Header */}
             <div className="schedule-header">
-                <div>
-                    <h1>{isTrainer ? 'Lịch giảng dạy của tôi' : 'Lịch học của tôi'}</h1>
-                    <p>
-                        {isTrainer
-                            ? 'Theo dõi lịch giảng dạy và các buổi học được phân công theo tuần'
-                            : 'Theo dõi buổi học sắp diễn ra và lịch học trong tuần theo các lớp đã ghi danh'}
-                    </p>
-                </div>
+                <PageHeader title={isTrainer ? 'Lịch giảng dạy của tôi' : 'Lịch học của tôi'} subtitle={isTrainer ? 'Theo dõi lịch giảng dạy và các buổi học được phân công theo tuần' : 'Theo dõi buổi học sắp diễn ra và lịch học trong tuần theo các lớp đã ghi danh'} />
 
                 {/* Chuyển đổi ngữ cảnh khi tài khoản có nhiều vai trò (Trainer + Trainee) */}
                 {availableContexts.length > 1 && (

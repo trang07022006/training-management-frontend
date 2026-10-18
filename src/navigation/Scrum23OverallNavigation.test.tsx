@@ -228,7 +228,8 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
             fireEvent.click(switchBtn)
 
             expect(screen.queryByTestId('menu-item-users')).toBeNull()
-            expect(screen.getByTestId('menu-item-trainer_dashboard')).toBeDefined()
+            expect(screen.queryByTestId('menu-item-trainer_dashboard')).toBeNull()
+            expect(screen.getByTestId('menu-item-my_schedule')).toBeDefined()
             expect(screen.getByTestId('user-role-badge').textContent).toBe('Giảng viên')
         })
 
@@ -240,8 +241,10 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
 
             expect(adminMenu.map((m) => m.key)).toContain('users')
             expect(adminMenu.map((m) => m.key)).not.toContain('admin_dashboard')
-            expect(trainerMenu.map((m) => m.key)).toContain('trainer_dashboard')
-            expect(traineeMenu.map((m) => m.key)).toContain('trainee_dashboard')
+            expect(trainerMenu.map((m) => m.key)).toContain('my_schedule')
+            expect(trainerMenu.map((m) => m.key)).not.toContain('trainer_dashboard')
+            expect(traineeMenu.map((m) => m.key)).toContain('my_schedule')
+            expect(traineeMenu.map((m) => m.key)).not.toContain('trainee_dashboard')
 
             expect(userMenu.map((m) => m.key)).not.toContain('admin_dashboard')
             expect(userMenu.map((m) => m.key)).not.toContain('trainer_dashboard')
@@ -259,10 +262,13 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
             expect(usersItem?.path).toBe('/users')
 
             const trainerItem = APP_MENU_CONFIG.find((i) => i.key === 'trainer_dashboard')
-            expect(trainerItem?.path).toBe('/trainer')
+            expect(trainerItem).toBeUndefined()
 
             const traineeItem = APP_MENU_CONFIG.find((i) => i.key === 'trainee_dashboard')
-            expect(traineeItem?.path).toBe('/trainee')
+            expect(traineeItem).toBeUndefined()
+
+            const myScheduleItem = APP_MENU_CONFIG.find((i) => i.key === 'my_schedule')
+            expect(myScheduleItem?.path).toBe('/my-schedule')
         })
 
         it('14. active state đánh dấu chính xác menu đang mở', () => {
@@ -291,7 +297,7 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
                         <SessionStateController role="trainee">
                             <LocationDisplay />
                             <Routes>
-                                <Route path="/trainee" element={<h1>Khu vực Học viên</h1>} />
+                                <Route path="/my-schedule" element={<h1>Khu vực Học viên</h1>} />
                                 <Route
                                     element={
                                         <RequirePermission
@@ -309,7 +315,7 @@ describe('SCRUM-23 Phase 6: Kiểm thử tổng thể Menu theo quyền người
             )
 
             expect(screen.queryByText('Khu vực Quản trị')).toBeNull()
-            expect(screen.getByTestId('location-display').textContent).toBe('/trainee')
+            expect(screen.getByTestId('location-display').textContent).toBe('/my-schedule')
             expect(screen.getByText('Khu vực Học viên')).toBeDefined()
         })
     })

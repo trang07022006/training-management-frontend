@@ -11,7 +11,7 @@ import * as classApi from '../api/classApi'
 // Mock useSession
 const mockSession = {
     user: { id: 'user-1', name: 'Quản lý đào tạo', email: 'ql@ictu.edu.vn' },
-    permissions: ['course.manage', 'course.view'],
+    permissions: ['schedule.manage', 'schedule.view', 'course.manage', 'course.view'],
     role: 'training_manager',
     roles: ['training_manager'],
     request: vi.fn(),
@@ -376,5 +376,20 @@ describe('ScheduleGeneratePage - Error Handling & Business Rejection Feedback', 
         expect(screen.getByText('Chủ đề xem trước 1')).toBeDefined()
         const dateInput = screen.getByLabelText(/Ngày bắt đầu/i) as HTMLInputElement
         expect(dateInput.value).toBe('2026-11-02')
+    })
+
+    it('10. Kiểm tra quyền màn hình: Người dùng chỉ có course.manage (không có schedule.manage) bị chặn truy cập', async () => {
+        const originalPerms = [...mockSession.permissions]
+        mockSession.permissions = ['course.manage', 'course.view']
+
+        try {
+            renderPage()
+            await waitFor(() => {
+                expect(screen.getByText('Bạn không có quyền sinh thời khóa biểu cho lớp học.')).toBeDefined()
+            })
+            expect(screen.queryByTestId('btn-preview-schedule')).toBeNull()
+        } finally {
+            mockSession.permissions = originalPerms
+        }
     })
 })

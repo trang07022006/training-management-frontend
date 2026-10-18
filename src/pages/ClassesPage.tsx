@@ -85,6 +85,11 @@ function ClassesPageBase({
                 )
             )
 
+    const canManageSchedule =
+        canManageOverride !== undefined
+            ? canManageOverride
+            : effectivePerms.includes(SYSTEM_PERMISSIONS.SCHEDULE_MANAGE)
+
     // State danh sách lớp học
     const [classes, setClasses] = useState<TrainingClass[]>(initialClasses ?? [])
     const [total, setTotal] = useState<number>(initialTotal ?? initialClasses?.length ?? 0)
@@ -1337,7 +1342,7 @@ function ClassesPageBase({
                 <ScheduleGenerationModal
                     classItem={scheduleModalClass}
                     requestFn={requestFn}
-                    canManage={canManage}
+                    canManage={canManageSchedule}
                     onClose={() => setScheduleModalClass(null)}
                 />
             )}

@@ -168,7 +168,7 @@ describe('NotFoundPage (SCRUM-79)', () => {
             </MemoryRouter>,
         )
         const trainerHome = screen.getByTestId('error-primary-action')
-        expect(trainerHome.getAttribute('href')).toBe('/trainer')
+        expect(trainerHome.getAttribute('href')).toBe('/my-schedule')
     })
 
     it('6. nút quay lại hoạt động an toàn', () => {

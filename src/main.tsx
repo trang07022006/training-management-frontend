@@ -24,7 +24,6 @@ import { RequireSession } from './auth/RequireSession'
 import { RequirePermission } from './auth/RequirePermission'
 import { AppLayout } from './navigation/AppLayout'
 import { SYSTEM_PERMISSIONS } from './navigation/menuConfig'
-import { RoleDashboard } from './pages/RoleDashboard'
 // User Management Pages
 import { UserManagementPage } from './pages/UserManagementPage'
 import { UserCreatePage } from './pages/UserCreatePage'
@@ -35,6 +34,8 @@ import { UserImportPage } from './pages/UserImportPage'
 
 // Course & Program Pages
 import { CoursesRedirect } from './pages/CoursesRedirect'
+import { TrainerRedirect } from './pages/TrainerRedirect'
+import { TraineeRedirect } from './pages/TraineeRedirect'
 import { TrainingProgramsPage } from './pages/TrainingProgramsPage'
 import { TrainingProgramCreatePage } from './pages/TrainingProgramCreatePage'
 import { TrainingProgramDetailPage } from './pages/TrainingProgramDetailPage'
@@ -123,30 +124,8 @@ createRoot(document.getElementById('root')!).render(
               {/* Redirections for deprecated routes (replace to prevent history loop) */}
               <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
               <Route path="/courses" element={<CoursesRedirect />} />
-
-              {/* Role Dashboards */}
-              <Route
-                element={
-                  <RequirePermission
-                    requiredRole="trainer"
-                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_MANAGE}
-                    fallbackPath="/forbidden"
-                  />
-                }
-              >
-                <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
-              </Route>
-              <Route
-                element={
-                  <RequirePermission
-                    requiredRole="trainee"
-                    requiredPermission={SYSTEM_PERMISSIONS.COURSE_VIEW}
-                    fallbackPath="/forbidden"
-                  />
-                }
-              >
-                <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
-              </Route>
+              <Route path="/trainer" element={<TrainerRedirect />} />
+              <Route path="/trainee" element={<TraineeRedirect />} />
 
               {/* User Management Module */}
               <Route
@@ -207,12 +186,12 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/classes/:classId/schedules" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/enrollments/new" element={<ClassEnrollmentPage />} />
                 <Route path="/classes/:classId/subjects/:classSubjectId/instructors" element={<ClassSubjectInstructorAssignPage />} />
-                <Route path="/classes/:classId/schedules/generate" element={<ScheduleGeneratePage />} />
+                <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/generate" element={<ScheduleGeneratePage />} /></Route>
                 <Route path="/classes/:classId/schedules/:scheduleId" element={<ScheduleSessionDetailPage />} />
-                <Route path="/classes/:classId/schedules/:scheduleId/edit" element={<ScheduleSessionEditPage />} />
+                <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/:scheduleId/edit" element={<ScheduleSessionEditPage />} /></Route>
 
                 {/* Schedules */}
-                <Route path="/schedules" element={<ScheduleCalendarPage />} />
+                <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_VIEW} fallbackPath="/forbidden" />}><Route path="/schedules" element={<ScheduleCalendarPage />} /></Route>
                 <Route
                   element={
                     <RequirePermission
@@ -248,7 +227,7 @@ createRoot(document.getElementById('root')!).render(
               <Route
                 element={
                   <RequirePermission
-                    requiredPermission={SYSTEM_PERMISSIONS.SESSION_VIEW}
+                    requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE}
                     fallbackPath="/forbidden"
                   />
                 }

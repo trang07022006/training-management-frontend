@@ -55,7 +55,7 @@ function renderAppWithCourses(role?: string, roles?: string[], permissions?: str
                     <Route path="/dashboard" element={<div data-testid="page-dashboard">Dashboard</div>} />
                     <Route path="/leads" element={<div data-testid="page-leads">Leads</div>} />
                     <Route path="/trainer" element={<div data-testid="page-trainer">Trainer Home</div>} />
-                    <Route path="/trainee" element={<div data-testid="page-trainee">Trainee Home</div>} />
+                    <Route path="/my-schedule" element={<div data-testid="page-trainee">Trainee Home</div>} />
                 </Routes>
             </SessionProvider>
         </MemoryRouter>,

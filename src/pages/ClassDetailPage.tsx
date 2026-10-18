@@ -17,7 +17,7 @@ import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
-import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './ClassesPage.css'
 
 export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules'
@@ -34,6 +34,9 @@ export function ClassDetailPage() {
         permissions?.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) ||
         normalizedRoles.includes('admin') ||
         normalizedRoles.includes('training_manager')
+
+    const effectiveSchedulePermissions = permissions?.length ? permissions : getRolePermissions(normalizedRoles)
+    const canManageSchedule = effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.SCHEDULE_MANAGE)
 
     // Determine active tab from URL pathname
     let activeTab: ClassDetailTab = 'info'
@@ -481,7 +484,7 @@ export function ClassDetailPage() {
                             Thời khóa biểu của lớp ({schedules.length} buổi học)
                         </h3>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            {canManage && (
+                            {canManageSchedule && (
                                 <Link to={`/classes/${classData.id}/schedules/generate`} className="btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
                                     📅 Sinh thời khóa biểu tự động
                                 </Link>
@@ -492,7 +495,7 @@ export function ClassDetailPage() {
                     {schedules.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '32px', color: '#64748b' }}>
                             <p style={{ marginBottom: '12px' }}>Lớp học này chưa có lịch học nào được thiết lập.</p>
-                            {canManage && (
+                            {canManageSchedule && (
                                 <Link to={`/classes/${classData.id}/schedules/generate`} className="btn-secondary">
                                     Cấu hình sinh thời khóa biểu tự động
                                 </Link>
@@ -541,7 +544,7 @@ export function ClassDetailPage() {
                                                     >
                                                         Chi tiết
                                                     </Link>
-                                                    {canManage && sch.status !== 'completed' && sch.status !== 'cancelled' && !sch.attendance_checked && (
+                                                    {canManageSchedule && sch.status !== 'completed' && sch.status !== 'cancelled' && !sch.attendance_checked && (
                                                         <Link
                                                             to={`/classes/${classData.id}/schedules/${sch.id}/edit`}
                                                             className="btn-action-edit"

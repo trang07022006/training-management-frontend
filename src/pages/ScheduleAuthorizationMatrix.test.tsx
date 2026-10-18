@@ -82,9 +82,10 @@ describe('SCRUM-228: Test Matrix Phân Quyền Lịch Hệ Thống ICTU', () => 
         })
         expect(screen.getByTestId('menu-item-schedules_calendar').textContent).toContain('Thời khóa biểu')
         expect(screen.queryByTestId('menu-item-my_schedule')).toBeNull()
+        expect(screen.queryByTestId('menu-item-sessions')).toBeNull()
     })
 
-    it('2. Quản lý đào tạo (training_manager): thấy "Thời khóa biểu", KHÔNG thấy "Lịch học của tôi"', async () => {
+    it('2. Quản lý đào tạo (training_manager): thấy "Thời khóa biểu" và "Quản lý buổi học", KHÔNG thấy "Lịch học của tôi"', async () => {
         render(
             <MemoryRouter initialEntries={['/schedules']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
@@ -99,6 +100,7 @@ describe('SCRUM-228: Test Matrix Phân Quyền Lịch Hệ Thống ICTU', () => 
             expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
         })
         expect(screen.getByTestId('menu-item-schedules_calendar').textContent).toContain('Thời khóa biểu')
+        expect(screen.getByTestId('menu-item-sessions')).toBeDefined()
         expect(screen.queryByTestId('menu-item-my_schedule')).toBeNull()
     })
 
@@ -122,7 +124,7 @@ describe('SCRUM-228: Test Matrix Phân Quyền Lịch Hệ Thống ICTU', () => 
 
     it('4. Học viên (trainee): thấy "Lịch học của tôi", KHÔNG thấy "Thời khóa biểu" quản lý', async () => {
         render(
-            <MemoryRouter initialEntries={['/trainee']}>
+            <MemoryRouter initialEntries={['/my-schedule']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
                     <TestAppWrapper role="trainee">
                         <Sidebar />
@@ -213,5 +215,24 @@ describe('SCRUM-228: Test Matrix Phân Quyền Lịch Hệ Thống ICTU', () => 
             expect(screen.getByTestId('page-my-schedule')).toBeDefined()
         })
         expect(screen.getByTestId('current-location').textContent).toBe('/my-schedule')
+    })
+
+    it('8. Multi-role Admin + Training Manager: thấy cả "Quản lý Người dùng", "Quản lý buổi học" và "Thời khóa biểu"', async () => {
+        render(
+            <MemoryRouter initialEntries={['/dashboard']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <TestAppWrapper role="admin" roles={['admin', 'training_manager']}>
+                        <Sidebar />
+                    </TestAppWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
+        })
+        expect(screen.getByTestId('menu-item-users')).toBeDefined()
+        expect(screen.getByTestId('menu-item-sessions')).toBeDefined()
+        expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
     })
 })

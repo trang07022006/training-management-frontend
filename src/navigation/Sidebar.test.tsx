@@ -12,11 +12,19 @@ import { SessionProvider, useSession } from '../auth/SessionProvider'
 import { Sidebar } from './Sidebar'
 import type { MenuItem } from './menuConfig'
 
-function SessionInitializer({ role }: { role?: string | null }) {
+function SessionInitializer({ role, roles }: { role?: string | null; roles?: string[] | null }) {
     const { startSession } = useSession()
     useEffect(() => {
-        startSession({ accessToken: 'test-acc', refreshToken: 'test-ref' }, role)
-    }, [role, startSession])
+        startSession(
+            { accessToken: 'test-acc', refreshToken: 'test-ref' },
+            role,
+            'test-user-id',
+            false,
+            'Test User',
+            'test@example.com',
+            roles ?? (role ? [role] : []),
+        )
+    }, [role, roles, startSession])
     return null
 }
 
@@ -38,17 +46,18 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
         expect(screen.getByTestId('menu-item-change_password')).toBeDefined()
 
-        // Admin không thấy: Bảng quản trị cũ, Khóa học mẫu cũ, Không gian Giảng viên, Góc Học viên, Lịch học của tôi
+        // Admin không thấy: Bảng quản trị cũ, Khóa học mẫu cũ, Không gian Giảng viên, Góc Học viên, Lịch học của tôi, Quản lý buổi học
         expect(screen.queryByTestId('menu-item-admin_dashboard')).toBeNull()
         expect(screen.queryByTestId('menu-item-courses')).toBeNull()
         expect(screen.queryByTestId('menu-item-trainer_dashboard')).toBeNull()
         expect(screen.queryByTestId('menu-item-trainee_dashboard')).toBeNull()
         expect(screen.queryByTestId('menu-item-my_schedule')).toBeNull()
+        expect(screen.queryByTestId('menu-item-sessions')).toBeNull()
     })
 
-    it('2. role Trainer thấy Không gian Giảng viên, Chương trình đào tạo, Thời khóa biểu và Lịch giảng dạy của tôi', () => {
+    it('2. role Trainer thấy Chương trình đào tạo, Thời khóa biểu và Lịch giảng dạy của tôi, không thấy Không gian Giảng viên', () => {
         render(
-            <MemoryRouter initialEntries={['/trainer']}>
+            <MemoryRouter initialEntries={['/my-schedule']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
                     <SessionInitializer role="trainer" />
                     <Sidebar />
@@ -57,7 +66,7 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         )
 
         expect(screen.getByTestId('menu-item-overview')).toBeDefined()
-        expect(screen.getByTestId('menu-item-trainer_dashboard')).toBeDefined()
+        expect(screen.queryByTestId('menu-item-trainer_dashboard')).toBeNull()
         expect(screen.getByTestId('menu-item-training_programs')).toBeDefined()
         expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
         expect(screen.getByTestId('menu-item-my_schedule')).toBeDefined()
@@ -70,9 +79,9 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.queryByTestId('menu-item-trainee_dashboard')).toBeNull()
     })
 
-    it('3. role Trainee thấy Góc Học viên, Chương trình đào tạo, Lịch học của tôi và không thấy menu Admin/Trainer, Thời khóa biểu quản lý', () => {
+    it('3. role Trainee thấy Chương trình đào tạo, Lịch học của tôi và không thấy Góc Học viên, Admin/Trainer, Thời khóa biểu quản lý', () => {
         render(
-            <MemoryRouter initialEntries={['/trainee']}>
+            <MemoryRouter initialEntries={['/my-schedule']}>
                 <SessionProvider apiOrigin="http://localhost:5000">
                     <SessionInitializer role="trainee" />
                     <Sidebar />
@@ -81,7 +90,7 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         )
 
         expect(screen.getByTestId('menu-item-overview')).toBeDefined()
-        expect(screen.getByTestId('menu-item-trainee_dashboard')).toBeDefined()
+        expect(screen.queryByTestId('menu-item-trainee_dashboard')).toBeNull()
         expect(screen.getByTestId('menu-item-training_programs')).toBeDefined()
         expect(screen.getByTestId('menu-item-my_schedule')).toBeDefined()
         expect(screen.getByTestId('menu-item-my_schedule').textContent).toContain('Lịch học của tôi')
@@ -212,5 +221,36 @@ describe('SCRUM-23 Phase 2: Sidebar theo Permission', () => {
         expect(screen.getByTestId('menu-item-subjects')).toBeDefined()
         expect(screen.getByTestId('menu-item-students')).toBeDefined()
         expect(screen.getByTestId('menu-item-leads')).toBeDefined()
+    })
+
+    it('10. Quản lý đào tạo (training_manager) thấy menu Quản lý buổi học (/sessions) và Thời khóa biểu (/schedules)', () => {
+        render(
+            <MemoryRouter initialEntries={['/sessions']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="training_manager" />
+                    <Sidebar />
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        expect(screen.getByTestId('menu-item-sessions')).toBeDefined()
+        expect(screen.getByTestId('menu-item-sessions').textContent).toContain('Quản lý buổi học')
+        expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
+        expect(screen.queryByTestId('menu-item-users')).toBeNull()
+    })
+
+    it('11. Tài khoản có cả admin và training_manager thấy cả Quản lý Người dùng, Quản lý buổi học và Thời khóa biểu', () => {
+        render(
+            <MemoryRouter initialEntries={['/dashboard']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="admin" roles={['admin', 'training_manager']} />
+                    <Sidebar />
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        expect(screen.getByTestId('menu-item-users')).toBeDefined()
+        expect(screen.getByTestId('menu-item-sessions')).toBeDefined()
+        expect(screen.getByTestId('menu-item-schedules_calendar')).toBeDefined()
     })
 })

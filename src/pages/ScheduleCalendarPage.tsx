@@ -13,6 +13,7 @@ import {
     formatInstructorLabel,
     formatScheduleStatus,
 } from '../utils/scheduleDisplayUtils'
+import { PageHeader } from '../components/PageHeader'
 import './ScheduleCalendarPage.css'
 
 function formatDateISO(d: Date): string {
@@ -220,12 +221,7 @@ export function ScheduleCalendarPage() {
         <div className="schedule-calendar-container" data-testid="schedule-calendar-page">
             {/* Header trang */}
             <div className="calendar-header-section">
-                <div className="calendar-title-wrap">
-                    <h1>📅 Lịch Đào Tạo (Thời Khóa Biểu)</h1>
-                    <p className="calendar-subtitle">
-                        Xem thời khóa biểu tổng thể theo tuần và tháng, phát hiện khoảng trống và chồng chéo lịch học.
-                    </p>
-                </div>
+                <PageHeader title="Thời khóa biểu" subtitle="Xem lịch tuần, tháng và tra cứu buổi học theo lớp, giảng viên, phòng học." />
 
                 {/* Nút chuyển đổi Tuần / Tháng (AC 1) */}
                 <div className="view-mode-toggle" role="group" aria-label="Chế độ xem">

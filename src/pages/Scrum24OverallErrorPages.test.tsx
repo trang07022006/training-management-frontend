@@ -96,7 +96,7 @@ function Scrum24TestApp({ initialEntry = '/' }: { initialEntry?: string }) {
                                     />
                                 }
                             >
-                                <Route path="/trainee" element={<div data-testid="trainee-content">Nội Dung Trainee</div>} />
+                                <Route path="/my-schedule" element={<div data-testid="trainee-content">Nội Dung Trainee</div>} />
                             </Route>
 
                             <Route path="/change-password" element={<ChangePasswordPage />} />
@@ -261,7 +261,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
                     </SessionProvider>
                 </MemoryRouter>,
             )
-            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainer')
+            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
             u2()
 
             render(
@@ -273,7 +273,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
                     </SessionProvider>
                 </MemoryRouter>,
             )
-            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainee')
+            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
         })
     })
 

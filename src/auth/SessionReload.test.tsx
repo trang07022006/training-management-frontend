@@ -17,7 +17,6 @@ import { RequirePermission } from './RequirePermission'
 import { SessionRedirect } from './SessionRedirect'
 import { SessionNotice } from './SessionNotice'
 import { LoginPage } from '../pages/LoginPage'
-import { RoleDashboard } from '../pages/RoleDashboard'
 import {
     saveStoredSession,
     loadStoredSession,
@@ -93,30 +92,10 @@ function renderReloadApp(
                                     />
                                 }
                             >
-                                <Route path="/admin" element={<RoleDashboard role="admin" />} />
+                                <Route path="/admin" element={<h1>Khu vực Quản trị</h1>} />
                             </Route>
 
-                            <Route
-                                element={
-                                    <RequirePermission
-                                        requiredRole="trainer"
-                                        fallbackPath="/forbidden"
-                                    />
-                                }
-                            >
-                                <Route path="/trainer" element={<RoleDashboard role="trainer" />} />
-                            </Route>
-
-                            <Route
-                                element={
-                                    <RequirePermission
-                                        requiredRole="trainee"
-                                        fallbackPath="/forbidden"
-                                    />
-                                }
-                            >
-                                <Route path="/trainee" element={<RoleDashboard role="trainee" />} />
-                            </Route>
+                            <Route path="/my-schedule" element={<h1>Lịch học và giảng dạy</h1>} />
                         </Route>
 
                         <Route path="/forbidden" element={<h1>Không có quyền truy cập</h1>} />
@@ -169,15 +148,15 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
         expect(screen.getByRole('heading', { name: 'Trang chủ hệ thống' })).toBeDefined()
     })
 
-    // 2. trainer reload stays /trainer
-    it('2. trainer reload stays /trainer: giảng viên F5 vẫn ở lại route /trainer', async () => {
+    // 2. trainer reload stays /my-schedule
+    it('2. trainer reload stays /my-schedule: giảng viên F5 vẫn ở lại route /my-schedule', async () => {
         saveStoredSession({
             tokens: sampleTokens,
             role: 'trainer',
             userId: 'trainer-123',
         })
 
-        const fetcher = renderReloadApp('/trainer')
+        const fetcher = renderReloadApp('/my-schedule')
         fetcher.mockResolvedValueOnce(
             jsonResponse({
                 user_id: 'trainer-123',
@@ -190,21 +169,21 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
             expect(screen.getByTestId('current-loading').textContent).toBe('idle')
         })
 
-        expect(screen.getByTestId('current-path').textContent).toBe('/trainer')
+        expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
         expect(screen.getByTestId('current-session').textContent).toBe('active')
         expect(screen.getByTestId('current-role').textContent).toBe('trainer')
-        expect(screen.getByRole('heading', { name: 'Bảng điều khiển Giảng viên' })).toBeDefined()
+        expect(screen.getByRole('heading', { name: 'Lịch học và giảng dạy' })).toBeDefined()
     })
 
-    // 3. trainee reload stays /trainee
-    it('3. trainee reload stays /trainee: học viên F5 vẫn ở lại route /trainee', async () => {
+    // 3. trainee reload stays /my-schedule
+    it('3. trainee reload stays /my-schedule: học viên F5 vẫn ở lại route /my-schedule', async () => {
         saveStoredSession({
             tokens: sampleTokens,
             role: 'trainee',
             userId: 'trainee-456',
         })
 
-        const fetcher = renderReloadApp('/trainee')
+        const fetcher = renderReloadApp('/my-schedule')
         fetcher.mockResolvedValueOnce(
             jsonResponse({
                 user_id: 'trainee-456',
@@ -217,10 +196,10 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
             expect(screen.getByTestId('current-loading').textContent).toBe('idle')
         })
 
-        expect(screen.getByTestId('current-path').textContent).toBe('/trainee')
+        expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
         expect(screen.getByTestId('current-session').textContent).toBe('active')
         expect(screen.getByTestId('current-role').textContent).toBe('trainee')
-        expect(screen.getByRole('heading', { name: 'Bảng điều khiển Học viên' })).toBeDefined()
+        expect(screen.getByRole('heading', { name: 'Lịch học và giảng dạy' })).toBeDefined()
     })
 
     // 4. admin reload stays /admin
@@ -247,7 +226,7 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
         expect(screen.getByTestId('current-path').textContent).toBe('/admin')
         expect(screen.getByTestId('current-session').textContent).toBe('active')
         expect(screen.getByTestId('current-role').textContent).toBe('admin')
-        expect(screen.getByRole('heading', { name: 'Bảng điều khiển Quản trị viên' })).toBeDefined()
+        expect(screen.getByRole('heading', { name: 'Khu vực Quản trị' })).toBeDefined()
     })
 
     // 5. expired session reload -> /login + "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục."
@@ -259,7 +238,7 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
         })
 
         // Backend trả 401 SESSION_EXPIRED
-        renderReloadApp('/trainer', () =>
+        renderReloadApp('/my-schedule', () =>
             Promise.resolve(
                 jsonResponse({ code: 'SESSION_EXPIRED', message: 'Phiên đăng nhập đã hết hạn.' }, 401),
             ),
@@ -285,7 +264,7 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
         })
 
         // Backend trả 401 SESSION_REVOKED
-        renderReloadApp('/trainee', () =>
+        renderReloadApp('/my-schedule', () =>
             Promise.resolve(
                 jsonResponse({ code: 'SESSION_REVOKED', message: 'Phiên làm việc đã bị thu hồi.' }, 401),
             ),
@@ -315,12 +294,12 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
             resolveBackendResponse = resolve
         })
 
-        renderReloadApp('/trainer', () => deferredPromise)
+        renderReloadApp('/my-schedule', () => deferredPromise)
 
         // Ngay khi mount, phiên đang được phục hồi:
-        // Đảm bảo có loading spinner, path vẫn là /trainer, CHƯA bị chuyển sang /login
+        // Đảm bảo có loading spinner, path vẫn là /my-schedule, CHƯA bị chuyển sang /login
         expect(screen.getByTestId('session-loading-spinner')).toBeDefined()
-        expect(screen.getByTestId('current-path').textContent).toBe('/trainer')
+        expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
         expect(screen.queryByRole('heading', { name: 'Đăng nhập' })).toBeNull()
 
         // Sau khi backend phản hồi thành công:
@@ -337,22 +316,22 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
         })
 
         expect(screen.queryByTestId('session-loading-spinner')).toBeNull()
-        expect(screen.getByTestId('current-path').textContent).toBe('/trainer')
-        expect(screen.getByRole('heading', { name: 'Bảng điều khiển Giảng viên' })).toBeDefined()
+        expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
+        expect(screen.getByRole('heading', { name: 'Lịch học và giảng dạy' })).toBeDefined()
     })
 
     // 8. role/user identity được restore đúng
     it('8. role/user identity được restore đúng: khôi phục chính xác role và userId', async () => {
         saveStoredSession({
             tokens: sampleTokens,
-            role: 'trainer',
-            userId: 'trainer-special-id',
+            role: 'trainee',
+            userId: 'trainee-special-id',
         })
 
-        renderReloadApp('/trainer', () =>
+        renderReloadApp('/my-schedule', () =>
             Promise.resolve(
                 jsonResponse({
-                    user_id: 'trainer-special-id',
+                    user_id: 'trainee-special-id',
                     idle_expires_at: '2026-10-02T15:00:00Z',
                     absolute_expires_at: '2026-10-02T22:00:00Z',
                 }),
@@ -363,9 +342,10 @@ describe('SCRUM-19: Khôi phục phiên làm việc sau khi tải lại trang (S
             expect(screen.getByTestId('current-loading').textContent).toBe('idle')
         })
 
-        expect(screen.getByTestId('current-role').textContent).toBe('trainer')
-        expect(screen.getByTestId('current-user-id').textContent).toBe('trainer-special-id')
-        expect(screen.getByText(/Mã tài khoản:/i)).toBeDefined()
-        expect(screen.getAllByText('trainer-special-id').length).toBeGreaterThan(0)
+        expect(screen.getByTestId('current-role').textContent).toBe('trainee')
+        expect(screen.getByTestId('current-user-id').textContent).toBe('trainee-special-id')
+        expect(screen.getByTestId('current-path').textContent).toBe('/my-schedule')
+        expect(screen.getByRole('heading', { name: 'Lịch học và giảng dạy' })).toBeDefined()
+        expect(screen.getAllByText('trainee-special-id').length).toBeGreaterThan(0)
     })
 })

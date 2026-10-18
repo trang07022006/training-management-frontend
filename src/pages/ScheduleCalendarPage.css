@@ -1,10 +1,10 @@
 /* ScheduleCalendarPage.css - SCRUM-227 Lịch thời khóa biểu theo tuần / tháng */
 
 .schedule-calendar-container {
-    padding: 24px 32px;
+    padding: 0 0 24px;
     margin: 0 auto;
     font-family: inherit;
-    color: #1e293b;
+    color: var(--text-main);
     display: flex;
     flex-direction: column;
     gap: 20px;

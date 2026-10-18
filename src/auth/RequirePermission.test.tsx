@@ -78,7 +78,7 @@ describe('SCRUM-23 Phase 4: Route / Menu Consistency (RequirePermission)', () =>
                     {/* User là trainee cố tình truy cập /admin */}
                     <TestAppWrapper role="trainee">
                         <Routes>
-                            <Route path="/trainee" element={<h1>Trang Học viên</h1>} />
+                            <Route path="/my-schedule" element={<h1>Lịch học của tôi</h1>} />
                             <Route
                                 element={
                                     <RequirePermission
@@ -97,9 +97,9 @@ describe('SCRUM-23 Phase 4: Route / Menu Consistency (RequirePermission)', () =>
 
         // Không render nội dung admin
         expect(screen.queryByText('Nội dung Quản trị viên')).toBeNull()
-        // Chuyển hướng về trang chủ của vai trò trainee (/trainee)
-        expect(screen.getByTestId('location-display').textContent).toBe('/trainee')
-        expect(screen.getByText('Trang Học viên')).toBeDefined()
+        // Chuyển hướng về trang chủ của vai trò trainee (/my-schedule)
+        expect(screen.getByTestId('location-display').textContent).toBe('/my-schedule')
+        expect(screen.getByText('Lịch học của tôi')).toBeDefined()
     })
 
     it('3. direct URL không bypass frontend guard', () => {
