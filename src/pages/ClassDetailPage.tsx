@@ -37,6 +37,9 @@ export function ClassDetailPage() {
 
     const effectiveSchedulePermissions = permissions?.length ? permissions : getRolePermissions(normalizedRoles)
     const canManageSchedule = effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.SCHEDULE_MANAGE)
+    const canLifecycleManage =
+        permissions?.includes(SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE) ||
+        normalizedRoles.includes('training_manager')
 
     // Determine active tab from URL pathname
     let activeTab: ClassDetailTab = 'info'
@@ -447,6 +450,7 @@ export function ClassDetailPage() {
                                         <th>Số điện thoại</th>
                                         <th>Ngày ghi danh</th>
                                         <th>Trạng thái</th>
+                                        {canLifecycleManage && <th style={{ textAlign: 'right' }}>Thao tác</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -467,6 +471,17 @@ export function ClassDetailPage() {
                                                     {st.status === 'enrolled' ? 'Đã ghi danh' : (st.status || 'Đang học')}
                                                 </span>
                                             </td>
+                                            {canLifecycleManage && (
+                                                <td style={{ textAlign: 'right' }}>
+                                                    <Link
+                                                        to={`/students/${st.student_id}/reserve?classId=${classData.id}`}
+                                                        className="btn-secondary"
+                                                        style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
+                                                    >
+                                                        Bảo lưu
+                                                    </Link>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>

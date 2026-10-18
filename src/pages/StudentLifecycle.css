@@ -1,0 +1,283 @@
+/* Student Lifecycle CSS (SCRUM-252) */
+
+.lifecycle-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+.lifecycle-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+}
+
+.lifecycle-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lifecycle-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.lifecycle-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.lifecycle-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lifecycle-info-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lifecycle-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.lifecycle-form-group {
+    margin-bottom: 20px;
+}
+
+.lifecycle-form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.lifecycle-form-label .required {
+    color: #ef4444;
+    margin-left: 4px;
+}
+
+.lifecycle-form-control {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #1e293b;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+.lifecycle-form-control:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+textarea.lifecycle-form-control {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.lifecycle-form-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+.lifecycle-impact-box {
+    background: #f8fafc;
+    border-left: 4px solid #0284c7;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 16px;
+    margin: 20px 0;
+}
+
+.lifecycle-impact-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0369a1;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lifecycle-impact-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.lifecycle-alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lifecycle-alert.error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.lifecycle-alert.success {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.lifecycle-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* Modal styles */
+.lifecycle-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 16px;
+}
+
+.lifecycle-modal-dialog {
+    background: #ffffff;
+    border-radius: 14px;
+    max-width: 540px;
+    width: 100%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.lifecycle-modal-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lifecycle-modal-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.lifecycle-modal-body {
+    padding: 24px;
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.lifecycle-modal-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 0;
+}
+
+.lifecycle-modal-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.lifecycle-modal-summary-row:last-child {
+    border-bottom: none;
+}
+
+.lifecycle-modal-summary-label {
+    font-weight: 500;
+    color: #64748b;
+}
+
+.lifecycle-modal-summary-val {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.lifecycle-modal-footer {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .lifecycle-container {
+        padding: 16px 12px;
+    }
+    .lifecycle-card {
+        padding: 16px;
+    }
+    .lifecycle-actions {
+        flex-direction: column-reverse;
+    }
+    .lifecycle-actions button {
+        width: 100%;
+    }
+    .lifecycle-modal-footer {
+        flex-direction: column-reverse;
+    }
+    .lifecycle-modal-footer button {
+        width: 100%;
+    }
+}
