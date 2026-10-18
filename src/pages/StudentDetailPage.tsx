@@ -179,14 +179,24 @@ export function StudentDetailPage() {
                             Quay lại danh sách
                         </button>
                         {canLifecycleManage && (
-                            <button
-                                type="button"
-                                className="btn-secondary"
-                                style={{ borderColor: '#f59e0b', color: '#b45309' }}
-                                onClick={() => navigate(`/students/${student.id}/reserve`)}
-                            >
-                                ⏸️ Bảo lưu học viên
-                            </button>
+                            <>
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    style={{ borderColor: '#f59e0b', color: '#b45309' }}
+                                    onClick={() => navigate(`/students/${student.id}/reserve`)}
+                                >
+                                    ⏸️ Bảo lưu học viên
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    style={{ borderColor: '#3b82f6', color: '#1d4ed8' }}
+                                    onClick={() => navigate(`/students/${student.id}/transfer`)}
+                                >
+                                    🔄 Chuyển lớp
+                                </button>
+                            </>
                         )}
                         {canManage && (
                             <button
@@ -318,13 +328,22 @@ export function StudentDetailPage() {
                                     {cid && (
                                         <div className="student-current-class-action" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                             {canLifecycleManage && (
-                                                <Link
-                                                    to={`/students/${student.id}/reserve?classId=${cid}`}
-                                                    className="btn-secondary"
-                                                    style={{ padding: '8px 14px', fontSize: '13px', display: 'inline-block', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
-                                                >
-                                                    Bảo lưu lớp
-                                                </Link>
+                                                <>
+                                                    <Link
+                                                        to={`/students/${student.id}/reserve?classId=${cid}`}
+                                                        className="btn-secondary"
+                                                        style={{ padding: '8px 14px', fontSize: '13px', display: 'inline-block', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
+                                                    >
+                                                        Bảo lưu
+                                                    </Link>
+                                                    <Link
+                                                        to={`/students/${student.id}/transfer?classId=${cid}`}
+                                                        className="btn-secondary"
+                                                        style={{ padding: '8px 14px', fontSize: '13px', display: 'inline-block', textDecoration: 'none', borderColor: '#3b82f6', color: '#1d4ed8' }}
+                                                    >
+                                                        Chuyển lớp
+                                                    </Link>
+                                                </>
                                             )}
                                             <Link
                                                 to={`/classes/${cid}`}

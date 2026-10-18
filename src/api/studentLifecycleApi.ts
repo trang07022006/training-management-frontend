@@ -88,6 +88,39 @@ export async function reserveStudent(
 }
 
 /**
+ * Thực hiện chuyển lớp học viên và giữ nguyên lịch sử (SCRUM-252.2).
+ * POST /api/v1/students/<student_id>/transfer
+ */
+export async function transferStudent(
+    requestFn: RequestFunction,
+    studentId: string,
+    payload: TransferStudentPayload,
+): Promise<{ message: string; data: any }> {
+    const path = `/api/v1/students/${encodeURIComponent(studentId.trim())}/transfer`
+
+    const res = await requestFn(path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể thực hiện chuyển lớp học viên.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body
+}
+
+/**
  * Lấy lịch sử thay đổi vòng đời học viên (bảo lưu, chuyển lớp, thôi học) (SCRUM-252.4).
  * GET /api/v1/students/<student_id>/lifecycle-history
  */

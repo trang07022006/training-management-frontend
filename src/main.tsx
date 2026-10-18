@@ -70,6 +70,7 @@ import { StudentsPage } from './pages/StudentsPage'
 import { StudentDetailPage } from './pages/StudentDetailPage'
 import { StudentEditPage } from './pages/StudentEditPage'
 import { StudentReservePage } from './pages/StudentReservePage'
+import { StudentTransferPage } from './pages/StudentTransferPage'
 
 // Lead Pages
 import { LeadsPage } from './pages/LeadsPage'
@@ -185,6 +186,7 @@ createRoot(document.getElementById('root')!).render(
                   }
                 >
                   <Route path="/students/:studentId/reserve" element={<StudentReservePage />} />
+                  <Route path="/students/:studentId/transfer" element={<StudentTransferPage />} />
                 </Route>
 
                 {/* Classes */}

@@ -473,13 +473,22 @@ export function ClassDetailPage() {
                                             </td>
                                             {canLifecycleManage && (
                                                 <td style={{ textAlign: 'right' }}>
-                                                    <Link
-                                                        to={`/students/${st.student_id}/reserve?classId=${classData.id}`}
-                                                        className="btn-secondary"
-                                                        style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
-                                                    >
-                                                        Bảo lưu
-                                                    </Link>
+                                                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                                        <Link
+                                                            to={`/students/${st.student_id}/reserve?classId=${classData.id}`}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
+                                                        >
+                                                            Bảo lưu
+                                                        </Link>
+                                                        <Link
+                                                            to={`/students/${st.student_id}/transfer?classId=${classData.id}`}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#3b82f6', color: '#1d4ed8' }}
+                                                        >
+                                                            Chuyển lớp
+                                                        </Link>
+                                                    </div>
                                                 </td>
                                             )}
                                         </tr>
