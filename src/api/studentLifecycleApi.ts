@@ -31,17 +31,22 @@ export interface DropStudentPayload {
 export interface StudentLifecycleHistoryItem {
     id: string
     student_id: string
+    enrollment_id?: string | null
     action_type: 'reserve' | 'transfer' | 'drop'
-    class_id: string | null
-    target_class_id: string | null
+    source_class_id?: string | null
+    target_class_id?: string | null
+    source_class_code?: string | null
+    target_class_code?: string | null
     effective_date: string
     reason: string
-    performed_by: string | null
-    performer_name: string | null
-    performer_email: string | null
-    source_class_code: string | null
-    target_class_code: string | null
+    status: 'applied' | 'pending'
+    performed_by?: string | null
+    performer_name?: string | null
+    performer_email?: string | null
+    student_name?: string | null
+    student_code?: string | null
     created_at: string
+    updated_at?: string
 }
 
 export interface EligibleAttendanceStudent {
@@ -178,7 +183,7 @@ export async function getStudentLifecycleHistory(
         throw new ApiError(message, code, res.status)
     }
 
-    return body.data || []
+    return body.data?.items || (Array.isArray(body.data) ? body.data : [])
 }
 
 /**
