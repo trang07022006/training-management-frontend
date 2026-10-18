@@ -196,6 +196,14 @@ export function StudentDetailPage() {
                                 >
                                     🔄 Chuyển lớp
                                 </button>
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    style={{ borderColor: '#ef4444', color: '#b91c1c' }}
+                                    onClick={() => navigate(`/students/${student.id}/drop`)}
+                                >
+                                    🛑 Thôi học
+                                </button>
                             </>
                         )}
                         {canManage && (
@@ -342,6 +350,13 @@ export function StudentDetailPage() {
                                                         style={{ padding: '8px 14px', fontSize: '13px', display: 'inline-block', textDecoration: 'none', borderColor: '#3b82f6', color: '#1d4ed8' }}
                                                     >
                                                         Chuyển lớp
+                                                    </Link>
+                                                    <Link
+                                                        to={`/students/${student.id}/drop?classId=${cid}`}
+                                                        className="btn-secondary"
+                                                        style={{ padding: '8px 14px', fontSize: '13px', display: 'inline-block', textDecoration: 'none', borderColor: '#ef4444', color: '#b91c1c' }}
+                                                    >
+                                                        Thôi học
                                                     </Link>
                                                 </>
                                             )}

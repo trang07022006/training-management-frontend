@@ -121,6 +121,39 @@ export async function transferStudent(
 }
 
 /**
+ * Thực hiện thôi học cho học viên theo ngày hiệu lực (SCRUM-252.3).
+ * POST /api/v1/students/<student_id>/drop
+ */
+export async function dropStudent(
+    requestFn: RequestFunction,
+    studentId: string,
+    payload: DropStudentPayload,
+): Promise<{ message: string; data: any }> {
+    const path = `/api/v1/students/${encodeURIComponent(studentId.trim())}/drop`
+
+    const res = await requestFn(path, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    })
+
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || 'API_ERROR'
+        const message = getErrorMessage(
+            { code, message: body.message, status: res.status },
+            'Không thể thực hiện thôi học học viên.',
+        )
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body
+}
+
+/**
  * Lấy lịch sử thay đổi vòng đời học viên (bảo lưu, chuyển lớp, thôi học) (SCRUM-252.4).
  * GET /api/v1/students/<student_id>/lifecycle-history
  */

@@ -488,6 +488,13 @@ export function ClassDetailPage() {
                                                         >
                                                             Chuyển lớp
                                                         </Link>
+                                                        <Link
+                                                            to={`/students/${st.student_id}/drop?classId=${classData.id}`}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#ef4444', color: '#b91c1c' }}
+                                                        >
+                                                            Thôi học
+                                                        </Link>
                                                     </div>
                                                 </td>
                                             )}
