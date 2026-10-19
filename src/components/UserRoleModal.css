@@ -178,29 +178,14 @@
     flex: 1;
 }
 
-.btn-assign-role {
+.role-inline-loading {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 9px 16px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #ffffff;
-    background-color: #2563eb;
-    border: 1px solid #1d4ed8;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
+    color: #2563eb;
+    font-size: 0.85rem;
+    font-weight: 500;
     white-space: nowrap;
-}
-
-.btn-assign-role:hover:not(:disabled) {
-    background-color: #1d4ed8;
-}
-
-.btn-assign-role:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
 }
 
 /* Success Banner */
@@ -233,10 +218,5 @@
     .assign-role-group {
         flex-direction: column;
         align-items: stretch;
-    }
-
-    .btn-assign-role {
-        width: 100%;
-        justify-content: center;
     }
 }

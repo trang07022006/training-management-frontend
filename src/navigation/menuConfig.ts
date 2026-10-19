@@ -1,6 +1,8 @@
+import { matchPath } from 'react-router'
+
 /**
  * Mô hình và cấu hình Menu dựa trên quyền người dùng (RBAC) (SCRUM-23).
- * Đồng bộ với danh mục vai trò và quyền hạn chuẩn từ Backend (SCRUM-60 -> 74):
+ * Đồng bộ với danh mục vai trò và quyền hạn chuẩn từ Backend (SCRUM-61 -> 74):
  * - Roles: admin, trainer, trainee, user
  * - Permissions: user.view, user.manage, course.view, course.manage, session.view, session.revoke
  */
@@ -25,6 +27,11 @@ export const SYSTEM_PERMISSIONS = {
     COURSE_MANAGE: 'course.manage',
     SESSION_VIEW: 'session.view',
     SESSION_REVOKE: 'session.revoke',
+    LEAD_DELETE: 'lead.delete',
+    SCHEDULE_VIEW: 'schedule.view',
+    SCHEDULE_MANAGE: 'schedule.manage',
+    SCHEDULE_PERSONAL_VIEW: 'schedule.personal_view',
+    STUDENT_LIFECYCLE_MANAGE: 'student.lifecycle_manage',
 } as const
 
 export type SystemPermission =
@@ -44,18 +51,37 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.COURSE_MANAGE,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SESSION_REVOKE,
+        SYSTEM_PERMISSIONS.LEAD_DELETE,
+        SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
     ],
     trainer: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.COURSE_MANAGE,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     ],
     user: [
         SYSTEM_PERMISSIONS.SESSION_VIEW,
+    ],
+    consultant: [
+        SYSTEM_PERMISSIONS.COURSE_VIEW,
+        SYSTEM_PERMISSIONS.COURSE_MANAGE,
+        SYSTEM_PERMISSIONS.SESSION_VIEW,
+    ],
+    training_manager: [
+        SYSTEM_PERMISSIONS.COURSE_VIEW,
+        SYSTEM_PERMISSIONS.COURSE_MANAGE,
+        SYSTEM_PERMISSIONS.SESSION_VIEW,
+        SYSTEM_PERMISSIONS.LEAD_DELETE,
+        SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+        SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
+        SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE,
     ],
 }
 
@@ -105,17 +131,9 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
     {
         key: 'overview',
         label: 'Tổng quan',
-        path: '/',
+        path: '/dashboard',
         icon: 'dashboard',
         isPublic: true,
-    },
-    {
-        key: 'admin_dashboard',
-        label: 'Bảng quản trị',
-        path: '/admin',
-        icon: 'shield',
-        requiredRole: 'admin',
-        requiredPermission: SYSTEM_PERMISSIONS.USER_MANAGE,
     },
     {
         key: 'users',
@@ -126,27 +144,67 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.USER_VIEW,
     },
     {
-        key: 'trainer_dashboard',
-        label: 'Không gian Giảng viên',
-        path: '/trainer',
+        key: 'training_programs',
+        label: 'Chương trình đào tạo',
+        path: '/training-programs',
+        icon: 'graduation-cap',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
+        key: 'subjects',
+        label: 'Môn học',
+        path: '/subjects',
+        icon: 'book-open',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
+        key: 'classes',
+        label: 'Lớp học',
+        path: '/classes',
         icon: 'chalkboard-teacher',
-        requiredRole: 'trainer',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+    {
+        key: 'classrooms',
+        label: 'Phòng học',
+        path: '/classrooms',
+        icon: 'building',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_MANAGE,
     },
     {
-        key: 'trainee_dashboard',
-        label: 'Góc Học viên',
-        path: '/trainee',
-        icon: 'user-graduate',
-        requiredRole: 'trainee',
-        requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+        key: 'sessions',
+        label: 'Quản lý buổi học',
+        path: '/sessions',
+        icon: 'calendar',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
     },
     {
-        key: 'courses',
-        label: 'Quản lý Khóa học',
-        path: '/courses',
-        icon: 'book',
+        key: 'schedules_calendar',
+        label: 'Thời khóa biểu',
+        path: '/schedules',
+        icon: 'calendar',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
+    },
+    {
+        key: 'my_schedule',
+        label: 'Lịch học của tôi',
+        path: '/my-schedule',
+        icon: 'calendar-check',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
+    },
+    {
+        key: 'students',
+        label: 'Học viên',
+        path: '/students',
+        icon: 'user-graduate',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
+    },
+        {
+        key: 'leads',
+        label: 'Tư vấn tuyển sinh',
+        path: '/leads',
+        icon: 'users',
+        requiredPermission: SYSTEM_PERMISSIONS.COURSE_MANAGE,
     },
     {
         key: 'change_password',
@@ -206,7 +264,7 @@ export function filterMenuItems(
         userPermissions.filter((p) => typeof p === 'string' && isKnownPermission(p)),
     )
 
-    return menuItems.filter((item) => {
+    const filtered = menuItems.filter((item) => {
         // Menu công khai cho người dùng đã xác thực phiên
         if (item.isPublic) {
             return true
@@ -231,4 +289,78 @@ export function filterMenuItems(
         // Nếu menu không phải public và không cấu hình quyền rõ ràng -> Default Deny
         return false
     })
+
+    // Đồng bộ tên menu theo ngữ cảnh học viên vs giảng viên (SCRUM-228 Requirement 2)
+    return filtered.map((item) => {
+        if (item.key === 'my_schedule') {
+            if (userRoles.includes('trainer') && !userRoles.includes('trainee')) {
+                return {
+                    ...item,
+                    label: 'Lịch giảng dạy của tôi',
+                }
+            }
+        }
+        return item
+    })
+}
+
+/**
+ * Helper kiểm tra xem một MenuItem có đang ở trạng thái active theo URL pathname hiện tại hay không.
+ *
+ * Tiêu chí:
+ * 1. Khớp chính xác (exact match): current === itemPath
+ * 2. Module "Chương trình đào tạo":
+ *    - Active khi ở danh sách (/training-programs)
+ *    - Vẫn giữ active khi chuyển sang trang cấu trúc (/training-programs/:programId/structure)
+ *    - Vẫn active khi ở bất kỳ route con nào thuộc module (/training-programs/*)
+ * 3. Module "Môn học":
+ *    - Active khi ở /subjects hoặc route con /subjects/:subjectId/sessions
+ * 4. Không làm active sai các module khác (ví dụ /subjects không kích hoạt /training-programs).
+ */
+export function isMenuActive(item: MenuItem, currentPathname: string): boolean {
+    if (!item || !currentPathname) {
+        return false
+    }
+
+    const current = currentPathname.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/'
+    const itemPath = item.path.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/'
+
+    // 1. Khớp chính xác route
+    if (current === itemPath) {
+        return true
+    }
+
+    // 2. Module "Chương trình đào tạo":
+    // Active khi ở /training-programs hoặc bất kỳ route con nào (như /training-programs/:programId/structure)
+    if (item.key === 'training_programs' || item.path === '/training-programs') {
+        return Boolean(
+            matchPath('/training-programs/:programId/structure', current) ||
+            current.startsWith('/training-programs/')
+        )
+    }
+
+    // 3. Module "Môn học":
+    // Active khi ở /subjects hoặc bất kỳ route con nào (như /subjects/:subjectId/sessions)
+    if (item.key === 'subjects' || item.path === '/subjects') {
+        return Boolean(
+            matchPath('/subjects/:subjectId/sessions', current) ||
+            current.startsWith('/subjects/')
+        )
+    }
+
+    // 4. Module "Lớp học":
+    // Active khi ở /classes hoặc bất kỳ route con nào (như /classes/:classId)
+    if (item.key === 'classes' || item.path === '/classes') {
+        return Boolean(
+            current === '/classes' ||
+            current.startsWith('/classes/')
+        )
+    }
+
+    // 5. Các menu khác có route con tương ứng (loại trừ root / và /dashboard)
+    if (itemPath !== '/' && itemPath !== '/dashboard' && current.startsWith(itemPath + '/')) {
+        return true
+    }
+
+    return false
 }

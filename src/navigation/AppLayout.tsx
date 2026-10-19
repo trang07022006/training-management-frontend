@@ -10,17 +10,42 @@ import './AppLayout.css'
  */
 export function AppLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+
+    const handleToggleSidebar = () => {
+        // Toggle mobile drawer
+        setSidebarOpen((prev) => !prev)
+        // Toggle desktop collapse state
+        setIsSidebarCollapsed((prev) => !prev)
+    }
+
+    const handleCloseSidebar = () => {
+        setSidebarOpen(false)
+    }
+
+    const handleCollapseSidebar = () => {
+        setSidebarOpen(false)
+        setIsSidebarCollapsed(true)
+    }
 
     return (
         <div className="app-layout-container" data-testid="app-layout">
+            {/* Background ICTU Campus with frosted white overlay for authenticated area */}
+            <div className="app-main-bg" aria-hidden="true">
+                <div className="app-main-bg-img" />
+                <div className="app-main-bg-overlay" />
+            </div>
+
             <Sidebar
                 isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
+                isCollapsed={isSidebarCollapsed}
+                onClose={handleCloseSidebar}
+                onToggleCollapse={handleCollapseSidebar}
             />
 
-            <div className="app-main-viewport">
+            <div className={`app-main-viewport ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
                 <AppHeader
-                    onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+                    onToggleSidebar={handleToggleSidebar}
                 />
                 <main className="app-content-body" data-testid="app-content-body">
                     <Outlet />

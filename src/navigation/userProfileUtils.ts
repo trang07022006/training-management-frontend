@@ -65,3 +65,15 @@ export function getUserRoleDisplay(role?: string | string[] | null): string {
 
     return 'Người dùng'
 }
+
+/**
+ * Lấy chữ cái viết tắt từ họ tên (SCRUM-121 A6): chữ đầu của từ đầu tiên + từ cuối cùng.
+ * "Nguyễn Văn An" -> "NA", "Lê Minh Trang" -> "LT".
+ */
+export function getNameInitials(name?: string | null): string {
+    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return '?'
+    const first = parts[0].charAt(0)
+    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : ''
+    return (first + last).toUpperCase()
+}

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { getApiOrigin } from '../utils/apiConfig'
 import { getErrorMessage } from '../utils/errorMessages'
 import './ResetPasswordPage.css'
 
@@ -79,8 +80,7 @@ export function ResetPasswordPage({
         setNewPassword('')
         setConfirmPassword('')
       } else {
-        const baseOrigin =
-          apiOrigin || import.meta.env.VITE_API_ORIGIN || window.location.origin
+        const baseOrigin = apiOrigin || getApiOrigin()
         const response = await fetch(`${baseOrigin}/api/auth/reset-password`, {
           method: 'POST',
           headers: {

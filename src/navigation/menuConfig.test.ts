@@ -138,41 +138,69 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
     })
 
     it('9. lọc menu thực tế theo vai trò hệ thống', () => {
-        // Admin: có bảng quản trị, quản lý người dùng, khóa học, tổng quan, đổi mật khẩu
+        // Admin: có quản lý người dùng, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có admin_dashboard hoặc courses
         const adminMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'admin',
         })
         const adminKeys = adminMenu.map((m) => m.key)
         expect(adminKeys).toContain('overview')
-        expect(adminKeys).toContain('admin_dashboard')
         expect(adminKeys).toContain('users')
-        expect(adminKeys).toContain('courses')
+        expect(adminKeys).toContain('training_programs')
+        expect(adminKeys).not.toContain('admin_dashboard')
+        expect(adminKeys).not.toContain('courses')
         expect(adminKeys).not.toContain('trainer_dashboard')
         expect(adminKeys).not.toContain('trainee_dashboard')
+        expect(adminKeys).not.toContain('sessions')
+        expect(adminKeys).toContain('schedules_calendar')
 
-        // Trainer: có không gian giảng viên, khóa học, tổng quan, đổi mật khẩu; KHÔNG có users
+        // Training Manager: có sessions (Quản lý buổi học) và schedules_calendar (Thời khóa biểu); KHÔNG có users
+        const tmMenu = filterMenuItems(APP_MENU_CONFIG, {
+            hasSession: true,
+            role: 'training_manager',
+        })
+        const tmKeys = tmMenu.map((m) => m.key)
+        expect(tmKeys).toContain('sessions')
+        expect(tmKeys).toContain('schedules_calendar')
+        expect(tmKeys).not.toContain('users')
+
+        // Dual-role admin + training_manager: có cả users, sessions và schedules_calendar
+        const dualMenu = filterMenuItems(APP_MENU_CONFIG, {
+            hasSession: true,
+            role: 'admin',
+            roles: ['admin', 'training_manager'],
+        })
+        const dualKeys = dualMenu.map((m) => m.key)
+        expect(dualKeys).toContain('users')
+        expect(dualKeys).toContain('sessions')
+        expect(dualKeys).toContain('schedules_calendar')
+
+        // Trainer: có lịch giảng dạy của tôi, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có users, courses, admin_dashboard, trainer_dashboard
         const trainerMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'trainer',
         })
         const trainerKeys = trainerMenu.map((m) => m.key)
         expect(trainerKeys).toContain('overview')
-        expect(trainerKeys).toContain('trainer_dashboard')
-        expect(trainerKeys).toContain('courses')
+        expect(trainerKeys).toContain('my_schedule')
+        expect(trainerKeys).toContain('training_programs')
+        expect(trainerKeys).not.toContain('trainer_dashboard')
+        expect(trainerKeys).not.toContain('courses')
         expect(trainerKeys).not.toContain('users')
         expect(trainerKeys).not.toContain('admin_dashboard')
         expect(trainerKeys).not.toContain('trainee_dashboard')
 
-        // Trainee: có góc học viên, khóa học, tổng quan, đổi mật khẩu; KHÔNG có users
+        // Trainee: có lịch học của tôi, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có users, courses, admin_dashboard, trainee_dashboard, trainer_dashboard
         const traineeMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'trainee',
         })
         const traineeKeys = traineeMenu.map((m) => m.key)
         expect(traineeKeys).toContain('overview')
-        expect(traineeKeys).toContain('trainee_dashboard')
-        expect(traineeKeys).toContain('courses')
+        expect(traineeKeys).toContain('my_schedule')
+        expect(traineeKeys).toContain('training_programs')
+        expect(traineeKeys).not.toContain('trainee_dashboard')
+        expect(traineeKeys).not.toContain('courses')
         expect(traineeKeys).not.toContain('users')
         expect(traineeKeys).not.toContain('admin_dashboard')
         expect(traineeKeys).not.toContain('trainer_dashboard')

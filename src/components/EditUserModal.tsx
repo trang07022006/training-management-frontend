@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import { updateUserApi, type User, type UpdateUserData } from '../api/userApi'
 import { getErrorMessage } from '../utils/errorMessages'
+import { getRoleLabel } from '../auth/roleRouting'
 import './UserModal.css'
 
 export interface EditUserModalProps {
@@ -24,6 +25,8 @@ const ROLE_LABELS: Record<string, string> = {
     trainer: 'Giảng viên',
     trainee: 'Học viên',
     user: 'Người dùng',
+    consultant: 'Tư vấn tuyển sinh',
+    training_manager: 'Quản lý đào tạo',
 }
 
 interface EditUserFormContentProps {
@@ -48,7 +51,7 @@ function EditUserFormContent({
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const roleKey = (user.role || 'user').toLowerCase()
-    const roleLabel = ROLE_LABELS[roleKey] || user.role || 'Người dùng'
+    const roleLabel = ROLE_LABELS[roleKey] || getRoleLabel(user.role) || 'Người dùng'
 
     const validate = (): boolean => {
         const nextErrors: FormErrors = {}
