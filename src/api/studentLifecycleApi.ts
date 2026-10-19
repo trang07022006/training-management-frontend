@@ -60,6 +60,25 @@ export interface EligibleAttendanceStudent {
 }
 
 /**
+ * Định dạng nhãn hiển thị cho lớp học, tránh lặp mã lớp và tên lớp khi chúng giống nhau (SCRUM-252).
+ * Ví dụ: "TR_C5537 - TR_C5537" -> "TR_C5537"
+ * "CNTT-K21A - Lập trình Web" -> "CNTT-K21A - Lập trình Web"
+ */
+export function formatClassOptionLabel(cls?: {
+    class_code?: string | null
+    name?: string | null
+    class_name?: string | null
+} | null): string {
+    if (!cls) return '—'
+    const code = (cls.class_code || '').trim()
+    const name = (cls.name || cls.class_name || '').trim()
+    if (!name || name.toLowerCase() === code.toLowerCase()) {
+        return code || 'Chưa có mã lớp'
+    }
+    return `${code} - ${name}`
+}
+
+/**
  * Thực hiện bảo lưu học viên theo lớp và ngày hiệu lực (SCRUM-252.1).
  * POST /api/v1/students/<student_id>/reserve
  */

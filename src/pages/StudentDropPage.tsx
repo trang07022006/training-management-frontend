@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getStudentDetail, type StudentDetail } from '../api/studentApi'
-import { dropStudent, type DropStudentPayload } from '../api/studentLifecycleApi'
+import { dropStudent, formatClassOptionLabel, type DropStudentPayload } from '../api/studentLifecycleApi'
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
+import { getStudentStatusBadge } from './StudentDetailPage'
 import './StudentLifecycle.css'
 
 export function StudentDropPage() {
@@ -115,7 +116,7 @@ export function StudentDropPage() {
             setShowConfirmModal(false)
             const targetDesc = scope === 'all'
                 ? 'toàn bộ khóa học'
-                : `lớp ${selectedClass?.class_code || ''}`
+                : `lớp ${formatClassOptionLabel(selectedClass)}`
             setSuccessMessage(
                 `Xử lý thôi học ${targetDesc} thành công từ ngày ${formatVietnamDate(effectiveDate)}. Lịch sử học tập trước đây được bảo toàn nguyên vẹn.`
             )
@@ -129,7 +130,7 @@ export function StudentDropPage() {
 
     if (isLoading) {
         return (
-            <div className="lifecycle-container" data-testid="student-drop-page">
+            <div className="students-container lifecycle-container" data-testid="student-drop-page">
                 <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                     <div className="spinner" style={{ margin: '0 auto 12px' }} />
                     <span>Đang tải thông tin thôi học...</span>
@@ -138,11 +139,13 @@ export function StudentDropPage() {
         )
     }
 
+    const studentStatus = student ? getStudentStatusBadge(student.status) : null
+
     return (
-        <div className="lifecycle-container" data-testid="student-drop-page">
+        <div className="students-container lifecycle-container" data-testid="student-drop-page">
             <PageHeader
                 title="Thôi học học viên"
-                subtitle={student ? `${student.full_name} (${student.student_code})` : ''}
+                subtitle={student ? `Mã học viên: ${student.student_code} • ${student.full_name}` : ''}
                 breadcrumbs={[
                     { label: 'Học viên', path: '/students' },
                     { label: student?.full_name || 'Hồ sơ', path: `/students/${studentId}` },
@@ -164,31 +167,43 @@ export function StudentDropPage() {
 
             {student && (
                 <>
-                    {/* THÔNG TIN HỌC VIÊN */}
-                    <div className="lifecycle-card">
-                        <div className="lifecycle-card-header">
-                            <h3 className="lifecycle-card-title">
-                                <span>👤</span> Thông tin học viên
-                            </h3>
+                    {/* KHỐI TÓM TẮT HỌC VIÊN THU GỌN */}
+                    <div className="lifecycle-student-summary" data-testid="student-summary-card">
+                        <div className="lifecycle-summary-main">
+                            <div className="lifecycle-summary-avatar">👤</div>
+                            <div className="lifecycle-summary-text">
+                                <div className="lifecycle-summary-name-row">
+                                    <span className="lifecycle-summary-name">{student.full_name}</span>
+                                    {studentStatus && (
+                                        <span className={`status-badge ${studentStatus.className}`} data-testid="student-status-badge">
+                                            {studentStatus.label}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="lifecycle-summary-meta">
+                                    <span>Mã HV: <strong>{student.student_code}</strong></span>
+                                    <span className="lifecycle-meta-sep">•</span>
+                                    <span>Email: {student.email || 'Chưa cập nhật email'}</span>
+                                    <span className="lifecycle-meta-sep">•</span>
+                                    <span>SĐT: {student.phone || 'Chưa cập nhật SĐT'}</span>
+                                    <span className="lifecycle-meta-sep">•</span>
+                                    <span>
+                                        Chương trình đăng ký của học viên:{' '}
+                                        <strong className="lifecycle-program-text">
+                                            {student.program_name || student.program_code || 'Chưa phân bổ chương trình'}
+                                        </strong>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="lifecycle-info-grid">
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Mã học viên</span>
-                                <span className="lifecycle-info-value">{student.student_code}</span>
-                            </div>
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Họ và tên</span>
-                                <span className="lifecycle-info-value">{student.full_name}</span>
-                            </div>
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Email</span>
-                                <span className="lifecycle-info-value">{student.email || 'Chưa cập nhật'}</span>
-                            </div>
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Chương trình</span>
-                                <span className="lifecycle-info-value">{student.program_name || student.program_code || '—'}</span>
-                            </div>
-                        </div>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ fontSize: '13px', padding: '6px 14px', flexShrink: 0 }}
+                            onClick={() => navigate(`/students/${studentId}`)}
+                        >
+                            Xem hồ sơ
+                        </button>
                     </div>
 
                     {/* FORM THÔI HỌC */}
@@ -232,7 +247,7 @@ export function StudentDropPage() {
                                     <label className="lifecycle-form-label">
                                         Phạm vi thôi học <span className="required">*</span>
                                     </label>
-                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
+                                    <div style={{ display: 'flex', gap: '20px', marginTop: '8px', flexWrap: 'wrap' }}>
                                         <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
                                             <input
                                                 type="radio"
@@ -260,56 +275,75 @@ export function StudentDropPage() {
                                     </div>
                                 </div>
 
-                                {/* CHỌN LỚP NẾU SCOPE SINGLE */}
-                                {scope === 'single' && (
-                                    <div className="lifecycle-form-group">
-                                        <label htmlFor="select-class" className="lifecycle-form-label">
-                                            Lớp học áp dụng thôi học <span className="required">*</span>
-                                        </label>
-                                        <select
-                                            id="select-class"
-                                            data-testid="select-class"
-                                            className="lifecycle-form-control"
-                                            value={selectedClassId}
-                                            onChange={(e) => setSelectedClassId(e.target.value)}
-                                            disabled={isSubmitting}
-                                        >
-                                            <option value="">-- Chọn lớp học --</option>
-                                            {availableClasses.map((cls, idx) => {
-                                                const cid = cls.class_id || cls.id || String(idx)
-                                                return (
-                                                    <option key={cid} value={cid}>
-                                                        {cls.class_code} {cls.name || cls.class_name ? `- ${cls.name || cls.class_name}` : ''}
-                                                    </option>
-                                                )
-                                            })}
-                                        </select>
-                                        {selectedClass && (
+                                {scope === 'single' ? (
+                                    <div className="lifecycle-form-grid-2">
+                                        <div className="lifecycle-form-group">
+                                            <label htmlFor="select-class" className="lifecycle-form-label">
+                                                Lớp học áp dụng thôi học <span className="required">*</span>
+                                            </label>
+                                            <select
+                                                id="select-class"
+                                                data-testid="select-class"
+                                                className="lifecycle-form-control"
+                                                value={selectedClassId}
+                                                onChange={(e) => setSelectedClassId(e.target.value)}
+                                                disabled={isSubmitting}
+                                            >
+                                                <option value="">-- Chọn lớp học --</option>
+                                                {availableClasses.map((cls, idx) => {
+                                                    const cid = cls.class_id || cls.id || String(idx)
+                                                    return (
+                                                        <option key={cid} value={cid}>
+                                                            {formatClassOptionLabel(cls)}
+                                                        </option>
+                                                    )
+                                                })}
+                                            </select>
+                                            {selectedClass && (
+                                                <div className="lifecycle-form-hint">
+                                                    Khai giảng: {selectedClass.expected_start_date || selectedClass.start_date ? formatVietnamDate(selectedClass.expected_start_date || selectedClass.start_date) : 'Chưa thiết lập ngày khai giảng'}
+                                                    {selectedClass.program_name ? ` • Chương trình của lớp: ${selectedClass.program_name}` : ''}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="lifecycle-form-group">
+                                            <label htmlFor="input-effective-date" className="lifecycle-form-label">
+                                                Ngày hiệu lực thôi học <span className="required">*</span>
+                                            </label>
+                                            <input
+                                                id="input-effective-date"
+                                                data-testid="input-effective-date"
+                                                type="date"
+                                                className="lifecycle-form-control"
+                                                value={effectiveDate}
+                                                onChange={(e) => setEffectiveDate(e.target.value)}
+                                                disabled={isSubmitting}
+                                            />
                                             <div className="lifecycle-form-hint">
-                                                Khai giảng: {selectedClass.expected_start_date || selectedClass.start_date ? formatVietnamDate(selectedClass.expected_start_date || selectedClass.start_date) : 'Chưa thiết lập'}
+                                                Từ ngày này trở đi, học viên sẽ không còn xuất hiện trong danh sách điểm danh. Trước ngày hiệu lực, lịch sử điểm và điểm danh vẫn được giữ nguyên vẹn.
                                             </div>
-                                        )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="lifecycle-form-group">
+                                        <label htmlFor="input-effective-date" className="lifecycle-form-label">
+                                            Ngày hiệu lực thôi học <span className="required">*</span>
+                                        </label>
+                                        <input
+                                            id="input-effective-date"
+                                            data-testid="input-effective-date"
+                                            type="date"
+                                            className="lifecycle-form-control"
+                                            value={effectiveDate}
+                                            onChange={(e) => setEffectiveDate(e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                        <div className="lifecycle-form-hint">
+                                            Từ ngày này trở đi, học viên sẽ không còn xuất hiện trong danh sách điểm danh của bất kỳ lớp nào. Trước ngày hiệu lực, lịch sử học tập vẫn được giữ nguyên vẹn.
+                                        </div>
                                     </div>
                                 )}
-
-                                {/* NGÀY HIỆU LỰC */}
-                                <div className="lifecycle-form-group">
-                                    <label htmlFor="input-effective-date" className="lifecycle-form-label">
-                                        Ngày hiệu lực thôi học <span className="required">*</span>
-                                    </label>
-                                    <input
-                                        id="input-effective-date"
-                                        data-testid="input-effective-date"
-                                        type="date"
-                                        className="lifecycle-form-control"
-                                        value={effectiveDate}
-                                        onChange={(e) => setEffectiveDate(e.target.value)}
-                                        disabled={isSubmitting}
-                                    />
-                                    <div className="lifecycle-form-hint">
-                                        Từ ngày này trở đi, học viên sẽ không còn xuất hiện trong danh sách điểm danh. Trước ngày hiệu lực, lịch sử điểm và điểm danh vẫn được giữ nguyên vẹn.
-                                    </div>
-                                </div>
 
                                 {/* LÝ DO */}
                                 <div className="lifecycle-form-group">
@@ -398,7 +432,7 @@ export function StudentDropPage() {
                                 <div className="lifecycle-modal-summary-row">
                                     <span className="lifecycle-modal-summary-label">Phạm vi:</span>
                                     <span className="lifecycle-modal-summary-val">
-                                        {scope === 'all' ? 'Toàn bộ khóa học (tất cả các lớp)' : `Một lớp (${selectedClass?.class_code})`}
+                                        {scope === 'all' ? 'Toàn bộ khóa học (tất cả các lớp)' : `Một lớp (${formatClassOptionLabel(selectedClass)})`}
                                     </span>
                                 </div>
                                 <div className="lifecycle-modal-summary-row">
@@ -443,3 +477,4 @@ export function StudentDropPage() {
         </div>
     )
 }
+

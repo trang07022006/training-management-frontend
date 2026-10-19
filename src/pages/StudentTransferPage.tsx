@@ -3,10 +3,11 @@ import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getStudentDetail, type StudentDetail } from '../api/studentApi'
 import { listClasses, type TrainingClass } from '../api/classApi'
-import { transferStudent, type TransferStudentPayload } from '../api/studentLifecycleApi'
+import { transferStudent, formatClassOptionLabel, type TransferStudentPayload } from '../api/studentLifecycleApi'
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
+import { getStudentStatusBadge } from './StudentDetailPage'
 import './StudentLifecycle.css'
 
 export function StudentTransferPage() {
@@ -177,7 +178,7 @@ export function StudentTransferPage() {
 
     if (isLoading) {
         return (
-            <div className="lifecycle-container" data-testid="student-transfer-page">
+            <div className="students-container lifecycle-container" data-testid="student-transfer-page">
                 <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
                     <div className="spinner" style={{ margin: '0 auto 12px' }} />
                     <span>Đang tải thông tin chuyển lớp...</span>
@@ -186,11 +187,13 @@ export function StudentTransferPage() {
         )
     }
 
+    const studentStatus = student ? getStudentStatusBadge(student.status) : null
+
     return (
-        <div className="lifecycle-container" data-testid="student-transfer-page">
+        <div className="students-container lifecycle-container" data-testid="student-transfer-page">
             <PageHeader
                 title="Chuyển lớp học viên"
-                subtitle={student ? `${student.full_name} (${student.student_code})` : ''}
+                subtitle={student ? `Mã học viên: ${student.student_code} • ${student.full_name}` : ''}
                 breadcrumbs={[
                     { label: 'Học viên', path: '/students' },
                     { label: student?.full_name || 'Hồ sơ', path: `/students/${studentId}` },
@@ -212,27 +215,43 @@ export function StudentTransferPage() {
 
             {student && (
                 <>
-                    {/* THÔNG TIN HỌC VIÊN */}
-                    <div className="lifecycle-card">
-                        <div className="lifecycle-card-header">
-                            <h3 className="lifecycle-card-title">
-                                <span>👤</span> Thông tin học viên
-                            </h3>
+                    {/* KHỐI TÓM TẮT HỌC VIÊN THU GỌN */}
+                    <div className="lifecycle-student-summary" data-testid="student-summary-card">
+                        <div className="lifecycle-summary-main">
+                            <div className="lifecycle-summary-avatar">👤</div>
+                            <div className="lifecycle-summary-text">
+                                <div className="lifecycle-summary-name-row">
+                                    <span className="lifecycle-summary-name">{student.full_name}</span>
+                                    {studentStatus && (
+                                        <span className={`status-badge ${studentStatus.className}`} data-testid="student-status-badge">
+                                            {studentStatus.label}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="lifecycle-summary-meta">
+                                    <span>Mã HV: <strong>{student.student_code}</strong></span>
+                                    <span className="lifecycle-meta-sep">•</span>
+                                    <span>Email: {student.email || 'Chưa cập nhật email'}</span>
+                                    <span className="lifecycle-meta-sep">•</span>
+                                    <span>SĐT: {student.phone || 'Chưa cập nhật SĐT'}</span>
+                                    <span className="lifecycle-meta-sep">•</span>
+                                    <span>
+                                        Chương trình đăng ký của học viên:{' '}
+                                        <strong className="lifecycle-program-text">
+                                            {student.program_name || student.program_code || 'Chưa phân bổ chương trình'}
+                                        </strong>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div className="lifecycle-info-grid">
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Mã học viên</span>
-                                <span className="lifecycle-info-value">{student.student_code}</span>
-                            </div>
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Họ và tên</span>
-                                <span className="lifecycle-info-value">{student.full_name}</span>
-                            </div>
-                            <div className="lifecycle-info-item">
-                                <span className="lifecycle-info-label">Chương trình</span>
-                                <span className="lifecycle-info-value">{student.program_name || student.program_code || '—'}</span>
-                            </div>
-                        </div>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ fontSize: '13px', padding: '6px 14px', flexShrink: 0 }}
+                            onClick={() => navigate(`/students/${studentId}`)}
+                        >
+                            Xem hồ sơ
+                        </button>
                     </div>
 
                     {/* FORM CHUYỂN LỚP */}
@@ -280,85 +299,89 @@ export function StudentTransferPage() {
                             </div>
                         ) : (
                             <form onSubmit={handleOpenConfirm}>
-                                {/* LỚP NGUỒN */}
-                                <div className="lifecycle-form-group">
-                                    <label htmlFor="select-source-class" className="lifecycle-form-label">
-                                        Lớp nguồn (chuyển đi) <span className="required">*</span>
-                                    </label>
-                                    <select
-                                        id="select-source-class"
-                                        data-testid="select-source-class"
-                                        className="lifecycle-form-control"
-                                        value={sourceClassId}
-                                        onChange={(e) => setSourceClassId(e.target.value)}
-                                        disabled={isSubmitting}
-                                    >
-                                        <option value="">-- Chọn lớp nguồn --</option>
-                                        {studentClasses.map((cls, idx) => {
-                                            const cid = cls.class_id || cls.id || String(idx)
-                                            return (
-                                                <option key={cid} value={cid}>
-                                                    {cls.class_code} {cls.name || cls.class_name ? `- ${cls.name || cls.class_name}` : ''}
-                                                </option>
-                                            )
-                                        })}
-                                    </select>
-                                    {selectedSourceClass && (
-                                        <div className="lifecycle-form-hint">
-                                            Khai giảng: {selectedSourceClass.expected_start_date || selectedSourceClass.start_date ? formatVietnamDate(selectedSourceClass.expected_start_date || selectedSourceClass.start_date) : 'Chưa thiết lập'}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* LỚP ĐÍCH */}
-                                <div className="lifecycle-form-group">
-                                    <label htmlFor="select-target-class" className="lifecycle-form-label">
-                                        Lớp đích (chuyển đến) <span className="required">*</span>
-                                    </label>
-
-                                    <div style={{ marginBottom: '8px' }}>
-                                        <input
-                                            type="text"
+                                {/* LỚI 2 CỘT: LỚP NGUỒN VÀ LỚP ĐÍCH */}
+                                <div className="lifecycle-form-grid-2">
+                                    {/* LỚP NGUỒN */}
+                                    <div className="lifecycle-form-group">
+                                        <label htmlFor="select-source-class" className="lifecycle-form-label">
+                                            Lớp nguồn (chuyển đi) <span className="required">*</span>
+                                        </label>
+                                        <select
+                                            id="select-source-class"
+                                            data-testid="select-source-class"
                                             className="lifecycle-form-control"
-                                            placeholder="Tìm kiếm lớp theo mã lớp..."
-                                            value={searchTargetKeyword}
-                                            onChange={(e) => setSearchTargetKeyword(e.target.value)}
-                                            style={{ fontSize: '13px', padding: '8px 12px' }}
-                                        />
+                                            value={sourceClassId}
+                                            onChange={(e) => setSourceClassId(e.target.value)}
+                                            disabled={isSubmitting}
+                                        >
+                                            <option value="">-- Chọn lớp nguồn --</option>
+                                            {studentClasses.map((cls, idx) => {
+                                                const cid = cls.class_id || cls.id || String(idx)
+                                                return (
+                                                    <option key={cid} value={cid}>
+                                                        {formatClassOptionLabel(cls)}
+                                                    </option>
+                                                )
+                                            })}
+                                        </select>
+                                        {selectedSourceClass && (
+                                            <div className="lifecycle-form-hint">
+                                                Khai giảng: {selectedSourceClass.expected_start_date || selectedSourceClass.start_date ? formatVietnamDate(selectedSourceClass.expected_start_date || selectedSourceClass.start_date) : 'Chưa thiết lập ngày khai giảng'}
+                                                {selectedSourceClass.program_name ? ` • Chương trình của lớp: ${selectedSourceClass.program_name}` : ''}
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <select
-                                        id="select-target-class"
-                                        data-testid="select-target-class"
-                                        className="lifecycle-form-control"
-                                        value={targetClassId}
-                                        onChange={(e) => setTargetClassId(e.target.value)}
-                                        disabled={isSubmitting}
-                                    >
-                                        <option value="">-- Chọn lớp đích trong cùng chương trình --</option>
-                                        {filteredTargetClasses.map((cls) => {
-                                            const isFull = cls.enrolled_count >= cls.max_capacity
-                                            return (
-                                                <option key={cls.id} value={cls.id} disabled={isFull}>
-                                                    {cls.class_code} (Sĩ số: {cls.enrolled_count}/{cls.max_capacity} {isFull ? '- ĐÃ ĐẦY' : '- Còn chỗ'})
-                                                </option>
-                                            )
-                                        })}
-                                    </select>
+                                    {/* LỚP ĐÍCH */}
+                                    <div className="lifecycle-form-group">
+                                        <label htmlFor="select-target-class" className="lifecycle-form-label">
+                                            Lớp đích (chuyển đến) <span className="required">*</span>
+                                        </label>
 
-                                    {selectedTargetClass && (
-                                        <div className="lifecycle-form-hint">
-                                            Sĩ số: <strong>{selectedTargetClass.enrolled_count} / {selectedTargetClass.max_capacity}</strong> học viên
-                                            {isTargetFull && (
-                                                <span style={{ color: '#ef4444', marginLeft: '8px', fontWeight: 600 }}>
-                                                    (Lớp đã hết chỗ)
-                                                </span>
-                                            )}
-                                            {selectedTargetClass.expected_start_date && (
-                                                <span> • Ngày khai giảng: {formatVietnamDate(selectedTargetClass.expected_start_date)}</span>
-                                            )}
+                                        <div style={{ marginBottom: '8px' }}>
+                                            <input
+                                                type="text"
+                                                className="lifecycle-form-control"
+                                                placeholder="Tìm kiếm lớp theo mã lớp..."
+                                                value={searchTargetKeyword}
+                                                onChange={(e) => setSearchTargetKeyword(e.target.value)}
+                                                style={{ fontSize: '13px', padding: '8px 12px', minHeight: '36px' }}
+                                            />
                                         </div>
-                                    )}
+
+                                        <select
+                                            id="select-target-class"
+                                            data-testid="select-target-class"
+                                            className="lifecycle-form-control"
+                                            value={targetClassId}
+                                            onChange={(e) => setTargetClassId(e.target.value)}
+                                            disabled={isSubmitting}
+                                        >
+                                            <option value="">-- Chọn lớp đích trong cùng chương trình --</option>
+                                            {filteredTargetClasses.map((cls) => {
+                                                const isFull = cls.enrolled_count >= cls.max_capacity
+                                                return (
+                                                    <option key={cls.id} value={cls.id} disabled={isFull}>
+                                                        {formatClassOptionLabel(cls)} (Sĩ số: {cls.enrolled_count}/{cls.max_capacity} {isFull ? '- ĐÃ ĐẦY' : '- Còn chỗ'})
+                                                    </option>
+                                                )
+                                            })}
+                                        </select>
+
+                                        {selectedTargetClass && (
+                                            <div className="lifecycle-form-hint">
+                                                Sĩ số: <strong>{selectedTargetClass.enrolled_count} / {selectedTargetClass.max_capacity}</strong> học viên
+                                                {isTargetFull && (
+                                                    <span style={{ color: '#ef4444', marginLeft: '8px', fontWeight: 600 }}>
+                                                        (Lớp đã hết chỗ)
+                                                    </span>
+                                                )}
+                                                {selectedTargetClass.expected_start_date && (
+                                                    <span> • Khai giảng: {formatVietnamDate(selectedTargetClass.expected_start_date)}</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* NGÀY HIỆU LỰC */}
@@ -462,11 +485,11 @@ export function StudentTransferPage() {
                                 </div>
                                 <div className="lifecycle-modal-summary-row">
                                     <span className="lifecycle-modal-summary-label">Lớp nguồn:</span>
-                                    <span className="lifecycle-modal-summary-val">{selectedSourceClass?.class_code}</span>
+                                    <span className="lifecycle-modal-summary-val">{formatClassOptionLabel(selectedSourceClass)}</span>
                                 </div>
                                 <div className="lifecycle-modal-summary-row">
                                     <span className="lifecycle-modal-summary-label">Lớp đích:</span>
-                                    <span className="lifecycle-modal-summary-val">{selectedTargetClass?.class_code}</span>
+                                    <span className="lifecycle-modal-summary-val">{formatClassOptionLabel(selectedTargetClass)}</span>
                                 </div>
                                 <div className="lifecycle-modal-summary-row">
                                     <span className="lifecycle-modal-summary-label">Ngày hiệu lực:</span>
@@ -509,3 +532,4 @@ export function StudentTransferPage() {
         </div>
     )
 }
+

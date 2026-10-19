@@ -271,4 +271,95 @@ describe('StudentTransferPage (SCRUM-252.2)', () => {
             expect(screen.getByTestId('forbidden-page')).toBeDefined()
         })
     })
+
+    it('5. Khối tóm tắt thu gọn, không lặp mã/tên lớp giống nhau và giữ nguyên dữ liệu khi validation lỗi', async () => {
+        const studentWithDuplicateClass: studentApi.StudentDetail = {
+            ...mockStudent,
+            full_name: 'Trần Thị Mỹ Linh Hoàng Yến Siêu Dài Dài Dài',
+            email: 'tran.thi.my.linh.hoang.yen.sieu.dai@ictu.edu.vn',
+            current_classes: [
+                {
+                    id: 'cls-src-dup',
+                    class_id: 'cls-src-dup',
+                    class_code: 'TR_C5537',
+                    name: 'TR_C5537', // trùng lặp mã và tên lớp nguồn
+                    expected_start_date: '2026-09-01',
+                    status: 'in_progress',
+                },
+            ],
+        }
+        const classesWithDuplicateName: classApi.TrainingClass[] = [
+            {
+                id: 'cls-src-dup',
+                class_code: 'TR_C5537',
+                program_id: 'prog-se',
+                expected_start_date: '2026-09-01',
+                max_capacity: 30,
+                enrolled_count: 10,
+                learning_mode: 'offline',
+                status: 'in_progress',
+                status_label: 'Đang học',
+                created_at: null,
+                updated_at: null,
+            },
+            {
+                id: 'cls-tgt-dup',
+                class_code: 'TR_C9999',
+                program_id: 'prog-se',
+                expected_start_date: '2026-09-01',
+                max_capacity: 30,
+                enrolled_count: 5,
+                learning_mode: 'offline',
+                status: 'in_progress',
+                status_label: 'Đang học',
+                created_at: null,
+                updated_at: null,
+            },
+        ]
+
+        vi.spyOn(studentApi, 'getStudentDetail').mockResolvedValue(studentWithDuplicateClass)
+        vi.spyOn(classApi, 'listClasses').mockResolvedValue({
+            items: classesWithDuplicateName,
+            total: 2,
+            page: 1,
+            page_size: 100,
+            total_pages: 1,
+        })
+
+        render(
+            <MemoryRouter initialEntries={['/students/st-202/transfer']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="training_manager">
+                        <Routes>
+                            <Route path="/students/:studentId/transfer" element={<StudentTransferPage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('student-summary-card')).toBeDefined()
+        })
+
+        // Không lặp "TR_C5537 - TR_C5537"
+        const selectSource = screen.getByTestId('select-source-class') as HTMLSelectElement
+        const sourceOptions = Array.from(selectSource.options).map(o => o.text)
+        expect(sourceOptions).toContain('TR_C5537')
+        expect(sourceOptions).not.toContain('TR_C5537 - TR_C5537')
+
+        // Nhập lý do và chọn lớp đích
+        const selectTarget = screen.getByTestId('select-target-class') as HTMLSelectElement
+        fireEvent.change(selectTarget, { target: { value: 'cls-tgt-dup' } })
+
+        const reasonInput = screen.getByTestId('input-reason') as HTMLTextAreaElement
+        fireEvent.change(reasonInput, { target: { value: 'Chuy' } }) // ngắn hơn 5 ký tự
+
+        fireEvent.click(screen.getByTestId('btn-preview-transfer'))
+
+        // Báo lỗi nhưng dữ liệu không bị xóa
+        expect(screen.getByTestId('alert-error').textContent).toContain('ít nhất 5 ký tự')
+        expect(reasonInput.value).toBe('Chuy')
+        expect(selectTarget.value).toBe('cls-tgt-dup')
+    })
 })

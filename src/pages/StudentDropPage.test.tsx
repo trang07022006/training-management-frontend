@@ -206,4 +206,56 @@ describe('StudentDropPage (SCRUM-252.3)', () => {
             expect(screen.getByTestId('forbidden-page')).toBeDefined()
         })
     })
+
+    it('5. Khối tóm tắt thu gọn, không lặp mã/tên lớp giống nhau và giữ nguyên dữ liệu khi validation lỗi', async () => {
+        const studentWithDuplicateClass: studentApi.StudentDetail = {
+            ...mockStudent,
+            full_name: 'Hoàng Văn Thôi Học Rất Dài Dài Dài Dài Dài Dài',
+            email: 'hoang.van.thoi.hoc.rat.dai@ictu.edu.vn',
+            current_classes: [
+                {
+                    id: 'cls-drop-dup',
+                    class_id: 'cls-drop-dup',
+                    class_code: 'TR_C5537',
+                    name: 'TR_C5537', // trùng lặp mã và tên lớp
+                    expected_start_date: '2026-09-01',
+                    status: 'in_progress',
+                },
+            ],
+        }
+
+        vi.spyOn(studentApi, 'getStudentDetail').mockResolvedValue(studentWithDuplicateClass)
+
+        render(
+            <MemoryRouter initialEntries={['/students/st-303/drop']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="training_manager">
+                        <Routes>
+                            <Route path="/students/:studentId/drop" element={<StudentDropPage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('student-summary-card')).toBeDefined()
+        })
+
+        // Không lặp "TR_C5537 - TR_C5537"
+        const selectClass = screen.getByTestId('select-class') as HTMLSelectElement
+        const options = Array.from(selectClass.options).map(o => o.text)
+        expect(options).toContain('TR_C5537')
+        expect(options).not.toContain('TR_C5537 - TR_C5537')
+
+        // Nhập lý do ngắn để gây validation error
+        const reasonInput = screen.getByTestId('input-reason') as HTMLTextAreaElement
+        fireEvent.change(reasonInput, { target: { value: 'Thôi' } }) // < 5 ký tự
+
+        fireEvent.click(screen.getByTestId('btn-preview-drop'))
+
+        // Báo lỗi nhưng dữ liệu lý do không bị mất
+        expect(screen.getByTestId('alert-error').textContent).toContain('ít nhất 5 ký tự')
+        expect(reasonInput.value).toBe('Thôi')
+    })
 })

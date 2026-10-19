@@ -199,4 +199,59 @@ describe('StudentReservePage (SCRUM-252.1)', () => {
             expect(screen.getByTestId('forbidden-page')).toBeDefined()
         })
     })
+
+    it('5. Khối tóm tắt thu gọn, không lặp mã/tên lớp giống nhau và giữ nguyên dữ liệu khi validation lỗi', async () => {
+        const studentWithDuplicateClass: studentApi.StudentDetail = {
+            ...mockStudent,
+            full_name: 'Nguyễn Văn Đỗ Hoàng Nam Anh Tuấn Long Siêu Dài',
+            email: 'nguyen.van.do.hoang.nam.anh.tuan.long.sieu.dai@ictu.edu.vn',
+            current_classes: [
+                {
+                    id: 'cls-dup',
+                    class_id: 'cls-dup',
+                    class_code: 'TR_C5537',
+                    name: 'TR_C5537', // trùng lặp mã và tên
+                    expected_start_date: '2026-09-01',
+                    status: 'in_progress',
+                    program_name: 'Khóa học React Nâng Cao',
+                },
+            ],
+        }
+        vi.spyOn(studentApi, 'getStudentDetail').mockResolvedValue(studentWithDuplicateClass)
+
+        render(
+            <MemoryRouter initialEntries={['/students/st-101/reserve']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="training_manager">
+                        <Routes>
+                            <Route path="/students/:studentId/reserve" element={<StudentReservePage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('student-summary-card')).toBeDefined()
+        })
+
+        // Kiểm tra phân biệt rõ chương trình học viên
+        expect(screen.getByText(/Chương trình đăng ký của học viên:/i)).toBeDefined()
+        expect(screen.getByText('Kỹ nghệ phần mềm')).toBeDefined()
+
+        // Kiểm tra không bị lặp "TR_C5537 - TR_C5537"
+        const selectClass = screen.getByTestId('select-class') as HTMLSelectElement
+        const options = Array.from(selectClass.options).map(o => o.text)
+        expect(options).toContain('TR_C5537')
+        expect(options).not.toContain('TR_C5537 - TR_C5537')
+
+        // Nhập lý do quá ngắn (< 5 ký tự) để gây lỗi validation
+        const reasonInput = screen.getByTestId('input-reason') as HTMLTextAreaElement
+        fireEvent.change(reasonInput, { target: { value: 'Bảo' } })
+        fireEvent.click(screen.getByTestId('btn-preview-reserve'))
+
+        // Báo lỗi nhưng dữ liệu 'Bảo' vẫn còn nguyên trong input
+        expect(screen.getByTestId('alert-error').textContent).toContain('ít nhất 5 ký tự')
+        expect(reasonInput.value).toBe('Bảo')
+    })
 })
