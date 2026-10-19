@@ -696,4 +696,18 @@
     .attendance-session-card {
         padding: 14px 12px;
     }
+
+    .attendance-actions-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .btn-mark-all-present,
+    .btn-history-view,
+    .btn-save-attendance {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
 }
