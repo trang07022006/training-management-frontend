@@ -728,4 +728,129 @@
         font-size: 11px;
         padding: 6px 4px;
     }
+
+    .attendance-pagination-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .pagination-info {
+        text-align: center;
+    }
+
+    .pagination-controls {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .pagination-btn {
+        flex: 1;
+        padding: 8px 6px;
+        font-size: 12px;
+        min-height: 38px;
+    }
+}
+
+/* Pagination Bar Styles (SCRUM-254) */
+.attendance-pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-top: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pagination-info {
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pagination-limit-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.pagination-select {
+    padding: 5px 8px;
+    font-size: 13px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+}
+
+.pagination-select:focus {
+    border-color: #0284c7;
+}
+
+.pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: 34px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.pagination-btn:disabled {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination-page-indicator {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    padding: 0 4px;
+}
+
+.draft-indicator-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 12px;
 }

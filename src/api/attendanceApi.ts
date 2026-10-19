@@ -47,6 +47,13 @@ export interface AttendanceStudentItem {
     is_historical_record?: boolean
 }
 
+export interface AttendancePagination {
+    page: number
+    limit: number
+    total_items: number
+    total_pages: number
+}
+
 export interface AttendanceSheetStats {
     total_students: number
     present_count: number
@@ -59,6 +66,7 @@ export interface AttendanceSheetStats {
 export interface AttendanceSheetResponse {
     session_info: SessionAttendanceInfo
     stats: AttendanceSheetStats
+    pagination?: AttendancePagination
     students: AttendanceStudentItem[]
 }
 
@@ -80,24 +88,32 @@ export interface AttendanceAuditLogItem {
 }
 
 export interface SaveAttendancePayload {
-    attendances: Array<{
+    attendances?: Array<{
         student_id: string
         status: AttendanceStatus
         notes?: string
     }>
+    mark_all_present?: boolean
     reason?: string
 }
 
 export type RequestFn = (url: string, init?: RequestInit) => Promise<Response>
 
 /**
- * Mở sổ điểm danh buổi học (SCRUM-254 Lát 1).
+ * Mở sổ điểm danh buổi học (SCRUM-254 Lát 1 + Phân trang Backend).
  */
 export async function getSessionAttendanceSheet(
     requestFn: RequestFn,
     scheduleId: string,
+    options?: { page?: number; limit?: number; q?: string },
 ): Promise<AttendanceSheetResponse> {
-    const res = await requestFn(`/api/v1/schedules/${encodeURIComponent(scheduleId)}/attendance`, {
+    const params = new URLSearchParams()
+    if (options?.page) params.set('page', String(options.page))
+    if (options?.limit) params.set('limit', String(options.limit))
+    if (options?.q && options.q.trim()) params.set('q', options.q.trim())
+    const queryString = params.toString() ? `?${params.toString()}` : ''
+
+    const res = await requestFn(`/api/v1/schedules/${encodeURIComponent(scheduleId)}/attendance${queryString}`, {
         method: 'GET',
     })
     const body = await res.json()

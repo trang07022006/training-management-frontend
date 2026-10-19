@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
@@ -9,6 +9,7 @@ import {
     type AttendanceStudentItem,
     type AttendanceStatus,
     type AttendanceAuditLogItem,
+    type SaveAttendancePayload,
 } from '../api/attendanceApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
@@ -22,50 +23,110 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
     unexcused: 'Vắng không phép',
 }
 
+interface StudentDraftEdit {
+    status: AttendanceStatus
+    notes?: string
+}
+
 export function SessionAttendancePage() {
     const { scheduleId } = useParams<{ scheduleId: string }>()
     const navigate = useNavigate()
     const { request: requestFn } = useSession()
 
-    // Dữ liệu chính từ API
+    // Phân trang & Tìm kiếm
+    const [page, setPage] = useState<number>(1)
+    const [limit, setLimit] = useState<number>(10)
+    const [searchQuery, setSearchQuery] = useState<string>('')
+
+    // Dữ liệu sổ điểm danh từ API
     const [sheetData, setSheetData] = useState<AttendanceSheetResponse | null>(null)
-    const [studentsState, setStudentsState] = useState<AttendanceStudentItem[]>([])
+    const [pageStudents, setPageStudents] = useState<AttendanceStudentItem[]>([])
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-    // Trạng thái tìm kiếm
-    const [searchQuery, setSearchQuery] = useState<string>('')
-
-    // Trạng thái lưu dữ liệu
-    const [isSaving, setIsSaving] = useState<boolean>(false)
+    // Quản lý bản nháp (Draft State) theo student_id — giữ nguyên khi chuyển trang và tìm kiếm
+    const [draftEdits, setDraftEdits] = useState<Record<string, StudentDraftEdit>>({})
+    const [markAllPresentDraft, setMarkAllPresentDraft] = useState<boolean>(false)
     const [isDirty, setIsDirty] = useState<boolean>(false)
+    const [isSaving, setIsSaving] = useState<boolean>(false)
+
+    // Refs để tránh stale closures khi load dữ liệu trang mới
+    const draftEditsRef = useRef<Record<string, StudentDraftEdit>>(draftEdits)
+    draftEditsRef.current = draftEdits
+    const markAllPresentDraftRef = useRef<boolean>(markAllPresentDraft)
+    markAllPresentDraftRef.current = markAllPresentDraft
 
     // Modal lịch sử chỉnh sửa
     const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false)
     const [historyLogs, setHistoryLogs] = useState<AttendanceAuditLogItem[]>([])
     const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(false)
 
-    // Tải dữ liệu sổ điểm danh
-    const loadSheetData = useCallback(async () => {
-        if (!scheduleId) return
-        setIsLoading(true)
-        setErrorMessage(null)
-        try {
-            const data = await getSessionAttendanceSheet(requestFn, scheduleId)
-            setSheetData(data)
-            setStudentsState(data.students || [])
-            setIsDirty(false)
-        } catch (err: unknown) {
-            setErrorMessage(getErrorMessage(err, 'Lỗi khi tải thông tin sổ điểm danh.'))
-        } finally {
-            setIsLoading(false)
-        }
-    }, [scheduleId, requestFn])
+    // Hàm áp dụng bản nháp vào danh sách học viên tải về từ Backend
+    const mergeWithDraft = useCallback(
+        (students: AttendanceStudentItem[], currentDrafts: Record<string, StudentDraftEdit>, allPresentMode: boolean) => {
+            return students.map((st) => {
+                const draft = currentDrafts[st.student_id]
+                if (draft) {
+                    return {
+                        ...st,
+                        status: draft.status,
+                        status_label: STATUS_LABELS[draft.status],
+                        notes: draft.notes !== undefined ? draft.notes : st.notes,
+                    }
+                }
+                if (allPresentMode) {
+                    return {
+                        ...st,
+                        status: 'present' as AttendanceStatus,
+                        status_label: STATUS_LABELS.present,
+                    }
+                }
+                return st
+            })
+        },
+        [],
+    )
 
+    // Tải dữ liệu sổ điểm danh phân trang từ Backend
+    const loadSheetData = useCallback(
+        async (
+            targetPage: number = page,
+            targetLimit: number = limit,
+            targetQ: string = searchQuery,
+            isSilent: boolean = false,
+        ) => {
+            if (!scheduleId) return
+            if (!isSilent) setIsLoading(true)
+            setErrorMessage(null)
+            try {
+                const data = await getSessionAttendanceSheet(requestFn, scheduleId, {
+                    page: targetPage,
+                    limit: targetLimit,
+                    q: targetQ,
+                })
+                setSheetData(data)
+                const merged = mergeWithDraft(
+                    data.students || [],
+                    draftEditsRef.current,
+                    markAllPresentDraftRef.current,
+                )
+                setPageStudents(merged)
+            } catch (err: unknown) {
+                // Request phân trang lỗi không xóa bản nháp hoặc báo danh sách rỗng
+                setErrorMessage(getErrorMessage(err, 'Lỗi khi tải thông tin sổ điểm danh.'))
+            } finally {
+                if (!isSilent) setIsLoading(false)
+            }
+        },
+        [scheduleId, requestFn, page, limit, searchQuery, mergeWithDraft],
+    )
+
+    // Tải lần đầu hoặc khi scheduleId thay đổi
     useEffect(() => {
-        loadSheetData()
-    }, [loadSheetData])
+        loadSheetData(1, limit, searchQuery)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scheduleId])
 
     // Cảnh báo khi rời khỏi trang nếu có thay đổi chưa lưu
     useEffect(() => {
@@ -79,40 +140,46 @@ export function SessionAttendancePage() {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload)
     }, [isDirty])
 
-    // Danh sách học viên sau khi áp dụng bộ lọc tìm kiếm
-    const filteredStudents = useMemo(() => {
-        const q = searchQuery.trim().toLowerCase()
-        if (!q) return studentsState
-        return studentsState.filter(
-            (s) =>
-                s.full_name.toLowerCase().includes(q) ||
-                s.student_code.toLowerCase().includes(q) ||
-                (s.email && s.email.toLowerCase().includes(q)),
-        )
-    }, [studentsState, searchQuery])
+    // Điều hướng chuyển trang
+    const handlePageChange = (newPage: number) => {
+        if (newPage < 1) return
+        if (sheetData?.pagination && newPage > sheetData.pagination.total_pages) return
+        setPage(newPage)
+        loadSheetData(newPage, limit, searchQuery)
+    }
 
-    // Tính toán lại thống kê dựa trên trạng thái hiện tại trên form
-    const currentStats = useMemo(() => {
-        const total = studentsState.length
-        const present = studentsState.filter((s) => s.status === 'present').length
-        const late = studentsState.filter((s) => s.status === 'late').length
-        const excused = studentsState.filter((s) => s.status === 'excused').length
-        const unexcused = studentsState.filter((s) => s.status === 'unexcused').length
-        const unmarked = studentsState.filter((s) => s.status === null).length
-        return {
-            total,
-            present,
-            late,
-            excused,
-            unexcused,
-            unmarked,
-        }
-    }, [studentsState])
+    // Đổi cỡ trang (10 hoặc 20 học viên/trang)
+    const handleLimitChange = (newLimit: number) => {
+        setLimit(newLimit)
+        setPage(1)
+        loadSheetData(1, newLimit, searchQuery)
+    }
 
-    // Cập nhật trạng thái cho một học viên
+    // Tìm kiếm: Đổi từ khóa đưa về trang 1, không làm mất thay đổi chưa lưu
+    const handleSearchChange = (q: string) => {
+        setSearchQuery(q)
+        setPage(1)
+        loadSheetData(1, limit, q)
+    }
+
+    // Cập nhật trạng thái điểm danh cho một học viên
     const handleStatusChange = (studentId: string, newStatus: AttendanceStatus) => {
         if (!sheetData?.session_info.can_edit) return
-        setStudentsState((prev) =>
+        setDraftEdits((prev) => {
+            const currentNotes =
+                prev[studentId]?.notes !== undefined
+                    ? prev[studentId].notes
+                    : (pageStudents.find((s) => s.student_id === studentId)?.notes ?? '')
+            return {
+                ...prev,
+                [studentId]: {
+                    status: newStatus,
+                    notes: currentNotes,
+                },
+            }
+        })
+
+        setPageStudents((prev) =>
             prev.map((s) =>
                 s.student_id === studentId
                     ? { ...s, status: newStatus, status_label: STATUS_LABELS[newStatus] }
@@ -126,36 +193,120 @@ export function SessionAttendancePage() {
     // Cập nhật ghi chú cho học viên
     const handleNoteChange = (studentId: string, notes: string) => {
         if (!sheetData?.session_info.can_edit) return
-        setStudentsState((prev) =>
+        setDraftEdits((prev) => {
+            const currentStatus =
+                prev[studentId]?.status !== undefined
+                    ? prev[studentId].status
+                    : (pageStudents.find((s) => s.student_id === studentId)?.status ?? (markAllPresentDraft ? 'present' : null))
+            return {
+                ...prev,
+                [studentId]: {
+                    status: (currentStatus || 'present') as AttendanceStatus,
+                    notes,
+                },
+            }
+        })
+
+        setPageStudents((prev) =>
             prev.map((s) => (s.student_id === studentId ? { ...s, notes } : s)),
         )
         setIsDirty(true)
     }
 
-    // Đánh dấu tất cả học viên có mặt
+    // “Đánh dấu tất cả có mặt” áp dụng toàn bộ học viên đủ điều kiện của buổi
+    // Bấm nút chỉ cập nhật bản nháp; chưa ghi DB trước khi bấm Lưu.
     const handleMarkAllPresent = () => {
         if (!sheetData?.session_info.can_edit) return
-        setStudentsState((prev) =>
-            prev.map((s) => ({ ...s, status: 'present', status_label: STATUS_LABELS.present })),
-        )
+        setMarkAllPresentDraft(true)
         setIsDirty(true)
         setSuccessMessage(null)
+
+        // Cập nhật các học viên trên trang hiện tại thành có mặt
+        setPageStudents((prev) =>
+            prev.map((s) => ({
+                ...s,
+                status: 'present',
+                status_label: STATUS_LABELS.present,
+            })),
+        )
     }
 
-    // Lưu kết quả điểm danh
+    // Thống kê sĩ số/trạng thái phản ánh toàn buổi, không chỉ trang hiện tại
+    // Phân biệt rõ số liệu đã lưu và thay đổi đang nhập
+    const savedStats = sheetData?.stats || {
+        total_students: 0,
+        present_count: 0,
+        late_count: 0,
+        excused_count: 0,
+        unexcused_count: 0,
+        unmarked_count: 0,
+    }
+
+    const currentStats = useMemo(() => {
+        const total = savedStats.total_students
+
+        if (!isDirty) {
+            return {
+                total,
+                present: savedStats.present_count,
+                late: savedStats.late_count,
+                excused: savedStats.excused_count,
+                unexcused: savedStats.unexcused_count,
+                unmarked: savedStats.unmarked_count,
+                isDraft: false,
+            }
+        }
+
+        if (markAllPresentDraft) {
+            // Khi đánh dấu tất cả có mặt:
+            // Mọi học viên mặc định là present, trừ các học viên bị override trong draftEdits
+            const edits = Object.values(draftEdits)
+            const lateCount = edits.filter((e) => e.status === 'late').length
+            const excusedCount = edits.filter((e) => e.status === 'excused').length
+            const unexcusedCount = edits.filter((e) => e.status === 'unexcused').length
+            const nonPresentCount = lateCount + excusedCount + unexcusedCount
+            const presentCount = Math.max(0, total - nonPresentCount)
+
+            return {
+                total,
+                present: presentCount,
+                late: lateCount,
+                excused: excusedCount,
+                unexcused: unexcusedCount,
+                unmarked: 0,
+                isDraft: true,
+            }
+        }
+
+        // Trường hợp chỉnh sửa thủ công riêng lẻ
+        return {
+            total,
+            present: savedStats.present_count,
+            late: savedStats.late_count,
+            excused: savedStats.excused_count,
+            unexcused: savedStats.unexcused_count,
+            unmarked: savedStats.unmarked_count,
+            isDraft: true,
+        }
+    }, [savedStats, isDirty, markAllPresentDraft, draftEdits])
+
+    // Danh sách học viên hiển thị trên trang hiện tại theo bộ lọc tìm kiếm
+    const displayStudents = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase()
+        if (!q) return pageStudents
+        return pageStudents.filter(
+            (s) =>
+                s.full_name.toLowerCase().includes(q) ||
+                s.student_code.toLowerCase().includes(q) ||
+                (s.email && s.email.toLowerCase().includes(q)),
+        )
+    }, [pageStudents, searchQuery])
+
+    // Lưu toàn bộ thay đổi chưa lưu ở các trang
     const handleSaveAttendance = async () => {
         if (!scheduleId || !sheetData?.session_info.can_edit || isSaving) return
 
-        // Thu thập các học viên đã chọn trạng thái
-        const toSave = studentsState
-            .filter((s) => s.status !== null)
-            .map((s) => ({
-                student_id: s.student_id,
-                status: s.status as AttendanceStatus,
-                notes: s.notes?.trim() || undefined,
-            }))
-
-        if (toSave.length === 0) {
+        if (!markAllPresentDraft && Object.keys(draftEdits).length === 0) {
             setErrorMessage('Vui lòng chọn trạng thái điểm danh cho ít nhất một học viên trước khi lưu.')
             return
         }
@@ -165,15 +316,36 @@ export function SessionAttendancePage() {
         setSuccessMessage(null)
 
         try {
-            const res = await saveSessionAttendance(requestFn, scheduleId, {
-                attendances: toSave,
-            })
-            setSuccessMessage(res.message || 'Lưu kết quả điểm danh thành công!')
-            setIsDirty(false)
-            if (res.data) {
-                setSheetData(res.data)
-                setStudentsState(res.data.students || [])
+            const payload: SaveAttendancePayload = {}
+
+            if (markAllPresentDraft) {
+                payload.mark_all_present = true
+                payload.reason = 'Đánh dấu tất cả có mặt cho toàn bộ buổi học'
+                if (Object.keys(draftEdits).length > 0) {
+                    payload.attendances = Object.entries(draftEdits).map(([sId, edit]) => ({
+                        student_id: sId,
+                        status: edit.status,
+                        notes: edit.notes?.trim() || undefined,
+                    }))
+                    payload.reason = 'Đánh dấu tất cả có mặt và cập nhật các học viên ngoại lệ'
+                }
+            } else {
+                payload.attendances = Object.entries(draftEdits).map(([sId, edit]) => ({
+                    student_id: sId,
+                    status: edit.status,
+                    notes: edit.notes?.trim() || undefined,
+                }))
+                payload.reason = `Cập nhật điểm danh cho ${Object.keys(draftEdits).length} học viên`
             }
+
+            const res = await saveSessionAttendance(requestFn, scheduleId, payload)
+            setSuccessMessage(res.message || 'Lưu kết quả điểm danh thành công!')
+            setDraftEdits({})
+            setMarkAllPresentDraft(false)
+            setIsDirty(false)
+
+            // Tải lại đúng trang hiện tại với dữ liệu mới nhất
+            await loadSheetData(page, limit, searchQuery, true)
         } catch (err: unknown) {
             setErrorMessage(getErrorMessage(err, 'Lỗi khi lưu kết quả điểm danh.'))
         } finally {
@@ -196,7 +368,7 @@ export function SessionAttendancePage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading && !sheetData) {
         return (
             <div className="attendance-page-container" data-testid="attendance-loading">
                 <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
@@ -209,7 +381,10 @@ export function SessionAttendancePage() {
     if (errorMessage && !sheetData) {
         return (
             <div className="attendance-page-container" data-testid="attendance-error-state">
-                <div className="attendance-restriction-alert" style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c' }}>
+                <div
+                    className="attendance-restriction-alert"
+                    style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c' }}
+                >
                     <span>⚠️ {errorMessage}</span>
                 </div>
                 <button
@@ -225,6 +400,15 @@ export function SessionAttendancePage() {
     }
 
     const sessionInfo = sheetData?.session_info
+    const pagination = sheetData?.pagination || {
+        page,
+        limit,
+        total_items: pageStudents.length,
+        total_pages: 1,
+    }
+
+    const fromItem = pagination.total_items === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1
+    const toItem = Math.min(pagination.page * pagination.limit, pagination.total_items)
 
     return (
         <div className="attendance-page-container" data-testid="session-attendance-page">
@@ -247,7 +431,7 @@ export function SessionAttendancePage() {
                 <span>Điểm danh học viên</span>
             </nav>
 
-            {/* Thông báo lỗi / thành công tại vị trí thao tác */}
+            {/* Thông báo lỗi / thành công */}
             {errorMessage && (
                 <div
                     className="attendance-restriction-alert"
@@ -345,41 +529,92 @@ export function SessionAttendancePage() {
                 </div>
             )}
 
-            {/* Quick Stats Ribbon */}
+            {/* Thanh cảnh báo có bản nháp chưa lưu */}
+            {isDirty && (
+                <div className="draft-indicator-banner" data-testid="draft-indicator-banner">
+                    <span>
+                        📝 <strong>Bản nháp đang chỉnh sửa:</strong> Bạn có thay đổi chưa lưu
+                        {markAllPresentDraft && ' (Đã chọn Đánh dấu tất cả có mặt)'}
+                        {Object.keys(draftEdits).length > 0 &&
+                            ` (${Object.keys(draftEdits).length} học viên có chỉnh sửa riêng)`}.
+                        Dữ liệu sẽ được giữ nguyên khi chuyển trang hoặc tìm kiếm.
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#b45309' }}>
+                        Chưa lưu vào cơ sở dữ liệu
+                    </span>
+                </div>
+            )}
+
+            {/* Quick Stats Ribbon — Phản ánh toàn buổi, phân biệt đã lưu và bản nháp */}
             <div className="attendance-stats-ribbon" data-testid="attendance-stats-ribbon">
                 <div className="attendance-stat-box">
                     <span className="stat-box-num" data-testid="stat-total">{currentStats.total}</span>
-                    <span className="stat-box-label">Sĩ số</span>
+                    <span className="stat-box-label">Sĩ số toàn buổi</span>
                 </div>
                 <div className="attendance-stat-box present">
                     <span className="stat-box-num" style={{ color: '#16a34a' }} data-testid="stat-present">
                         {currentStats.present}
                     </span>
-                    <span className="stat-box-label">Có mặt</span>
+                    <span className="stat-box-label">
+                        Có mặt
+                        {isDirty && savedStats.present_count !== currentStats.present && (
+                            <span style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: 'normal' }}>
+                                (Đã lưu: {savedStats.present_count})
+                            </span>
+                        )}
+                    </span>
                 </div>
                 <div className="attendance-stat-box late">
                     <span className="stat-box-num" style={{ color: '#d97706' }} data-testid="stat-late">
                         {currentStats.late}
                     </span>
-                    <span className="stat-box-label">Đi muộn</span>
+                    <span className="stat-box-label">
+                        Đi muộn
+                        {isDirty && savedStats.late_count !== currentStats.late && (
+                            <span style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: 'normal' }}>
+                                (Đã lưu: {savedStats.late_count})
+                            </span>
+                        )}
+                    </span>
                 </div>
                 <div className="attendance-stat-box excused">
                     <span className="stat-box-num" style={{ color: '#0284c7' }} data-testid="stat-excused">
                         {currentStats.excused}
                     </span>
-                    <span className="stat-box-label">Vắng có phép</span>
+                    <span className="stat-box-label">
+                        Vắng có phép
+                        {isDirty && savedStats.excused_count !== currentStats.excused && (
+                            <span style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: 'normal' }}>
+                                (Đã lưu: {savedStats.excused_count})
+                            </span>
+                        )}
+                    </span>
                 </div>
                 <div className="attendance-stat-box unexcused">
                     <span className="stat-box-num" style={{ color: '#dc2626' }} data-testid="stat-unexcused">
                         {currentStats.unexcused}
                     </span>
-                    <span className="stat-box-label">Vắng không phép</span>
+                    <span className="stat-box-label">
+                        Vắng không phép
+                        {isDirty && savedStats.unexcused_count !== currentStats.unexcused && (
+                            <span style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: 'normal' }}>
+                                (Đã lưu: {savedStats.unexcused_count})
+                            </span>
+                        )}
+                    </span>
                 </div>
                 <div className="attendance-stat-box unmarked">
                     <span className="stat-box-num" style={{ color: '#64748b' }} data-testid="stat-unmarked">
                         {currentStats.unmarked}
                     </span>
-                    <span className="stat-box-label">Chưa điểm danh</span>
+                    <span className="stat-box-label">
+                        Chưa điểm danh
+                        {isDirty && savedStats.unmarked_count !== currentStats.unmarked && (
+                            <span style={{ display: 'block', fontSize: '10px', color: '#64748b', fontWeight: 'normal' }}>
+                                (Đã lưu: {savedStats.unmarked_count})
+                            </span>
+                        )}
+                    </span>
                 </div>
             </div>
 
@@ -390,9 +625,9 @@ export function SessionAttendancePage() {
                     <input
                         type="text"
                         className="attendance-search-input"
-                        placeholder="Tìm kiếm theo mã, họ tên học viên..."
+                        placeholder="Tìm kiếm theo mã, họ tên hoặc email học viên..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                         data-testid="attendance-search-input"
                     />
                 </div>
@@ -404,9 +639,10 @@ export function SessionAttendancePage() {
                             className="btn-mark-all-present"
                             onClick={handleMarkAllPresent}
                             data-testid="btn-mark-all-present"
+                            title={`Đánh dấu tất cả ${savedStats.total_students} học viên của buổi có mặt`}
                         >
                             <span>✓</span>
-                            <span>Đánh dấu tất cả có mặt</span>
+                            <span>Đánh dấu tất cả có mặt (toàn bộ {savedStats.total_students} học viên)</span>
                         </button>
                     )}
 
@@ -447,21 +683,26 @@ export function SessionAttendancePage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredStudents.length > 0 ? (
-                            filteredStudents.map((st, index) => {
+                        {displayStudents.length > 0 ? (
+                            displayStudents.map((st, index) => {
                                 const canEdit = Boolean(sessionInfo?.can_edit)
+                                const rowNumber = (pagination.page - 1) * pagination.limit + index + 1
                                 return (
                                     <tr key={st.student_id} data-testid={`row-student-${st.student_id}`}>
-                                        <td style={{ textAlign: 'center', color: '#64748b' }}>{index + 1}</td>
+                                        <td style={{ textAlign: 'center', color: '#64748b' }}>{rowNumber}</td>
                                         <td>
                                             <span style={{ fontWeight: 600, color: '#0f172a' }}>
                                                 {st.student_code}
                                             </span>
                                         </td>
                                         <td style={{ minWidth: '180px', maxWidth: '300px' }}>
-                                            <div style={{ fontWeight: 600, color: '#0f172a', wordBreak: 'break-word' }}>{st.full_name}</div>
+                                            <div style={{ fontWeight: 600, color: '#0f172a', wordBreak: 'break-word' }}>
+                                                {st.full_name}
+                                            </div>
                                             {st.email && (
-                                                <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all', marginTop: '2px' }}>{st.email}</div>
+                                                <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all', marginTop: '2px' }}>
+                                                    {st.email}
+                                                </div>
                                             )}
                                             {st.is_historical_record && (
                                                 <span style={{ fontSize: '11px', color: '#d97706', display: 'block', marginTop: '2px' }}>
@@ -541,8 +782,8 @@ export function SessionAttendancePage() {
 
             {/* Danh sách học viên - Thẻ Mobile (<= 640px) */}
             <div className="attendance-cards-mobile" data-testid="attendance-mobile-cards">
-                {filteredStudents.length > 0 ? (
-                    filteredStudents.map((st) => {
+                {displayStudents.length > 0 ? (
+                    displayStudents.map((st) => {
                         const canEdit = Boolean(sessionInfo?.can_edit)
                         return (
                             <div className="attendance-student-card" key={st.student_id} data-testid={`card-student-${st.student_id}`}>
@@ -551,7 +792,9 @@ export function SessionAttendancePage() {
                                         <div className="card-student-name">{st.full_name}</div>
                                         <div className="card-student-code">{st.student_code}</div>
                                         {st.email && (
-                                            <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all', marginTop: '2px' }}>{st.email}</div>
+                                            <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all', marginTop: '2px' }}>
+                                                {st.email}
+                                            </div>
                                         )}
                                     </div>
                                     <span
@@ -620,6 +863,52 @@ export function SessionAttendancePage() {
                         Không tìm thấy học viên nào phù hợp.
                     </div>
                 )}
+            </div>
+
+            {/* Thanh phân trang Backend (10 hoặc 20 học viên/trang) */}
+            <div className="attendance-pagination-bar" data-testid="attendance-pagination">
+                <div className="pagination-info" data-testid="pagination-info">
+                    {fromItem}–{toItem} / {pagination.total_items} học viên
+                </div>
+
+                <div className="pagination-controls">
+                    <label className="pagination-limit-label">
+                        <span>Hiển thị:</span>
+                        <select
+                            className="pagination-select"
+                            value={limit}
+                            onChange={(e) => handleLimitChange(Number(e.target.value))}
+                            data-testid="pagination-limit-select"
+                        >
+                            <option value={10}>10 học viên / trang</option>
+                            <option value={20}>20 học viên / trang</option>
+                        </select>
+                    </label>
+
+                    <button
+                        type="button"
+                        className="pagination-btn"
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page <= 1}
+                        data-testid="pagination-prev-btn"
+                    >
+                        ← Trước
+                    </button>
+
+                    <span className="pagination-page-indicator" data-testid="pagination-page-indicator">
+                        Trang {page} / {pagination.total_pages}
+                    </span>
+
+                    <button
+                        type="button"
+                        className="pagination-btn"
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={page >= pagination.total_pages}
+                        data-testid="pagination-next-btn"
+                    >
+                        Sau →
+                    </button>
+                </div>
             </div>
 
             {/* Modal Lịch sử chỉnh sửa điểm danh */}
