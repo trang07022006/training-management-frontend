@@ -64,6 +64,7 @@ import { ScheduleSessionEditPage } from './pages/ScheduleSessionEditPage'
 import { ScheduleCalendarPage } from './pages/ScheduleCalendarPage'
 import { StudentSchedulePage } from './pages/StudentSchedulePage'
 import { StudentAbsenceRequestsPage } from './pages/StudentAbsenceRequestsPage'
+import { InstructorAbsenceManagementPage } from './pages/InstructorAbsenceManagementPage'
 import { SessionManagementPage } from './pages/SessionManagementPage'
 
 // Student Pages
@@ -232,6 +233,16 @@ createRoot(document.getElementById('root')!).render(
                   }
                 >
                   <Route path="/my-absence-requests" element={<StudentAbsenceRequestsPage />} />
+                </Route>
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredPermission={SYSTEM_PERMISSIONS.ABSENCE_REVIEW}
+                      fallbackPath="/forbidden"
+                    />
+                  }
+                >
+                  <Route path="/instructor/absence-requests" element={<InstructorAbsenceManagementPage />} />
                 </Route>
 
                 {/* Holidays */}

@@ -216,6 +216,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.ABSENCE_REQUEST,
     },
     {
+        key: 'absence_reviews',
+        label: 'Duyệt đơn xin vắng',
+        path: '/instructor/absence-requests',
+        icon: 'clipboard-check',
+        requiredPermission: SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
+    },
+    {
         key: 'students',
         label: 'Học viên',
         path: '/students',

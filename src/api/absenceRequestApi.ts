@@ -46,6 +46,8 @@ export interface AbsenceRequestItem {
     reviewer_email?: string
     attachment_count?: number
     attachments?: AbsenceRequestAttachment[]
+    attendance_updated?: boolean
+    attendance_status?: string | null
 }
 
 export interface EligibleSessionItem {
@@ -216,3 +218,71 @@ export async function getAbsenceRequestDetail(
     }
     return body.data as AbsenceRequestItem
 }
+
+export interface ReviewAbsenceRequestPayload {
+    action: 'approve' | 'reject'
+    rejection_reason?: string
+}
+
+export interface ReviewerAbsenceRequestsResponse {
+    items: AbsenceRequestItem[]
+    pagination: AbsencePagination
+    status_counts?: {
+        all: number
+        pending: number
+        approved: number
+        rejected: number
+    }
+}
+
+/**
+ * Lấy danh sách đơn xin phép vắng cần duyệt cho Giảng viên hoặc Quản lý đào tạo (SCRUM-255 Lát 3).
+ */
+export async function getAbsenceRequestsForReviewer(
+    requestFn: RequestFn,
+    options?: { page?: number; limit?: number; status?: string; q?: string; schedule_id?: string },
+): Promise<ReviewerAbsenceRequestsResponse> {
+    const params = new URLSearchParams()
+    if (options?.page) params.set('page', String(options.page))
+    if (options?.limit) params.set('limit', String(options.limit))
+    if (options?.status && options.status !== 'all') params.set('status', options.status)
+    if (options?.q && options.q.trim()) params.set('q', options.q.trim())
+    if (options?.schedule_id && options.schedule_id.trim()) params.set('schedule_id', options.schedule_id.trim())
+    const queryString = params.toString() ? `?${params.toString()}` : ''
+
+    const res = await requestFn(`/api/v1/absence-requests${queryString}`, {
+        method: 'GET',
+    })
+    const body = await res.json()
+    if (!res.ok || body.status !== 'success') {
+        const err = new Error(body.message || 'Lỗi khi tải danh sách đơn cần xét duyệt.')
+        ;(err as unknown as { code: string }).code = body.code
+        ;(err as unknown as { status: number }).status = res.status
+        throw err
+    }
+    return body.data as ReviewerAbsenceRequestsResponse
+}
+
+/**
+ * Phê duyệt hoặc từ chối đơn xin phép vắng (SCRUM-255 Lát 3).
+ */
+export async function reviewAbsenceRequest(
+    requestFn: RequestFn,
+    requestId: string,
+    payload: ReviewAbsenceRequestPayload,
+): Promise<AbsenceRequestItem> {
+    const res = await requestFn(`/api/v1/absence-requests/${encodeURIComponent(requestId)}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const body = await res.json()
+    if (!res.ok || body.status !== 'success') {
+        const err = new Error(body.message || 'Lỗi khi xử lý đơn xin phép vắng.')
+        ;(err as unknown as { code: string }).code = body.code
+        ;(err as unknown as { status: number }).status = res.status
+        throw err
+    }
+    return body.data as AbsenceRequestItem
+}
+
