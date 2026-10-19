@@ -293,4 +293,153 @@ describe('SessionAttendancePage (SCRUM-254)', () => {
         })
         expect(screen.getByText(/Không tìm thấy buổi học/)).toBeDefined()
     })
+
+    it('saves attendance successfully and shows success notification', async () => {
+        vi.spyOn(attendanceApi, 'getSessionAttendanceSheet').mockResolvedValue(mockSheetData)
+        const saveSpy = vi.spyOn(attendanceApi, 'saveSessionAttendance').mockResolvedValue({
+            message: 'Lưu kết quả điểm danh thành công cho 2 học viên.',
+            data: {
+                ...mockSheetData,
+                session_info: { ...mockSheetData.session_info, attendance_checked: true },
+                stats: { ...mockSheetData.stats, present_count: 2, unmarked_count: 0 },
+                students: mockSheetData.students.map((s) => ({ ...s, status: 'present', status_label: 'Có mặt' })),
+            },
+        })
+
+        render(
+            <MemoryRouter initialEntries={['/schedules/sch-1/attendance']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="trainer">
+                        <Routes>
+                            <Route path="/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-mark-all-present')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('btn-mark-all-present'))
+        fireEvent.click(screen.getByTestId('btn-save-attendance'))
+
+        await waitFor(() => {
+            expect(saveSpy).toHaveBeenCalledTimes(1)
+            expect(screen.getByTestId('attendance-success-alert')).toBeDefined()
+        })
+
+        expect(screen.getByText(/Lưu kết quả điểm danh thành công/)).toBeDefined()
+    })
+
+    it('handles save error and displays error alert without wiping entered data', async () => {
+        vi.spyOn(attendanceApi, 'getSessionAttendanceSheet').mockResolvedValue(mockSheetData)
+        vi.spyOn(attendanceApi, 'saveSessionAttendance').mockRejectedValue(
+            new Error('Lỗi kết nối máy chủ khi lưu điểm danh.'),
+        )
+
+        render(
+            <MemoryRouter initialEntries={['/schedules/sch-1/attendance']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="trainer">
+                        <Routes>
+                            <Route path="/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-mark-all-present')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('btn-mark-all-present'))
+        fireEvent.click(screen.getByTestId('btn-save-attendance'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('attendance-error-alert')).toBeDefined()
+        })
+
+        expect(screen.getByTestId('attendance-error-alert').textContent).toMatch(/Không thể kết nối|Lỗi/i)
+        expect(screen.getByTestId('btn-present-st-1').className).toContain('active')
+        expect(screen.getByTestId('btn-present-st-2').className).toContain('active')
+    })
+
+    it('opens and closes audit history modal with log entries', async () => {
+        vi.spyOn(attendanceApi, 'getSessionAttendanceSheet').mockResolvedValue(mockSheetData)
+        const mockLogs: attendanceApi.AttendanceAuditLogItem[] = [
+            {
+                id: 'log-1',
+                schedule_id: 'sch-1',
+                student_id: 'st-1',
+                student_name: 'Nguyễn Văn An',
+                student_code: 'SV001',
+                old_status: 'present',
+                old_status_label: 'Có mặt',
+                new_status: 'excused',
+                new_status_label: 'Vắng có phép',
+                reason: 'Xin nghỉ phép có xác nhận',
+                performed_by: 'user-1',
+                performer_name: 'Giảng viên A',
+                created_at: '2026-10-19T08:30:00Z',
+            },
+        ]
+        const historySpy = vi.spyOn(attendanceApi, 'getSessionAttendanceHistory').mockResolvedValue(mockLogs)
+
+        render(
+            <MemoryRouter initialEntries={['/schedules/sch-1/attendance']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="trainer">
+                        <Routes>
+                            <Route path="/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-open-history')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('btn-open-history'))
+
+        await waitFor(() => {
+            expect(historySpy).toHaveBeenCalledTimes(1)
+            expect(screen.getByTestId('history-modal')).toBeDefined()
+        })
+
+        expect(screen.getByText(/Lịch sử chỉnh sửa điểm danh/)).toBeDefined()
+        expect(screen.getByText(/Giảng viên A/)).toBeDefined()
+        expect(screen.getByText(/Xin nghỉ phép có xác nhận/)).toBeDefined()
+
+        fireEvent.click(screen.getByTestId('btn-close-history'))
+        expect(screen.queryByTestId('history-modal')).toBeNull()
+    })
+
+    it('allows mobile card buttons interaction', async () => {
+        vi.spyOn(attendanceApi, 'getSessionAttendanceSheet').mockResolvedValue(mockSheetData)
+
+        render(
+            <MemoryRouter initialEntries={['/schedules/sch-1/attendance']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="trainer">
+                        <Routes>
+                            <Route path="/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('mobile-btn-present-st-1')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('mobile-btn-present-st-1'))
+        expect(screen.getByTestId('mobile-btn-present-st-1').className).toContain('active')
+        expect(screen.getByTestId('badge-status-st-1').textContent).toBe('Có mặt')
+    })
 })

@@ -14,6 +14,13 @@ import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
 import './SessionAttendance.css'
 
+const STATUS_LABELS: Record<AttendanceStatus, string> = {
+    present: 'Có mặt',
+    late: 'Đi muộn',
+    excused: 'Vắng có phép',
+    unexcused: 'Vắng không phép',
+}
+
 export function SessionAttendancePage() {
     const { scheduleId } = useParams<{ scheduleId: string }>()
     const navigate = useNavigate()
@@ -105,7 +112,11 @@ export function SessionAttendancePage() {
     const handleStatusChange = (studentId: string, newStatus: AttendanceStatus) => {
         if (!sheetData?.session_info.can_edit) return
         setStudentsState((prev) =>
-            prev.map((s) => (s.student_id === studentId ? { ...s, status: newStatus } : s)),
+            prev.map((s) =>
+                s.student_id === studentId
+                    ? { ...s, status: newStatus, status_label: STATUS_LABELS[newStatus] }
+                    : s,
+            ),
         )
         setIsDirty(true)
         setSuccessMessage(null)
@@ -124,7 +135,7 @@ export function SessionAttendancePage() {
     const handleMarkAllPresent = () => {
         if (!sheetData?.session_info.can_edit) return
         setStudentsState((prev) =>
-            prev.map((s) => ({ ...s, status: 'present' })),
+            prev.map((s) => ({ ...s, status: 'present', status_label: STATUS_LABELS.present })),
         )
         setIsDirty(true)
         setSuccessMessage(null)
