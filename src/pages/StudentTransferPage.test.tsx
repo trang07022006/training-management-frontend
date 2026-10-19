@@ -179,9 +179,9 @@ describe('StudentTransferPage (SCRUM-252.2)', () => {
             expect(screen.getByTestId('btn-preview-transfer')).toBeDefined()
         })
 
-        // Không chọn lớp đích -> báo lỗi
+        // Không chọn lớp đích -> báo lỗi ngay dưới trường lớp đích
         fireEvent.click(screen.getByTestId('btn-preview-transfer'))
-        expect(screen.getByTestId('alert-error').textContent).toContain('Vui lòng chọn lớp đích')
+        expect(screen.getByTestId('select-target-class-error').textContent).toContain('Vui lòng chọn lớp đích')
 
         // Chọn lớp đích nhưng để trống lý do
         const selectTarget = screen.getByTestId('select-target-class')
@@ -191,7 +191,7 @@ describe('StudentTransferPage (SCRUM-252.2)', () => {
         fireEvent.change(reasonInput, { target: { value: '   ' } })
 
         fireEvent.click(screen.getByTestId('btn-preview-transfer'))
-        expect(screen.getByTestId('alert-error').textContent).toContain('Lý do chuyển lớp là bắt buộc')
+        expect(screen.getByTestId('input-reason-error').textContent).toContain('Lý do chuyển lớp là bắt buộc')
     })
 
     it('3. Mở modal xác nhận tóm tắt chuyển lớp và gọi API thành công', async () => {
@@ -358,8 +358,128 @@ describe('StudentTransferPage (SCRUM-252.2)', () => {
         fireEvent.click(screen.getByTestId('btn-preview-transfer'))
 
         // Báo lỗi nhưng dữ liệu không bị xóa
-        expect(screen.getByTestId('alert-error').textContent).toContain('ít nhất 5 ký tự')
+        expect(screen.getByTestId('input-reason-error').textContent).toContain('ít nhất 5 ký tự')
         expect(reasonInput.value).toBe('Chuy')
         expect(selectTarget.value).toBe('cls-tgt-dup')
+    })
+
+    it('6. Hiển thị lỗi tại trường (lớp đích, whitespace, ngày sai), aria attributes, focus/cuộn và backend error mapping', async () => {
+        vi.spyOn(studentApi, 'getStudentDetail').mockResolvedValue(mockStudent)
+        vi.spyOn(classApi, 'listClasses').mockResolvedValue({
+            items: mockClasses,
+            total: 3,
+            page: 1,
+            page_size: 100,
+            total_pages: 1,
+        })
+        const scrollSpy = vi.fn()
+        window.HTMLElement.prototype.scrollIntoView = scrollSpy
+
+        render(
+            <MemoryRouter initialEntries={['/students/st-202/transfer']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="training_manager">
+                        <Routes>
+                            <Route path="/students/:studentId/transfer" element={<StudentTransferPage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-preview-transfer')).toBeDefined()
+        })
+
+        const selectTarget = screen.getByTestId('select-target-class') as HTMLSelectElement
+        const dateInput = screen.getByTestId('input-effective-date') as HTMLInputElement
+        const reasonInput = screen.getByTestId('input-reason') as HTMLTextAreaElement
+
+        // 1. Để trống lớp đích, ngày sai và lý do chỉ có khoảng trắng
+        fireEvent.change(selectTarget, { target: { value: '' } })
+        fireEvent.change(dateInput, { target: { value: '' } })
+        fireEvent.change(reasonInput, { target: { value: '    ' } })
+
+        fireEvent.click(screen.getByTestId('btn-preview-transfer'))
+
+        // Không mở modal
+        expect(screen.queryByTestId('transfer-modal')).toBeNull()
+
+        // Lỗi hiển thị đúng từng trường
+        const targetError = screen.getByTestId('select-target-class-error')
+        const dateError = screen.getByTestId('input-effective-date-error')
+        const reasonError = screen.getByTestId('input-reason-error')
+        expect(targetError.textContent).toContain('Vui lòng chọn lớp đích')
+        expect(dateError.textContent).toContain('Vui lòng chọn ngày hiệu lực')
+        expect(reasonError.textContent).toContain('không được chỉ chứa khoảng trắng')
+
+        // Kiểm tra aria & viền has-error
+        expect(selectTarget.classList.contains('has-error')).toBe(true)
+        expect(selectTarget.getAttribute('aria-invalid')).toBe('true')
+        expect(selectTarget.getAttribute('aria-describedby')).toBe('select-target-class-error')
+
+        expect(dateInput.classList.contains('has-error')).toBe(true)
+        expect(dateInput.getAttribute('aria-invalid')).toBe('true')
+        expect(dateInput.getAttribute('aria-describedby')).toBe('input-effective-date-error')
+
+        expect(reasonInput.classList.contains('has-error')).toBe(true)
+        expect(reasonInput.getAttribute('aria-invalid')).toBe('true')
+        expect(reasonInput.getAttribute('aria-describedby')).toBe('input-reason-error')
+
+        // Cuộn và focus vào trường lỗi đầu tiên (lớp đích)
+        expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+        expect(document.activeElement).toBe(selectTarget)
+
+        // Sửa chọn lớp đích hợp lệ
+        fireEvent.change(selectTarget, { target: { value: 'cls-tgt-ok' } })
+        expect(selectTarget.classList.contains('has-error')).toBe(false)
+        expect(selectTarget.getAttribute('aria-invalid')).toBe('false')
+
+        // Sửa ngày hợp lệ
+        fireEvent.change(dateInput, { target: { value: '2026-11-15' } })
+        expect(dateInput.classList.contains('has-error')).toBe(false)
+
+        // Sửa lý do hợp lệ
+        fireEvent.change(reasonInput, { target: { value: 'Chuyển ca học tối để phù hợp công việc' } })
+        expect(reasonInput.classList.contains('has-error')).toBe(false)
+
+        // 2. Kiểm thử lỗi Backend: map vào trường (lớp đích hết chỗ)
+        const transferMock = vi.spyOn(studentLifecycleApi, 'transferStudent')
+        transferMock.mockRejectedValueOnce(new Error('Lớp đích đã hết chỗ hoặc đủ sĩ số'))
+
+        fireEvent.click(screen.getByTestId('btn-preview-transfer'))
+        expect(screen.getByTestId('transfer-modal')).toBeDefined()
+        fireEvent.click(screen.getByTestId('btn-confirm-transfer'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('select-target-class-error').textContent).toContain('Lớp đích đã hết chỗ')
+        })
+
+        // 3. Kiểm thử lỗi Backend: lỗi mạng / chung -> action alert + toast
+        transferMock.mockRejectedValueOnce(new Error('Mất kết nối mạng tới máy chủ'))
+        fireEvent.click(screen.getByTestId('btn-preview-transfer'))
+        fireEvent.click(screen.getByTestId('btn-confirm-transfer'))
+
+        await waitFor(() => {
+            const actionAlert = document.querySelector('.lifecycle-action-alert')
+            expect(actionAlert).not.toBeNull()
+            expect(actionAlert?.textContent).toContain('Không thể kết nối tới máy chủ')
+
+            const toast = document.querySelector('.leads-toast-error')
+            expect(toast).not.toBeNull()
+            expect(toast?.textContent).toContain('Không thể kết nối tới máy chủ')
+        })
+
+        // 4. Sửa và gửi lại thành công
+        transferMock.mockResolvedValueOnce({
+            message: 'Chuyển lớp thành công',
+            data: { id: 'hist-tr-ok' },
+        })
+        fireEvent.click(screen.getByTestId('btn-preview-transfer'))
+        fireEvent.click(screen.getByTestId('btn-confirm-transfer'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('alert-success').textContent).toContain('Chuyển lớp thành công')
+        })
     })
 })

@@ -2,8 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getStudentDetail, type StudentDetail } from '../api/studentApi'
-import { dropStudent, formatClassOptionLabel, type DropStudentPayload } from '../api/studentLifecycleApi'
+import {
+    dropStudent,
+    formatClassOptionLabel,
+    parseBackendErrorToField,
+    scrollToAndFocusField,
+    type DropStudentPayload,
+} from '../api/studentLifecycleApi'
 import { PageHeader } from '../components/PageHeader'
+import { ToastPortal } from '../components/ToastPortal'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
 import { getStudentStatusBadge } from './StudentDetailPage'
@@ -25,6 +32,14 @@ export function StudentDropPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [fieldErrors, setFieldErrors] = useState<{
+        selectedClassId?: string
+        effectiveDate?: string
+        reason?: string
+    }>({})
+    const [generalError, setGeneralError] = useState<string | null>(null)
+    const [toastError, setToastError] = useState<string | null>(null)
+    const [toastSuccess, setToastSuccess] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
 
@@ -75,25 +90,40 @@ export function StudentDropPage() {
 
     const handleOpenConfirm = (e: React.FormEvent) => {
         e.preventDefault()
-        setErrorMessage(null)
+        setGeneralError(null)
+        setToastError(null)
+
+        const errors: {
+            selectedClassId?: string
+            effectiveDate?: string
+            reason?: string
+        } = {}
 
         if (scope === 'single' && !selectedClassId) {
-            setErrorMessage('Vui lòng chọn lớp học cần thôi học.')
-            return
+            errors.selectedClassId = 'Vui lòng chọn lớp học cần thôi học.'
         }
-        if (!effectiveDate) {
-            setErrorMessage('Vui lòng chọn ngày hiệu lực thôi học.')
-            return
+        if (!effectiveDate || isNaN(Date.parse(effectiveDate))) {
+            errors.effectiveDate = 'Vui lòng chọn ngày hiệu lực thôi học hợp lệ.'
         }
         if (!reason || reason.trim().length === 0) {
-            setErrorMessage('Lý do thôi học là bắt buộc và không được chỉ chứa khoảng trắng.')
-            return
+            errors.reason = 'Lý do thôi học là bắt buộc và không được chỉ chứa khoảng trắng.'
+        } else if (reason.trim().length < 5) {
+            errors.reason = 'Lý do thôi học phải có ít nhất 5 ký tự.'
         }
-        if (reason.trim().length < 5) {
-            setErrorMessage('Lý do thôi học phải có ít nhất 5 ký tự.')
+
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors)
+            if (errors.selectedClassId) {
+                scrollToAndFocusField('select-class')
+            } else if (errors.effectiveDate) {
+                scrollToAndFocusField('input-effective-date')
+            } else if (errors.reason) {
+                scrollToAndFocusField('input-reason')
+            }
             return
         }
 
+        setFieldErrors({})
         setShowConfirmModal(true)
     }
 
@@ -102,7 +132,8 @@ export function StudentDropPage() {
         if (scope === 'single' && !selectedClassId) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
+        setGeneralError(null)
+        setToastError(null)
 
         const payload: DropStudentPayload = {
             scope,
@@ -117,12 +148,22 @@ export function StudentDropPage() {
             const targetDesc = scope === 'all'
                 ? 'toàn bộ khóa học'
                 : `lớp ${formatClassOptionLabel(selectedClass)}`
-            setSuccessMessage(
-                `Xử lý thôi học ${targetDesc} thành công từ ngày ${formatVietnamDate(effectiveDate)}. Lịch sử học tập trước đây được bảo toàn nguyên vẹn.`
-            )
+            const successMsg = `Xử lý thôi học ${targetDesc} thành công từ ngày ${formatVietnamDate(effectiveDate)}. Lịch sử học tập trước đây được bảo toàn nguyên vẹn.`
+            setSuccessMessage(successMsg)
+            setToastSuccess(successMsg)
         } catch (err: any) {
             setShowConfirmModal(false)
-            setErrorMessage(getErrorMessage(err, 'Lỗi khi thực hiện thôi học học viên.'))
+            const errText = getErrorMessage(err, 'Lỗi khi thực hiện thôi học học viên.')
+            const mapped = parseBackendErrorToField(errText, ['selectedClassId', 'effectiveDate', 'reason'])
+            if (mapped.field) {
+                setFieldErrors((prev) => ({ ...prev, [mapped.field!]: mapped.message }))
+                if (mapped.field === 'selectedClassId') scrollToAndFocusField('select-class')
+                else if (mapped.field === 'effectiveDate') scrollToAndFocusField('input-effective-date')
+                else if (mapped.field === 'reason') scrollToAndFocusField('input-reason')
+            } else {
+                setGeneralError(errText)
+                setToastError(errText)
+            }
         } finally {
             setIsSubmitting(false)
         }
@@ -143,6 +184,13 @@ export function StudentDropPage() {
 
     return (
         <div className="students-container lifecycle-container" data-testid="student-drop-page">
+            <ToastPortal
+                error={toastError}
+                success={toastSuccess}
+                onCloseError={() => setToastError(null)}
+                onCloseSuccess={() => setToastSuccess(null)}
+            />
+
             <PageHeader
                 title="Thôi học học viên"
                 subtitle={student ? `Mã học viên: ${student.student_code} • ${student.full_name}` : ''}
@@ -267,7 +315,12 @@ export function StudentDropPage() {
                                                 data-testid="radio-scope-all"
                                                 value="all"
                                                 checked={scope === 'all'}
-                                                onChange={() => setScope('all')}
+                                                onChange={() => {
+                                                    setScope('all')
+                                                    if (fieldErrors.selectedClassId) {
+                                                        setFieldErrors((prev) => ({ ...prev, selectedClassId: undefined }))
+                                                    }
+                                                }}
                                                 disabled={isSubmitting}
                                             />
                                             Thôi học toàn bộ khóa học (tất cả các lớp)
@@ -284,10 +337,17 @@ export function StudentDropPage() {
                                             <select
                                                 id="select-class"
                                                 data-testid="select-class"
-                                                className="lifecycle-form-control"
+                                                className={`lifecycle-form-control ${fieldErrors.selectedClassId ? 'has-error' : ''}`}
                                                 value={selectedClassId}
-                                                onChange={(e) => setSelectedClassId(e.target.value)}
+                                                onChange={(e) => {
+                                                    setSelectedClassId(e.target.value)
+                                                    if (fieldErrors.selectedClassId) {
+                                                        setFieldErrors((prev) => ({ ...prev, selectedClassId: undefined }))
+                                                    }
+                                                }}
                                                 disabled={isSubmitting}
+                                                aria-invalid={!!fieldErrors.selectedClassId}
+                                                aria-describedby={fieldErrors.selectedClassId ? 'select-class-error' : undefined}
                                             >
                                                 <option value="">-- Chọn lớp học --</option>
                                                 {availableClasses.map((cls, idx) => {
@@ -299,6 +359,11 @@ export function StudentDropPage() {
                                                     )
                                                 })}
                                             </select>
+                                            {fieldErrors.selectedClassId && (
+                                                <div id="select-class-error" className="lifecycle-field-error" role="alert" data-testid="select-class-error">
+                                                    <span>⚠️ {fieldErrors.selectedClassId}</span>
+                                                </div>
+                                            )}
                                             {selectedClass && (
                                                 <div className="lifecycle-form-hint">
                                                     Khai giảng: {selectedClass.expected_start_date || selectedClass.start_date ? formatVietnamDate(selectedClass.expected_start_date || selectedClass.start_date) : 'Chưa thiết lập ngày khai giảng'}
@@ -315,11 +380,23 @@ export function StudentDropPage() {
                                                 id="input-effective-date"
                                                 data-testid="input-effective-date"
                                                 type="date"
-                                                className="lifecycle-form-control"
+                                                className={`lifecycle-form-control ${fieldErrors.effectiveDate ? 'has-error' : ''}`}
                                                 value={effectiveDate}
-                                                onChange={(e) => setEffectiveDate(e.target.value)}
+                                                onChange={(e) => {
+                                                    setEffectiveDate(e.target.value)
+                                                    if (fieldErrors.effectiveDate) {
+                                                        setFieldErrors((prev) => ({ ...prev, effectiveDate: undefined }))
+                                                    }
+                                                }}
                                                 disabled={isSubmitting}
+                                                aria-invalid={!!fieldErrors.effectiveDate}
+                                                aria-describedby={fieldErrors.effectiveDate ? 'input-effective-date-error' : undefined}
                                             />
+                                            {fieldErrors.effectiveDate && (
+                                                <div id="input-effective-date-error" className="lifecycle-field-error" role="alert" data-testid="input-effective-date-error">
+                                                    <span>⚠️ {fieldErrors.effectiveDate}</span>
+                                                </div>
+                                            )}
                                             <div className="lifecycle-form-hint">
                                                 Từ ngày này trở đi, học viên sẽ không còn xuất hiện trong danh sách điểm danh. Trước ngày hiệu lực, lịch sử điểm và điểm danh vẫn được giữ nguyên vẹn.
                                             </div>
@@ -334,11 +411,23 @@ export function StudentDropPage() {
                                             id="input-effective-date"
                                             data-testid="input-effective-date"
                                             type="date"
-                                            className="lifecycle-form-control"
+                                            className={`lifecycle-form-control ${fieldErrors.effectiveDate ? 'has-error' : ''}`}
                                             value={effectiveDate}
-                                            onChange={(e) => setEffectiveDate(e.target.value)}
+                                            onChange={(e) => {
+                                                setEffectiveDate(e.target.value)
+                                                if (fieldErrors.effectiveDate) {
+                                                    setFieldErrors((prev) => ({ ...prev, effectiveDate: undefined }))
+                                                }
+                                            }}
                                             disabled={isSubmitting}
+                                            aria-invalid={!!fieldErrors.effectiveDate}
+                                            aria-describedby={fieldErrors.effectiveDate ? 'input-effective-date-error' : undefined}
                                         />
+                                        {fieldErrors.effectiveDate && (
+                                            <div id="input-effective-date-error" className="lifecycle-field-error" role="alert" data-testid="input-effective-date-error">
+                                                <span>⚠️ {fieldErrors.effectiveDate}</span>
+                                            </div>
+                                        )}
                                         <div className="lifecycle-form-hint">
                                             Từ ngày này trở đi, học viên sẽ không còn xuất hiện trong danh sách điểm danh của bất kỳ lớp nào. Trước ngày hiệu lực, lịch sử học tập vẫn được giữ nguyên vẹn.
                                         </div>
@@ -353,12 +442,24 @@ export function StudentDropPage() {
                                     <textarea
                                         id="input-reason"
                                         data-testid="input-reason"
-                                        className="lifecycle-form-control"
+                                        className={`lifecycle-form-control ${fieldErrors.reason ? 'has-error' : ''}`}
                                         placeholder="Nhập lý do thôi học cụ thể (ví dụ: lý do cá nhân, điều kiện gia đình, chuyển nơi cư trú...)"
                                         value={reason}
-                                        onChange={(e) => setReason(e.target.value)}
+                                        onChange={(e) => {
+                                            setReason(e.target.value)
+                                            if (fieldErrors.reason) {
+                                                setFieldErrors((prev) => ({ ...prev, reason: undefined }))
+                                            }
+                                        }}
                                         disabled={isSubmitting}
+                                        aria-invalid={!!fieldErrors.reason}
+                                        aria-describedby={fieldErrors.reason ? 'input-reason-error' : undefined}
                                     />
+                                    {fieldErrors.reason && (
+                                        <div id="input-reason-error" className="lifecycle-field-error" role="alert" data-testid="input-reason-error">
+                                            <span>⚠️ {fieldErrors.reason}</span>
+                                        </div>
+                                    )}
                                     <div className="lifecycle-form-hint">
                                         Lý do là thông tin bắt buộc và được ghi vào lịch sử hồ sơ học viên.
                                     </div>
@@ -371,7 +472,7 @@ export function StudentDropPage() {
                                     </div>
                                     <ul className="lifecycle-impact-list">
                                         {scope === 'single' ? (
-                                            <li>Học viên sẽ thôi học tại lớp <strong>{selectedClass?.class_code || 'lớp đã chọn'}</strong> từ ngày <strong>{effectiveDate ? formatVietnamDate(effectiveDate) : '...'}</strong>. Các lớp khác của học viên hoàn toàn không bị ảnh hưởng.</li>
+                                             <li>Học viên sẽ thôi học tại lớp <strong>{selectedClass?.class_code || 'lớp đã chọn'}</strong> từ ngày <strong>{effectiveDate ? formatVietnamDate(effectiveDate) : '...'}</strong>. Các lớp khác của học viên hoàn toàn không bị ảnh hưởng.</li>
                                         ) : (
                                             <li>Học viên sẽ thôi học tại <strong>tất cả các lớp đang học ({availableClasses.length} lớp)</strong> và trạng thái hồ sơ chuyển sang Đã nghỉ học.</li>
                                         )}
@@ -379,6 +480,12 @@ export function StudentDropPage() {
                                         <li>Bảo toàn nguyên vẹn hồ sơ, điểm và điểm danh lịch sử đã ghi nhận trước ngày hiệu lực. Không tự xóa tài khoản đăng nhập.</li>
                                     </ul>
                                 </div>
+
+                                {generalError && (
+                                    <div className="lifecycle-alert error lifecycle-action-alert" role="alert" data-testid="alert-error">
+                                        <span>⚠️ {generalError}</span>
+                                    </div>
+                                )}
 
                                 <div className="lifecycle-actions">
                                     <button

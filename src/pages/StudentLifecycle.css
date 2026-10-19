@@ -136,6 +136,7 @@
     margin-bottom: 20px;
     min-width: 0;
     box-sizing: border-box;
+    scroll-margin-top: 90px;
 }
 
 .lifecycle-form-label {
@@ -161,15 +162,26 @@
     border-radius: 8px;
     background-color: #ffffff;
     color: #1e293b;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
     box-sizing: border-box;
     min-height: 42px;
+    scroll-margin-top: 90px;
 }
 
 .lifecycle-form-control:focus {
     outline: none;
     border-color: #0284c7;
     box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.lifecycle-form-control.has-error {
+    border-color: #ef4444 !important;
+    background-color: #fffafa;
+}
+
+.lifecycle-form-control.has-error:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
 }
 
 textarea.lifecycle-form-control {
@@ -185,6 +197,30 @@ textarea.lifecycle-form-control {
     margin-top: 6px;
     line-height: 1.45;
     word-break: break-word;
+}
+
+/* THÔNG BÁO LỖI THEO TỪNG TRƯỜNG DỮ LIỆU */
+.lifecycle-field-error {
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    animation: fieldErrorFadeIn 0.15s ease-out;
+}
+
+@keyframes fieldErrorFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* KHỐI TÁC ĐỘNG NGHIỆP VỤ */
@@ -261,6 +297,11 @@ textarea.lifecycle-form-control {
     background-color: #f0fdf4;
     color: #166534;
     border: 1px solid #bbf7d0;
+}
+
+.lifecycle-action-alert {
+    margin-top: 16px;
+    margin-bottom: 0;
 }
 
 /* THANH NÚT THAO TÁC */

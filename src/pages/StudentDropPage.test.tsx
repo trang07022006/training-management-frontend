@@ -126,7 +126,7 @@ describe('StudentDropPage (SCRUM-252.3)', () => {
         fireEvent.change(reasonInput, { target: { value: '    ' } })
 
         fireEvent.click(screen.getByTestId('btn-preview-drop'))
-        expect(screen.getByTestId('alert-error').textContent).toContain('Lý do thôi học là bắt buộc')
+        expect(screen.getByTestId('input-reason-error').textContent).toContain('Lý do thôi học là bắt buộc')
     })
 
     it('3. Thôi học toàn bộ khóa học: mở modal và gửi yêu cầu thành công', async () => {
@@ -255,7 +255,120 @@ describe('StudentDropPage (SCRUM-252.3)', () => {
         fireEvent.click(screen.getByTestId('btn-preview-drop'))
 
         // Báo lỗi nhưng dữ liệu lý do không bị mất
-        expect(screen.getByTestId('alert-error').textContent).toContain('ít nhất 5 ký tự')
+        expect(screen.getByTestId('input-reason-error').textContent).toContain('ít nhất 5 ký tự')
         expect(reasonInput.value).toBe('Thôi')
+    })
+
+    it('6. Hiển thị lỗi tại trường (chọn lớp, whitespace, ngày sai), aria attributes, focus/cuộn và backend error mapping', async () => {
+        vi.spyOn(studentApi, 'getStudentDetail').mockResolvedValue(mockStudent)
+        const scrollSpy = vi.fn()
+        window.HTMLElement.prototype.scrollIntoView = scrollSpy
+
+        render(
+            <MemoryRouter initialEntries={['/students/st-303/drop']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <RoleSessionWrapper role="training_manager">
+                        <Routes>
+                            <Route path="/students/:studentId/drop" element={<StudentDropPage />} />
+                        </Routes>
+                    </RoleSessionWrapper>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('btn-preview-drop')).toBeDefined()
+        })
+
+        const selectClass = screen.getByTestId('select-class') as HTMLSelectElement
+        const dateInput = screen.getByTestId('input-effective-date') as HTMLInputElement
+        const reasonInput = screen.getByTestId('input-reason') as HTMLTextAreaElement
+
+        // 1. Để trống lớp, ngày rỗng và lý do toàn khoảng trắng
+        fireEvent.change(selectClass, { target: { value: '' } })
+        fireEvent.change(dateInput, { target: { value: '' } })
+        fireEvent.change(reasonInput, { target: { value: '    ' } })
+
+        fireEvent.click(screen.getByTestId('btn-preview-drop'))
+
+        // Không mở modal
+        expect(screen.queryByTestId('drop-modal')).toBeNull()
+
+        // Lỗi hiển thị đúng từng trường
+        const classError = screen.getByTestId('select-class-error')
+        const dateError = screen.getByTestId('input-effective-date-error')
+        const reasonError = screen.getByTestId('input-reason-error')
+        expect(classError.textContent).toContain('Vui lòng chọn lớp học')
+        expect(dateError.textContent).toContain('Vui lòng chọn ngày hiệu lực')
+        expect(reasonError.textContent).toContain('không được chỉ chứa khoảng trắng')
+
+        // Kiểm tra aria & viền has-error
+        expect(selectClass.classList.contains('has-error')).toBe(true)
+        expect(selectClass.getAttribute('aria-invalid')).toBe('true')
+        expect(selectClass.getAttribute('aria-describedby')).toBe('select-class-error')
+
+        expect(dateInput.classList.contains('has-error')).toBe(true)
+        expect(dateInput.getAttribute('aria-invalid')).toBe('true')
+        expect(dateInput.getAttribute('aria-describedby')).toBe('input-effective-date-error')
+
+        expect(reasonInput.classList.contains('has-error')).toBe(true)
+        expect(reasonInput.getAttribute('aria-invalid')).toBe('true')
+        expect(reasonInput.getAttribute('aria-describedby')).toBe('input-reason-error')
+
+        // Cuộn và focus vào trường lỗi đầu tiên (lớp học)
+        expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' })
+        expect(document.activeElement).toBe(selectClass)
+
+        // Sửa chọn lớp hợp lệ
+        fireEvent.change(selectClass, { target: { value: 'cls-drop-1' } })
+        expect(selectClass.classList.contains('has-error')).toBe(false)
+        expect(selectClass.getAttribute('aria-invalid')).toBe('false')
+
+        // Sửa ngày hợp lệ
+        fireEvent.change(dateInput, { target: { value: '2026-12-01' } })
+        expect(dateInput.classList.contains('has-error')).toBe(false)
+
+        // Sửa lý do hợp lệ
+        fireEvent.change(reasonInput, { target: { value: 'Thôi học do chuyển nơi sinh sống' } })
+        expect(reasonInput.classList.contains('has-error')).toBe(false)
+
+        // 2. Kiểm thử lỗi Backend: map vào trường (lý do)
+        const dropMock = vi.spyOn(studentLifecycleApi, 'dropStudent')
+        dropMock.mockRejectedValueOnce(new Error('Lý do thôi học không hợp lệ'))
+
+        fireEvent.click(screen.getByTestId('btn-preview-drop'))
+        expect(screen.getByTestId('drop-modal')).toBeDefined()
+        fireEvent.click(screen.getByTestId('btn-confirm-drop'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('input-reason-error').textContent).toContain('Lý do thôi học không hợp lệ')
+        })
+
+        // 3. Kiểm thử lỗi Backend: lỗi mạng / chung -> action alert + toast
+        dropMock.mockRejectedValueOnce(new Error('Mất kết nối mạng tới máy chủ'))
+        fireEvent.click(screen.getByTestId('btn-preview-drop'))
+        fireEvent.click(screen.getByTestId('btn-confirm-drop'))
+
+        await waitFor(() => {
+            const actionAlert = document.querySelector('.lifecycle-action-alert')
+            expect(actionAlert).not.toBeNull()
+            expect(actionAlert?.textContent).toContain('Không thể kết nối tới máy chủ')
+
+            const toast = document.querySelector('.leads-toast-error')
+            expect(toast).not.toBeNull()
+            expect(toast?.textContent).toContain('Không thể kết nối tới máy chủ')
+        })
+
+        // 4. Sửa và gửi lại thành công
+        dropMock.mockResolvedValueOnce({
+            message: 'Thôi học thành công',
+            data: { scope: 'single' },
+        })
+        fireEvent.click(screen.getByTestId('btn-preview-drop'))
+        fireEvent.click(screen.getByTestId('btn-confirm-drop'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('alert-success').textContent).toContain('Xử lý thôi học')
+        })
     })
 })

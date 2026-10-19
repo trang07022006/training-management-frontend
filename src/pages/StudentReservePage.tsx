@@ -2,8 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getStudentDetail, type StudentDetail } from '../api/studentApi'
-import { reserveStudent, formatClassOptionLabel, type ReserveStudentPayload } from '../api/studentLifecycleApi'
+import {
+    reserveStudent,
+    formatClassOptionLabel,
+    parseBackendErrorToField,
+    scrollToAndFocusField,
+    type ReserveStudentPayload,
+} from '../api/studentLifecycleApi'
 import { PageHeader } from '../components/PageHeader'
+import { ToastPortal } from '../components/ToastPortal'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
 import { getStudentStatusBadge } from './StudentDetailPage'
@@ -20,6 +27,15 @@ export function StudentReservePage() {
     const [selectedClassId, setSelectedClassId] = useState<string>(preselectedClassId)
     const [effectiveDate, setEffectiveDate] = useState<string>(new Date().toISOString().slice(0, 10))
     const [reason, setReason] = useState<string>('')
+
+    const [fieldErrors, setFieldErrors] = useState<{
+        selectedClassId?: string
+        effectiveDate?: string
+        reason?: string
+    }>({})
+    const [generalError, setGeneralError] = useState<string | null>(null)
+    const [toastError, setToastError] = useState<string | null>(null)
+    const [toastSuccess, setToastSuccess] = useState<string | null>(null)
 
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,7 +72,9 @@ export function StudentReservePage() {
             })
             .catch((err) => {
                 if (isMounted) {
-                    setErrorMessage(getErrorMessage(err, 'Lỗi khi tải thông tin học viên.'))
+                    const msg = getErrorMessage(err, 'Lỗi khi tải thông tin học viên.')
+                    setErrorMessage(msg)
+                    setToastError(msg)
                     setIsLoading(false)
                 }
             })
@@ -74,25 +92,36 @@ export function StudentReservePage() {
 
     const handleOpenConfirm = (e: React.FormEvent) => {
         e.preventDefault()
-        setErrorMessage(null)
+        setGeneralError(null)
+        setToastError(null)
 
+        const errors: { selectedClassId?: string; effectiveDate?: string; reason?: string } = {}
         if (!selectedClassId) {
-            setErrorMessage('Vui lòng chọn lớp học cần bảo lưu.')
-            return
+            errors.selectedClassId = 'Vui lòng chọn lớp học cần bảo lưu.'
         }
-        if (!effectiveDate) {
-            setErrorMessage('Vui lòng chọn ngày hiệu lực bảo lưu.')
-            return
+        if (!effectiveDate || isNaN(Date.parse(effectiveDate))) {
+            errors.effectiveDate = 'Vui lòng chọn ngày hiệu lực bảo lưu hợp lệ.'
         }
         if (!reason || reason.trim().length === 0) {
-            setErrorMessage('Lý do bảo lưu là bắt buộc và không được chỉ chứa khoảng trắng.')
-            return
+            errors.reason = 'Lý do bảo lưu là bắt buộc và không được chỉ chứa khoảng trắng.'
+        } else if (reason.trim().length < 5) {
+            errors.reason = 'Lý do bảo lưu phải có ít nhất 5 ký tự.'
         }
-        if (reason.trim().length < 5) {
-            setErrorMessage('Lý do bảo lưu phải có ít nhất 5 ký tự.')
+
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors)
+            // Focus và cuộn đến trường bị lỗi đầu tiên
+            if (errors.selectedClassId) {
+                scrollToAndFocusField('select-class')
+            } else if (errors.effectiveDate) {
+                scrollToAndFocusField('input-effective-date')
+            } else if (errors.reason) {
+                scrollToAndFocusField('input-reason')
+            }
             return
         }
 
+        setFieldErrors({})
         setShowConfirmModal(true)
     }
 
@@ -100,7 +129,8 @@ export function StudentReservePage() {
         if (!studentId || !selectedClassId || !effectiveDate || !reason.trim()) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
+        setGeneralError(null)
+        setToastError(null)
 
         const payload: ReserveStudentPayload = {
             class_id: selectedClassId,
@@ -111,12 +141,22 @@ export function StudentReservePage() {
         try {
             await reserveStudent(requestFn, studentId, payload)
             setShowConfirmModal(false)
-            setSuccessMessage(
-                `Bảo lưu học viên thành công từ ngày ${formatVietnamDate(effectiveDate)}. Học viên sẽ không còn xuất hiện trong danh sách điểm danh của lớp kể từ ngày này.`
-            )
+            const successMsg = `Bảo lưu học viên thành công từ ngày ${formatVietnamDate(effectiveDate)}. Học viên sẽ không còn xuất hiện trong danh sách điểm danh của lớp kể từ ngày này.`
+            setSuccessMessage(successMsg)
+            setToastSuccess(successMsg)
         } catch (err: any) {
             setShowConfirmModal(false)
-            setErrorMessage(getErrorMessage(err, 'Lỗi khi thực hiện bảo lưu học viên.'))
+            const errText = getErrorMessage(err, 'Lỗi khi thực hiện bảo lưu học viên.')
+            const mapped = parseBackendErrorToField(errText, ['selectedClassId', 'effectiveDate', 'reason'])
+            if (mapped.field) {
+                setFieldErrors(prev => ({ ...prev, [mapped.field!]: mapped.message }))
+                if (mapped.field === 'selectedClassId') scrollToAndFocusField('select-class')
+                else if (mapped.field === 'effectiveDate') scrollToAndFocusField('input-effective-date')
+                else if (mapped.field === 'reason') scrollToAndFocusField('input-reason')
+            } else {
+                setGeneralError(errText)
+                setToastError(errText)
+            }
         } finally {
             setIsSubmitting(false)
         }
@@ -137,6 +177,13 @@ export function StudentReservePage() {
 
     return (
         <div className="students-container lifecycle-container" data-testid="student-reserve-page">
+            <ToastPortal
+                error={toastError}
+                success={toastSuccess}
+                onCloseError={() => setToastError(null)}
+                onCloseSuccess={() => setToastSuccess(null)}
+            />
+
             <PageHeader
                 title="Bảo lưu học viên"
                 subtitle={student ? `Mã học viên: ${student.student_code} • ${student.full_name}` : ''}
@@ -253,10 +300,17 @@ export function StudentReservePage() {
                                         <select
                                             id="select-class"
                                             data-testid="select-class"
-                                            className="lifecycle-form-control"
+                                            className={`lifecycle-form-control ${fieldErrors.selectedClassId ? 'has-error' : ''}`}
                                             value={selectedClassId}
-                                            onChange={(e) => setSelectedClassId(e.target.value)}
+                                            onChange={(e) => {
+                                                setSelectedClassId(e.target.value)
+                                                if (fieldErrors.selectedClassId) {
+                                                    setFieldErrors((prev) => ({ ...prev, selectedClassId: undefined }))
+                                                }
+                                            }}
                                             disabled={isSubmitting}
+                                            aria-invalid={!!fieldErrors.selectedClassId}
+                                            aria-describedby={fieldErrors.selectedClassId ? 'select-class-error' : undefined}
                                         >
                                             <option value="">-- Chọn lớp học --</option>
                                             {availableClasses.map((cls, idx) => {
@@ -268,6 +322,11 @@ export function StudentReservePage() {
                                                 )
                                             })}
                                         </select>
+                                        {fieldErrors.selectedClassId && (
+                                            <div id="select-class-error" className="lifecycle-field-error" role="alert" data-testid="select-class-error">
+                                                <span>⚠️ {fieldErrors.selectedClassId}</span>
+                                            </div>
+                                        )}
                                         {selectedClass && (
                                             <div className="lifecycle-form-hint">
                                                 Khai giảng: {selectedClass.expected_start_date || selectedClass.start_date ? formatVietnamDate(selectedClass.expected_start_date || selectedClass.start_date) : 'Chưa thiết lập ngày khai giảng'}
@@ -284,11 +343,23 @@ export function StudentReservePage() {
                                             id="input-effective-date"
                                             data-testid="input-effective-date"
                                             type="date"
-                                            className="lifecycle-form-control"
+                                            className={`lifecycle-form-control ${fieldErrors.effectiveDate ? 'has-error' : ''}`}
                                             value={effectiveDate}
-                                            onChange={(e) => setEffectiveDate(e.target.value)}
+                                            onChange={(e) => {
+                                                setEffectiveDate(e.target.value)
+                                                if (fieldErrors.effectiveDate) {
+                                                    setFieldErrors((prev) => ({ ...prev, effectiveDate: undefined }))
+                                                }
+                                            }}
                                             disabled={isSubmitting}
+                                            aria-invalid={!!fieldErrors.effectiveDate}
+                                            aria-describedby={fieldErrors.effectiveDate ? 'input-effective-date-error' : undefined}
                                         />
+                                        {fieldErrors.effectiveDate && (
+                                            <div id="input-effective-date-error" className="lifecycle-field-error" role="alert" data-testid="input-effective-date-error">
+                                                <span>⚠️ {fieldErrors.effectiveDate}</span>
+                                            </div>
+                                        )}
                                         <div className="lifecycle-form-hint">
                                             Từ ngày này trở đi, học viên sẽ không còn xuất hiện trong danh sách điểm danh của lớp. Trước ngày hiệu lực, lịch sử điểm và điểm danh vẫn được giữ nguyên vẹn.
                                         </div>
@@ -302,12 +373,24 @@ export function StudentReservePage() {
                                     <textarea
                                         id="input-reason"
                                         data-testid="input-reason"
-                                        className="lifecycle-form-control"
+                                        className={`lifecycle-form-control ${fieldErrors.reason ? 'has-error' : ''}`}
                                         placeholder="Nhập lý do bảo lưu cụ thể (ví dụ: lý do cá nhân, điều trị sức khỏe, tạm hoãn công tác...)"
                                         value={reason}
-                                        onChange={(e) => setReason(e.target.value)}
+                                        onChange={(e) => {
+                                            setReason(e.target.value)
+                                            if (fieldErrors.reason) {
+                                                setFieldErrors((prev) => ({ ...prev, reason: undefined }))
+                                            }
+                                        }}
                                         disabled={isSubmitting}
+                                        aria-invalid={!!fieldErrors.reason}
+                                        aria-describedby={fieldErrors.reason ? 'input-reason-error' : undefined}
                                     />
+                                    {fieldErrors.reason && (
+                                        <div id="input-reason-error" className="lifecycle-field-error" role="alert" data-testid="input-reason-error">
+                                            <span>⚠️ {fieldErrors.reason}</span>
+                                        </div>
+                                    )}
                                     <div className="lifecycle-form-hint">
                                         Lý do là thông tin bắt buộc và sẽ được lưu trữ minh bạch vào lịch sử hồ sơ học viên.
                                     </div>
@@ -325,6 +408,12 @@ export function StudentReservePage() {
                                         <li>Sĩ số lớp học sẽ được giải phóng kể từ ngày hiệu lực.</li>
                                     </ul>
                                 </div>
+
+                                {generalError && (
+                                    <div className="lifecycle-alert error lifecycle-action-alert" role="alert" data-testid="alert-error">
+                                        <span>⚠️ {generalError}</span>
+                                    </div>
+                                )}
 
                                 <div className="lifecycle-actions">
                                     <button

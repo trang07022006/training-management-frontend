@@ -233,3 +233,48 @@ export async function getEligibleAttendanceStudents(
 
     return body.data?.students || []
 }
+
+/**
+ * Phân tích lỗi từ backend hoặc nghiệp vụ xem có liên quan trực tiếp đến một trường cụ thể không (SCRUM-252).
+ */
+export function parseBackendErrorToField(
+    errorMessage: string,
+    availableFields: string[],
+): { field?: string; message: string } {
+    const lower = (errorMessage || '').toLowerCase()
+    if (availableFields.includes('reason') && (lower.includes('lý do') || lower.includes('reason'))) {
+        return { field: 'reason', message: errorMessage }
+    }
+    if (availableFields.includes('effectiveDate') && (lower.includes('ngày') || lower.includes('date') || lower.includes('hiệu lực'))) {
+        return { field: 'effectiveDate', message: errorMessage }
+    }
+    if (availableFields.includes('targetClassId') && (lower.includes('lớp đích') || lower.includes('target') || lower.includes('sĩ số') || lower.includes('hết chỗ') || lower.includes('đã đầy') || lower.includes('trùng'))) {
+        return { field: 'targetClassId', message: errorMessage }
+    }
+    if (availableFields.includes('sourceClassId') && (lower.includes('lớp nguồn') || lower.includes('source'))) {
+        return { field: 'sourceClassId', message: errorMessage }
+    }
+    if (availableFields.includes('selectedClassId') && (lower.includes('lớp') || lower.includes('class'))) {
+        return { field: 'selectedClassId', message: errorMessage }
+    }
+    return { message: errorMessage }
+}
+
+/**
+ * Cuộn và focus vào trường bị lỗi đầu tiên, đảm bảo căn giữa viewport để không bị header cố định che (SCRUM-252).
+ */
+export function scrollToAndFocusField(elementId: string) {
+    if (typeof document === 'undefined') return
+    const el = document.getElementById(elementId)
+    if (el) {
+        if (typeof el.scrollIntoView === 'function') {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        try {
+            el.focus({ preventScroll: true })
+        } catch {
+            el.focus()
+        }
+    }
+}
+

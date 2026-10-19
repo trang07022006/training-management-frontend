@@ -3,8 +3,15 @@ import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getStudentDetail, type StudentDetail } from '../api/studentApi'
 import { listClasses, type TrainingClass } from '../api/classApi'
-import { transferStudent, formatClassOptionLabel, type TransferStudentPayload } from '../api/studentLifecycleApi'
+import {
+    transferStudent,
+    formatClassOptionLabel,
+    parseBackendErrorToField,
+    scrollToAndFocusField,
+    type TransferStudentPayload,
+} from '../api/studentLifecycleApi'
 import { PageHeader } from '../components/PageHeader'
+import { ToastPortal } from '../components/ToastPortal'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
 import { getStudentStatusBadge } from './StudentDetailPage'
@@ -29,6 +36,15 @@ export function StudentTransferPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [fieldErrors, setFieldErrors] = useState<{
+        sourceClassId?: string
+        targetClassId?: string
+        effectiveDate?: string
+        reason?: string
+    }>({})
+    const [generalError, setGeneralError] = useState<string | null>(null)
+    const [toastError, setToastError] = useState<string | null>(null)
+    const [toastSuccess, setToastSuccess] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
 
@@ -115,37 +131,52 @@ export function StudentTransferPage() {
 
     const handleOpenConfirm = (e: React.FormEvent) => {
         e.preventDefault()
-        setErrorMessage(null)
+        setGeneralError(null)
+        setToastError(null)
+
+        const errors: {
+            sourceClassId?: string
+            targetClassId?: string
+            effectiveDate?: string
+            reason?: string
+        } = {}
 
         if (!sourceClassId) {
-            setErrorMessage('Vui lòng chọn lớp nguồn cần chuyển đi.')
-            return
+            errors.sourceClassId = 'Vui lòng chọn lớp nguồn cần chuyển đi.'
         }
         if (!targetClassId) {
-            setErrorMessage('Vui lòng chọn lớp đích cần chuyển đến.')
-            return
+            errors.targetClassId = 'Vui lòng chọn lớp đích cần chuyển đến.'
+        } else if (sourceClassId === targetClassId) {
+            errors.targetClassId = 'Lớp đích phải khác lớp nguồn.'
+        } else if (isTargetFull) {
+            errors.targetClassId = 'Lớp đích đã đủ sĩ số tối đa. Vui lòng chọn lớp khác.'
         }
-        if (sourceClassId === targetClassId) {
-            setErrorMessage('Lớp đích phải khác lớp nguồn.')
-            return
+
+        if (!effectiveDate || isNaN(Date.parse(effectiveDate))) {
+            errors.effectiveDate = 'Vui lòng chọn ngày hiệu lực chuyển lớp hợp lệ.'
         }
-        if (isTargetFull) {
-            setErrorMessage('Lớp đích đã đủ sĩ số tối đa. Vui lòng chọn lớp khác.')
-            return
-        }
-        if (!effectiveDate) {
-            setErrorMessage('Vui lòng chọn ngày hiệu lực chuyển lớp.')
-            return
-        }
+
         if (!reason || reason.trim().length === 0) {
-            setErrorMessage('Lý do chuyển lớp là bắt buộc và không được chỉ chứa khoảng trắng.')
-            return
+            errors.reason = 'Lý do chuyển lớp là bắt buộc và không được chỉ chứa khoảng trắng.'
+        } else if (reason.trim().length < 5) {
+            errors.reason = 'Lý do chuyển lớp phải có ít nhất 5 ký tự.'
         }
-        if (reason.trim().length < 5) {
-            setErrorMessage('Lý do chuyển lớp phải có ít nhất 5 ký tự.')
+
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors)
+            if (errors.sourceClassId) {
+                scrollToAndFocusField('select-source-class')
+            } else if (errors.targetClassId) {
+                scrollToAndFocusField('select-target-class')
+            } else if (errors.effectiveDate) {
+                scrollToAndFocusField('input-effective-date')
+            } else if (errors.reason) {
+                scrollToAndFocusField('input-reason')
+            }
             return
         }
 
+        setFieldErrors({})
         setShowConfirmModal(true)
     }
 
@@ -153,7 +184,8 @@ export function StudentTransferPage() {
         if (!studentId || !sourceClassId || !targetClassId || !effectiveDate || !reason.trim()) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
+        setGeneralError(null)
+        setToastError(null)
 
         const payload: TransferStudentPayload = {
             source_class_id: sourceClassId,
@@ -165,12 +197,23 @@ export function StudentTransferPage() {
         try {
             await transferStudent(requestFn, studentId, payload)
             setShowConfirmModal(false)
-            setSuccessMessage(
-                `Chuyển lớp thành công sang ${selectedTargetClass?.class_code} từ ngày ${formatVietnamDate(effectiveDate)}. Lịch sử điểm và điểm danh ở lớp cũ được bảo toàn.`
-            )
+            const successMsg = `Chuyển lớp thành công sang ${selectedTargetClass?.class_code} từ ngày ${formatVietnamDate(effectiveDate)}. Lịch sử điểm và điểm danh ở lớp cũ được bảo toàn.`
+            setSuccessMessage(successMsg)
+            setToastSuccess(successMsg)
         } catch (err: any) {
             setShowConfirmModal(false)
-            setErrorMessage(getErrorMessage(err, 'Lỗi khi thực hiện chuyển lớp học viên.'))
+            const errText = getErrorMessage(err, 'Lỗi khi thực hiện chuyển lớp học viên.')
+            const mapped = parseBackendErrorToField(errText, ['sourceClassId', 'targetClassId', 'effectiveDate', 'reason'])
+            if (mapped.field) {
+                setFieldErrors((prev) => ({ ...prev, [mapped.field!]: mapped.message }))
+                if (mapped.field === 'sourceClassId') scrollToAndFocusField('select-source-class')
+                else if (mapped.field === 'targetClassId') scrollToAndFocusField('select-target-class')
+                else if (mapped.field === 'effectiveDate') scrollToAndFocusField('input-effective-date')
+                else if (mapped.field === 'reason') scrollToAndFocusField('input-reason')
+            } else {
+                setGeneralError(errText)
+                setToastError(errText)
+            }
         } finally {
             setIsSubmitting(false)
         }
@@ -191,6 +234,13 @@ export function StudentTransferPage() {
 
     return (
         <div className="students-container lifecycle-container" data-testid="student-transfer-page">
+            <ToastPortal
+                error={toastError}
+                success={toastSuccess}
+                onCloseError={() => setToastError(null)}
+                onCloseSuccess={() => setToastSuccess(null)}
+            />
+
             <PageHeader
                 title="Chuyển lớp học viên"
                 subtitle={student ? `Mã học viên: ${student.student_code} • ${student.full_name}` : ''}
@@ -309,10 +359,17 @@ export function StudentTransferPage() {
                                         <select
                                             id="select-source-class"
                                             data-testid="select-source-class"
-                                            className="lifecycle-form-control"
+                                            className={`lifecycle-form-control ${fieldErrors.sourceClassId ? 'has-error' : ''}`}
                                             value={sourceClassId}
-                                            onChange={(e) => setSourceClassId(e.target.value)}
+                                            onChange={(e) => {
+                                                setSourceClassId(e.target.value)
+                                                if (fieldErrors.sourceClassId) {
+                                                    setFieldErrors((prev) => ({ ...prev, sourceClassId: undefined }))
+                                                }
+                                            }}
                                             disabled={isSubmitting}
+                                            aria-invalid={!!fieldErrors.sourceClassId}
+                                            aria-describedby={fieldErrors.sourceClassId ? 'select-source-class-error' : undefined}
                                         >
                                             <option value="">-- Chọn lớp nguồn --</option>
                                             {studentClasses.map((cls, idx) => {
@@ -324,6 +381,11 @@ export function StudentTransferPage() {
                                                 )
                                             })}
                                         </select>
+                                        {fieldErrors.sourceClassId && (
+                                            <div id="select-source-class-error" className="lifecycle-field-error" role="alert" data-testid="select-source-class-error">
+                                                <span>⚠️ {fieldErrors.sourceClassId}</span>
+                                            </div>
+                                        )}
                                         {selectedSourceClass && (
                                             <div className="lifecycle-form-hint">
                                                 Khai giảng: {selectedSourceClass.expected_start_date || selectedSourceClass.start_date ? formatVietnamDate(selectedSourceClass.expected_start_date || selectedSourceClass.start_date) : 'Chưa thiết lập ngày khai giảng'}
@@ -352,10 +414,17 @@ export function StudentTransferPage() {
                                         <select
                                             id="select-target-class"
                                             data-testid="select-target-class"
-                                            className="lifecycle-form-control"
+                                            className={`lifecycle-form-control ${fieldErrors.targetClassId ? 'has-error' : ''}`}
                                             value={targetClassId}
-                                            onChange={(e) => setTargetClassId(e.target.value)}
+                                            onChange={(e) => {
+                                                setTargetClassId(e.target.value)
+                                                if (fieldErrors.targetClassId) {
+                                                    setFieldErrors((prev) => ({ ...prev, targetClassId: undefined }))
+                                                }
+                                            }}
                                             disabled={isSubmitting}
+                                            aria-invalid={!!fieldErrors.targetClassId}
+                                            aria-describedby={fieldErrors.targetClassId ? 'select-target-class-error' : undefined}
                                         >
                                             <option value="">-- Chọn lớp đích trong cùng chương trình --</option>
                                             {filteredTargetClasses.map((cls) => {
@@ -367,6 +436,11 @@ export function StudentTransferPage() {
                                                 )
                                             })}
                                         </select>
+                                        {fieldErrors.targetClassId && (
+                                            <div id="select-target-class-error" className="lifecycle-field-error" role="alert" data-testid="select-target-class-error">
+                                                <span>⚠️ {fieldErrors.targetClassId}</span>
+                                            </div>
+                                        )}
 
                                         {selectedTargetClass && (
                                             <div className="lifecycle-form-hint">
@@ -393,11 +467,23 @@ export function StudentTransferPage() {
                                         id="input-effective-date"
                                         data-testid="input-effective-date"
                                         type="date"
-                                        className="lifecycle-form-control"
+                                        className={`lifecycle-form-control ${fieldErrors.effectiveDate ? 'has-error' : ''}`}
                                         value={effectiveDate}
-                                        onChange={(e) => setEffectiveDate(e.target.value)}
+                                        onChange={(e) => {
+                                            setEffectiveDate(e.target.value)
+                                            if (fieldErrors.effectiveDate) {
+                                                setFieldErrors((prev) => ({ ...prev, effectiveDate: undefined }))
+                                            }
+                                        }}
                                         disabled={isSubmitting}
+                                        aria-invalid={!!fieldErrors.effectiveDate}
+                                        aria-describedby={fieldErrors.effectiveDate ? 'input-effective-date-error' : undefined}
                                     />
+                                    {fieldErrors.effectiveDate && (
+                                        <div id="input-effective-date-error" className="lifecycle-field-error" role="alert" data-testid="input-effective-date-error">
+                                            <span>⚠️ {fieldErrors.effectiveDate}</span>
+                                        </div>
+                                    )}
                                     <div className="lifecycle-form-hint">
                                         Từ ngày này trở đi, học viên sẽ được ghi danh vào lớp đích và ngừng điểm danh ở lớp nguồn. Trước ngày này, học viên vẫn thuộc lớp nguồn.
                                     </div>
@@ -411,12 +497,24 @@ export function StudentTransferPage() {
                                     <textarea
                                         id="input-reason"
                                         data-testid="input-reason"
-                                        className="lifecycle-form-control"
+                                        className={`lifecycle-form-control ${fieldErrors.reason ? 'has-error' : ''}`}
                                         placeholder="Nhập lý do chuyển lớp (ví dụ: chuyển ca học, phù hợp lịch công tác, yêu cầu chuyên môn...)"
                                         value={reason}
-                                        onChange={(e) => setReason(e.target.value)}
+                                        onChange={(e) => {
+                                            setReason(e.target.value)
+                                            if (fieldErrors.reason) {
+                                                setFieldErrors((prev) => ({ ...prev, reason: undefined }))
+                                            }
+                                        }}
                                         disabled={isSubmitting}
+                                        aria-invalid={!!fieldErrors.reason}
+                                        aria-describedby={fieldErrors.reason ? 'input-reason-error' : undefined}
                                     />
+                                    {fieldErrors.reason && (
+                                        <div id="input-reason-error" className="lifecycle-field-error" role="alert" data-testid="input-reason-error">
+                                            <span>⚠️ {fieldErrors.reason}</span>
+                                        </div>
+                                    )}
                                     <div className="lifecycle-form-hint">
                                         Lý do là thông tin bắt buộc và sẽ được lưu trữ vào lịch sử hồ sơ học viên.
                                     </div>
@@ -434,6 +532,12 @@ export function StudentTransferPage() {
                                         <li>Thao tác được ghi nhận vào lịch sử học viên và có thể tra cứu bất cứ lúc nào.</li>
                                     </ul>
                                 </div>
+
+                                {generalError && (
+                                    <div className="lifecycle-alert error lifecycle-action-alert" role="alert" data-testid="alert-error">
+                                        <span>⚠️ {generalError}</span>
+                                    </div>
+                                )}
 
                                 <div className="lifecycle-actions">
                                     <button
