@@ -7,6 +7,8 @@ import {
 } from '../api/scheduleApi'
 import { formatVietnamDate } from '../utils/dateUtils'
 import { PageHeader } from '../components/PageHeader'
+import { SYSTEM_PERMISSIONS, getRolePermissions } from '../navigation/menuConfig'
+import { getRoleHomePath } from '../auth/roleRouting'
 import './StudentSchedulePage.css'
 
 function formatDateISO(d: Date): string {
@@ -70,6 +72,39 @@ export function StudentSchedulePage() {
         const title = `Tuần từ ${monday.toLocaleDateString('vi-VN')} đến ${sunday.toLocaleDateString('vi-VN')}`
         return { dateFrom: fromStr, dateTo: toStr, periodTitle: title }
     }, [currentDate])
+
+    // Reset dữ liệu khi đổi tài khoản đăng nhập hoặc đổi ngữ cảnh (SCRUM-254)
+    useEffect(() => {
+        setScheduleData(null)
+        setError(null)
+        setIsForbidden(false)
+    }, [session.userId, selectedContext])
+
+    // Kiểm tra quyền xem thời khóa biểu chung để hiển thị nút gợi ý phù hợp (SCRUM-254 & SCRUM-228)
+    const canViewGeneralSchedule = useMemo(() => {
+        let perms = session.permissions
+        if (!perms || perms.length === 0) {
+            perms = [...getRolePermissions(userRoles)]
+        }
+        if (perms.includes(SYSTEM_PERMISSIONS.SCHEDULE_VIEW)) {
+            return true
+        }
+        if (userRoles.includes('admin') || userRoles.includes('training_manager')) {
+            return true
+        }
+        if (error && (error.toLowerCase().includes('thời khóa biểu') || error.toLowerCase().includes('quản trị'))) {
+            return true
+        }
+        return false
+    }, [session.permissions, userRoles, error])
+
+    const homePath = useMemo(() => {
+        return getRoleHomePath(role)
+    }, [role])
+
+    const homeLabel = useMemo(() => {
+        return homePath === '/dashboard' ? 'Về Tổng quan' : 'Về Trang chủ'
+    }, [homePath])
 
     // Load dữ liệu lịch cá nhân
     const loadSchedule = useCallback(async () => {
@@ -183,7 +218,7 @@ export function StudentSchedulePage() {
                 )}
             </div>
 
-            {/* Trạng thái 1: Không có quyền truy cập (403 Forbidden) (SCRUM-228 Requirement 5) */}
+            {/* Trạng thái 1: Không có quyền truy cập (403 Forbidden) (SCRUM-228 Requirement 5 & SCRUM-254) */}
             {isForbidden && (
                 <div className="schedule-empty-state schedule-forbidden-state" data-testid="schedule-forbidden-state">
                     <span className="empty-state-icon">🚫</span>
@@ -193,11 +228,13 @@ export function StudentSchedulePage() {
                         Tài khoản Quản trị viên và Quản lý đào tạo vui lòng sử dụng phân hệ Thời khóa biểu toàn trường.
                     </p>
                     <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                        <Link to="/schedules" className="btn-primary" style={{ padding: '8px 16px', textDecoration: 'none', borderRadius: '6px' }}>
-                            Đến Thời khóa biểu
-                        </Link>
-                        <Link to="/dashboard" className="btn-secondary" style={{ padding: '8px 16px', textDecoration: 'none', borderRadius: '6px' }}>
-                            Về Tổng quan
+                        {canViewGeneralSchedule && (
+                            <Link to="/schedules" className="btn-primary" style={{ padding: '8px 16px', textDecoration: 'none', borderRadius: '6px' }} data-testid="btn-forbidden-schedules">
+                                Đến Thời khóa biểu
+                            </Link>
+                        )}
+                        <Link to={homePath} className="btn-secondary" style={{ padding: '8px 16px', textDecoration: 'none', borderRadius: '6px' }} data-testid="btn-forbidden-home">
+                            {homeLabel}
                         </Link>
                     </div>
                 </div>
@@ -333,6 +370,32 @@ export function StudentSchedulePage() {
                                             <span>📍 Phòng học:</span>
                                             <strong>{nextSession.room_name || nextSession.room_id || 'Chưa xếp phòng'}</strong>
                                         </div>
+                                    )}
+
+                                    {isTrainer && nextSession.class_id && (
+                                        <Link
+                                            to={`/classes/${nextSession.class_id}/schedules/${nextSession.id}/attendance`}
+                                            className="btn-secondary"
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                marginTop: '8px',
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '13px',
+                                                borderColor: '#0284c7',
+                                                color: '#0284c7',
+                                                textDecoration: 'none',
+                                                fontWeight: 600,
+                                            }}
+                                            data-testid="hero-btn-attendance"
+                                        >
+                                            <span>📋 Điểm danh buổi học này</span>
+                                            {nextSession.attendance_checked && (
+                                                <span style={{ color: '#16a34a', fontSize: '11px' }}>✓ Đã điểm danh</span>
+                                            )}
+                                        </Link>
                                     )}
                                 </div>
                             </div>
@@ -477,6 +540,41 @@ export function StudentSchedulePage() {
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {/* Hành động điểm danh dành cho Giảng viên (SCRUM-254) */}
+                                            {isTrainer && !isCancelled && sessionItem.class_id && (
+                                                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <Link
+                                                        to={`/classes/${sessionItem.class_id}/schedules/${sessionItem.id}/attendance`}
+                                                        className="btn-attendance-link"
+                                                        style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '4px 10px',
+                                                            fontSize: '12px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid #0284c7',
+                                                            color: '#0284c7',
+                                                            textDecoration: 'none',
+                                                            fontWeight: 600,
+                                                            backgroundColor: '#f0f9ff',
+                                                        }}
+                                                        data-testid={`btn-attendance-${sessionItem.id}`}
+                                                    >
+                                                        <span>📋 Điểm danh</span>
+                                                    </Link>
+                                                    {sessionItem.attendance_checked ? (
+                                                        <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600 }} data-testid={`badge-checked-${sessionItem.id}`}>
+                                                            ✓ Đã điểm danh
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                                            Chưa điểm danh
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
 
                                             {/* Cảnh báo buổi bị hủy kèm lý do */}
                                             {isCancelled && (

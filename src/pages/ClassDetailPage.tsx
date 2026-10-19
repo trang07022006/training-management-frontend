@@ -40,6 +40,11 @@ export function ClassDetailPage() {
     const canLifecycleManage =
         permissions?.includes(SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE) ||
         normalizedRoles.includes('training_manager')
+    const canTakeOrViewAttendance =
+        effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.ATTENDANCE_VIEW) ||
+        effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.ATTENDANCE_TAKE) ||
+        normalizedRoles.includes('trainer') ||
+        normalizedRoles.includes('training_manager')
 
     // Determine active tab from URL pathname
     let activeTab: ClassDetailTab = 'info'
@@ -185,7 +190,7 @@ export function ClassDetailPage() {
                                 <span>+ Ghi danh học viên</span>
                             </Link>
                         )}
-                        {canManage && (
+                        {canManageSchedule && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/generate`}
                                 className="btn-secondary"
@@ -575,6 +580,15 @@ export function ClassDetailPage() {
                                                     >
                                                         Chi tiết
                                                     </Link>
+                                                    {canTakeOrViewAttendance && sch.status !== 'cancelled' && (
+                                                        <Link
+                                                            to={`/classes/${classData.id}/schedules/${sch.id}/attendance`}
+                                                            className="btn-action-attendance"
+                                                            style={{ padding: '4px 8px', fontSize: '12px', color: '#0284c7', background: '#eff6ff', borderRadius: '4px', textDecoration: 'none', border: '1px solid #bfdbfe', fontWeight: 500 }}
+                                                        >
+                                                            Điểm danh
+                                                        </Link>
+                                                    )}
                                                     {canManageSchedule && sch.status !== 'completed' && sch.status !== 'cancelled' && !sch.attendance_checked && (
                                                         <Link
                                                             to={`/classes/${classData.id}/schedules/${sch.id}/edit`}

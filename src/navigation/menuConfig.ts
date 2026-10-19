@@ -32,6 +32,9 @@ export const SYSTEM_PERMISSIONS = {
     SCHEDULE_MANAGE: 'schedule.manage',
     SCHEDULE_PERSONAL_VIEW: 'schedule.personal_view',
     STUDENT_LIFECYCLE_MANAGE: 'student.lifecycle_manage',
+    ATTENDANCE_VIEW: 'attendance.view',
+    ATTENDANCE_TAKE: 'attendance.take',
+    ATTENDANCE_MANAGE: 'attendance.manage',
 } as const
 
 export type SystemPermission =
@@ -60,6 +63,8 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
+        SYSTEM_PERMISSIONS.ATTENDANCE_VIEW,
+        SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
@@ -82,6 +87,9 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
         SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE,
+        SYSTEM_PERMISSIONS.ATTENDANCE_VIEW,
+        SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
+        SYSTEM_PERMISSIONS.ATTENDANCE_MANAGE,
     ],
 }
 
@@ -278,6 +286,17 @@ export function filterMenuItems(
             }
         }
 
+        // Menu lịch cá nhân (SCRUM-228 & SCRUM-254):
+        // 1. Chỉ hiển thị khi tài khoản có vai trò Học viên (trainee) hoặc Giảng viên (trainer).
+        // 2. Admin hoặc Quản lý đào tạo thuần túy (hoặc các vai trò khác không có trainee/trainer)
+        //    tuyệt đối không hiển thị menu lịch cá nhân.
+        if (item.key === 'my_schedule') {
+            const hasPersonalScheduleRole = userRoles.includes('trainee') || userRoles.includes('trainer')
+            if (!hasPersonalScheduleRole) {
+                return false
+            }
+        }
+
         // Kiểm tra quyền hạn
         if (item.requiredPermission) {
             if (!isKnownPermission(item.requiredPermission)) {
@@ -290,7 +309,9 @@ export function filterMenuItems(
         return false
     })
 
-    // Đồng bộ tên menu theo ngữ cảnh học viên vs giảng viên (SCRUM-228 Requirement 2)
+    // Đồng bộ tên menu theo ngữ cảnh học viên vs giảng viên (SCRUM-228 & SCRUM-254):
+    // - Có vai trò trainee (kể cả multi-role có trainee): "Lịch học của tôi"
+    // - Có vai trò trainer nhưng không có trainee: "Lịch giảng dạy của tôi"
     return filtered.map((item) => {
         if (item.key === 'my_schedule') {
             if (userRoles.includes('trainer') && !userRoles.includes('trainee')) {
@@ -298,6 +319,10 @@ export function filterMenuItems(
                     ...item,
                     label: 'Lịch giảng dạy của tôi',
                 }
+            }
+            return {
+                ...item,
+                label: 'Lịch học của tôi',
             }
         }
         return item

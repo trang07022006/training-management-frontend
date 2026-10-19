@@ -172,6 +172,16 @@ export function ScheduleSessionDetailPage() {
                         >
                             Quay lại lịch lớp
                         </button>
+                        {classData && schedule && (
+                            <Link
+                                to={`/classes/${classData.id}/schedules/${schedule.id}/attendance`}
+                                className="btn-secondary"
+                                style={{ borderColor: '#0284c7', color: '#0284c7' }}
+                                data-testid="btn-go-to-attendance"
+                            >
+                                📋 Điểm danh buổi học
+                            </Link>
+                        )}
                         {canManage && !isCancelled && !isCompleted && !isAttendanceChecked && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/${schedule.id}/edit`}

@@ -77,18 +77,65 @@ export function formatShiftLabel(code?: string | null, startTime?: string | null
     return shiftBase || 'Chưa xếp ca'
 }
 
+/**
+ * Định dạng nhãn ca học và khoảng giờ thực tế chuẩn HH:mm, hiển thị đúng một lần duy nhất.
+ * Ví dụ: "Ca 1 • 07:30–09:30".
+ * Tránh hoàn toàn việc lặp lại giờ dạng "Ca 1 (07:30 - 09:30) • 7:30: - 9:30:".
+ */
+export function formatSessionShiftAndTime(
+    shift?: string | null,
+    startTime?: string | null,
+    endTime?: string | null
+): string {
+    const s = startTime ? formatTimeStr(startTime) : ''
+    const e = endTime ? formatTimeStr(endTime) : ''
+    const timeRange = (s && e) ? `${s}–${e}` : (s || e || '')
+
+    let shiftBase = ''
+    if (shift && shift.trim()) {
+        const raw = shift.trim()
+        // Bỏ phần giờ trong ngoặc nếu chuỗi ca đã bị đính kèm giờ (ví dụ "Ca 1 (07:30 - 09:30)" -> "Ca 1")
+        const stripped = raw.replace(/\s*\(.*?\)\s*/g, '').trim()
+        if (stripped.startsWith('shift_')) {
+            shiftBase = `Ca ${stripped.replace('shift_', '')}`
+        } else if (stripped === 'morning') {
+            shiftBase = 'Ca sáng'
+        } else if (stripped === 'afternoon') {
+            shiftBase = 'Ca chiều'
+        } else if (stripped === 'evening') {
+            shiftBase = 'Ca tối'
+        } else if (stripped) {
+            shiftBase = stripped
+        }
+    }
+
+    if (shiftBase && timeRange) {
+        return `${shiftBase} • ${timeRange}`
+    }
+    if (shiftBase) {
+        return shiftBase
+    }
+    if (timeRange) {
+        return timeRange
+    }
+    return 'Chưa xếp ca'
+}
+
 export function formatRoomLabel(roomId?: string | null, roomName?: string | null, isOnline?: boolean, onlineLink?: string | null): string {
-    if (roomName && roomName.trim()) {
+    if (roomName && roomName.trim() && roomName.trim() !== 'Chưa xếp phòng') {
         return roomName.trim()
     }
     if (isOnline || onlineLink) {
         return 'Phòng học trực tuyến'
     }
-    if (!roomId) return 'Chưa xếp phòng'
-    if (roomId.length > 20) {
-        return `Phòng ${roomId.substring(0, 6)}...`
+    if (roomId && roomId.trim()) {
+        const trimmed = roomId.trim()
+        if (trimmed.length > 20) {
+            return `Phòng ${trimmed.substring(0, 6)}...`
+        }
+        return trimmed
     }
-    return roomId
+    return 'Chưa xếp phòng'
 }
 
 export function formatInstructorLabel(instructorName?: string | null, instructorId?: string | null): string {

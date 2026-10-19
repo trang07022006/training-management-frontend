@@ -67,7 +67,7 @@ export function ScheduleGeneratePage() {
     const [hasPreviewed, setHasPreviewed] = useState<boolean>(false)
     const [previewSnapshot, setPreviewSnapshot] = useState<string | null>(null)
 
-    const canOverrideConflict = normalizedRoles.includes('admin') || normalizedRoles.includes('training_manager')
+    const canOverrideConflict = canManage
 
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
