@@ -72,6 +72,7 @@ import { StudentEditPage } from './pages/StudentEditPage'
 import { StudentReservePage } from './pages/StudentReservePage'
 import { StudentTransferPage } from './pages/StudentTransferPage'
 import { StudentDropPage } from './pages/StudentDropPage'
+import { SessionAttendancePage } from './pages/SessionAttendancePage'
 
 // Lead Pages
 import { LeadsPage } from './pages/LeadsPage'
@@ -204,6 +205,10 @@ createRoot(document.getElementById('root')!).render(
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/generate" element={<ScheduleGeneratePage />} /></Route>
                 <Route path="/classes/:classId/schedules/:scheduleId" element={<ScheduleSessionDetailPage />} />
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/:scheduleId/edit" element={<ScheduleSessionEditPage />} /></Route>
+                <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.ATTENDANCE_VIEW} fallbackPath="/forbidden" />}>
+                  <Route path="/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                  <Route path="/classes/:classId/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                </Route>
 
                 {/* Schedules */}
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_VIEW} fallbackPath="/forbidden" />}><Route path="/schedules" element={<ScheduleCalendarPage />} /></Route>

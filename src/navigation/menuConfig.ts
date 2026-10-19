@@ -32,6 +32,9 @@ export const SYSTEM_PERMISSIONS = {
     SCHEDULE_MANAGE: 'schedule.manage',
     SCHEDULE_PERSONAL_VIEW: 'schedule.personal_view',
     STUDENT_LIFECYCLE_MANAGE: 'student.lifecycle_manage',
+    ATTENDANCE_VIEW: 'attendance.view',
+    ATTENDANCE_TAKE: 'attendance.take',
+    ATTENDANCE_MANAGE: 'attendance.manage',
 } as const
 
 export type SystemPermission =
@@ -60,6 +63,8 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
+        SYSTEM_PERMISSIONS.ATTENDANCE_VIEW,
+        SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
@@ -82,6 +87,9 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
         SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE,
+        SYSTEM_PERMISSIONS.ATTENDANCE_VIEW,
+        SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
+        SYSTEM_PERMISSIONS.ATTENDANCE_MANAGE,
     ],
 }
 
