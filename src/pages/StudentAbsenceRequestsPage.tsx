@@ -4,12 +4,17 @@ import { useSession } from '../auth/SessionProvider'
 import {
     type AbsenceRequestItem,
     type EligibleSessionItem,
+    downloadAbsenceAttachment,
     getAbsenceRequestDetail,
     getEligibleSessions,
     getMyAbsenceRequests,
     submitAbsenceRequest,
 } from '../api/absenceRequestApi'
 import './StudentAbsenceRequestsPage.css'
+
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_FILE_COUNT = 5
 
 export const StudentAbsenceRequestsPage: React.FC = () => {
     const { request } = useSession()
@@ -34,14 +39,27 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
     const [isLoadingSessions, setIsLoadingSessions] = useState<boolean>(false)
     const [selectedScheduleId, setSelectedScheduleId] = useState<string>('')
     const [reasonText, setReasonText] = useState<string>('')
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+    const [fileError, setFileError] = useState<string | null>(null)
     const [fieldErrors, setFieldErrors] = useState<{ scheduleId?: string; reason?: string }>({})
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
     const reasonInputRef = useRef<HTMLTextAreaElement>(null)
     const scheduleSelectRef = useRef<HTMLSelectElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     // State Modal Chi tiết đơn
     const [selectedDetail, setSelectedDetail] = useState<AbsenceRequestItem | null>(null)
     const [isLoadingDetail, setIsLoadingDetail] = useState<boolean>(false)
+    const [downloadingAttId, setDownloadingAttId] = useState<string | null>(null)
+
+    // Helper format dung lượng tệp
+    const formatFileSize = (bytes?: number): string => {
+        if (!bytes || bytes <= 0) return '0 B'
+        const k = 1024
+        const sizes = ['B', 'KB', 'MB', 'GB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+    }
 
     // Debounce tìm kiếm
     useEffect(() => {
@@ -100,7 +118,6 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
             setSelectedScheduleId(scheduleIdParam)
             setIsCreateModalOpen(true)
             loadEligibleSessions()
-            // Xóa param sau khi mở modal để tránh lặp khi refresh
             searchParams.delete('scheduleId')
             setSearchParams(searchParams, { replace: true })
         }
@@ -111,23 +128,68 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
         setIsCreateModalOpen(true)
         setSelectedScheduleId('')
         setReasonText('')
+        setSelectedFiles([])
+        setFileError(null)
         setFieldErrors({})
         loadEligibleSessions()
     }
 
-    // Đóng modal tạo đơn có cảnh báo
+    // Đóng modal tạo đơn có cảnh báo nếu có dữ liệu chưa lưu
     const handleCloseCreateModal = () => {
-        if (reasonText.trim().length > 0 || selectedScheduleId) {
+        if (reasonText.trim().length > 0 || selectedScheduleId || selectedFiles.length > 0) {
             const confirmDiscard = window.confirm('Bạn có nội dung chưa lưu. Bạn có chắc chắn muốn đóng?')
             if (!confirmDiscard) return
         }
         setIsCreateModalOpen(false)
         setSelectedScheduleId('')
         setReasonText('')
+        setSelectedFiles([])
+        setFileError(null)
         setFieldErrors({})
     }
 
-    // Submit form gửi đơn
+    // Chọn tệp đính kèm (Lát 2)
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFileError(null)
+        const files = Array.from(e.target.files || [])
+        if (files.length === 0) return
+
+        if (selectedFiles.length + files.length > MAX_FILE_COUNT) {
+            setFileError(`Số lượng tệp đính kèm tối đa là ${MAX_FILE_COUNT} tệp.`)
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+        }
+
+        for (const file of files) {
+            const ext = file.name.split('.').pop()?.toLowerCase() || ''
+            if (!ALLOWED_EXTENSIONS.includes(ext)) {
+                setFileError(`Tệp "${file.name}" không hợp lệ. Chỉ chấp nhận ảnh (JPG, JPEG, PNG, WEBP) hoặc tài liệu PDF.`)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+                return
+            }
+            if (file.size === 0) {
+                setFileError(`Tệp "${file.name}" không được để trống (0 byte).`)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+                return
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                setFileError(`Tệp "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)}MB) vượt quá dung lượng tối đa 5MB.`)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+                return
+            }
+        }
+
+        setSelectedFiles((prev) => [...prev, ...files])
+        if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+
+    // Xóa một tệp khỏi danh sách chọn
+    const handleRemoveFile = (index: number) => {
+        setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+        setFileError(null)
+    }
+
+    // Submit form gửi đơn (Lát 1 & Lát 2)
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const errors: { scheduleId?: string; reason?: string } = {}
@@ -160,16 +222,26 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
         setSuccessMessage(null)
 
         try {
-            await submitAbsenceRequest(request, {
-                schedule_id: selectedScheduleId,
-                reason: trimmedReason,
-            })
+            if (selectedFiles.length > 0) {
+                const formData = new FormData()
+                formData.append('schedule_id', selectedScheduleId)
+                formData.append('reason', trimmedReason)
+                selectedFiles.forEach((file) => formData.append('attachments', file))
+                await submitAbsenceRequest(request, formData)
+            } else {
+                await submitAbsenceRequest(request, {
+                    schedule_id: selectedScheduleId,
+                    reason: trimmedReason,
+                })
+            }
+
             setSuccessMessage('Gửi đơn xin phép vắng thành công. Đơn đang chờ giảng viên xem xét.')
             setIsCreateModalOpen(false)
             setSelectedScheduleId('')
             setReasonText('')
+            setSelectedFiles([])
             setFieldErrors({})
-            // Load lại danh sách đơn
+            setFileError(null)
             setPage(1)
             loadRequests()
         } catch (err: unknown) {
@@ -183,6 +255,8 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
             } else if (error.code === 'REASON_TOO_LONG') {
                 setFieldErrors({ reason: 'Lý do xin phép vắng không được vượt quá 1000 ký tự.' })
                 if (reasonInputRef.current) reasonInputRef.current.focus()
+            } else if (error.code === 'ATTACHMENT_TOO_LARGE' || error.code === 'INVALID_ATTACHMENT_TYPE' || error.code === 'INVALID_ATTACHMENT_CONTENT' || error.code === 'TOO_MANY_ATTACHMENTS') {
+                setFileError(error.message || 'Tệp minh chứng không hợp lệ.')
             } else {
                 setErrorMessage(error.message || 'Không thể gửi đơn xin phép vắng. Vui lòng thử lại.')
             }
@@ -202,6 +276,19 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
             setErrorMessage(error.message || 'Không thể xem chi tiết đơn.')
         } finally {
             setIsLoadingDetail(false)
+        }
+    }
+
+    // Tải xuống minh chứng có xác thực (Lát 2)
+    const handleDownloadAttachment = async (requestId: string, attachmentId: string, fileName: string) => {
+        setDownloadingAttId(attachmentId)
+        try {
+            await downloadAbsenceAttachment(request, requestId, attachmentId, fileName)
+        } catch (err: unknown) {
+            const error = err as { message?: string }
+            setErrorMessage(error.message || 'Không thể tải xuống tệp minh chứng.')
+        } finally {
+            setDownloadingAttId(null)
         }
     }
 
@@ -226,9 +313,8 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
     const formatDateOnly = (dateStr?: string | null) => {
         if (!dateStr) return '—'
         try {
-            const [y, m, d] = dateStr.split('-')
-            if (y && m && d) return `${d}/${m}/${y}`
-            return dateStr
+            const [y, m, d] = dateStr.slice(0, 10).split('-')
+            return `${d}/${m}/${y}`
         } catch {
             return dateStr
         }
@@ -236,41 +322,37 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
 
     return (
         <div className="student-absence-container" data-testid="student-absence-page">
-            {/* Header */}
+            {/* Header Section */}
             <div className="absence-header-section">
                 <div className="absence-header-title">
                     <h1>Đơn xin phép vắng của tôi</h1>
-                    <p>Theo dõi trạng thái các đơn đã gửi và nộp đơn xin nghỉ có lý do chính đáng</p>
+                    <p>Theo dõi tình trạng xét duyệt các đơn xin nghỉ phép buổi học và nộp đơn mới.</p>
                 </div>
                 <button
+                    type="button"
                     className="btn-primary-create"
                     onClick={handleOpenCreateModal}
-                    data-testid="create-absence-request-btn"
+                    data-testid="create-absence-btn"
                 >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Tạo đơn xin phép vắng
+                    <span style={{ fontSize: 16 }}>＋</span> Xin phép vắng
                 </button>
             </div>
 
-            {/* Error & Success Banners */}
+            {/* Alert Messages */}
             {errorMessage && (
-                <div className="absence-error-banner" role="alert" data-testid="absence-error-banner">
-                    <span>{errorMessage}</span>
-                    <button className="modal-close-btn" onClick={() => setErrorMessage(null)} title="Đóng">✕</button>
+                <div className="alert-message alert-error" role="alert" data-testid="error-banner">
+                    <span>⚠️ {errorMessage}</span>
+                    <button className="alert-close-btn" onClick={() => setErrorMessage(null)} title="Đóng">✕</button>
                 </div>
             )}
-
             {successMessage && (
-                <div className="absence-error-banner" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#065f46' }} role="status" data-testid="absence-success-banner">
-                    <span>{successMessage}</span>
-                    <button className="modal-close-btn" onClick={() => setSuccessMessage(null)} title="Đóng">✕</button>
+                <div className="alert-message alert-success" role="status" data-testid="success-banner">
+                    <span>✓ {successMessage}</span>
+                    <button className="alert-close-btn" onClick={() => setSuccessMessage(null)} title="Đóng">✕</button>
                 </div>
             )}
 
-            {/* Filter Bar */}
+            {/* Filter Card */}
             <div className="absence-filter-card">
                 <div className="status-tabs" role="tablist">
                     {[
@@ -288,63 +370,76 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                 setStatusFilter(tab.key)
                                 setPage(1)
                             }}
-                            data-testid={`tab-${tab.key}`}
+                            data-testid={`filter-tab-${tab.key}`}
                         >
                             {tab.label}
                         </button>
                     ))}
                 </div>
 
-                <div className="filter-search-group">
+                <div className="absence-search-box">
                     <input
                         type="text"
-                        className="filter-search-input"
-                        placeholder="Tìm kiếm môn, lớp, lý do..."
+                        placeholder="Tìm theo môn, lớp hoặc lý do..."
                         value={searchKeyword}
                         onChange={(e) => setSearchKeyword(e.target.value)}
-                        data-testid="absence-search-input"
+                        data-testid="search-input"
                     />
+                    {searchKeyword && (
+                        <button
+                            type="button"
+                            className="search-clear-btn"
+                            onClick={() => setSearchKeyword('')}
+                            title="Xóa tìm kiếm"
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Content Table Card */}
+            {/* Table Content */}
             <div className="absence-table-card">
                 {isLoading ? (
-                    <div className="absence-state-container" data-testid="absence-loading">
-                        <div className="absence-state-icon">⏳</div>
+                    <div className="loading-state-box" data-testid="loading-state">
+                        <div className="spinner" />
                         <p>Đang tải danh sách đơn xin phép vắng...</p>
                     </div>
                 ) : requests.length === 0 ? (
-                    <div className="absence-state-container" data-testid="absence-empty">
-                        <div className="absence-state-icon">📋</div>
-                        <p style={{ fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>Chưa có đơn xin phép vắng nào</p>
-                        <p style={{ fontSize: 13, color: '#64748b' }}>
-                            {debouncedKeyword || statusFilter !== 'all'
-                                ? 'Không tìm thấy đơn phù hợp với bộ lọc tìm kiếm.'
-                                : 'Bạn chưa gửi đơn xin phép vắng nào. Bấm nút "Tạo đơn xin phép vắng" để bắt đầu.'}
+                    <div className="empty-state-box" data-testid="empty-state">
+                        <div className="empty-state-icon">📋</div>
+                        <h3>Chưa có đơn xin phép vắng nào</h3>
+                        <p>
+                            {searchKeyword || statusFilter !== 'all'
+                                ? 'Không tìm thấy đơn nào phù hợp với bộ lọc hiện tại.'
+                                : 'Bạn chưa gửi đơn xin phép vắng nào. Nhấn nút "Xin phép vắng" để tạo đơn mới.'}
                         </p>
                     </div>
                 ) : (
-                    <div className="absence-table-responsive">
-                        <table className="absence-data-table" data-testid="absence-data-table">
+                    <div className="table-responsive">
+                        <table className="absence-table" data-testid="absence-requests-table">
                             <thead>
                                 <tr>
+                                    <th style={{ width: 60 }}>STT</th>
+                                    <th>Môn học & Lớp</th>
                                     <th>Buổi học</th>
-                                    <th>Thời gian học</th>
-                                    <th>Lý do xin vắng</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thời điểm gửi</th>
+                                    <th>Lý do xin phép vắng</th>
+                                    <th style={{ width: 130 }}>Trạng thái</th>
+                                    <th style={{ width: 140 }}>Thời điểm gửi</th>
                                     <th>Kết quả duyệt</th>
-                                    <th style={{ textAlign: 'center' }}>Thao tác</th>
+                                    <th style={{ width: 90, textAlign: 'center' }}>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {requests.map((item) => (
-                                    <tr key={item.id} data-testid={`absence-row-${item.id}`}>
+                                {requests.map((item, idx) => (
+                                    <tr key={item.id} data-testid={`request-row-${item.id}`}>
+                                        <td style={{ color: '#64748b', fontSize: 13 }}>
+                                            {(page - 1) * limit + idx + 1}
+                                        </td>
                                         <td>
                                             <div className="session-info-cell">
-                                                <span className="session-topic-title">
-                                                    Buổi #{item.session_number}: {item.topic || 'Chủ đề buổi học'}
+                                                <span className="session-title">
+                                                    Buổi #{item.session_number}: {item.topic}
                                                 </span>
                                                 <span className="session-meta-sub">
                                                     {item.subject_name} ({item.class_code})
@@ -364,6 +459,11 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                             <div className="reason-text-cell" title={item.reason}>
                                                 {item.reason.length > 80 ? `${item.reason.slice(0, 80)}...` : item.reason}
                                             </div>
+                                            {item.attachment_count && item.attachment_count > 0 ? (
+                                                <div className="attachment-count-badge" data-testid={`attachment-count-${item.id}`}>
+                                                    📎 {item.attachment_count} minh chứng
+                                                </div>
+                                            ) : null}
                                         </td>
                                         <td>
                                             <span className={`status-badge ${item.status}`} data-testid={`badge-${item.status}`}>
@@ -536,6 +636,62 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                         <span className="char-counter">{reasonText.length} / 1000 ký tự</span>
                                     </div>
                                 </div>
+
+                                {/* Minh chứng đính kèm (Lát 2) */}
+                                <div className="form-field-group">
+                                    <label className="form-field-label">
+                                        Minh chứng đính kèm <span style={{ fontWeight: 400, color: '#64748b', fontSize: 12 }}>(Tối đa 5 tệp, dung lượng &le; 5MB/tệp: JPG, PNG, WEBP, PDF)</span>
+                                    </label>
+                                    <div className="file-upload-wrapper">
+                                        <input
+                                            id="file-attachment-input"
+                                            ref={fileInputRef}
+                                            type="file"
+                                            multiple
+                                            accept=".jpg,.jpeg,.png,.webp,.pdf"
+                                            style={{ display: 'none' }}
+                                            onChange={handleFileChange}
+                                            data-testid="file-attachment-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="file-input-trigger"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            data-testid="choose-files-btn"
+                                        >
+                                            📎 Chọn tệp đính kèm ({selectedFiles.length}/{MAX_FILE_COUNT})
+                                        </button>
+
+                                        {fileError && (
+                                            <div className="form-field-error-msg" style={{ marginTop: 6 }} data-testid="file-error-msg">
+                                                {fileError}
+                                            </div>
+                                        )}
+
+                                        {selectedFiles.length > 0 && (
+                                            <div className="file-selected-list" data-testid="selected-files-list">
+                                                {selectedFiles.map((f, idx) => (
+                                                    <div key={`${f.name}-${idx}`} className="file-selected-item">
+                                                        <div className="file-info-col">
+                                                            <span>{f.name.endsWith('.pdf') ? '📄' : '🖼️'}</span>
+                                                            <span className="file-name-text" title={f.name}>{f.name}</span>
+                                                            <span className="file-size-text">({formatFileSize(f.size)})</span>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-remove-selected-file"
+                                                            onClick={() => handleRemoveFile(idx)}
+                                                            title="Xóa tệp này"
+                                                            data-testid={`remove-file-btn-${idx}`}
+                                                        >
+                                                            ✕
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="modal-dialog-footer">
@@ -611,6 +767,36 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                             {selectedDetail.reason}
                                         </div>
                                     </div>
+
+                                    {/* Minh chứng đính kèm (Lát 2) */}
+                                    {selectedDetail.attachments && selectedDetail.attachments.length > 0 && (
+                                        <div className="detail-attachments-box" data-testid="detail-attachments-section">
+                                            <div className="detail-item-label">Tệp minh chứng đính kèm ({selectedDetail.attachments.length})</div>
+                                            <div className="attachment-cards-grid">
+                                                {selectedDetail.attachments.map((att) => (
+                                                    <div key={att.id} className="attachment-download-card" data-testid={`attachment-card-${att.id}`}>
+                                                        <div className="file-info-col">
+                                                            <span style={{ fontSize: 16 }}>{att.mime_type?.includes('pdf') ? '📄' : '🖼️'}</span>
+                                                            <div>
+                                                                <div className="file-name-text" title={att.file_name}>{att.file_name}</div>
+                                                                <div className="file-size-text">{formatFileSize(att.file_size)}</div>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="btn-download-file"
+                                                            disabled={downloadingAttId === att.id}
+                                                            onClick={() => handleDownloadAttachment(selectedDetail.id, att.id, att.file_name)}
+                                                            data-testid={`download-att-btn-${att.id}`}
+                                                        >
+                                                            {downloadingAttId === att.id ? 'Đang tải...' : 'Tải xuống'}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {selectedDetail.status !== 'pending' && (
                                         <div style={{ gridColumn: 'span 2', borderTop: '1px solid #e2e8f0', paddingTop: 14 }}>
                                             <div className="detail-item-label">Thông tin xét duyệt</div>

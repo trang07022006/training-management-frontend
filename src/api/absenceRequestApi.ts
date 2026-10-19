@@ -106,17 +106,23 @@ export async function getEligibleSessions(requestFn: RequestFn): Promise<Eligibl
 }
 
 /**
- * Gửi đơn xin phép vắng mới (SCRUM-255 Lát 1).
+ * Gửi đơn xin phép vắng mới (SCRUM-255 Lát 1 & Lát 2).
+ * Hỗ trợ gửi JSON thuần hoặc FormData có đính kèm tệp minh chứng.
  */
 export async function submitAbsenceRequest(
     requestFn: RequestFn,
-    payload: SubmitAbsenceRequestPayload,
+    payload: SubmitAbsenceRequestPayload | FormData,
 ): Promise<AbsenceRequestItem> {
-    const res = await requestFn('/api/v1/absence-requests', {
+    const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData
+    const init: RequestInit = {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    })
+        body: isFormData ? payload : JSON.stringify(payload),
+    }
+    if (!isFormData) {
+        init.headers = { 'Content-Type': 'application/json' }
+    }
+
+    const res = await requestFn('/api/v1/absence-requests', init)
     const body = await res.json()
     if (!res.ok || body.status !== 'success') {
         const err = new Error(body.message || 'Lỗi khi gửi đơn xin phép vắng.')
@@ -125,6 +131,43 @@ export async function submitAbsenceRequest(
         throw err
     }
     return body.data as AbsenceRequestItem
+}
+
+/**
+ * Tải xuống tệp minh chứng có kiểm soát quyền truy cập (SCRUM-255 Lát 2).
+ */
+export async function downloadAbsenceAttachment(
+    requestFn: RequestFn,
+    requestId: string,
+    attachmentId: string,
+    fileName: string,
+): Promise<void> {
+    const res = await requestFn(
+        `/api/v1/absence-requests/${encodeURIComponent(requestId)}/attachments/${encodeURIComponent(attachmentId)}`,
+        { method: 'GET' },
+    )
+    if (!res.ok) {
+        let errorMsg = 'Không thể tải tệp minh chứng.'
+        try {
+            const body = await res.json()
+            if (body.message) errorMsg = body.message
+        } catch {
+            // response wasn't JSON
+        }
+        const err = new Error(errorMsg)
+        ;(err as unknown as { status: number }).status = res.status
+        throw err
+    }
+
+    const blob = await res.blob()
+    const blobUrl = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000)
 }
 
 /**

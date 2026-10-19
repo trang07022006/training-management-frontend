@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 /**
- * Automated Tests cho SCRUM-255 Frontend Lát 1:
+ * Automated Tests cho SCRUM-255 Frontend Lát 1 & Lát 2:
  * - Học viên xem danh sách đơn xin phép vắng của bản thân
  * - Bộ lọc trạng thái và tìm kiếm
- * - Gửi đơn xin phép vắng với validation
- * - Xem chi tiết đơn xin phép vắng
+ * - Gửi đơn xin phép vắng có/không có minh chứng (Lát 1 & Lát 2)
+ * - Xóa tệp đính kèm trước khi gửi
+ * - Chặn tệp quá 5MB hoặc sai định dạng ở client
+ * - Xem chi tiết đơn và tải tệp minh chứng
  */
 
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
@@ -24,7 +26,7 @@ vi.mock('../auth/SessionProvider', () => ({
     }),
 }))
 
-describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
+describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1 & Lát 2)', () => {
     const mockRequestsList: absenceApi.AbsenceRequestItem[] = [
         {
             id: 'req-001',
@@ -42,6 +44,21 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
             end_time: '10:00:00',
             class_code: 'WEB_K21',
             subject_name: 'Lập trình Web cơ bản',
+            attachment_count: 2,
+            attachments: [
+                {
+                    id: 'att-001',
+                    file_name: 'don_thuoc.png',
+                    file_size: 154000,
+                    mime_type: 'image/png',
+                },
+                {
+                    id: 'att-002',
+                    file_name: 'giay_xac_nhan.pdf',
+                    file_size: 320000,
+                    mime_type: 'application/pdf',
+                },
+            ],
         },
         {
             id: 'req-002',
@@ -62,6 +79,7 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
             end_time: '15:30:00',
             class_code: 'WEB_K21',
             subject_name: 'Lập trình Web cơ bản',
+            attachment_count: 0,
         },
         {
             id: 'req-003',
@@ -83,6 +101,7 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
             end_time: '10:00:00',
             class_code: 'WEB_K21',
             subject_name: 'Lập trình Web cơ bản',
+            attachment_count: 0,
         },
     ]
 
@@ -133,17 +152,17 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
         vi.clearAllMocks()
     })
 
-    it('hiển thị danh sách đơn xin phép vắng và các trạng thái badge đúng chuẩn', async () => {
+    it('hiển thị danh sách đơn xin phép vắng, các trạng thái badge và số lượng minh chứng', async () => {
         render(
             <MemoryRouter>
                 <StudentAbsenceRequestsPage />
             </MemoryRouter>
         )
 
-        expect(screen.getByTestId('absence-loading')).toBeDefined()
+        expect(screen.getByTestId('loading-state')).toBeDefined()
 
         await waitFor(() => {
-            expect(screen.getByTestId('absence-data-table')).toBeDefined()
+            expect(screen.getByTestId('absence-requests-table')).toBeDefined()
         })
 
         // Kiểm tra các dòng dữ liệu
@@ -152,6 +171,10 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
         expect(screen.getByTestId('badge-pending')).toBeDefined()
         expect(screen.getByTestId('badge-approved')).toBeDefined()
         expect(screen.getByTestId('badge-rejected')).toBeDefined()
+
+        // Kiểm tra badge minh chứng Lát 2
+        expect(screen.getByTestId('attachment-count-req-001')).toBeDefined()
+        expect(screen.getByText(/2 minh chứng/i)).toBeDefined()
     })
 
     it('lọc danh sách theo trạng thái khi bấm vào các tab', async () => {
@@ -162,10 +185,10 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
         )
 
         await waitFor(() => {
-            expect(screen.getByTestId('tab-pending')).toBeDefined()
+            expect(screen.getByTestId('filter-tab-pending')).toBeDefined()
         })
 
-        fireEvent.click(screen.getByTestId('tab-pending'))
+        fireEvent.click(screen.getByTestId('filter-tab-pending'))
 
         await waitFor(() => {
             expect(absenceApi.getMyAbsenceRequests).toHaveBeenCalledWith(
@@ -183,10 +206,10 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
         )
 
         await waitFor(() => {
-            expect(screen.getByTestId('create-absence-request-btn')).toBeDefined()
+            expect(screen.getByTestId('create-absence-btn')).toBeDefined()
         })
 
-        fireEvent.click(screen.getByTestId('create-absence-request-btn'))
+        fireEvent.click(screen.getByTestId('create-absence-btn'))
 
         await waitFor(() => {
             expect(screen.getByTestId('create-absence-modal')).toBeDefined()
@@ -227,15 +250,16 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
         })
     })
 
-    it('gửi đơn thành công, gọi API submitAbsenceRequest và đóng modal', async () => {
+    it('chọn đính kèm minh chứng hợp lệ, cho phép xóa tệp và gửi FormData thành công (Lát 2)', async () => {
         const submitSpy = vi.spyOn(absenceApi, 'submitAbsenceRequest').mockResolvedValue({
             id: 'req-new-001',
             schedule_id: 'sch-004',
             student_id: 'stu-001',
-            reason: 'Em bị sốt xuất huyết phải nằm viện điều trị.',
+            reason: 'Em bị sốt xuất huyết có giấy nhập viện.',
             status: 'pending',
             status_label: 'Chờ duyệt',
             created_at: '2026-10-20T08:00:00Z',
+            attachment_count: 1,
         })
 
         render(
@@ -245,10 +269,10 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
         )
 
         await waitFor(() => {
-            expect(screen.getByTestId('create-absence-request-btn')).toBeDefined()
+            expect(screen.getByTestId('create-absence-btn')).toBeDefined()
         })
 
-        fireEvent.click(screen.getByTestId('create-absence-request-btn'))
+        fireEvent.click(screen.getByTestId('create-absence-btn'))
 
         await waitFor(() => {
             expect(screen.getByTestId('schedule-select')).toBeDefined()
@@ -256,27 +280,90 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
 
         fireEvent.change(screen.getByTestId('schedule-select'), { target: { value: 'sch-004' } })
         fireEvent.change(screen.getByTestId('reason-textarea'), {
-            target: { value: 'Em bị sốt xuất huyết phải nằm viện điều trị.' },
+            target: { value: 'Em bị sốt xuất huyết có giấy nhập viện.' },
         })
 
+        // Giả lập chọn 2 tệp: don_thuoc.png và file_nham.pdf
+        const file1 = new File(['fake-png-content'], 'don_thuoc.png', { type: 'image/png' })
+        const file2 = new File(['fake-pdf-content'], 'file_nham.pdf', { type: 'application/pdf' })
+        const input = screen.getByTestId('file-attachment-input')
+
+        fireEvent.change(input, { target: { files: [file1, file2] } })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('selected-files-list')).toBeDefined()
+            expect(screen.getByText('don_thuoc.png')).toBeDefined()
+            expect(screen.getByText('file_nham.pdf')).toBeDefined()
+        })
+
+        // Xóa file2 trước khi gửi
+        fireEvent.click(screen.getByTestId('remove-file-btn-1'))
+
+        await waitFor(() => {
+            expect(screen.queryByText('file_nham.pdf')).toBeNull()
+            expect(screen.getByText('don_thuoc.png')).toBeDefined()
+        })
+
+        // Bấm gửi đơn
         fireEvent.click(screen.getByTestId('submit-absence-btn'))
 
         await waitFor(() => {
-            expect(submitSpy).toHaveBeenCalledWith(expect.any(Function), {
-                schedule_id: 'sch-004',
-                reason: 'Em bị sốt xuất huyết phải nằm viện điều trị.',
-            })
+            expect(submitSpy).toHaveBeenCalled()
+            const callArg = submitSpy.mock.calls[0][1]
+            expect(callArg instanceof FormData).toBe(true)
+            const formData = callArg as FormData
+            expect(formData.get('schedule_id')).toBe('sch-004')
+            expect(formData.get('reason')).toBe('Em bị sốt xuất huyết có giấy nhập viện.')
+            expect(formData.get('attachments')).toBeDefined()
         })
 
         await waitFor(() => {
-            expect(screen.getByTestId('absence-success-banner').textContent).toContain(
+            expect(screen.getByTestId('success-banner').textContent).toContain(
                 'Gửi đơn xin phép vắng thành công'
             )
         })
     })
 
-    it('xem chi tiết đơn khi bấm nút Chi tiết', async () => {
+    it('chặn tệp đính kèm quá 5MB hoặc sai định dạng ở client', async () => {
+        render(
+            <MemoryRouter>
+                <StudentAbsenceRequestsPage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('create-absence-btn')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('create-absence-btn'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('file-attachment-input')).toBeDefined()
+        })
+
+        const input = screen.getByTestId('file-attachment-input')
+
+        // 1. Tệp đuôi .exe
+        const invalidFile = new File(['content'], 'trojan.exe', { type: 'application/x-msdownload' })
+        fireEvent.change(input, { target: { files: [invalidFile] } })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('file-error-msg').textContent).toContain('không hợp lệ')
+        })
+
+        // 2. Tệp dung lượng > 5MB
+        const hugeFile = new File(['0'.repeat(5 * 1024 * 1024 + 10)], 'huge.pdf', { type: 'application/pdf' })
+        Object.defineProperty(hugeFile, 'size', { value: 6 * 1024 * 1024 })
+        fireEvent.change(input, { target: { files: [hugeFile] } })
+
+        await waitFor(() => {
+            expect(screen.getByTestId('file-error-msg').textContent).toContain('vượt quá dung lượng tối đa 5MB')
+        })
+    })
+
+    it('xem chi tiết đơn, hiển thị tệp đính kèm và gọi downloadAbsenceAttachment khi bấm Tải xuống (Lát 2)', async () => {
         const detailSpy = vi.spyOn(absenceApi, 'getAbsenceRequestDetail').mockResolvedValue(mockRequestsList[0])
+        const downloadSpy = vi.spyOn(absenceApi, 'downloadAbsenceAttachment').mockResolvedValue(undefined)
 
         render(
             <MemoryRouter>
@@ -294,6 +381,17 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1)', () => {
             expect(detailSpy).toHaveBeenCalledWith(expect.any(Function), 'req-001')
             expect(screen.getByTestId('detail-absence-modal')).toBeDefined()
             expect(screen.getByText('Chi tiết đơn xin phép vắng')).toBeDefined()
+            // Hiển thị section tệp minh chứng
+            expect(screen.getByTestId('detail-attachments-section')).toBeDefined()
+            expect(screen.getByText('don_thuoc.png')).toBeDefined()
+            expect(screen.getByText('giay_xac_nhan.pdf')).toBeDefined()
+        })
+
+        // Bấm Tải xuống tệp đầu tiên
+        fireEvent.click(screen.getByTestId('download-att-btn-att-001'))
+
+        await waitFor(() => {
+            expect(downloadSpy).toHaveBeenCalledWith(expect.any(Function), 'req-001', 'att-001', 'don_thuoc.png')
         })
     })
 })

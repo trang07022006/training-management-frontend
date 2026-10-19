@@ -511,3 +511,153 @@
     font-weight: 600;
     color: #0f172a;
 }
+
+/* Attachment Styles (SCRUM-255 Lát 2) */
+.attachment-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.file-upload-wrapper {
+    margin-top: 6px;
+}
+
+.file-input-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #0284c7;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-input-trigger:hover {
+    background: #f0f9ff;
+    border-color: #0284c7;
+}
+
+.file-selected-list {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.file-selected-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.file-info-col {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.file-name-text {
+    font-weight: 500;
+    color: #0f172a;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size-text {
+    color: #64748b;
+    font-size: 11px;
+}
+
+.btn-remove-selected-file {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+}
+
+.btn-remove-selected-file:hover {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+/* Detail Modal Attachment list */
+.detail-attachments-box {
+    grid-column: span 2;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 14px;
+}
+
+.attachment-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.attachment-download-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    transition: border-color 0.15s;
+}
+
+.attachment-download-card:hover {
+    border-color: #cbd5e1;
+}
+
+.btn-download-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-download-file:hover:not(:disabled) {
+    background: #0369a1;
+}
+
+.btn-download-file:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
