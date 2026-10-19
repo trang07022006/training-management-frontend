@@ -315,14 +315,35 @@ export async function assignClassSubjectInstructors(
     return body.data
 }
 
+export interface InstructorCandidateParams {
+    q?: string
+    page?: number
+    page_size?: number
+}
+
+export interface InstructorCandidateData {
+    items: User[]
+    total: number
+    page: number
+    page_size: number
+    has_more: boolean
+}
+
 /**
  * Lấy danh sách ứng viên giảng viên đủ điều kiện phân công (SCRUM-220).
  * GET /api/v1/classes/instructors/candidates
  */
 export async function getInstructorCandidates(
     requestFn: RequestFunction,
-): Promise<User[]> {
-    const res = await requestFn('/api/v1/classes/instructors/candidates', { method: 'GET' })
+    params?: InstructorCandidateParams,
+): Promise<InstructorCandidateData> {
+    const searchParams = new URLSearchParams()
+    if (params?.q) searchParams.set('q', params.q)
+    if (params?.page) searchParams.set('page', String(params.page))
+    if (params?.page_size) searchParams.set('page_size', String(params.page_size))
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : ''
+
+    const res = await requestFn(`/api/v1/classes/instructors/candidates${qs}`, { method: 'GET' })
     const body = await res.json().catch(() => ({}))
     if (!res.ok) {
         const code = body.code || 'API_ERROR'
@@ -332,6 +353,25 @@ export async function getInstructorCandidates(
         )
         throw new ApiError(message, code, res.status)
     }
-    return body.data || []
+
+    if (Array.isArray(body.data)) {
+        return {
+            items: body.data,
+            total: body.data.length,
+            page: 1,
+            page_size: body.data.length,
+            has_more: false,
+        }
+    }
+
+    return (
+        body.data || {
+            items: [],
+            total: 0,
+            page: 1,
+            page_size: 20,
+            has_more: false,
+        }
+    )
 }
 
