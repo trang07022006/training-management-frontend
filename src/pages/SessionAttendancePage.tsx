@@ -12,7 +12,7 @@ import {
     type SaveAttendancePayload,
 } from '../api/attendanceApi'
 import { getErrorMessage } from '../utils/errorMessages'
-import { formatVietnamDate } from '../utils/dateUtils'
+import { formatVietnamDate, formatAuditDateTime } from '../utils/dateUtils'
 import { formatSessionShiftAndTime, formatRoomLabel } from '../utils/scheduleDisplayUtils'
 import './SessionAttendance.css'
 
@@ -916,7 +916,18 @@ export function SessionAttendancePage() {
                 <div className="attendance-modal-backdrop" data-testid="history-modal">
                     <div className="attendance-modal-container">
                         <div className="attendance-modal-header">
-                            <h3 className="attendance-modal-title">📜 Lịch sử chỉnh sửa điểm danh</h3>
+                            <div>
+                                <h3 className="attendance-modal-title">📜 Lịch sử chỉnh sửa điểm danh</h3>
+                                {sessionInfo && (
+                                    <div
+                                        className="attendance-modal-subtitle"
+                                        style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}
+                                        data-testid="history-session-info"
+                                    >
+                                        Buổi #{sessionInfo.session_number} • Ngày học: <strong style={{ color: '#0f172a' }}>{formatVietnamDate(sessionInfo.learning_date)}</strong>
+                                    </div>
+                                )}
+                            </div>
                             <button
                                 type="button"
                                 className="attendance-modal-close"
@@ -941,8 +952,8 @@ export function SessionAttendancePage() {
                                                     <span className="history-performer">
                                                         {log.performer_name || 'Người dùng'}
                                                     </span>
-                                                    <span className="history-time">
-                                                        {log.created_at ? new Date(log.created_at).toLocaleString('vi-VN') : ''}
+                                                    <span className="history-time" data-testid={`history-time-${log.id}`}>
+                                                        {formatAuditDateTime(log.created_at)}
                                                     </span>
                                                 </div>
                                                 <div className="history-change-line">

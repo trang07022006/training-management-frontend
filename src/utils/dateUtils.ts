@@ -52,6 +52,53 @@ export function formatVietnamDateTime(isoString?: string | null): string {
 }
 
 /**
+ * Định dạng thời điểm kiểm toán / lịch sử chỉnh sửa có giây theo múi giờ Việt Nam (Asia/Ho_Chi_Minh).
+ * Định dạng: HH:mm:ss DD/MM/YYYY
+ * Ví dụ: '2026-10-19T17:25:22.233764Z' -> '00:25:22 20/10/2026'
+ * Tương thích ngược: Chuỗi ISO chưa có Z sẽ tự động xem là UTC (tránh bị parse local time).
+ */
+export function formatAuditDateTime(isoString?: string | null): string {
+    if (!isoString) return '-'
+    const trimmed = String(isoString).trim()
+    if (!trimmed) return '-'
+
+    try {
+        let normalized = trimmed
+        if (normalized.includes(' ') && !normalized.includes('T')) {
+            normalized = normalized.replace(' ', 'T')
+        }
+        // Nếu chuỗi ISO chưa có chỉ định timezone (thiếu Z hoặc offset), chuẩn hóa thành UTC (Z)
+        if (!normalized.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(normalized)) {
+            normalized += 'Z'
+        }
+
+        const date = new Date(normalized)
+        if (isNaN(date.getTime())) {
+            return isoString
+        }
+
+        const formatter = new Intl.DateTimeFormat('en-GB', {
+            timeZone: VIETNAM_TIMEZONE,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hourCycle: 'h23',
+        })
+
+        const parts = Object.fromEntries(
+            formatter.formatToParts(date).map((p) => [p.type, p.value]),
+        )
+
+        return `${parts.hour}:${parts.minute}:${parts.second} ${parts.day}/${parts.month}/${parts.year}`
+    } catch {
+        return isoString
+    }
+}
+
+/**
  * Kiểm tra xem thời điểm (chuỗi ISO) có nằm trong vòng 24 giờ qua hay không.
  * So sánh dựa trên timestamp UTC tuyệt đối, không cộng cứng múi giờ.
  */
