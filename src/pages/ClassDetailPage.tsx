@@ -185,7 +185,7 @@ export function ClassDetailPage() {
                                 <span>+ Ghi danh học viên</span>
                             </Link>
                         )}
-                        {canManage && (
+                        {canManageSchedule && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/generate`}
                                 className="btn-secondary"
