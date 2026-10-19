@@ -278,17 +278,59 @@ export function App() {
                         padding: '2px 8px',
                         borderRadius: '4px',
                         fontWeight: 600,
-                        backgroundColor: n.change_type === 'cancelled' ? '#fee2e2' : n.change_type === 'rescheduled' ? '#fef3c7' : '#e0e7ff',
-                        color: n.change_type === 'cancelled' ? '#dc2626' : n.change_type === 'rescheduled' ? '#b45309' : '#3730a3',
+                        backgroundColor:
+                          n.change_type === 'cancelled'
+                            ? '#fee2e2'
+                            : n.change_type === 'rescheduled'
+                            ? '#fef3c7'
+                            : n.change_type === 'absence_approved'
+                            ? '#dcfce7'
+                            : n.change_type === 'absence_rejected'
+                            ? '#fee2e2'
+                            : '#e0e7ff',
+                        color:
+                          n.change_type === 'cancelled'
+                            ? '#dc2626'
+                            : n.change_type === 'rescheduled'
+                            ? '#b45309'
+                            : n.change_type === 'absence_approved'
+                            ? '#15803d'
+                            : n.change_type === 'absence_rejected'
+                            ? '#b91c1c'
+                            : '#3730a3',
                       }}
                     >
-                      {n.change_type === 'cancelled' ? 'Hủy buổi' : n.change_type === 'rescheduled' ? 'Đổi lịch' : 'Cập nhật'}
+                      {n.change_type === 'cancelled'
+                        ? 'Hủy buổi'
+                        : n.change_type === 'rescheduled'
+                        ? 'Đổi lịch'
+                        : n.change_type === 'absence_approved'
+                        ? 'Đơn được duyệt'
+                        : n.change_type === 'absence_rejected'
+                        ? 'Đơn bị từ chối'
+                        : 'Cập nhật'}
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: '0.82rem', color: '#475569', lineHeight: 1.4 }}>{n.message}</p>
-                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
-                    {n.created_at ? new Date(n.created_at).toLocaleString('vi-VN') : ''}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                      {n.created_at ? new Date(n.created_at).toLocaleString('vi-VN') : ''}
+                    </span>
+                    {(n.change_type === 'absence_approved' || n.change_type === 'absence_rejected') && (
+                      <Link
+                        to="/my-absence-requests"
+                        style={{
+                          fontSize: '0.75rem',
+                          color: '#2563eb',
+                          textDecoration: 'none',
+                          fontWeight: 500,
+                        }}
+                        data-testid={`link-to-absence-${n.id}`}
+                      >
+                        → Xem đơn xin nghỉ
+                      </Link>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

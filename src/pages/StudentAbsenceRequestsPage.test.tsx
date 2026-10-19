@@ -394,4 +394,50 @@ describe('SCRUM-255: StudentAbsenceRequestsPage (Lát 1 & Lát 2)', () => {
             expect(downloadSpy).toHaveBeenCalledWith(expect.any(Function), 'req-001', 'att-001', 'don_thuoc.png')
         })
     })
+
+    it('xem chi tiết đơn đang chờ duyệt hiển thị thông báo chờ xét duyệt rõ ràng (Lát 4)', async () => {
+        vi.spyOn(absenceApi, 'getAbsenceRequestDetail').mockResolvedValue(mockRequestsList[0]) // req-001: pending
+
+        render(
+            <MemoryRouter>
+                <StudentAbsenceRequestsPage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('view-detail-btn-req-001')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('view-detail-btn-req-001'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('detail-absence-modal')).toBeDefined()
+            // Hiển thị notice đang chờ duyệt, không hiển thị nhầm như đã duyệt
+            expect(screen.getByTestId('pending-review-notice')).toBeDefined()
+            expect(screen.getByText(/Đơn xin phép vắng đang chờ giảng viên hoặc quản lý đào tạo xem xét/i)).toBeDefined()
+        })
+    })
+
+    it('xem chi tiết đơn bị từ chối hiển thị người xử lý và lý do từ chối (Lát 4)', async () => {
+        vi.spyOn(absenceApi, 'getAbsenceRequestDetail').mockResolvedValue(mockRequestsList[2]) // req-003: rejected
+
+        render(
+            <MemoryRouter>
+                <StudentAbsenceRequestsPage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('view-detail-btn-req-003')).toBeDefined()
+        })
+
+        fireEvent.click(screen.getByTestId('view-detail-btn-req-003'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('detail-absence-modal')).toBeDefined()
+            expect(screen.getByText('Thầy Nguyễn Văn Giảng')).toBeDefined()
+            expect(screen.getByText('Lý do cá nhân không chính đáng.')).toBeDefined()
+        })
+    })
 })
+

@@ -812,6 +812,27 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                             </div>
                                         </div>
                                     )}
+
+                                    {selectedDetail.status === 'pending' && (
+                                        <div style={{ gridColumn: 'span 2', borderTop: '1px solid #e2e8f0', paddingTop: 14 }}>
+                                            <div
+                                                style={{
+                                                    fontSize: 13,
+                                                    color: '#92400e',
+                                                    background: '#fef3c7',
+                                                    padding: '10px 14px',
+                                                    borderRadius: 8,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 8,
+                                                }}
+                                                data-testid="pending-review-notice"
+                                            >
+                                                <span>⏳</span>
+                                                <span>Đơn xin phép vắng đang chờ giảng viên hoặc quản lý đào tạo xem xét. Kết quả sẽ được cập nhật tại đây và gửi thông báo tới bạn.</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : null}
                         </div>
