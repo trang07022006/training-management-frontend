@@ -31,6 +31,7 @@ export const SYSTEM_PERMISSIONS = {
     SCHEDULE_VIEW: 'schedule.view',
     SCHEDULE_MANAGE: 'schedule.manage',
     SCHEDULE_PERSONAL_VIEW: 'schedule.personal_view',
+    STUDENT_LIFECYCLE_MANAGE: 'student.lifecycle_manage',
 } as const
 
 export type SystemPermission =
@@ -80,6 +81,7 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.LEAD_DELETE,
         SYSTEM_PERMISSIONS.SCHEDULE_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_MANAGE,
+        SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE,
     ],
 }
 

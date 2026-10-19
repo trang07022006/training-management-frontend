@@ -69,6 +69,9 @@ import { SessionManagementPage } from './pages/SessionManagementPage'
 import { StudentsPage } from './pages/StudentsPage'
 import { StudentDetailPage } from './pages/StudentDetailPage'
 import { StudentEditPage } from './pages/StudentEditPage'
+import { StudentReservePage } from './pages/StudentReservePage'
+import { StudentTransferPage } from './pages/StudentTransferPage'
+import { StudentDropPage } from './pages/StudentDropPage'
 
 // Lead Pages
 import { LeadsPage } from './pages/LeadsPage'
@@ -175,6 +178,18 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/students" element={<StudentsPage />} />
                 <Route path="/students/:studentId" element={<StudentDetailPage />} />
                 <Route path="/students/:studentId/edit" element={<StudentEditPage />} />
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredPermission={SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE}
+                      fallbackPath="/forbidden"
+                    />
+                  }
+                >
+                  <Route path="/students/:studentId/reserve" element={<StudentReservePage />} />
+                  <Route path="/students/:studentId/transfer" element={<StudentTransferPage />} />
+                  <Route path="/students/:studentId/drop" element={<StudentDropPage />} />
+                </Route>
 
                 {/* Classes */}
                 <Route path="/classes" element={<ClassesPage />} />
