@@ -12,6 +12,7 @@ import {
 } from '../api/attendanceApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
+import { formatSessionShiftAndTime, formatRoomLabel } from '../utils/scheduleDisplayUtils'
 import './SessionAttendance.css'
 
 const STATUS_LABELS: Record<AttendanceStatus, string> = {
@@ -274,11 +275,16 @@ export function SessionAttendancePage() {
                     <div className="attendance-session-header">
                         <div>
                             <h1 className="attendance-session-title">
-                                Điểm danh Buổi #{sessionInfo.session_number}: {sessionInfo.topic || sessionInfo.subject_name}
+                                Điểm danh Buổi #{sessionInfo.session_number}
                             </h1>
                             <p className="attendance-session-subtitle">
                                 Môn học: <strong>{sessionInfo.subject_name}</strong> • Lớp:{' '}
                                 <strong>{sessionInfo.class_code}</strong>
+                                {sessionInfo.topic && sessionInfo.topic.trim() && (
+                                    <>
+                                        {' '}• Chủ đề: <strong>{sessionInfo.topic}</strong>
+                                    </>
+                                )}
                             </p>
                         </div>
 
@@ -311,13 +317,14 @@ export function SessionAttendancePage() {
                         <div className="attendance-meta-item">
                             <span className="attendance-meta-label">Ca & Thời gian</span>
                             <span className="attendance-meta-value">
-                                {sessionInfo.shift ? `${sessionInfo.shift} • ` : ''}
-                                {sessionInfo.start_time?.substring(0, 5)} - {sessionInfo.end_time?.substring(0, 5)}
+                                {formatSessionShiftAndTime(sessionInfo.shift, sessionInfo.start_time, sessionInfo.end_time)}
                             </span>
                         </div>
                         <div className="attendance-meta-item">
                             <span className="attendance-meta-label">Phòng học</span>
-                            <span className="attendance-meta-value">{sessionInfo.room_name}</span>
+                            <span className="attendance-meta-value">
+                                {formatRoomLabel(sessionInfo.room_id, sessionInfo.room_name)}
+                            </span>
                         </div>
                         <div className="attendance-meta-item">
                             <span className="attendance-meta-label">Giảng viên phụ trách</span>
@@ -451,10 +458,10 @@ export function SessionAttendancePage() {
                                                 {st.student_code}
                                             </span>
                                         </td>
-                                        <td>
-                                            <div style={{ fontWeight: 600, color: '#0f172a' }}>{st.full_name}</div>
+                                        <td style={{ minWidth: '180px', maxWidth: '300px' }}>
+                                            <div style={{ fontWeight: 600, color: '#0f172a', wordBreak: 'break-word' }}>{st.full_name}</div>
                                             {st.email && (
-                                                <div style={{ fontSize: '12px', color: '#64748b' }}>{st.email}</div>
+                                                <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all', marginTop: '2px' }}>{st.email}</div>
                                             )}
                                             {st.is_historical_record && (
                                                 <span style={{ fontSize: '11px', color: '#d97706', display: 'block', marginTop: '2px' }}>
@@ -540,9 +547,12 @@ export function SessionAttendancePage() {
                         return (
                             <div className="attendance-student-card" key={st.student_id} data-testid={`card-student-${st.student_id}`}>
                                 <div className="attendance-card-header">
-                                    <div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
                                         <div className="card-student-name">{st.full_name}</div>
                                         <div className="card-student-code">{st.student_code}</div>
+                                        {st.email && (
+                                            <div style={{ fontSize: '12px', color: '#64748b', wordBreak: 'break-all', marginTop: '2px' }}>{st.email}</div>
+                                        )}
                                     </div>
                                     <span
                                         className={`card-status-badge ${st.status || 'unmarked'}`}
