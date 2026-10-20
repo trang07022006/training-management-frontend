@@ -280,9 +280,9 @@
     gap: 4px;
     padding: 6px 12px;
     border-radius: 6px;
-    border: 1px solid #0284c7;
-    background: #f0f9ff;
-    color: #0284c7;
+    border: 1px solid var(--btn-blue-border, #1d4ed8);
+    background: var(--btn-blue-bg, #1d4ed8);
+    color: #ffffff;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
@@ -290,7 +290,7 @@
 }
 
 .btn-action-review:hover {
-    background: #0284c7;
+    background: var(--btn-blue-hover-bg, #1e40af);
     color: #ffffff;
 }
 
@@ -522,9 +522,9 @@
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: #0284c7;
+    background: var(--btn-blue-bg, #1d4ed8);
     color: #ffffff;
-    border: none;
+    border: 1px solid var(--btn-blue-border, #1d4ed8);
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -533,7 +533,7 @@
 }
 
 .btn-download-file:hover:not(:disabled) {
-    background: #0369a1;
+    background: var(--btn-blue-hover-bg, #1e40af);
 }
 
 .btn-download-file:disabled {
@@ -563,9 +563,9 @@
     align-items: center;
     gap: 6px;
     padding: 10px 20px;
-    background: #16a34a;
+    background: var(--btn-green-bg, #15803d);
     color: #ffffff;
-    border: none;
+    border: 1px solid var(--btn-green-border, #15803d);
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
@@ -574,7 +574,7 @@
 }
 
 .btn-approve-action:hover:not(:disabled) {
-    background: #15803d;
+    background: var(--btn-green-hover-bg, #166534);
 }
 
 .btn-reject-action {
@@ -582,9 +582,9 @@
     align-items: center;
     gap: 6px;
     padding: 10px 20px;
-    background: #dc2626;
+    background: var(--btn-red-bg, #dc2626);
     color: #ffffff;
-    border: none;
+    border: 1px solid var(--btn-red-border, #dc2626);
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
@@ -593,7 +593,7 @@
 }
 
 .btn-reject-action:hover:not(:disabled) {
-    background: #b91c1c;
+    background: var(--btn-red-hover-bg, #b91c1c);
 }
 
 .btn-approve-action:disabled,

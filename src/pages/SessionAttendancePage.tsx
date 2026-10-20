@@ -14,6 +14,7 @@ import {
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate, formatAuditDateTime } from '../utils/dateUtils'
 import { formatSessionShiftAndTime, formatRoomLabel } from '../utils/scheduleDisplayUtils'
+import { ToastPortal } from '../components/ToastPortal'
 import './SessionAttendance.css'
 
 const STATUS_LABELS: Record<AttendanceStatus, string> = {
@@ -431,27 +432,15 @@ export function SessionAttendancePage() {
                 <span>Điểm danh học viên</span>
             </nav>
 
-            {/* Thông báo lỗi / thành công */}
-            {errorMessage && (
-                <div
-                    className="attendance-restriction-alert"
-                    role="alert"
-                    style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c', marginBottom: '16px' }}
-                    data-testid="attendance-error-alert"
-                >
-                    <span>⚠️ {errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div
-                    className="attendance-restriction-alert"
-                    role="alert"
-                    style={{ background: '#f0fdf4', borderColor: '#86efac', color: '#15803d', marginBottom: '16px' }}
-                    data-testid="attendance-success-alert"
-                >
-                    <span>✓ {successMessage}</span>
-                </div>
-            )}
+            {/* Thông báo Toast */}
+            <ToastPortal
+                error={errorMessage}
+                success={successMessage}
+                onCloseError={() => setErrorMessage(null)}
+                onCloseSuccess={() => setSuccessMessage(null)}
+                errorTestId="attendance-error-alert"
+                successTestId="attendance-success-alert"
+            />
 
             {/* Session Info Summary Card */}
             {sessionInfo && (

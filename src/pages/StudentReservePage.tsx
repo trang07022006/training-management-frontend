@@ -239,7 +239,7 @@ export function StudentReservePage() {
                         </div>
                         <button
                             type="button"
-                            className="btn-secondary"
+                            className="btn-back"
                             style={{ fontSize: '13px', padding: '6px 14px', flexShrink: 0 }}
                             onClick={() => navigate(`/students/${studentId}`)}
                         >
@@ -418,7 +418,7 @@ export function StudentReservePage() {
                                 <div className="lifecycle-actions">
                                     <button
                                         type="button"
-                                        className="btn-secondary"
+                                        className="btn-cancel"
                                         onClick={() => navigate(`/students/${studentId}`)}
                                         disabled={isSubmitting}
                                     >
@@ -426,7 +426,7 @@ export function StudentReservePage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn-primary"
+                                        className="btn-reserve"
                                         data-testid="btn-preview-reserve"
                                         disabled={isSubmitting}
                                     >
@@ -486,7 +486,7 @@ export function StudentReservePage() {
                         <div className="lifecycle-modal-footer">
                             <button
                                 type="button"
-                                className="btn-secondary"
+                                className="btn-back"
                                 onClick={() => setShowConfirmModal(false)}
                                 disabled={isSubmitting}
                             >
@@ -494,7 +494,7 @@ export function StudentReservePage() {
                             </button>
                             <button
                                 type="button"
-                                className="btn-primary"
+                                className="btn-reserve"
                                 data-testid="btn-confirm-reserve"
                                 onClick={handleConfirmReserve}
                                 disabled={isSubmitting}

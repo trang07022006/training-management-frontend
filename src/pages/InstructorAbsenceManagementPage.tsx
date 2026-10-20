@@ -8,6 +8,7 @@ import {
     reviewAbsenceRequest,
 } from '../api/absenceRequestApi'
 import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
+import { ToastPortal } from '../components/ToastPortal'
 import './InstructorAbsenceManagementPage.css'
 
 export const InstructorAbsenceManagementPage: React.FC = () => {
@@ -240,19 +241,15 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Alert Messages */}
-            {errorMessage && (
-                <div className="alert-message alert-error" role="alert" data-testid="error-banner">
-                    <span>⚠️ {errorMessage}</span>
-                    <button className="alert-close-btn" onClick={() => setErrorMessage(null)} title="Đóng">✕</button>
-                </div>
-            )}
-            {successMessage && (
-                <div className="alert-message alert-success" role="status" data-testid="success-banner">
-                    <span>✓ {successMessage}</span>
-                    <button className="alert-close-btn" onClick={() => setSuccessMessage(null)} title="Đóng">✕</button>
-                </div>
-            )}
+            {/* Thông báo Toast */}
+            <ToastPortal
+                error={errorMessage}
+                success={successMessage}
+                onCloseError={() => setErrorMessage(null)}
+                onCloseSuccess={() => setSuccessMessage(null)}
+                errorTestId="error-banner"
+                successTestId="success-banner"
+            />
 
             {/* Filter Card */}
             <div className="absence-filter-card">
@@ -645,7 +642,7 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            className="btn-secondary"
+                                                            className="btn-cancel"
                                                             disabled={isReviewing}
                                                             onClick={() => {
                                                                 setShowRejectForm(false)

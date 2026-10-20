@@ -187,7 +187,7 @@ export function StudentDetailPage() {
                     <span>{errorMessage || 'Không tìm thấy hồ sơ học viên.'}</span>
                 </div>
                 <div style={{ marginTop: '16px' }}>
-                    <button type="button" className="btn-secondary" onClick={() => navigate('/students')}>
+                    <button type="button" className="btn-back" onClick={() => navigate('/students')}>
                         Quay lại danh sách học viên
                     </button>
                 </div>
@@ -218,7 +218,7 @@ export function StudentDetailPage() {
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <button
                             type="button"
-                            className="btn-secondary"
+                            className="btn-back"
                             onClick={() => navigate('/students')}
                         >
                             Quay lại danh sách
@@ -227,24 +227,21 @@ export function StudentDetailPage() {
                             <>
                                 <button
                                     type="button"
-                                    className="btn-secondary"
-                                    style={{ borderColor: '#f59e0b', color: '#b45309' }}
+                                    className="btn-reserve"
                                     onClick={() => navigate(`/students/${student.id}/reserve`)}
                                 >
                                     ⏸️ Bảo lưu học viên
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn-secondary"
-                                    style={{ borderColor: '#3b82f6', color: '#1d4ed8' }}
+                                    className="btn-transfer"
                                     onClick={() => navigate(`/students/${student.id}/transfer`)}
                                 >
                                     🔄 Chuyển lớp
                                 </button>
                                 <button
                                     type="button"
-                                    className="btn-secondary"
-                                    style={{ borderColor: '#ef4444', color: '#b91c1c' }}
+                                    className="btn-drop"
                                     onClick={() => navigate(`/students/${student.id}/drop`)}
                                 >
                                     🛑 Thôi học

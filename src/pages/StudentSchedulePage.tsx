@@ -7,6 +7,7 @@ import {
 } from '../api/scheduleApi'
 import { formatVietnamDate } from '../utils/dateUtils'
 import { PageHeader } from '../components/PageHeader'
+import { ToastPortal } from '../components/ToastPortal'
 import { SYSTEM_PERMISSIONS, getRolePermissions } from '../navigation/menuConfig'
 import { getRoleHomePath } from '../auth/roleRouting'
 import './StudentSchedulePage.css'
@@ -239,6 +240,11 @@ export function StudentSchedulePage() {
                     </div>
                 </div>
             )}
+
+            <ToastPortal
+                error={!isForbidden ? error : null}
+                onCloseError={() => setError(null)}
+            />
 
             {/* Error Alert khi không phải 403 */}
             {!isForbidden && error && (

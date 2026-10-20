@@ -542,7 +542,7 @@ export function StudentTransferPage() {
                                 <div className="lifecycle-actions">
                                     <button
                                         type="button"
-                                        className="btn-secondary"
+                                        className="btn-cancel"
                                         onClick={() => navigate(`/students/${studentId}`)}
                                         disabled={isSubmitting}
                                     >
@@ -614,7 +614,7 @@ export function StudentTransferPage() {
                         <div className="lifecycle-modal-footer">
                             <button
                                 type="button"
-                                className="btn-secondary"
+                                className="btn-back"
                                 onClick={() => setShowConfirmModal(false)}
                                 disabled={isSubmitting}
                             >

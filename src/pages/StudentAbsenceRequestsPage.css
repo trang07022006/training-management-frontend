@@ -42,22 +42,22 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: #0284c7;
+    background: var(--btn-blue-bg, #1d4ed8);
     color: #ffffff;
     font-weight: 600;
     font-size: 14px;
     padding: 10px 20px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid var(--btn-blue-border, #1d4ed8);
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2);
+    box-shadow: 0 2px 4px rgba(29, 78, 216, 0.2);
 }
 
 .btn-primary-create:hover {
-    background: #0369a1;
+    background: var(--btn-blue-hover-bg, #1e40af);
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(2, 132, 199, 0.3);
+    box-shadow: 0 4px 6px rgba(29, 78, 216, 0.3);
 }
 
 .btn-primary-create:active {
@@ -434,10 +434,10 @@
 
 .btn-secondary {
     padding: 8px 16px;
-    border: 1px solid #cbd5e1;
+    border: none;
     border-radius: 6px;
-    background: #ffffff;
-    color: #475569;
+    background: var(--btn-gray-bg, #475569);
+    color: #ffffff;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -445,14 +445,30 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #f1f5f9;
+    background: var(--btn-gray-hover, #334155);
+}
+
+.btn-cancel {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: var(--btn-red-bg, #dc2626);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: var(--btn-red-hover, #b91c1c);
 }
 
 .btn-primary {
     padding: 8px 20px;
     border: none;
     border-radius: 6px;
-    background: #0284c7;
+    background: var(--btn-blue-bg, #1d4ed8);
     color: #ffffff;
     font-size: 13px;
     font-weight: 600;
@@ -461,30 +477,31 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: #0369a1;
+    background: var(--btn-blue-hover, #1e40af);
 }
 
 .btn-primary:disabled,
-.btn-secondary:disabled {
+.btn-secondary:disabled,
+.btn-cancel:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
 /* Action button in table */
 .btn-action-view {
-    padding: 4px 10px;
+    padding: 6px 12px;
     border-radius: 6px;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #0284c7;
+    border: none;
+    background: var(--btn-blue-bg, #1d4ed8);
+    color: #ffffff;
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+    transition: background 0.15s ease;
 }
 
 .btn-action-view:hover {
-    background: #f0f9ff;
-    border-color: #0284c7;
+    background: var(--btn-blue-hover, #1e40af);
 }
 
 /* Detail Modal Styles */
@@ -642,7 +659,7 @@
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: #0284c7;
+    background: var(--btn-blue-bg, #1d4ed8);
     color: #ffffff;
     border: none;
     border-radius: 6px;
@@ -653,7 +670,7 @@
 }
 
 .btn-download-file:hover:not(:disabled) {
-    background: #0369a1;
+    background: var(--btn-blue-hover, #1e40af);
 }
 
 .btn-download-file:disabled {

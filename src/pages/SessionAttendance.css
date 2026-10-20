@@ -239,9 +239,9 @@
 }
 
 .btn-mark-all-present {
-    background: #f0fdf4;
-    color: #15803d;
-    border: 1px solid #86efac;
+    background: var(--btn-green-bg, #15803d);
+    color: #ffffff;
+    border: 1px solid var(--btn-green-border, #15803d);
     padding: 8px 16px;
     border-radius: 8px;
     font-size: 14px;
@@ -254,8 +254,8 @@
 }
 
 .btn-mark-all-present:hover:not(:disabled) {
-    background: #dcfce7;
-    border-color: #4ade80;
+    background: var(--btn-green-hover-bg, #166534);
+    border-color: var(--btn-green-hover-border, #166534);
 }
 
 .btn-mark-all-present:disabled {
@@ -264,13 +264,13 @@
 }
 
 .btn-history-view {
-    background: #ffffff;
-    color: #475569;
-    border: 1px solid #cbd5e1;
+    background: var(--btn-gray-bg, #475569);
+    color: #ffffff;
+    border: 1px solid #334155;
     padding: 8px 14px;
     border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -279,14 +279,14 @@
 }
 
 .btn-history-view:hover {
-    background: #f8fafc;
-    border-color: #94a3b8;
+    background: var(--btn-gray-hover-bg, #334155);
+    border-color: #1e293b;
 }
 
 .btn-save-attendance {
-    background: #0284c7;
+    background: var(--btn-blue-bg, #1d4ed8);
     color: #ffffff;
-    border: 1px solid #0284c7;
+    border: 1px solid var(--btn-blue-border, #1d4ed8);
     padding: 8px 20px;
     border-radius: 8px;
     font-size: 14px;
@@ -295,12 +295,12 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 1px 2px rgba(2, 132, 199, 0.2);
+    box-shadow: 0 1px 2px rgba(29, 78, 216, 0.2);
     transition: all 0.15s ease;
 }
 
 .btn-save-attendance:hover:not(:disabled) {
-    background: #0369a1;
+    background: var(--btn-blue-hover-bg, #1e40af);
 }
 
 .btn-save-attendance:disabled {

@@ -9,6 +9,7 @@ import {
     submitAbsenceRequest,
 } from '../api/absenceRequestApi'
 import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
+import { ToastPortal } from '../components/ToastPortal'
 import './CreateAbsenceRequestPage.css'
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
@@ -323,14 +324,11 @@ export const CreateAbsenceRequestPage: React.FC = () => {
             </div>
 
             {/* Submit Global Error */}
-            {submitErrorMessage && (
-                <div className="alert-box error" data-testid="submit-error-banner">
-                    <span className="alert-icon">⚠️</span>
-                    <div className="alert-content">
-                        <strong>Không thể gửi đơn:</strong> {submitErrorMessage}
-                    </div>
-                </div>
-            )}
+            <ToastPortal
+                error={submitErrorMessage}
+                onCloseError={() => setSubmitErrorMessage(null)}
+                errorTestId="submit-error-banner"
+            />
 
             {/* Khối Tóm tắt Buổi học đã chọn */}
             <div className="selected-session-card-wrapper" data-testid="selected-session-summary">
