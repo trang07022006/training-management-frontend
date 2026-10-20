@@ -201,75 +201,285 @@ button {
   box-sizing: border-box;
 }
 
-/* Standard Buttons */
-.ictu-btn {
+/* =========================================================================
+   Standardized Button System (Quy chuẩn hệ thống nút bấm ICTU)
+   Màu đậm, rõ ràng theo ngữ nghĩa hành động:
+   - Xanh dương: Tạo, Thêm, Lưu, Gửi, Xác nhận, Chỉnh sửa, Xem chi tiết
+   - Xanh lá: Phê duyệt, Chấp nhận, Hoàn tất
+   - Đỏ: Xóa, Hủy bỏ, Hủy lớp/buổi học, Từ chối, Thôi học (cả Xóa và Hủy bỏ nền đỏ chữ trắng)
+   - Cam: Bảo lưu, Tạm dừng, Cảnh báo
+   - Xám đậm: Quay lại, Đóng
+   ========================================================================= */
+
+.ictu-btn,
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-size: 0.875rem; /* 14px */
   font-weight: 600;
-  padding: 9px 18px;
-  border-radius: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 6px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.18s ease-in-out;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
   text-decoration: none;
-  line-height: 1.25;
+  white-space: nowrap;
+  line-height: 1;
   box-sizing: border-box;
+  user-select: none;
 }
 
-.ictu-btn-primary {
-  background: linear-gradient(135deg, #0874c9 0%, #065ca3 100%);
+.ictu-btn:active:not(:disabled),
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ictu-btn:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Kích thước */
+.ictu-btn-sm,
+.btn-sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 0.8125rem; /* 13px */
+  gap: 6px;
+  border-radius: 5px;
+}
+
+.ictu-btn-lg,
+.btn-lg {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 0.9375rem; /* 15px */
+  border-radius: 8px;
+}
+
+/* 1. Xanh dương (Tạo, Thêm, Lưu, Gửi, Xác nhận, Chỉnh sửa, Xem chi tiết) */
+.ictu-btn-blue,
+.ictu-btn-primary,
+.btn-blue,
+.btn-primary,
+.btn-save,
+.btn-create,
+.btn-edit,
+.btn-submit {
+  background-color: #1d4ed8;
   color: #ffffff;
-  border-color: #0874c9;
-  box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
+  border-color: #1d4ed8;
 }
 
-.ictu-btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #0984e3 0%, #0874c9 100%);
+.ictu-btn-blue:hover:not(:disabled),
+.ictu-btn-primary:hover:not(:disabled),
+.btn-blue:hover:not(:disabled),
+.btn-primary:hover:not(:disabled),
+.btn-save:hover:not(:disabled),
+.btn-create:hover:not(:disabled),
+.btn-edit:hover:not(:disabled),
+.btn-submit:hover:not(:disabled) {
+  background-color: #1e40af;
+  border-color: #1e40af;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(8, 116, 201, 0.35);
-  transform: translateY(-1px);
 }
 
-.ictu-btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.ictu-btn-blue:active:not(:disabled),
+.ictu-btn-primary:active:not(:disabled),
+.btn-blue:active:not(:disabled),
+.btn-primary:active:not(:disabled) {
+  background-color: #172554;
+  border-color: #172554;
 }
 
-.ictu-btn-secondary {
-  background-color: #f1f5f9;
-  color: #334155;
-  border-color: #e2e8f0;
+/* 2. Xanh lá (Phê duyệt, Chấp nhận, Hoàn tất) */
+.ictu-btn-green,
+.ictu-btn-success,
+.btn-green,
+.btn-success,
+.btn-approve {
+  background-color: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
 }
 
-.ictu-btn-secondary:hover:not(:disabled) {
-  background-color: #e2e8f0;
-  color: #0f172a;
+.ictu-btn-green:hover:not(:disabled),
+.ictu-btn-success:hover:not(:disabled),
+.btn-green:hover:not(:disabled),
+.btn-success:hover:not(:disabled),
+.btn-approve:hover:not(:disabled) {
+  background-color: #166534;
+  border-color: #166534;
+  color: #ffffff;
 }
 
-.ictu-btn-outline {
-  background-color: transparent;
-  color: #0874c9;
-  border-color: #0874c9;
+.ictu-btn-green:active:not(:disabled),
+.ictu-btn-success:active:not(:disabled),
+.btn-green:active:not(:disabled),
+.btn-success:active:not(:disabled) {
+  background-color: #14532d;
+  border-color: #14532d;
 }
 
-.ictu-btn-outline:hover:not(:disabled) {
-  background-color: #eaf4ff;
-  color: #064b8e;
-}
-
-.ictu-btn-danger {
+/* 3. Đỏ (Xóa, Hủy bỏ, Hủy lớp/buổi học, Từ chối, Thôi học) */
+.ictu-btn-red,
+.ictu-btn-danger,
+.btn-red,
+.btn-danger,
+.btn-cancel,
+.btn-delete,
+.btn-reject,
+.btn-drop {
   background-color: #dc2626;
   color: #ffffff;
   border-color: #dc2626;
 }
 
-.ictu-btn-danger:hover:not(:disabled) {
+.ictu-btn-red:hover:not(:disabled),
+.ictu-btn-danger:hover:not(:disabled),
+.btn-red:hover:not(:disabled),
+.btn-danger:hover:not(:disabled),
+.btn-cancel:hover:not(:disabled),
+.btn-delete:hover:not(:disabled),
+.btn-reject:hover:not(:disabled),
+.btn-drop:hover:not(:disabled) {
   background-color: #b91c1c;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+.ictu-btn-red:active:not(:disabled),
+.ictu-btn-danger:active:not(:disabled),
+.btn-red:active:not(:disabled),
+.btn-danger:active:not(:disabled) {
+  background-color: #991b1b;
+  border-color: #991b1b;
+}
+
+/* 4. Cam (Bảo lưu, Tạm dừng và hành động cảnh báo) */
+.ictu-btn-orange,
+.ictu-btn-warning,
+.btn-orange,
+.btn-warning,
+.btn-reserve,
+.btn-suspend {
+  background-color: #d97706;
+  color: #ffffff;
+  border-color: #d97706;
+}
+
+.ictu-btn-orange:hover:not(:disabled),
+.ictu-btn-warning:hover:not(:disabled),
+.btn-orange:hover:not(:disabled),
+.btn-warning:hover:not(:disabled),
+.btn-reserve:hover:not(:disabled),
+.btn-suspend:hover:not(:disabled) {
+  background-color: #b45309;
+  border-color: #b45309;
+  color: #ffffff;
+}
+
+.ictu-btn-orange:active:not(:disabled),
+.ictu-btn-warning:active:not(:disabled),
+.btn-orange:active:not(:disabled),
+.btn-warning:active:not(:disabled) {
+  background-color: #92400e;
+  border-color: #92400e;
+}
+
+/* 5. Xám đậm (Quay lại, Đóng) */
+.ictu-btn-gray,
+.ictu-btn-secondary,
+.btn-gray,
+.btn-secondary,
+.btn-back,
+.btn-close {
+  background-color: #475569;
+  color: #ffffff;
+  border-color: #475569;
+}
+
+.ictu-btn-gray:hover:not(:disabled),
+.ictu-btn-secondary:hover:not(:disabled),
+.btn-gray:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.btn-back:hover:not(:disabled),
+.btn-close:hover:not(:disabled) {
+  background-color: #334155;
+  border-color: #334155;
+  color: #ffffff;
+}
+
+.ictu-btn-gray:active:not(:disabled),
+.ictu-btn-secondary:active:not(:disabled),
+.btn-gray:active:not(:disabled),
+.btn-secondary:active:not(:disabled) {
+  background-color: #1e293b;
+  border-color: #1e293b;
+}
+
+/* 6. Outline */
+.ictu-btn-outline,
+.btn-outline {
+  background-color: transparent;
+  color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.ictu-btn-outline:hover:not(:disabled),
+.btn-outline:hover:not(:disabled) {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border-color: #1e40af;
+}
+
+/* Trạng thái Disabled */
+.ictu-btn:disabled,
+.ictu-btn[disabled],
+.btn:disabled,
+.btn[disabled] {
+  background-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  border-color: #cbd5e1 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  pointer-events: none;
+}
+
+/* Spinner for Loading State */
+.ictu-btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: ictuBtnSpin 0.6s linear infinite;
+}
+
+.ictu-btn-outline .ictu-btn-spinner {
+  border-color: rgba(29, 78, 216, 0.3);
+  border-top-color: #1d4ed8;
+}
+
+@keyframes ictuBtnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ictu-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+  line-height: 1;
 }
 
 /* Standard Badges */
