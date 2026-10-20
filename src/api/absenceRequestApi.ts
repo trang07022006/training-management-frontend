@@ -68,6 +68,8 @@ export interface EligibleSessionItem {
     room_name?: string
     instructor_name?: string
     has_pending_request: boolean
+    has_approved_request?: boolean
+    is_selectable?: boolean
     latest_request_status?: AbsenceStatus | null
 }
 

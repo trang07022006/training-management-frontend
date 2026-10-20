@@ -249,6 +249,9 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
             if (error.code === 'DUPLICATE_PENDING_REQUEST') {
                 setFieldErrors({ scheduleId: 'Buổi học này đã có đơn xin phép vắng đang chờ duyệt.' })
                 if (scheduleSelectRef.current) scheduleSelectRef.current.focus()
+            } else if (error.code === 'DUPLICATE_APPROVED_REQUEST') {
+                setFieldErrors({ scheduleId: 'Buổi học này đã có đơn xin phép vắng được phê duyệt.' })
+                if (scheduleSelectRef.current) scheduleSelectRef.current.focus()
             } else if (error.code === 'REASON_TOO_SHORT') {
                 setFieldErrors({ reason: 'Lý do xin phép vắng phải có ít nhất 5 ký tự.' })
                 if (reasonInputRef.current) reasonInputRef.current.focus()
@@ -591,10 +594,10 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                                 <option
                                                     key={s.schedule_id}
                                                     value={s.schedule_id}
-                                                    disabled={s.has_pending_request}
+                                                    disabled={Boolean(s.has_pending_request || s.has_approved_request || s.latest_request_status === 'pending' || s.latest_request_status === 'approved')}
                                                 >
                                                     [{s.class_code}] {s.subject_name} • Buổi #{s.session_number}: {s.topic} • {formatDateOnly(s.learning_date)} ({s.shift || 'Ca học'})
-                                                    {s.has_pending_request ? ' (Đang chờ duyệt)' : ''}
+                                                    {s.has_approved_request || s.latest_request_status === 'approved' ? ' (Đã duyệt)' : (s.has_pending_request || s.latest_request_status === 'pending' ? ' (Đang chờ duyệt)' : '')}
                                                 </option>
                                             ))}
                                         </select>
