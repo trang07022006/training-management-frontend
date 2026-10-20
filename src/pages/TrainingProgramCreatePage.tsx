@@ -258,10 +258,10 @@ export function TrainingProgramCreatePage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary"
+                            className="btn-primary btn-create"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Đang lưu...' : 'Lưu chương trình'}
+                            {isSubmitting ? 'Đang tạo...' : 'Tạo chương trình'}
                         </button>
                     </div>
                 </form>

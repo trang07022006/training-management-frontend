@@ -224,19 +224,28 @@
 }
 
 .btn-action-view {
-  background: var(--btn-blue-bg, #1d4ed8);
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--btn-teal-bg, #0f766e);
+  border: 1px solid var(--btn-teal-bg, #0f766e);
   color: #ffffff;
-  padding: 0.35rem 0.65rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.18s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-action-view:hover {
-  background: var(--btn-blue-hover, #1e40af);
+  background: var(--btn-teal-hover, #115e59);
+  border-color: var(--btn-teal-hover, #115e59);
 }
 
 /* Pagination */
@@ -1091,41 +1100,53 @@
 }
 
 .btn-action-edit {
-    padding: 0.35rem 0.65rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border-radius: 4px;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 6px;
+    border: 1px solid var(--btn-orange-bg, #c2410c);
+    background: var(--btn-orange-bg, #c2410c);
+    color: #ffffff;
     cursor: pointer;
     transition: all 0.15s ease;
     margin-left: 0.35rem;
 }
 
 .btn-action-edit:hover {
-    background: #f1f5f9;
-    color: #0874c9;
-    border-color: #93c5fd;
+    background: var(--btn-orange-hover, #9a3412);
+    border-color: var(--btn-orange-hover, #9a3412);
+    color: #ffffff;
 }
 
 .btn-action-delete {
-    padding: 0.35rem 0.65rem;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border-radius: 4px;
-    border: 1px solid #fecaca;
-    background: #fef2f2;
-    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 6px;
+    border: 1px solid var(--btn-red-bg, #dc2626);
+    background: var(--btn-red-bg, #dc2626);
+    color: #ffffff;
     cursor: pointer;
     transition: all 0.15s ease;
     margin-left: 0.35rem;
 }
 
 .btn-action-delete:hover {
-    background: #fee2e2;
-    color: #b91c1c;
-    border-color: #f87171;
+    background: var(--btn-red-hover, #b91c1c);
+    border-color: var(--btn-red-hover, #b91c1c);
+    color: #ffffff;
 }
 
 /* Custom Delete Confirmation Modal - Always Centered in Viewport */
@@ -1896,19 +1917,26 @@
 }
 
 .btn-action-convert {
-  background: #10b981;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--btn-green-bg, #15803d);
   color: #ffffff;
-  border: 1px solid #059669;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.82rem;
+  border: 1px solid var(--btn-green-bg, #15803d);
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-action-convert:hover:not(:disabled) {
-  background: #059669;
+  background: var(--btn-green-hover, #166534);
+  border-color: var(--btn-green-hover, #166534);
 }
 
 .btn-action-convert:disabled {
@@ -1982,22 +2010,28 @@
 
 /* Rejection Action Button in List View */
 .btn-action-reject {
-  padding: 0.35rem 0.65rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 4px;
-  border: 1px solid #fecaca;
-  background: #fff5f5;
-  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: 6px;
+  border: 1px solid var(--btn-red-bg, #dc2626);
+  background: var(--btn-red-bg, #dc2626);
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.15s ease;
   margin-left: 0.35rem;
 }
 
 .btn-action-reject:hover {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #f87171;
+  background: var(--btn-red-hover, #b91c1c);
+  border-color: var(--btn-red-hover, #b91c1c);
+  color: #ffffff;
 }
 
 /* Invalid state for rejection modal inputs */

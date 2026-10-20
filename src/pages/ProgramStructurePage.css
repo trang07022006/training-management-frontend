@@ -492,9 +492,9 @@
 }
 
 .btn-sm-prereq {
-    background-color: var(--btn-blue-bg, #1d4ed8);
+    background-color: var(--btn-purple-bg, #7e22ce);
     color: #ffffff;
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    border: 1px solid var(--btn-purple-bg, #7e22ce);
     border-radius: 6px;
     padding: 4px 10px;
     font-size: 0.8rem;
@@ -504,14 +504,14 @@
 }
 
 .btn-sm-prereq:hover {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
+    background-color: var(--btn-purple-hover, #6b21a8);
+    border-color: var(--btn-purple-hover, #6b21a8);
 }
 
 .btn-sm-edit {
-    background-color: var(--btn-blue-bg, #1d4ed8);
+    background-color: var(--btn-orange-bg, #c2410c);
     color: #ffffff;
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    border: 1px solid var(--btn-orange-bg, #c2410c);
     border-radius: 6px;
     padding: 4px 10px;
     font-size: 0.8rem;
@@ -521,8 +521,8 @@
 }
 
 .btn-sm-edit:hover {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
+    background-color: var(--btn-orange-hover, #9a3412);
+    border-color: var(--btn-orange-hover, #9a3412);
 }
 
 .btn-sm-remove {
@@ -932,9 +932,9 @@
 
 /* Action button for table in TrainingProgramsPage */
 .btn-action-structure {
-    background-color: var(--btn-blue-bg, #1d4ed8);
+    background-color: var(--btn-purple-bg, #7e22ce);
     color: #ffffff;
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    border: 1px solid var(--btn-purple-bg, #7e22ce);
     border-radius: 6px;
     padding: 6px 12px;
     font-size: 0.85rem;
@@ -946,8 +946,8 @@
 }
 
 .btn-action-structure:hover {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
+    background-color: var(--btn-purple-hover, #6b21a8);
+    border-color: var(--btn-purple-hover, #6b21a8);
 }
 
 /* Responsive Breakpoints */

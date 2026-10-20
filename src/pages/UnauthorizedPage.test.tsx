@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach, vi } from 'vitest'
-import { render, screen, cleanup, fireEvent } from '@testing-library/react'
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { SessionProvider, useSession } from '../auth/SessionProvider'
 import { SessionRedirect } from '../auth/SessionRedirect'
@@ -89,8 +89,10 @@ describe('UnauthorizedPage (SCRUM-77)', () => {
             </MemoryRouter>,
         )
 
-        const title = await screen.findByTestId('error-title')
-        expect(title.textContent).toBe('Phiên đăng nhập đã hết hạn')
+        await screen.findByTestId('error-title')
+        await waitFor(() => {
+            expect(screen.getByTestId('error-title').textContent).toBe('Phiên đăng nhập đã hết hạn')
+        })
     })
 
     it('5. cho phép truyền reason trực tiếp qua props (SESSION_INVALID)', () => {

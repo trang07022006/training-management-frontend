@@ -340,7 +340,7 @@ export function StudentEditPage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary"
+                            className="btn-primary btn-save"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Đang lưu...' : 'Lưu hồ sơ'}

@@ -251,7 +251,7 @@ export function StudentDetailPage() {
                         {canManage && (
                             <button
                                 type="button"
-                                className="btn-primary"
+                                className="btn-edit"
                                 onClick={() => navigate(`/students/${student.id}/edit`)}
                             >
                                 Chỉnh sửa hồ sơ
@@ -404,7 +404,7 @@ export function StudentDetailPage() {
                                             )}
                                             <Link
                                                 to={`/classes/${cid}`}
-                                                className="btn-primary"
+                                                className="btn-view"
                                                 style={{ padding: '8px 18px', fontSize: '13px', display: 'inline-block', textDecoration: 'none' }}
                                             >
                                                 Xem chi tiết lớp học →

@@ -297,7 +297,7 @@ export function LeadEditPage() {
                             </button>
                             <button
                                 type="submit"
-                                className="btn-primary"
+                                className="btn-primary btn-save"
                                 disabled={isSubmitting}
                                 style={{ minWidth: '120px' }}
                             >

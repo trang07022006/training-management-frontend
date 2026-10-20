@@ -194,8 +194,8 @@ export function ClassDetailPage() {
                         {canManageSchedule && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/generate`}
-                                className="btn-primary"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                className="btn-purple"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
                             >
                                 <span>📅 Sinh thời khóa biểu</span>
                             </Link>

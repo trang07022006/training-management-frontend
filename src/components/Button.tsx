@@ -1,7 +1,7 @@
 import React from 'react'
 import './Button.css'
 
-export type ButtonVariant = 'blue' | 'green' | 'red' | 'orange' | 'gray' | 'outline'
+export type ButtonVariant = 'blue' | 'green' | 'orange' | 'teal' | 'purple' | 'red' | 'gray' | 'outline'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -15,12 +15,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 /**
  * Standardized Button Component for ICTU Training Management
- * Đảm bảo màu đậm, rõ ràng theo đúng quy chuẩn hành động:
- * - blue: Tạo, Thêm, Lưu, Gửi, Xác nhận, Chỉnh sửa, Xem chi tiết
- * - green: Phê duyệt, Chấp nhận, Hoàn tất
- * - red: Xóa, Hủy bỏ, Hủy lớp/buổi học, Từ chối, Thôi học
- * - orange: Bảo lưu, Tạm dừng, Cảnh báo
- * - gray: Quay lại, Đóng
+ * Đảm bảo màu đậm, rõ ràng theo đúng quy chuẩn phân loại hành động:
+ * - blue (xanh dương): Thêm, Tạo mới
+ * - green (xanh lá): Lưu, Gửi, Phê duyệt, Hoàn tất
+ * - orange (cam đậm #c2410c): Sửa, Chỉnh sửa
+ * - teal (xanh ngọc đậm #0f766e): Xem, Chi tiết
+ * - purple (tím #7e22ce): Buổi học, Cấu trúc, Cấu hình
+ * - red (đỏ #dc2626): Xóa, Hủy bỏ, Từ chối, Thôi học
+ * - gray (xám đậm #475569): Quay lại, Đóng
+ * - outline: Đường viền viền xanh
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     (

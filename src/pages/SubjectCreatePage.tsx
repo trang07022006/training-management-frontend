@@ -287,10 +287,10 @@ export function SubjectCreatePage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary"
+                            className="btn-primary btn-create"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Đang lưu...' : 'Lưu môn học'}
+                            {isSubmitting ? 'Đang thêm...' : 'Thêm môn học'}
                         </button>
                     </div>
                 </form>

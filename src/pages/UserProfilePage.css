@@ -402,9 +402,9 @@
     justify-content: center;
     gap: 6px;
     padding: 8px 18px;
-    background-color: var(--btn-blue-bg, #1d4ed8);
+    background-color: var(--btn-green-bg, #15803d);
     color: #ffffff;
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    border: 1px solid var(--btn-green-bg, #15803d);
     border-radius: 7px;
     font-size: 0.84rem;
     font-weight: 600;
@@ -413,8 +413,8 @@
 }
 
 .btn-save:hover:not(:disabled) {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
+    background-color: var(--btn-green-hover, #166534);
+    border-color: var(--btn-green-hover, #166534);
 }
 
 .btn-save:active:not(:disabled) {

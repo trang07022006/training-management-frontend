@@ -325,23 +325,61 @@
 .btn-action-view,
 .btn-action-schedule,
 .btn-action-enroll,
-.btn-action-roster {
-    padding: 6px 12px;
-    background-color: var(--btn-blue-bg, #1d4ed8);
-    color: #ffffff;
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+.btn-action-roster,
+.btn-action-delete {
+    box-sizing: border-box;
+    height: 32px;
+    padding: 0 12px;
     border-radius: 6px;
-    font-size: 13px;
+    font-size: 0.8125rem; /* 13px */
     font-weight: 600;
+    line-height: 1;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    transition: all 0.15s ease;
+    justify-content: center;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+    vertical-align: middle;
 }
 
-.btn-action-view:hover:not(:disabled),
-.btn-action-schedule:hover:not(:disabled),
+/* Xem: Xanh ngọc đậm */
+.btn-action-view {
+    background-color: var(--btn-teal-bg, #0f766e);
+    border-color: var(--btn-teal-bg, #0f766e);
+    color: #ffffff;
+}
+
+.btn-action-view:hover:not(:disabled) {
+    background-color: var(--btn-teal-hover, #115e59);
+    border-color: var(--btn-teal-hover, #115e59);
+    color: #ffffff;
+}
+
+/* Thời khóa biểu / Lịch học: Tím */
+.btn-action-schedule {
+    background-color: var(--btn-purple-bg, #7e22ce);
+    border-color: var(--btn-purple-bg, #7e22ce);
+    color: #ffffff;
+}
+
+.btn-action-schedule:hover:not(:disabled) {
+    background-color: var(--btn-purple-hover, #6b21a8);
+    border-color: var(--btn-purple-hover, #6b21a8);
+    color: #ffffff;
+}
+
+/* Ghi danh / Học viên: Xanh dương */
+.btn-action-enroll,
+.btn-action-roster {
+    background-color: var(--btn-blue-bg, #1d4ed8);
+    border-color: var(--btn-blue-bg, #1d4ed8);
+    color: #ffffff;
+}
+
 .btn-action-enroll:hover:not(:disabled),
 .btn-action-roster:hover:not(:disabled) {
     background-color: var(--btn-blue-hover, #1e40af);
@@ -349,19 +387,11 @@
     color: #ffffff;
 }
 
+/* Hủy / Xóa: Đỏ */
 .btn-action-delete {
-    padding: 6px 12px;
     background-color: var(--btn-red-bg, #dc2626);
+    border-color: var(--btn-red-bg, #dc2626);
     color: #ffffff;
-    border: 1px solid var(--btn-red-bg, #dc2626);
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    transition: all 0.15s ease;
 }
 
 .btn-action-delete:hover:not(:disabled) {
@@ -641,6 +671,18 @@
 .btn-modal-submit:hover:not(:disabled) {
     background-color: var(--btn-blue-hover, #1e40af);
     border-color: var(--btn-blue-hover, #1e40af);
+}
+
+.btn-modal-save {
+    background-color: var(--btn-green-bg, #15803d);
+    border: 1px solid var(--btn-green-bg, #15803d);
+    color: #ffffff;
+}
+
+.btn-modal-save:hover:not(:disabled) {
+    background-color: var(--btn-green-hover, #166534);
+    border-color: var(--btn-green-hover, #166534);
+    color: #ffffff;
 }
 
 .btn-modal-cancel:disabled,

@@ -957,7 +957,7 @@ export function TrainingProgramsPage({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-modal-submit"
+                                    className="btn-modal-submit btn-modal-save"
                                     data-testid="btn-submit-edit"
                                     disabled={isSubmitting}
                                 >

@@ -432,7 +432,7 @@ export function LeadDetailPage() {
                     </button>
                     <Link
                         to={`/leads/${lead.id}/edit`}
-                        className="btn-primary"
+                        className="btn-edit"
                         style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
                         Chỉnh sửa
@@ -470,7 +470,7 @@ export function LeadDetailPage() {
                     {lead.student?.id && (
                         <Link
                             to={`/students/${lead.student.id}`}
-                            className="btn-primary"
+                            className="btn-view"
                             style={{ textDecoration: 'none' }}
                         >
                             Xem hồ sơ học viên

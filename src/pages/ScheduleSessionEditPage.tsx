@@ -460,7 +460,7 @@ export function ScheduleSessionEditPage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary"
+                            className="btn-primary btn-save"
                             disabled={isSubmitting || isBlocked}
                         >
                             {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}

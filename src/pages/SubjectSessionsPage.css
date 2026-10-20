@@ -496,8 +496,8 @@
 }
 
 .btn-action-edit {
-    background-color: var(--btn-blue-bg, #1d4ed8);
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    background-color: var(--btn-orange-bg, #c2410c);
+    border: 1px solid var(--btn-orange-bg, #c2410c);
     color: #ffffff;
     font-weight: 600;
     border-radius: 0.375rem;
@@ -508,8 +508,8 @@
 }
 
 .btn-action-edit:hover:not(:disabled) {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
+    background-color: var(--btn-orange-hover, #9a3412);
+    border-color: var(--btn-orange-hover, #9a3412);
 }
 
 .btn-action-delete {

@@ -34,6 +34,18 @@ describe('Standardized Button Component', () => {
         expect(btn.className).toContain('ictu-btn-orange')
     })
 
+    it('renders teal variant for view and detail actions', () => {
+        render(<Button variant="teal">Xem chi tiết</Button>)
+        const btn = screen.getByRole('button', { name: 'Xem chi tiết' })
+        expect(btn.className).toContain('ictu-btn-teal')
+    })
+
+    it('renders purple variant for sessions and structure actions', () => {
+        render(<Button variant="purple">Buổi học</Button>)
+        const btn = screen.getByRole('button', { name: 'Buổi học' })
+        expect(btn.className).toContain('ictu-btn-purple')
+    })
+
     it('renders gray variant for back and close actions', () => {
         render(<Button variant="gray">Quay lại</Button>)
         const btn = screen.getByRole('button', { name: 'Quay lại' })
