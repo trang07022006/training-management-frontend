@@ -1414,6 +1414,168 @@ describe('SubjectSessionsPage - Test Suite SCRUM-129 Activity A6', () => {
             fireEvent.click(addBtn)
             expect(screen.queryByText('Thêm buổi học mới')).toBeNull()
         })
+
+        it('34. Khi API trả về 400 INVALID_PARAMS: hiển thị error-state, KHÔNG giả thành empty-state hay hiện nút thêm', async () => {
+            const mockBadRequest = vi.fn().mockImplementation(async (path: string) => {
+                if (path.includes('/sessions')) {
+                    return {
+                        ok: false,
+                        status: 400,
+                        json: async () => ({
+                            code: 'INVALID_PARAMS',
+                            message: 'Mã định danh môn học không đúng định dạng UUID.',
+                        }),
+                    }
+                }
+                return { ok: true, json: async () => ({}) }
+            })
+
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                subjectId: 'sub-py-7db24fb8',
+                customRequest: mockBadRequest,
+            })
+
+            await waitFor(() => {
+                expect(screen.getByTestId('error-state')).toBeDefined()
+            })
+
+            expect(screen.getByText('Không thể tải danh sách buổi học')).toBeDefined()
+            expect(screen.getByTestId('sessions-error-message').textContent).toContain('Mã định danh môn học không đúng định dạng UUID.')
+            expect(screen.getByTestId('btn-retry')).toBeDefined()
+            expect(screen.getByTestId('btn-back-to-subjects')).toBeDefined()
+
+            // KHÔNG hiển thị empty state
+            expect(screen.queryByTestId('empty-state')).toBeNull()
+            expect(screen.queryByText('Chưa có buổi học nào')).toBeNull()
+            expect(screen.queryByTestId('btn-empty-add-session')).toBeNull()
+
+            // KHÔNG hiển thị nút thêm hoặc nhân bản trên header
+            expect(screen.queryByTestId('btn-add-session')).toBeNull()
+            expect(screen.queryByTestId('btn-clone-sessions')).toBeNull()
+        })
+
+        it('35. Bấm nút "Thử lại" trên error-state sẽ gọi lại API tải dữ liệu', async () => {
+            let attempt = 0
+            const mockRetryRequest = vi.fn().mockImplementation(async (path: string) => {
+                if (path.includes('/sessions')) {
+                    attempt++
+                    if (attempt === 1) {
+                        return {
+                            ok: false,
+                            status: 400,
+                            json: async () => ({
+                                code: 'INVALID_PARAMS',
+                                message: 'Mã định danh môn học không đúng định dạng UUID.',
+                            }),
+                        }
+                    }
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            status: 'success',
+                            data: {
+                                subject: mockSubjectSummary,
+                                items: mockSessionsData,
+                            },
+                        }),
+                    }
+                }
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: { ...mockSubjectSummary, status: 'active' },
+                    }),
+                }
+            })
+
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                subjectId: 'sub-101',
+                customRequest: mockRetryRequest,
+            })
+
+            await waitFor(() => {
+                expect(screen.getByTestId('error-state')).toBeDefined()
+            })
+
+            // Bấm Thử lại
+            fireEvent.click(screen.getByTestId('btn-retry'))
+
+            await waitFor(() => {
+                expect(screen.getByTestId('sessions-table-wrapper')).toBeDefined()
+            })
+
+            expect(screen.queryByTestId('error-state')).toBeNull()
+            expect(screen.getByText('Giới thiệu môn học')).toBeDefined()
+        })
+
+        it('36. Khi API trả về 404 hoặc 403: hiển thị thông báo lỗi phù hợp, không hiển thị empty-state', async () => {
+            const mock404Request = vi.fn().mockImplementation(async () => {
+                return {
+                    ok: false,
+                    status: 404,
+                    json: async () => ({
+                        code: 'SUBJECT_NOT_FOUND',
+                        message: 'Không tìm thấy môn học.',
+                    }),
+                }
+            })
+
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                subjectId: 'sub-non-existent',
+                customRequest: mock404Request,
+            })
+
+            await waitFor(() => {
+                expect(screen.getByTestId('error-state')).toBeDefined()
+            })
+
+            expect(screen.getByTestId('sessions-error-message').textContent).toContain('Không tìm thấy')
+            expect(screen.queryByTestId('empty-state')).toBeNull()
+        })
+
+        it('37. Khi API thành công và danh sách rỗng: hiển thị empty-state và nút thêm buổi đầu tiên', async () => {
+            const mockEmptyRequest = vi.fn().mockImplementation(async (path: string) => {
+                if (path.includes('/sessions')) {
+                    return {
+                        ok: true,
+                        json: async () => ({
+                            status: 'success',
+                            data: {
+                                subject: mockSubjectSummary,
+                                items: [],
+                            },
+                        }),
+                    }
+                }
+                return {
+                    ok: true,
+                    json: async () => ({
+                        status: 'success',
+                        data: { ...mockSubjectSummary, status: 'active' },
+                    }),
+                }
+            })
+
+            renderSubjectSessionsPage({
+                canManageOverride: true,
+                subjectId: 'sub-101',
+                customRequest: mockEmptyRequest,
+            })
+
+            await waitFor(() => {
+                expect(screen.getByTestId('empty-state')).toBeDefined()
+            })
+
+            expect(screen.getByText('Chưa có buổi học nào')).toBeDefined()
+            expect(screen.getByTestId('btn-empty-add-session')).toBeDefined()
+            expect(screen.queryByTestId('error-state')).toBeNull()
+            expect(screen.queryByTestId('sessions-table-wrapper')).toBeNull()
+        })
     })
 })
+
 

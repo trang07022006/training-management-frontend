@@ -754,3 +754,49 @@
     pointer-events: auto;
 }
 
+/* Error State */
+.sessions-error-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background-color: #fef2f2;
+    border-radius: 0.75rem;
+    border: 1px dashed #fca5a5;
+    margin: 2rem 0;
+}
+
+.sessions-error-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background-color: #fee2e2;
+    color: #dc2626;
+    margin: 0 auto 1.25rem auto;
+}
+
+.sessions-error-state h3 {
+    font-size: 1.25rem;
+    color: #991b1b;
+    margin: 0 0 0.5rem 0;
+    font-weight: 600;
+}
+
+.sessions-error-state p {
+    color: #4b5563;
+    margin: 0 auto 1.5rem auto;
+    max-width: 550px;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.sessions-error-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+
