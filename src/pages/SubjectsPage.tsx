@@ -17,6 +17,7 @@ import {
 } from '../api/subjectApi'
 import { getErrorMessage, getSuccessMessage, isNetworkError, isTechnicalCode } from '../utils/errorMessages'
 import { Breadcrumb } from '../components/Breadcrumb'
+import { ToastPortal } from '../components/ToastPortal'
 import './SubjectsPage.css'
 
 export interface SubjectsPageProps {
@@ -516,38 +517,16 @@ export function SubjectsPage({
                 )}
             </header>
 
-            {/* Success Message Banner */}
-            {successMessage && (
-                <div className="subjects-banner subjects-banner-success" data-testid="banner-success" role="status">
-                    <p className="subjects-banner-message">
-                        <span aria-hidden="true">✓</span> {successMessage}
-                    </p>
-                    <button
-                        type="button"
-                        className="subjects-banner-close"
-                        aria-label="Đóng thông báo"
-                        onClick={() => setSuccessMessage(null)}
-                    >
-                        ×
-                    </button>
-                </div>
-            )}
-
-            {/* Error Message Banner */}
-            {errorMessage && (
-                <div className="subjects-banner subjects-banner-error" data-testid="banner-error" role="alert">
-                    <p className="subjects-banner-message">
-                        <span aria-hidden="true">⚠</span> {errorMessage}
-                    </p>
-                    <button
-                        type="button"
-                        className="subjects-banner-close"
-                        aria-label="Đóng thông báo lỗi"
-                        onClick={() => setErrorMessage(null)}
-                    >
-                        ×
-                    </button>
-                </div>
+            {/* Toast Notifications */}
+            {(successMessage || errorMessage) && (
+                <ToastPortal
+                    success={successMessage}
+                    error={errorMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                    onCloseError={() => setErrorMessage(null)}
+                    successTestId="banner-success"
+                    errorTestId="banner-error"
+                />
             )}
 
             {/* Search and Status Filter Bar */}
@@ -1369,7 +1348,7 @@ export function SubjectsPage({
                         <footer className="subjects-modal-footer subjects-modal-detail-footer">
                             <button
                                 type="button"
-                                className="btn-modal-cancel"
+                                className="btn-modal-close"
                                 onClick={closeDetailModal}
                             >
                                 Đóng

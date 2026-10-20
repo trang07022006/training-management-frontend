@@ -240,7 +240,7 @@ export function ToastPortal({
                             className="leads-toast-close"
                             data-testid={closeBtnTestId}
                             onClick={() => handleClose(t)}
-                            aria-label={`Đóng thông báo ${t.type}`}
+                            aria-label={t.type === 'error' ? 'Đóng thông báo lỗi' : 'Đóng thông báo'}
                         >
                             &times;
                         </button>

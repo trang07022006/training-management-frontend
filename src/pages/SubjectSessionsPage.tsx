@@ -29,6 +29,7 @@ import { getSubject, getSubjects, type Subject } from '../api/subjectApi'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { getErrorMessage } from '../utils/errorMessages'
 import { validateSessionNumber } from '../utils/subjectSessionValidation'
+import { ToastPortal } from '../components/ToastPortal'
 import './SubjectSessionsPage.css'
 
 export interface SubjectSessionsPageProps {
@@ -640,34 +641,16 @@ export function SubjectSessionsPage({
                 </div>
             )}
 
-            {/* Success Message Banner */}
-            {successMessage && (
-                <div className="sessions-banner sessions-banner-success" data-testid="banner-success" role="status">
-                    <p className="sessions-banner-message">✓ {successMessage}</p>
-                    <button
-                        type="button"
-                        className="sessions-banner-close"
-                        aria-label="Đóng thông báo"
-                        onClick={() => setSuccessMessage(null)}
-                    >
-                        ×
-                    </button>
-                </div>
-            )}
-
-            {/* Error Message Banner */}
-            {errorMessage && (
-                <div className="sessions-banner sessions-banner-error" data-testid="banner-error" role="alert">
-                    <p className="sessions-banner-message">⚠ {errorMessage}</p>
-                    <button
-                        type="button"
-                        className="sessions-banner-close"
-                        aria-label="Đóng thông báo lỗi"
-                        onClick={() => setErrorMessage(null)}
-                    >
-                        ×
-                    </button>
-                </div>
+            {/* Toast Notifications */}
+            {(successMessage || errorMessage) && (
+                <ToastPortal
+                    success={successMessage}
+                    error={errorMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                    onCloseError={() => setErrorMessage(null)}
+                    successTestId="banner-success"
+                    errorTestId="banner-error"
+                />
             )}
 
             {/* Loading State */}

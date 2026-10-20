@@ -17,6 +17,7 @@ import {
 } from '../api/trainingProgramApi'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { Breadcrumb } from '../components/Breadcrumb'
+import { ToastPortal } from '../components/ToastPortal'
 import './TrainingProgramsPage.css'
 
 export interface TrainingProgramsPageProps {
@@ -407,38 +408,16 @@ export function TrainingProgramsPage({
                 )}
             </header>
 
-            {/* Success Message Banner */}
-            {successMessage && (
-                <div className="programs-banner programs-banner-success" data-testid="banner-success" role="status">
-                    <p className="programs-banner-message">
-                        <span aria-hidden="true">✓</span> {successMessage}
-                    </p>
-                    <button
-                        type="button"
-                        className="programs-banner-close"
-                        aria-label="Đóng thông báo"
-                        onClick={() => setSuccessMessage(null)}
-                    >
-                        ×
-                    </button>
-                </div>
-            )}
-
-            {/* Error Message Banner */}
-            {errorMessage && (
-                <div className="programs-banner programs-banner-error" data-testid="banner-error" role="alert">
-                    <p className="programs-banner-message">
-                        <span aria-hidden="true">⚠</span> {errorMessage}
-                    </p>
-                    <button
-                        type="button"
-                        className="programs-banner-close"
-                        aria-label="Đóng thông báo lỗi"
-                        onClick={() => setErrorMessage(null)}
-                    >
-                        ×
-                    </button>
-                </div>
+            {/* Toast Notifications */}
+            {(successMessage || errorMessage) && (
+                <ToastPortal
+                    success={successMessage}
+                    error={errorMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                    onCloseError={() => setErrorMessage(null)}
+                    successTestId="banner-success"
+                    errorTestId="banner-error"
+                />
             )}
 
             {/* Search and Status Filter Bar */}

@@ -250,7 +250,7 @@ export function TrainingProgramCreatePage() {
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <button
                             type="button"
-                            className="btn-cancel"
+                            className="btn-back"
                             onClick={() => navigate('/training-programs')}
                             disabled={isSubmitting}
                         >
