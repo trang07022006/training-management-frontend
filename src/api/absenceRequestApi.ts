@@ -73,6 +73,37 @@ export interface EligibleSessionItem {
     latest_request_status?: AbsenceStatus | null
 }
 
+export interface ClassFilterOption {
+    id: string
+    class_code: string
+}
+
+export interface SubjectFilterOption {
+    id: string
+    code?: string
+    name: string
+    label: string
+}
+
+export interface EligibleSessionsQueryParams {
+    page?: number
+    limit?: number
+    q?: string
+    class_id?: string
+    subject_id?: string
+    from_date?: string
+    to_date?: string
+}
+
+export interface EligibleSessionsPaginatedResponse {
+    items: EligibleSessionItem[]
+    pagination: AbsencePagination
+    filter_options: {
+        classes: ClassFilterOption[]
+        subjects: SubjectFilterOption[]
+    }
+}
+
 export interface AbsencePagination {
     page: number
     limit: number
@@ -106,7 +137,62 @@ export async function getEligibleSessions(requestFn: RequestFn): Promise<Eligibl
         ;(err as unknown as { status: number }).status = res.status
         throw err
     }
+    if (body.data && typeof body.data === 'object' && Array.isArray(body.data.items)) {
+        return body.data.items as EligibleSessionItem[]
+    }
     return (body.data || []) as EligibleSessionItem[]
+}
+
+/**
+ * Lấy danh sách các buổi học hợp lệ có phân trang, tìm kiếm và bộ lọc (SCRUM-255).
+ */
+export async function getEligibleSessionsPaginated(
+    requestFn: RequestFn,
+    params?: EligibleSessionsQueryParams,
+    signal?: AbortSignal,
+): Promise<EligibleSessionsPaginatedResponse> {
+    const searchParams = new URLSearchParams()
+    if (params) {
+        if (params.page) searchParams.set('page', String(params.page))
+        if (params.limit) searchParams.set('limit', String(params.limit))
+        if (params.q && params.q.trim()) searchParams.set('q', params.q.trim())
+        if (params.class_id) searchParams.set('class_id', params.class_id)
+        if (params.subject_id) searchParams.set('subject_id', params.subject_id)
+        if (params.from_date) searchParams.set('from_date', params.from_date)
+        if (params.to_date) searchParams.set('to_date', params.to_date)
+    }
+
+    const qs = searchParams.toString()
+    const url = `/api/v1/absence-requests/eligible-sessions${qs ? `?${qs}` : '?page=1&limit=10'}`
+
+    const res = await requestFn(url, {
+        method: 'GET',
+        signal,
+    })
+    const body = await res.json()
+    if (!res.ok || body.status !== 'success') {
+        const err = new Error(body.message || 'Lỗi khi tải danh sách buổi học hợp lệ.')
+        ;(err as unknown as { code: string }).code = body.code
+        ;(err as unknown as { status: number }).status = res.status
+        throw err
+    }
+    if (body.data && typeof body.data === 'object' && 'items' in body.data) {
+        return body.data as EligibleSessionsPaginatedResponse
+    }
+    const items = (body.data || []) as EligibleSessionItem[]
+    return {
+        items,
+        pagination: {
+            page: params?.page || 1,
+            limit: params?.limit || (items.length || 10),
+            total_items: items.length,
+            total_pages: 1,
+        },
+        filter_options: {
+            classes: [],
+            subjects: [],
+        },
+    }
 }
 
 /**

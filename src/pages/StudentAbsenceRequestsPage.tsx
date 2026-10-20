@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import {
     type AbsenceRequestItem,
@@ -10,6 +10,7 @@ import {
     getMyAbsenceRequests,
     submitAbsenceRequest,
 } from '../api/absenceRequestApi'
+import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
 import './StudentAbsenceRequestsPage.css'
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
@@ -18,6 +19,7 @@ const MAX_FILE_COUNT = 5
 
 export const StudentAbsenceRequestsPage: React.FC = () => {
     const { request } = useSession()
+    const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
 
     // State danh sách đơn
@@ -32,6 +34,15 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+    // Bắt query param ?success=1
+    useEffect(() => {
+        if (searchParams.get('success') === '1') {
+            setSuccessMessage('Gửi đơn xin phép vắng thành công!')
+            searchParams.delete('success')
+            setSearchParams(searchParams, { replace: true })
+        }
+    }, [searchParams, setSearchParams])
 
     // State Modal Tạo đơn
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false)
@@ -331,14 +342,27 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                     <h1>Đơn xin phép vắng của tôi</h1>
                     <p>Theo dõi tình trạng xét duyệt các đơn xin nghỉ phép buổi học và nộp đơn mới.</p>
                 </div>
-                <button
-                    type="button"
-                    className="btn-primary-create"
-                    onClick={handleOpenCreateModal}
-                    data-testid="create-absence-btn"
-                >
-                    <span style={{ fontSize: 16 }}>＋</span> Xin phép vắng
-                </button>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <button
+                        type="button"
+                        className="btn-primary-create"
+                        onClick={() => navigate('/my-absence-requests/new')}
+                        data-testid="create-absence-page-btn"
+                        style={{ background: '#2563eb' }}
+                    >
+                        <span style={{ fontSize: 16 }}>＋</span> Gửi đơn xin phép vắng
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={handleOpenCreateModal}
+                        data-testid="create-absence-btn"
+                        style={{ fontSize: 13, padding: '8px 12px' }}
+                        title="Mở nhanh dạng hộp thoại"
+                    >
+                        ⚡ Mở nhanh
+                    </button>
+                </div>
             </div>
 
             {/* Alert Messages */}
@@ -453,8 +477,7 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                             <div className="session-info-cell">
                                                 <span style={{ fontWeight: 600 }}>{formatDateOnly(item.learning_date)}</span>
                                                 <span className="session-meta-sub">
-                                                    {item.shift ? `${item.shift} • ` : ''}
-                                                    {item.start_time?.slice(0, 5)} - {item.end_time?.slice(0, 5)}
+                                                    {formatSessionShiftAndTime(item.shift, item.start_time, item.end_time)}
                                                 </span>
                                             </div>
                                         </td>
@@ -740,12 +763,14 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                                     </div>
                                     <div>
                                         <div className="detail-item-label">Buổi học</div>
-                                        <div className="detail-item-value">Buổi #{selectedDetail.session_number}: {selectedDetail.topic}</div>
+                                        <div className="detail-item-value">
+                                            <strong>Buổi #{selectedDetail.session_number}:</strong> {selectedDetail.topic || 'Không có chủ đề'}
+                                        </div>
                                     </div>
                                     <div>
                                         <div className="detail-item-label">Ngày & Giờ học</div>
                                         <div className="detail-item-value">
-                                            {formatDateOnly(selectedDetail.learning_date)} • {selectedDetail.start_time?.slice(0, 5)} - {selectedDetail.end_time?.slice(0, 5)}
+                                            {formatDateOnly(selectedDetail.learning_date)} • {formatSessionShiftAndTime(selectedDetail.shift, selectedDetail.start_time, selectedDetail.end_time)}
                                         </div>
                                     </div>
                                     <div>

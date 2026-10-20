@@ -7,6 +7,7 @@ import {
     getAbsenceRequestsForReviewer,
     reviewAbsenceRequest,
 } from '../api/absenceRequestApi'
+import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
 import './InstructorAbsenceManagementPage.css'
 
 export const InstructorAbsenceManagementPage: React.FC = () => {
@@ -359,8 +360,7 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
                                                     Buổi #{item.session_number}: {formatDateOnly(item.learning_date)}
                                                 </span>
                                                 <span className="session-meta-sub">
-                                                    {item.shift ? `${item.shift} • ` : ''}
-                                                    {item.start_time?.slice(0, 5)} - {item.end_time?.slice(0, 5)}
+                                                    {formatSessionShiftAndTime(item.shift, item.start_time, item.end_time)}
                                                 </span>
                                             </div>
                                         </td>
@@ -476,13 +476,13 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
                                     <div>
                                         <div className="detail-item-label">Buổi học</div>
                                         <div className="detail-item-value">
-                                            Buổi #{selectedRequest.session_number}: {selectedRequest.topic}
+                                            <strong>Buổi #{selectedRequest.session_number}:</strong> {selectedRequest.topic || 'Không có chủ đề'}
                                         </div>
                                     </div>
                                     <div>
                                         <div className="detail-item-label">Thời gian & Phòng học</div>
                                         <div className="detail-item-value">
-                                            {formatDateOnly(selectedRequest.learning_date)} • {selectedRequest.start_time?.slice(0, 5)} - {selectedRequest.end_time?.slice(0, 5)} ({selectedRequest.room_name || 'Chưa xếp phòng'})
+                                            {formatDateOnly(selectedRequest.learning_date)} • {formatSessionShiftAndTime(selectedRequest.shift, selectedRequest.start_time, selectedRequest.end_time)} ({selectedRequest.room_name || 'Chưa xếp phòng'})
                                         </div>
                                     </div>
                                     <div>
