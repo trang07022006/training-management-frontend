@@ -25,7 +25,8 @@
 .session-management-subline { display: block; margin-top: 5px; color: var(--text-muted); font-size: 12px; }
 .session-management-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .session-management-row-actions { min-width: 145px; }
-.session-management-row-actions a { font-size: 12px; padding: 6px 10px; min-height: 36px; }
+.session-management-row-actions a { font-size: 12px; padding: 6px 12px; min-height: 36px; background-color: var(--btn-blue-bg, #1d4ed8); color: #ffffff; border: 1px solid var(--btn-blue-bg, #1d4ed8); border-radius: 6px; }
+.session-management-row-actions a:hover { background-color: var(--btn-blue-hover, #1e40af); border-color: var(--btn-blue-hover, #1e40af); color: #ffffff; }
 .session-management-badge { display: inline-flex; padding: 5px 10px; border-radius: var(--radius-pill); background: var(--info-bg); color: var(--info); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .session-management-badge.cancelled { background: var(--danger-bg); color: var(--danger); }
 .session-management-badge.completed { background: var(--bg-surface-alt); color: var(--text-muted); }

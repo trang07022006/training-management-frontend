@@ -570,7 +570,7 @@ export function ClassroomsPage({
                             <div className="modal-footer">
                                 <button
                                     type="button"
-                                    className="btn-secondary"
+                                    className="btn-cancel"
                                     data-testid="cancel-room-btn"
                                     onClick={handleCloseModal}
                                     disabled={isSubmitting}

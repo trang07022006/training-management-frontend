@@ -103,6 +103,8 @@ export function HolidaysPage() {
                 success={successMessage}
                 onCloseError={() => setErrorMessage(null)}
                 onCloseSuccess={() => setSuccessMessage(null)}
+                errorTestId="holidays-error-alert"
+                successTestId="holidays-success-alert"
             />
 
             <PageHeader
@@ -115,24 +117,13 @@ export function HolidaysPage() {
                 actions={
                     <button
                         type="button"
-                        className="btn-secondary"
+                        className="btn-back"
                         onClick={() => navigate('/classes')}
                     >
                         Quay lại danh sách lớp
                     </button>
                 }
             />
-
-            {errorMessage && (
-                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }} data-testid="holidays-error-alert">
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }} data-testid="holidays-success-alert">
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: canManage ? '1fr 340px' : '1fr', gap: '24px', alignItems: 'start' }}>
                 {/* BẢNG DANH SÁCH NGÀY NGHỈ LỄ */}

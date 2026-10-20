@@ -22,6 +22,7 @@ import { HolidaysManagementModal } from '../components/HolidaysManagementModal'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
 import { fetchUsersApi, type User } from '../api/userApi'
+import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export interface ClassesPageProps {
@@ -588,18 +589,6 @@ function ClassesPageBase({
                                     }
                                 }}
                                 data-testid="open-holidays-btn"
-                                style={{
-                                    padding: '8px 14px',
-                                    borderRadius: '6px',
-                                    border: '1px solid #cbd5e1',
-                                    background: '#ffffff',
-                                    cursor: 'pointer',
-                                    fontWeight: 600,
-                                    fontSize: '0.9rem',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                }}
                             >
                                 🏖️ Ngày nghỉ lễ
                             </button>
@@ -616,22 +605,16 @@ function ClassesPageBase({
                 </div>
             </div>
 
-            {/* Thông báo Alert */}
+            {/* Toast Notifications */}
             {alertMessage && (
-                <div
-                    className={`classes-alert ${alertMessage.type}`}
-                    data-testid={alertMessage.type === 'success' ? 'success-alert' : 'error-alert'}
-                >
-                    <span>{alertMessage.text}</span>
-                    <button
-                        type="button"
-                        className="btn-close"
-                        onClick={() => setAlertMessage(null)}
-                        aria-label="Đóng thông báo"
-                    >
-                        ×
-                    </button>
-                </div>
+                <ToastPortal
+                    success={alertMessage.type === 'success' ? alertMessage.text : null}
+                    error={alertMessage.type === 'error' ? alertMessage.text : null}
+                    onCloseSuccess={() => setAlertMessage(null)}
+                    onCloseError={() => setAlertMessage(null)}
+                    successTestId="success-alert"
+                    errorTestId="error-alert"
+                />
             )}
 
             {/* Bộ lọc và Tìm kiếm danh sách lớp (SCRUM-219) */}
@@ -1014,14 +997,14 @@ function ClassesPageBase({
                             <div className="modal-footer">
                                 <button
                                     type="button"
-                                    className="btn-secondary"
+                                    className="btn-modal-cancel"
                                     onClick={() => setIsCreateModalOpen(false)}
                                 >
                                     Hủy
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-primary"
+                                    className="btn-modal-submit"
                                     disabled={isCreating}
                                     data-testid="submit-class-btn"
                                 >
@@ -1099,7 +1082,7 @@ function ClassesPageBase({
                         <div className="modal-footer">
                             <button
                                 type="button"
-                                className="btn-secondary"
+                                className="btn-modal-close"
                                 onClick={() => setIsDetailModalOpen(false)}
                             >
                                 Đóng
@@ -1222,7 +1205,7 @@ function ClassesPageBase({
                             <div className="modal-footer">
                                 <button
                                     type="button"
-                                    className="btn-secondary"
+                                    className="btn-modal-cancel"
                                     onClick={() => setIsEnrollModalOpen(false)}
                                     data-testid="cancel-enroll-btn"
                                 >
@@ -1230,7 +1213,7 @@ function ClassesPageBase({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-primary"
+                                    className="btn-modal-submit"
                                     disabled={
                                         isClassFull ||
                                         selectedStudentIds.length === 0 ||
@@ -1326,7 +1309,7 @@ function ClassesPageBase({
                         <div className="modal-footer">
                             <button
                                 type="button"
-                                className="btn-secondary"
+                                className="btn-modal-close"
                                 onClick={() => setIsRosterModalOpen(false)}
                                 data-testid="close-roster-btn"
                             >

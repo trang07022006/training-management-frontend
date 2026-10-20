@@ -308,6 +308,8 @@ export function ScheduleGeneratePage() {
                 success={successMessage}
                 onCloseError={() => setErrorMessage(null)}
                 onCloseSuccess={() => setSuccessMessage(null)}
+                successTestId="schedule-success-alert"
+                errorTestId="schedule-error-alert"
             />
 
             <PageHeader
@@ -322,17 +324,6 @@ export function ScheduleGeneratePage() {
             />
 
             <DetailNavTabs items={navItems} />
-
-            {errorMessage && (
-                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }} data-testid="schedule-error-alert">
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }} data-testid="schedule-success-alert">
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a', marginBottom: '16px' }}>
@@ -575,7 +566,7 @@ export function ScheduleGeneratePage() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
                     <button
                         type="button"
-                        className="btn-secondary"
+                        className="btn-back"
                         onClick={() => navigate(`/classes/${classId}/schedules`)}
                         disabled={isPreviewing || isSaving}
                     >
@@ -608,12 +599,13 @@ export function ScheduleGeneratePage() {
                             )}
                             <button
                                 type="button"
-                                className="btn-primary"
+                                className="btn-approve"
                                 onClick={handleSave}
                                 disabled={!canConfirmSave}
                                 data-testid="btn-confirm-save-schedule"
                                 style={{
-                                    background: canConfirmSave ? '#16a34a' : '#94a3b8',
+                                    background: canConfirmSave ? 'var(--btn-green-bg, #15803d)' : '#cbd5e1',
+                                    color: canConfirmSave ? '#ffffff' : '#94a3b8',
                                     cursor: canConfirmSave ? 'pointer' : 'not-allowed',
                                 }}
                             >

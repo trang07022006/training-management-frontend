@@ -8,6 +8,7 @@ import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export function ClassEnrollmentPage() {
@@ -145,7 +146,7 @@ export function ClassEnrollmentPage() {
                 <div className="modal-banner banner-error" role="alert" style={{ marginBottom: '16px' }}>
                     <span>Bạn không có quyền thực hiện thao tác ghi danh học viên vào lớp.</span>
                 </div>
-                <button type="button" className="btn-secondary" onClick={() => navigate('/classes')}>
+                <button type="button" className="btn-back" onClick={() => navigate('/classes')}>
                     Quay lại danh sách lớp
                 </button>
             </div>
@@ -203,15 +204,14 @@ export function ClassEnrollmentPage() {
 
             <DetailNavTabs items={navItems} />
 
-            {errorMessage && (
-                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
+            {/* Toast Notifications */}
+            {(errorMessage || successMessage) && (
+                <ToastPortal
+                    success={successMessage}
+                    error={errorMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                    onCloseError={() => setErrorMessage(null)}
+                />
             )}
 
             <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -311,7 +311,7 @@ export function ClassEnrollmentPage() {
                 <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                     <button
                         type="button"
-                        className="btn-cancel"
+                        className="btn-back"
                         onClick={() => navigate(`/classes/${classId}/students`)}
                         disabled={isSubmitting}
                     >

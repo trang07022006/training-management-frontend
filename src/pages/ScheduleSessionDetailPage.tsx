@@ -12,6 +12,7 @@ import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export function ScheduleSessionDetailPage() {
@@ -167,7 +168,7 @@ export function ScheduleSessionDetailPage() {
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <button
                             type="button"
-                            className="btn-secondary"
+                            className="btn-back"
                             onClick={() => navigate(`/classes/${classData.id}/schedules`)}
                         >
                             Quay lại lịch lớp
@@ -175,8 +176,8 @@ export function ScheduleSessionDetailPage() {
                         {classData && schedule && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/${schedule.id}/attendance`}
-                                className="btn-secondary"
-                                style={{ borderColor: '#0284c7', color: '#0284c7' }}
+                                className="btn-green"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '6px', textDecoration: 'none' }}
                                 data-testid="btn-go-to-attendance"
                             >
                                 📋 Điểm danh buổi học
@@ -186,6 +187,7 @@ export function ScheduleSessionDetailPage() {
                             <Link
                                 to={`/classes/${classData.id}/schedules/${schedule.id}/edit`}
                                 className="btn-primary"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '6px', textDecoration: 'none' }}
                             >
                                 Sửa / Dời buổi học
                             </Link>
@@ -196,15 +198,14 @@ export function ScheduleSessionDetailPage() {
 
             <DetailNavTabs items={navItems} />
 
-            {errorMessage && (
-                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
+            {/* Toast Notifications */}
+            {(errorMessage || successMessage) && (
+                <ToastPortal
+                    success={successMessage}
+                    error={errorMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                    onCloseError={() => setErrorMessage(null)}
+                />
             )}
 
             {isAttendanceChecked && (
@@ -305,10 +306,9 @@ export function ScheduleSessionDetailPage() {
 
                         <button
                             type="button"
-                            className="btn-secondary"
+                            className="btn-danger"
                             onClick={handleCancelSession}
                             disabled={isCancelling || !cancelReason.trim()}
-                            style={{ color: '#ef4444', borderColor: '#fca5a5' }}
                         >
                             {isCancelling ? 'Đang hủy buổi học...' : 'Xác nhận hủy buổi học'}
                         </button>
