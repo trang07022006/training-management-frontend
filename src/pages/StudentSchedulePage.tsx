@@ -397,6 +397,30 @@ export function StudentSchedulePage() {
                                             )}
                                         </Link>
                                     )}
+
+                                    {!isTrainer && (
+                                        <Link
+                                            to={`/my-absence-requests?scheduleId=${nextSession.id}`}
+                                            className="btn-secondary"
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                marginTop: '8px',
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '13px',
+                                                borderColor: '#e2e8f0',
+                                                color: '#0f172a',
+                                                textDecoration: 'none',
+                                                fontWeight: 600,
+                                                background: '#ffffff',
+                                            }}
+                                            data-testid="hero-btn-absence-request"
+                                        >
+                                            <span>📝 Xin phép vắng buổi này</span>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -573,6 +597,31 @@ export function StudentSchedulePage() {
                                                             Chưa điểm danh
                                                         </span>
                                                     )}
+                                                </div>
+                                            )}
+
+                                            {/* Hành động xin phép vắng dành cho Học viên (SCRUM-255) */}
+                                            {!isTrainer && !isCancelled && (
+                                                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
+                                                    <Link
+                                                        to={`/my-absence-requests?scheduleId=${sessionItem.id}`}
+                                                        style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            padding: '4px 10px',
+                                                            fontSize: '12px',
+                                                            borderRadius: '6px',
+                                                            border: '1px solid #cbd5e1',
+                                                            color: '#334155',
+                                                            textDecoration: 'none',
+                                                            fontWeight: 600,
+                                                            backgroundColor: '#ffffff',
+                                                        }}
+                                                        data-testid={`btn-absence-${sessionItem.id}`}
+                                                    >
+                                                        <span>📝 Xin phép vắng</span>
+                                                    </Link>
                                                 </div>
                                             )}
 

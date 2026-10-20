@@ -604,7 +604,7 @@ export interface ScheduleNotificationItem {
     recipient_id: string
     recipient_name: string
     recipient_email?: string | null
-    change_type: 'rescheduled' | 'cancelled' | 'updated'
+    change_type: 'rescheduled' | 'cancelled' | 'updated' | 'absence_approved' | 'absence_rejected' | string
     title: string
     message: string
     created_at: string

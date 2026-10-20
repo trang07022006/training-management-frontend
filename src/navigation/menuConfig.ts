@@ -35,6 +35,9 @@ export const SYSTEM_PERMISSIONS = {
     ATTENDANCE_VIEW: 'attendance.view',
     ATTENDANCE_TAKE: 'attendance.take',
     ATTENDANCE_MANAGE: 'attendance.manage',
+    ABSENCE_REQUEST: 'absence.request',
+    ABSENCE_VIEW: 'absence.view',
+    ABSENCE_REVIEW: 'absence.review',
 } as const
 
 export type SystemPermission =
@@ -65,11 +68,14 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
         SYSTEM_PERMISSIONS.ATTENDANCE_VIEW,
         SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
+        SYSTEM_PERMISSIONS.ABSENCE_VIEW,
+        SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
+        SYSTEM_PERMISSIONS.ABSENCE_REQUEST,
     ],
     user: [
         SYSTEM_PERMISSIONS.SESSION_VIEW,
@@ -90,6 +96,8 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.ATTENDANCE_VIEW,
         SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
         SYSTEM_PERMISSIONS.ATTENDANCE_MANAGE,
+        SYSTEM_PERMISSIONS.ABSENCE_VIEW,
+        SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
     ],
 }
 
@@ -201,6 +209,20 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     },
     {
+        key: 'my_absence_requests',
+        label: 'Đơn xin phép vắng',
+        path: '/my-absence-requests',
+        icon: 'file-text',
+        requiredPermission: SYSTEM_PERMISSIONS.ABSENCE_REQUEST,
+    },
+    {
+        key: 'absence_reviews',
+        label: 'Duyệt đơn xin vắng',
+        path: '/instructor/absence-requests',
+        icon: 'clipboard-check',
+        requiredPermission: SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
+    },
+    {
         key: 'students',
         label: 'Học viên',
         path: '/students',
@@ -293,6 +315,14 @@ export function filterMenuItems(
         if (item.key === 'my_schedule') {
             const hasPersonalScheduleRole = userRoles.includes('trainee') || userRoles.includes('trainer')
             if (!hasPersonalScheduleRole) {
+                return false
+            }
+        }
+
+        // Menu đơn xin phép vắng (SCRUM-255):
+        // Chỉ hiển thị cho học viên (trainee)
+        if (item.key === 'my_absence_requests') {
+            if (!userRoles.includes('trainee')) {
                 return false
             }
         }
