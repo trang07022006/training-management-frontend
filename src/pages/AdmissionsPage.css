@@ -194,7 +194,7 @@
 
 .btn-adm-primary {
   padding: 12px 22px;
-  background: linear-gradient(135deg, #0874c9, #0284c7);
+  background: var(--btn-blue-bg, #1d4ed8);
   color: #ffffff;
   font-weight: 600;
   font-size: 0.92rem;
@@ -205,7 +205,7 @@
 }
 
 .btn-adm-primary:hover {
-  background: linear-gradient(135deg, #065b9e, #0369a1);
+  background: var(--btn-blue-hover, #1e40af);
   transform: translateY(-1px);
 }
 

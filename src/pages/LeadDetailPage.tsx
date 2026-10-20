@@ -425,14 +425,14 @@ export function LeadDetailPage() {
                 <div style={{ display: 'flex', gap: '12px' }}>
                     <button
                         type="button"
-                        className="btn-clear-filter"
+                        className="btn-back"
                         onClick={() => navigate('/leads')}
                     >
                         ← Danh sách
                     </button>
                     <Link
                         to={`/leads/${lead.id}/edit`}
-                        className="btn-filter"
+                        className="btn-primary"
                         style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
                         Chỉnh sửa
@@ -441,7 +441,7 @@ export function LeadDetailPage() {
                         <button
                             type="button"
                             className="btn-filter"
-                            style={{ background: '#10b981' }}
+                            style={{ background: 'var(--btn-green-bg, #15803d)', color: '#ffffff' }}
                             onClick={handleConvertToStudentAction}
                             disabled={isConverting}
                         >
@@ -470,8 +470,8 @@ export function LeadDetailPage() {
                     {lead.student?.id && (
                         <Link
                             to={`/students/${lead.student.id}`}
-                            className="btn-filter"
-                            style={{ background: '#059669', textDecoration: 'none' }}
+                            className="btn-primary"
+                            style={{ textDecoration: 'none' }}
                         >
                             Xem hồ sơ học viên
                         </Link>
