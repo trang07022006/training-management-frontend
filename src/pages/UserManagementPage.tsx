@@ -13,6 +13,7 @@ import { UserRoleModal } from '../components/UserRoleModal'
 import { AccountLockModal } from '../components/AccountLockModal'
 import { UserImportTab } from '../components/UserImportTab'
 import { Breadcrumb } from '../components/Breadcrumb'
+import { ToastPortal } from '../components/ToastPortal'
 import './UserManagementPage.css'
 
 export interface UserManagementPageProps {
@@ -318,26 +319,14 @@ function UserManagementPageContent({
                         </div>
                     )}
 
-                    {/* Success Banner */}
+                    {/* Success Toast Notification */}
                     {successMessage && (
-                        <div className="user-success-banner" data-testid="user-success-state" role="status">
-                            <p className="user-success-message">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                    <polyline points="22 4 12 14.01 9 11.01" />
-                                </svg>
-                                <span data-testid="user-success-text">{successMessage}</span>
-                            </p>
-                            <button
-                                type="button"
-                                className="user-close-banner-btn"
-                                data-testid="btn-close-success-banner"
-                                onClick={() => setSuccessMessage(null)}
-                                aria-label="Đóng thông báo"
-                            >
-                                ×
-                            </button>
-                        </div>
+                        <ToastPortal
+                            success={successMessage}
+                            onCloseSuccess={() => setSuccessMessage(null)}
+                            successTestId="user-success-state"
+                            successMsgTestId="user-success-text"
+                        />
                     )}
 
                     {/* Search & Filter Section */}

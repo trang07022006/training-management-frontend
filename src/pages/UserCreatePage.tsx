@@ -5,6 +5,8 @@ import { createUserApi, fetchAvailableRolesApi, type CreateUserData, ApiError } 
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ToastPortal } from '../components/ToastPortal'
+import { setFlashToast } from '../context/ToastContext'
 import '../components/UserModal.css'
 
 interface FormErrors {
@@ -114,10 +116,9 @@ export function UserCreatePage() {
 
         try {
             const created = await createUserApi(requestFn, payload)
-            setSuccessMessage(getSuccessMessage('CREATE_USER_SUCCESS', 'Tạo tài khoản người dùng thành công!'))
-            setTimeout(() => {
-                navigate(`/users/${created.id}`)
-            }, 800)
+            const successMsg = getSuccessMessage('CREATE_USER_SUCCESS', 'Tạo tài khoản người dùng thành công!')
+            setFlashToast('success', successMsg)
+            navigate(`/users/${created.id}`)
         } catch (err: unknown) {
             if (err instanceof ApiError) {
                 setErrorMessage(err.message)
@@ -158,14 +159,16 @@ export function UserCreatePage() {
             />
 
             {errorMessage && (
-                <div className="modal-banner banner-error" role="alert" style={{ margin: '0 0 16px 0' }}>
-                    <span>{errorMessage}</span>
-                </div>
+                <ToastPortal
+                    error={errorMessage}
+                    onCloseError={() => setErrorMessage(null)}
+                />
             )}
             {successMessage && (
-                <div className="modal-banner banner-success" role="alert" style={{ margin: '0 0 16px 0' }}>
-                    <span>{successMessage}</span>
-                </div>
+                <ToastPortal
+                    success={successMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                />
             )}
 
             <div style={{ maxWidth: '780px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -286,7 +289,7 @@ export function UserCreatePage() {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                         <button
                             type="button"
-                            className="btn-cancel"
+                            className="btn-secondary"
                             onClick={() => navigate('/users')}
                             disabled={isSubmitting}
                         >
@@ -294,7 +297,7 @@ export function UserCreatePage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-submit"
+                            className="btn-primary"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Đang tạo...' : 'Tạo người dùng'}

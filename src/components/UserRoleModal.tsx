@@ -300,7 +300,7 @@ function UserRoleModalContent({
             <div className="modal-footer">
                 <button
                     type="button"
-                    className="btn-secondary"
+                    className="btn-success"
                     data-testid="btn-done-role-modal"
                     onClick={onClose}
                     disabled={isActionLoading}

@@ -12,6 +12,7 @@ import { getUserRoleDisplay } from '../navigation/userProfileUtils'
 import { ProfileAvatarSection } from '../components/ProfileAvatarSection'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { getErrorMessage } from '../utils/errorMessages'
+import { ToastPortal } from '../components/ToastPortal'
 import './UserProfilePage.css'
 
 const VIETNAMESE_PHONE_REGEX = /^0[35789]\d{8}$/
@@ -400,16 +401,13 @@ export function UserProfilePage() {
                 </div>
             </header>
 
-            {/* Notification Banners for Personal Info */}
+            {/* Notification Toast for Personal Info */}
             {activeTab === 'personal' && successMessage && (
-                <div
-                    className="profile-alert profile-alert-success"
-                    role="alert"
-                    data-testid="profile-success-message"
-                >
-                    <span className="alert-icon" aria-hidden="true">✓</span>
-                    <span>{successMessage}</span>
-                </div>
+                <ToastPortal
+                    success={successMessage}
+                    onCloseSuccess={() => setSuccessMessage(null)}
+                    successTestId="profile-success-message"
+                />
             )}
 
             {activeTab === 'personal' && errorMessage && (
@@ -677,10 +675,11 @@ export function UserProfilePage() {
                                 </div>
 
                                 {passwordSuccessMessage && (
-                                    <div className="profile-alert profile-alert-success" role="status" data-testid="password-success-message">
-                                        <span className="alert-icon" aria-hidden="true">✓</span>
-                                        <span>{passwordSuccessMessage}</span>
-                                    </div>
+                                    <ToastPortal
+                                        success={passwordSuccessMessage}
+                                        onCloseSuccess={() => setPasswordSuccessMessage(null)}
+                                        successTestId="password-success-message"
+                                    />
                                 )}
                                 {passwordErrorMessage && (
                                     <div className="profile-alert profile-alert-error" role="alert" data-testid="password-error-message">

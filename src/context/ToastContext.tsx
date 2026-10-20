@@ -29,8 +29,29 @@ const FLASH_STORAGE_KEY = 'ictu_pending_flash_toast'
 /**
  * Set a flash toast that will be displayed once on the next page view.
  * Immune to page refresh (cleared immediately upon consumption).
+ * Supports both setFlashToast(type, message) and setFlashToast(message, type).
  */
-export function setFlashToast(type: ToastType, message: string, duration?: number) {
+export function setFlashToast(
+    typeOrMessage: ToastType | string,
+    messageOrType?: string | ToastType,
+    duration?: number
+) {
+    let type: ToastType = 'success'
+    let message = ''
+
+    if (
+        typeOrMessage === 'success' ||
+        typeOrMessage === 'error' ||
+        typeOrMessage === 'warning' ||
+        typeOrMessage === 'info'
+    ) {
+        type = typeOrMessage as ToastType
+        message = String(messageOrType || '')
+    } else {
+        message = typeOrMessage
+        type = (messageOrType as ToastType) || 'success'
+    }
+
     try {
         sessionStorage.setItem(
             FLASH_STORAGE_KEY,

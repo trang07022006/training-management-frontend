@@ -137,7 +137,7 @@ function AccountLockModalContent({
                 <div className="modal-footer">
                     <button
                         type="button"
-                        className="btn-secondary"
+                        className="btn-cancel"
                         data-testid="btn-cancel-lock"
                         onClick={onClose}
                         disabled={isLoading}
@@ -146,7 +146,7 @@ function AccountLockModalContent({
                     </button>
                     <button
                         type="button"
-                        className={isLock ? 'btn-danger' : 'btn-primary'}
+                        className={isLock ? 'btn-danger' : 'btn-success'}
                         data-testid={isLock ? 'btn-confirm-lock' : 'btn-confirm-unlock'}
                         onClick={() => void handleConfirm()}
                         disabled={isLoading}

@@ -118,7 +118,7 @@ export function UserDetailPage() {
                         </button>
                         {canManage && (
                             <>
-                                <Link to={`/users/${user.id}/edit`} className="btn-secondary">
+                                <Link to={`/users/${user.id}/edit`} className="btn-primary">
                                     Chỉnh sửa thông tin
                                 </Link>
                                 <Link to={`/users/${user.id}/roles`} className="btn-primary">

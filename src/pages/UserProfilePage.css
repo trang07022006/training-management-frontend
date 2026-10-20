@@ -402,21 +402,19 @@
     justify-content: center;
     gap: 6px;
     padding: 8px 18px;
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    background-color: var(--btn-blue-bg, #1d4ed8);
     color: #ffffff;
-    border: none;
+    border: 1px solid var(--btn-blue-bg, #1d4ed8);
     border-radius: 7px;
     font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
 }
 
 .btn-save:hover:not(:disabled) {
-    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.32);
-    transform: translateY(-1px);
+    background-color: var(--btn-blue-hover, #1e40af);
+    border-color: var(--btn-blue-hover, #1e40af);
 }
 
 .btn-save:active:not(:disabled) {
@@ -424,16 +422,21 @@
 }
 
 .btn-save:disabled {
-    opacity: 0.65;
+    opacity: 0.5;
     cursor: not-allowed;
-    box-shadow: none;
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
 }
 
 .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 8px 16px;
-    background-color: #ffffff;
-    color: #334155;
-    border: 1px solid #cbd5e1;
+    background-color: var(--btn-red-bg, #dc2626);
+    color: #ffffff;
+    border: 1px solid var(--btn-red-bg, #dc2626);
     border-radius: 7px;
     font-size: 0.84rem;
     font-weight: 600;
@@ -442,14 +445,36 @@
 }
 
 .btn-cancel:hover:not(:disabled) {
-    background-color: #f8fafc;
-    border-color: #94a3b8;
-    color: #0f172a;
+    background-color: var(--btn-red-hover, #b91c1c);
+    border-color: var(--btn-red-hover, #b91c1c);
 }
 
 .btn-cancel:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
+    background-color: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+}
+
+.btn-retry {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 18px;
+    border-radius: 7px;
+    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    background-color: var(--btn-blue-bg, #1d4ed8);
+    color: #ffffff;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-retry:hover {
+    background-color: var(--btn-blue-hover, #1e40af);
+    border-color: var(--btn-blue-hover, #1e40af);
 }
 
 .btn-spinner {
@@ -625,25 +650,25 @@
 .btn-modal-stay {
     padding: 7px 15px;
     border-radius: 7px;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
-    color: #334155;
+    border: 1px solid var(--btn-gray-bg, #475569);
+    background-color: var(--btn-gray-bg, #475569);
+    color: #ffffff;
     font-size: 0.84rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btn-modal-stay:hover {
-    background-color: #f1f5f9;
-    color: #0f172a;
+    background-color: var(--btn-gray-hover, #334155);
+    border-color: var(--btn-gray-hover, #334155);
 }
 
 .btn-modal-confirm-cancel {
     padding: 7px 15px;
     border-radius: 7px;
-    border: none;
-    background: #dc2626;
+    border: 1px solid var(--btn-red-bg, #dc2626);
+    background-color: var(--btn-red-bg, #dc2626);
     color: #ffffff;
     font-size: 0.84rem;
     font-weight: 600;
@@ -652,7 +677,8 @@
 }
 
 .btn-modal-confirm-cancel:hover {
-    background-color: #b91c1c;
+    background-color: var(--btn-red-hover, #b91c1c);
+    border-color: var(--btn-red-hover, #b91c1c);
 }
 
 /* ==========================================================================
