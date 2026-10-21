@@ -38,6 +38,10 @@ export const SYSTEM_PERMISSIONS = {
     ABSENCE_REQUEST: 'absence.request',
     ABSENCE_VIEW: 'absence.view',
     ABSENCE_REVIEW: 'absence.review',
+    RUBRIC_MANAGE: 'rubric.manage',
+    RUBRIC_VIEW: 'rubric.view',
+    GRADE_MANAGE: 'grade.manage',
+    GRADE_VIEW_OWN: 'grade.view_own',
 } as const
 
 export type SystemPermission =
@@ -70,12 +74,16 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
         SYSTEM_PERMISSIONS.ABSENCE_VIEW,
         SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
+        SYSTEM_PERMISSIONS.RUBRIC_MANAGE,
+        SYSTEM_PERMISSIONS.RUBRIC_VIEW,
+        SYSTEM_PERMISSIONS.GRADE_MANAGE,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
         SYSTEM_PERMISSIONS.ABSENCE_REQUEST,
+        SYSTEM_PERMISSIONS.GRADE_VIEW_OWN,
     ],
     user: [
         SYSTEM_PERMISSIONS.SESSION_VIEW,
@@ -98,6 +106,8 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.ATTENDANCE_MANAGE,
         SYSTEM_PERMISSIONS.ABSENCE_VIEW,
         SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
+        SYSTEM_PERMISSIONS.RUBRIC_VIEW,
+        SYSTEM_PERMISSIONS.GRADE_MANAGE,
     ],
 }
 
@@ -229,7 +239,28 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         icon: 'user-graduate',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
-        {
+    {
+        key: 'rubric_templates',
+        label: 'Mẫu Rubric',
+        path: '/rubric-templates',
+        icon: 'clipboard-list',
+        requiredPermission: SYSTEM_PERMISSIONS.RUBRIC_VIEW,
+    },
+    {
+        key: 'assignment_grading',
+        label: 'Chấm điểm Rubric',
+        path: '/assignment-grading',
+        icon: 'check-square',
+        requiredPermission: SYSTEM_PERMISSIONS.GRADE_MANAGE,
+    },
+    {
+        key: 'my_grade',
+        label: 'Điểm bài tập của tôi',
+        path: '/my-grade',
+        icon: 'award',
+        requiredPermission: SYSTEM_PERMISSIONS.GRADE_VIEW_OWN,
+    },
+    {
         key: 'leads',
         label: 'Tư vấn tuyển sinh',
         path: '/leads',

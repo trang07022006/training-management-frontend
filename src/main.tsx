@@ -91,6 +91,9 @@ import { ClassroomsPage } from './pages/ClassroomsPage'
 
 import { UserProfilePage } from './pages/UserProfilePage'
 import { PublicConsultationPage } from './pages/PublicConsultationPage'
+import { RubricTemplatesPage } from './pages/RubricTemplatesPage'
+import { AssignmentGradingPage } from './pages/AssignmentGradingPage'
+import { MyAssignmentGradePage } from './pages/MyAssignmentGradePage'
 import { getApiOrigin } from './utils/apiConfig'
 
 const apiOrigin = getApiOrigin()
@@ -280,6 +283,38 @@ createRoot(document.getElementById('root')!).render(
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/profile" element={<UserProfilePage />} />
+
+              {/* Rubric and Grading Module - SCRUM-268 */}
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.RUBRIC_VIEW}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/rubric-templates" element={<RubricTemplatesPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.GRADE_MANAGE}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/assignment-grading" element={<AssignmentGradingPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.GRADE_VIEW_OWN}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/my-grade" element={<MyAssignmentGradePage />} />
+              </Route>
             </Route>
           </Route>
 
