@@ -6,6 +6,7 @@ import {
     type AttendanceSummaryData,
     type AttendanceSummaryCell,
 } from '../api/attendanceSummaryApi'
+import { saveSessionAttendance, type AttendanceStatus } from '../api/attendanceApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import './ClassAttendanceSummary.css'
 
@@ -29,6 +30,20 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
     const [activeSortOrder, setActiveSortOrder] = useState<'asc' | 'desc'>('asc')
     const [currentPage, setCurrentPage] = useState<number>(1)
     const [pageSize, setPageSize] = useState<number>(20)
+
+    // State điểm danh nhanh từ ô ma trận
+    const [quickEditTarget, setQuickEditTarget] = useState<{
+        studentId: string
+        studentName: string
+        studentCode: string
+        scheduleId: string
+        sessionNumber: number
+        learningDate: string
+        currentStatus?: string
+    } | null>(null)
+    const [isSavingQuick, setIsSavingQuick] = useState<boolean>(false)
+    const [quickSuccessMsg, setQuickSuccessMsg] = useState<string | null>(null)
+    const [quickErrorMsg, setQuickErrorMsg] = useState<string | null>(null)
 
     const [, startTransition] = useTransition()
 
@@ -98,12 +113,23 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
     }
 
     // Helper render class badge cho cell
-    const renderCellBadge = (cell?: AttendanceSummaryCell) => {
+    const renderCellBadge = (cell?: AttendanceSummaryCell, onCellClick?: () => void) => {
         if (!cell) {
-            return <span className="matrix-cell-badge cell-not_recorded" title="Chưa có dữ liệu">?</span>
+            return (
+                <span
+                    className="matrix-cell-badge cell-not_recorded matrix-cell-clickable"
+                    title="Chưa có dữ liệu (Bấm để điểm danh)"
+                    onClick={onCellClick}
+                    role="button"
+                    tabIndex={0}
+                >
+                    ?
+                </span>
+            )
         }
 
-        const className = `matrix-cell-badge cell-${cell.status} ${cell.is_pre_approved ? 'pre-approved-dot' : ''}`
+        const isActionable = cell.status !== 'cancelled' && cell.status !== 'not_applicable'
+        const className = `matrix-cell-badge cell-${cell.status} ${cell.is_pre_approved ? 'pre-approved-dot' : ''} ${isActionable ? 'matrix-cell-clickable' : ''}`
         let tooltip = `${cell.status_label} (${cell.symbol})`
         if (cell.is_pre_approved) {
             tooltip += ' • Đơn xin phép vắng đã được duyệt trước'
@@ -111,16 +137,57 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
         if (cell.notes) {
             tooltip += ` • Ghi chú: ${cell.notes}`
         }
+        if (isActionable) {
+            tooltip += ' • Bấm để điểm danh'
+        }
 
         return (
             <span
                 className={className}
                 title={tooltip}
                 aria-label={tooltip}
+                onClick={isActionable ? onCellClick : undefined}
+                role={isActionable ? 'button' : undefined}
+                tabIndex={isActionable ? 0 : undefined}
+                onKeyDown={(e) => {
+                    if (isActionable && onCellClick && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault()
+                        onCellClick()
+                    }
+                }}
             >
                 {cell.symbol}
             </span>
         )
+    }
+
+    // Xử lý điểm danh nhanh trực tiếp từ ô ma trận
+    const handleQuickAttendanceSelect = async (newStatus: AttendanceStatus) => {
+        if (!quickEditTarget) return
+        setIsSavingQuick(true)
+        setQuickErrorMsg(null)
+        try {
+            await saveSessionAttendance(requestFn, quickEditTarget.scheduleId, {
+                attendances: [
+                    {
+                        student_id: quickEditTarget.studentId,
+                        status: newStatus,
+                        notes: 'Điểm danh từ bảng chuyên cần',
+                    },
+                ],
+                reason: `Cập nhật điểm danh cho ${quickEditTarget.studentName} sang ${newStatus}`,
+            })
+            setQuickSuccessMsg(`Đã cập nhật trạng thái của ${quickEditTarget.studentName} thành công!`)
+            setTimeout(() => {
+                setQuickEditTarget(null)
+                setQuickSuccessMsg(null)
+            }, 800)
+            loadSummary()
+        } catch (err: unknown) {
+            setQuickErrorMsg(getErrorMessage(err, 'Lỗi khi cập nhật điểm danh nhanh.'))
+        } finally {
+            setIsSavingQuick(false)
+        }
     }
 
     // Helper render badge tỷ lệ chuyên cần AC2
@@ -355,7 +422,17 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
                                                 const cell = st.session_statuses[s.schedule_id]
                                                 return (
                                                     <td key={s.schedule_id}>
-                                                        {renderCellBadge(cell)}
+                                                        {renderCellBadge(cell, () =>
+                                                            setQuickEditTarget({
+                                                                studentId: st.student_id,
+                                                                studentName: st.full_name,
+                                                                studentCode: st.student_code,
+                                                                scheduleId: s.schedule_id,
+                                                                sessionNumber: s.session_number,
+                                                                learningDate: s.learning_date,
+                                                                currentStatus: cell?.status,
+                                                            }),
+                                                        )}
                                                     </td>
                                                 )
                                             })}
@@ -471,6 +548,115 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
                         >
                             Sau ›
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Điểm danh nhanh khi bấm ô trên ma trận */}
+            {quickEditTarget && (
+                <div
+                    className="quick-attendance-backdrop"
+                    onClick={() => !isSavingQuick && setQuickEditTarget(null)}
+                    data-testid="quick-attendance-modal-backdrop"
+                >
+                    <div
+                        className="quick-attendance-modal"
+                        onClick={(e) => e.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="quick-modal-title"
+                    >
+                        <div className="quick-attendance-header">
+                            <div>
+                                <h3 id="quick-modal-title" className="quick-modal-title">
+                                    Điểm danh Buổi #{quickEditTarget.sessionNumber} ({formatColDate(quickEditTarget.learningDate)})
+                                </h3>
+                                <p className="quick-student-desc">
+                                    Học viên: <strong>{quickEditTarget.studentName}</strong> ({quickEditTarget.studentCode})
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                className="quick-close-btn"
+                                onClick={() => setQuickEditTarget(null)}
+                                disabled={isSavingQuick}
+                                aria-label="Đóng cửa sổ điểm danh nhanh"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="quick-attendance-body">
+                            <p className="quick-instruction-text">
+                                Chọn một trong các ô dưới đây để tích điểm danh:
+                            </p>
+
+                            {quickErrorMsg && <div className="quick-alert error">{quickErrorMsg}</div>}
+                            {quickSuccessMsg && <div className="quick-alert success">{quickSuccessMsg}</div>}
+
+                            <div className="quick-tick-group" role="radiogroup" aria-label="Tùy chọn điểm danh nhanh">
+                                {/* P - Có mặt */}
+                                <button
+                                    type="button"
+                                    className={`status-tick-btn present ${quickEditTarget.currentStatus === 'present' ? 'active' : ''}`}
+                                    onClick={() => handleQuickAttendanceSelect('present')}
+                                    disabled={isSavingQuick}
+                                    title="Đánh dấu Có mặt (P)"
+                                >
+                                    <span className="status-badge-box badge-p">P</span>
+                                    <span className="status-tick-label">Có mặt</span>
+                                    {quickEditTarget.currentStatus === 'present' && <span className="tick-check-icon">✓</span>}
+                                </button>
+
+                                {/* L - Đi muộn */}
+                                <button
+                                    type="button"
+                                    className={`status-tick-btn late ${quickEditTarget.currentStatus === 'late' ? 'active' : ''}`}
+                                    onClick={() => handleQuickAttendanceSelect('late')}
+                                    disabled={isSavingQuick}
+                                    title="Đánh dấu Đi muộn (L)"
+                                >
+                                    <span className="status-badge-box badge-l">L</span>
+                                    <span className="status-tick-label">Đi muộn</span>
+                                    {quickEditTarget.currentStatus === 'late' && <span className="tick-check-icon">✓</span>}
+                                </button>
+
+                                {/* E - Vắng có phép */}
+                                <button
+                                    type="button"
+                                    className={`status-tick-btn excused ${quickEditTarget.currentStatus === 'excused' ? 'active' : ''}`}
+                                    onClick={() => handleQuickAttendanceSelect('excused')}
+                                    disabled={isSavingQuick}
+                                    title="Đánh dấu Vắng có phép (E)"
+                                >
+                                    <span className="status-badge-box badge-e">E</span>
+                                    <span className="status-tick-label">Vắng có phép</span>
+                                    {quickEditTarget.currentStatus === 'excused' && <span className="tick-check-icon">✓</span>}
+                                </button>
+
+                                {/* U - Vắng không phép */}
+                                <button
+                                    type="button"
+                                    className={`status-tick-btn unexcused ${quickEditTarget.currentStatus === 'unexcused' ? 'active' : ''}`}
+                                    onClick={() => handleQuickAttendanceSelect('unexcused')}
+                                    disabled={isSavingQuick}
+                                    title="Đánh dấu Vắng không phép (U)"
+                                >
+                                    <span className="status-badge-box badge-u">U</span>
+                                    <span className="status-tick-label">Vắng không phép</span>
+                                    {quickEditTarget.currentStatus === 'unexcused' && <span className="tick-check-icon">✓</span>}
+                                </button>
+                            </div>
+
+                            <div className="quick-footer-nav">
+                                <Link
+                                    to={`/classes/${classId}/schedules/${quickEditTarget.scheduleId}/attendance`}
+                                    className="quick-full-attendance-link"
+                                >
+                                    📋 Mở trang điểm danh đầy đủ buổi học này →
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

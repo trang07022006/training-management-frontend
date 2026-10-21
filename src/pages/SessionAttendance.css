@@ -344,63 +344,138 @@
     background-color: #f8fafc;
 }
 
-/* Status Button Groups in Table */
-.status-btn-group {
+/* Status Tick Option Groups in Table */
+.status-tick-group {
     display: inline-flex;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    padding: 2px;
+    flex-wrap: nowrap;
 }
 
-.status-btn {
-    padding: 6px 12px;
+.status-tick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
     font-size: 13px;
     font-weight: 500;
-    border: none;
-    border-right: 1px solid #e2e8f0;
-    background: transparent;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.15s ease-in-out;
     white-space: nowrap;
-    color: #475569;
+    color: #334155;
+    user-select: none;
 }
 
-.status-btn:last-child {
-    border-right: none;
-}
-
-.status-btn:hover:not(:disabled) {
+.status-tick-btn:hover:not(:disabled) {
     background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
 }
 
-.status-btn:disabled {
+.status-tick-btn:disabled {
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
-/* Active Status Pill Styling */
-.status-btn.present.active {
-    background: #16a34a;
-    color: #ffffff;
+/* Badge Box inside each tick button matching exact user legend screenshot */
+.status-badge-box {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.status-badge-box.badge-p {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.status-badge-box.badge-l {
+    background: #ffedd5;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.status-badge-box.badge-e {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.status-badge-box.badge-u {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.status-badge-box.badge-unmarked {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+}
+
+.status-tick-label {
+    font-size: 13px;
+    color: inherit;
+}
+
+.tick-check-icon {
+    font-size: 12px;
+    font-weight: 800;
+    margin-left: 2px;
+}
+
+/* Active Status Tick Styling (highlighted pill border & soft background) */
+.status-tick-btn.present.active {
+    background: #f0fdf4 !important;
+    border-color: #22c55e !important;
+    color: #15803d !important;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
     font-weight: 600;
 }
 
-.status-btn.late.active {
-    background: #d97706;
-    color: #ffffff;
+.status-tick-btn.late.active {
+    background: #fffbeb !important;
+    border-color: #f59e0b !important;
+    color: #b45309 !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
     font-weight: 600;
 }
 
-.status-btn.excused.active {
-    background: #0284c7;
-    color: #ffffff;
+.status-tick-btn.excused.active {
+    background: #eff6ff !important;
+    border-color: #3b82f6 !important;
+    color: #1d4ed8 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     font-weight: 600;
 }
 
-.status-btn.unexcused.active {
-    background: #dc2626;
-    color: #ffffff;
+.status-tick-btn.unexcused.active {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    font-weight: 600;
+}
+
+.status-tick-btn.unmarked.active {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #475569 !important;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
     font-weight: 600;
 }
 
@@ -505,31 +580,58 @@
     text-align: center;
 }
 
-.mobile-status-btn.active.present {
-    background: #16a34a;
-    border-color: #16a34a;
-    color: #ffffff;
+.mobile-tick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+}
+
+.mobile-tick-btn.active.present {
+    background: #f0fdf4 !important;
+    border-color: #22c55e !important;
+    color: #15803d !important;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
     font-weight: 600;
 }
 
-.mobile-status-btn.active.late {
-    background: #d97706;
-    border-color: #d97706;
-    color: #ffffff;
+.mobile-tick-btn.active.late {
+    background: #fffbeb !important;
+    border-color: #f59e0b !important;
+    color: #b45309 !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
     font-weight: 600;
 }
 
-.mobile-status-btn.active.excused {
-    background: #0284c7;
-    border-color: #0284c7;
-    color: #ffffff;
+.mobile-tick-btn.active.excused {
+    background: #eff6ff !important;
+    border-color: #3b82f6 !important;
+    color: #1d4ed8 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
     font-weight: 600;
 }
 
-.mobile-status-btn.active.unexcused {
-    background: #dc2626;
-    border-color: #dc2626;
-    color: #ffffff;
+.mobile-tick-btn.active.unexcused {
+    background: #fef2f2 !important;
+    border-color: #ef4444 !important;
+    color: #b91c1c !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+    font-weight: 600;
+}
+
+.mobile-tick-btn.active.unmarked {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+    color: #475569 !important;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
     font-weight: 600;
 }
 
