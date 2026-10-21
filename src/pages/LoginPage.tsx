@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRoleHomePath } from '../auth/roleRouting'
 import { LoginForm } from '../components/LoginForm'
+import { QuickRoleLogin } from '../components/QuickRoleLogin'
 import { getErrorMessage } from '../utils/errorMessages'
 import './LoginPage.css'
 
@@ -15,6 +16,8 @@ export function LoginPage() {
     const [isLocked, setIsLocked] = useState(false)
     const [isInactive, setIsInactive] = useState(false)
     const [tempLockSeconds, setTempLockSeconds] = useState<number | null>(null)
+    const [initialEmail, setInitialEmail] = useState<string | undefined>()
+    const [initialPassword, setInitialPassword] = useState<string | undefined>()
 
     const handleTempLockEnd = () => {
         setTempLockSeconds(null)
@@ -308,6 +311,22 @@ export function LoginPage() {
                         tempLockSeconds={tempLockSeconds}
                         onTempLockEnd={handleTempLockEnd}
                         onInputChange={handleInputChange}
+                        initialEmail={initialEmail}
+                        initialPassword={initialPassword}
+                    />
+
+                    {/* Giao diện Đăng nhập nhanh cho từng phân quyền */}
+                    <QuickRoleLogin
+                        onQuickLogin={(email, password) => {
+                            setInitialEmail(email)
+                            setInitialPassword(password)
+                            handleLogin(email, password)
+                        }}
+                        onFillCredentials={(email, password) => {
+                            setInitialEmail(email)
+                            setInitialPassword(password)
+                        }}
+                        isLoading={isLoading}
                     />
 
                     <div className="login-public-links">

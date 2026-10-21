@@ -10,6 +10,8 @@ export interface LoginFormProps {
     tempLockSeconds?: number | null
     onTempLockEnd?: () => void
     onInputChange?: () => void
+    initialEmail?: string
+    initialPassword?: string
 }
 
 function formatTime(totalSeconds: number): string {
@@ -27,11 +29,25 @@ export function LoginForm({
     tempLockSeconds = null,
     onTempLockEnd,
     onInputChange,
+    initialEmail,
+    initialPassword,
 }: LoginFormProps) {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const [email, setEmail] = useState(initialEmail || '')
+    const [password, setPassword] = useState(initialPassword || '')
     const [remember, setRemember] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+
+    useEffect(() => {
+        if (initialEmail !== undefined) {
+            setEmail(initialEmail)
+        }
+    }, [initialEmail])
+
+    useEffect(() => {
+        if (initialPassword !== undefined) {
+            setPassword(initialPassword)
+        }
+    }, [initialPassword])
     const [countdown, setCountdown] = useState<number | null>(() =>
         typeof tempLockSeconds === 'number' && tempLockSeconds > 0 ? tempLockSeconds : null,
     )
