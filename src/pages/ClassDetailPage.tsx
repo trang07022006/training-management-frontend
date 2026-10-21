@@ -18,9 +18,10 @@ import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ClassAttendanceSummaryView } from './ClassAttendanceSummaryView'
 import './ClassesPage.css'
 
-export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules'
+export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules' | 'attendance-summary'
 
 export function ClassDetailPage() {
     const { classId } = useParams<{ classId: string }>()
@@ -52,6 +53,7 @@ export function ClassDetailPage() {
     else if (location.pathname.endsWith('/instructors')) activeTab = 'instructors'
     else if (location.pathname.endsWith('/students')) activeTab = 'students'
     else if (location.pathname.endsWith('/schedules')) activeTab = 'schedules'
+    else if (location.pathname.endsWith('/attendance-summary')) activeTab = 'attendance-summary'
 
     // Data states
     const [classData, setClassData] = useState<TrainingClass | null>(null)
@@ -157,6 +159,13 @@ export function ClassDetailPage() {
         { key: 'students', label: `Học viên (${classData.enrolled_count}/${classData.max_capacity})`, path: `/classes/${classData.id}/students` },
         { key: 'schedules', label: 'Thời khóa biểu', path: `/classes/${classData.id}/schedules` },
     ]
+    if (canTakeOrViewAttendance) {
+        navItems.push({
+            key: 'attendance-summary',
+            label: 'Chuyên cần tổng hợp',
+            path: `/classes/${classData.id}/attendance-summary`,
+        })
+    }
 
     return (
         <div className="classes-container" data-testid="class-detail-page">
@@ -607,6 +616,11 @@ export function ClassDetailPage() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* TAB 6: CHUYÊN CẦN TỔNG HỢP (SCRUM-256) */}
+            {activeTab === 'attendance-summary' && (
+                <ClassAttendanceSummaryView classId={classData.id} classCode={classData.class_code} />
             )}
         </div>
     )

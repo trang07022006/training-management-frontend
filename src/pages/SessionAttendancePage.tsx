@@ -488,6 +488,14 @@ export function SessionAttendancePage() {
                                     ✓ Đã điểm danh
                                 </span>
                             )}
+                            <Link
+                                to={`/classes/${sessionInfo.class_id}/attendance-summary`}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                title="Xem bảng chuyên cần tổng hợp của lớp"
+                            >
+                                📊 Bảng tổng hợp
+                            </Link>
                         </div>
                     </div>
 
