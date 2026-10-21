@@ -4,6 +4,7 @@ import { useSession } from '../auth/SessionProvider'
 import { getLead, updateLead, checkLeadPhone, LEAD_SOURCES, type Lead } from '../api/leadApi'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
 import { Breadcrumb } from '../components/Breadcrumb'
+import { TrainingProgramSelect } from '../components/TrainingProgramSelect'
 import { getErrorMessage } from '../utils/errorMessages'
 import './LeadsPage.css'
 
@@ -221,7 +222,7 @@ export function LeadEditPage() {
                                 </span>
                             )}
                             {duplicatePhoneWarning && (
-                                <div style={{ color: '#d97706', fontSize: '0.85rem', marginTop: '4px' }}>
+                                <div style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '4px', fontWeight: 600 }}>
                                     ⚠️ {duplicatePhoneWarning}
                                 </div>
                             )}
@@ -270,20 +271,14 @@ export function LeadEditPage() {
                             <label htmlFor="lead-edit-program" style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>
                                 Chương trình quan tâm
                             </label>
-                            <select
+                            <TrainingProgramSelect
                                 id="lead-edit-program"
                                 value={interestedProgramId}
-                                onChange={(e) => setInterestedProgramId(e.target.value)}
+                                onChange={(val) => setInterestedProgramId(val)}
+                                programs={trainingPrograms}
+                                placeholder="-- Chọn chương trình đào tạo --"
                                 disabled={isSubmitting}
-                                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px' }}
-                            >
-                                <option value="">-- Chọn chương trình đào tạo --</option>
-                                {trainingPrograms.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.code} - {p.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>

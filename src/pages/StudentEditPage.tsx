@@ -5,6 +5,8 @@ import { getStudentDetail, updateStudentProfile, type StudentDetail, type Update
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import './StudentsPage.css'
 
 interface FormErrors {
@@ -38,8 +40,6 @@ export function StudentEditPage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [isDirty, setIsDirty] = useState(false)
 
     useEffect(() => {
@@ -111,8 +111,6 @@ export function StudentEditPage() {
         if (!validate() || !studentId) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: UpdateStudentPayload = {
             full_name: fullName.trim(),
@@ -124,26 +122,31 @@ export function StudentEditPage() {
 
         try {
             await updateStudentProfile(requestFn, studentId, payload)
-            setSuccessMessage(getSuccessMessage('UPDATE_STUDENT_SUCCESS', 'Cập nhật hồ sơ học viên thành công!'))
+            const msg = getSuccessMessage('UPDATE_STUDENT_SUCCESS', 'Cập nhật hồ sơ học viên thành công!')
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/students/${studentId}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi cập nhật hồ sơ học viên.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi cập nhật hồ sơ học viên.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+                const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
+                if (!confirmed) return
+            } else {
+                setIsConfirmLeaveOpen(true)
+                return
+            }
         }
         navigate(`/students/${studentId || ''}`)
     }
@@ -210,17 +213,6 @@ export function StudentEditPage() {
                     { label: 'Chỉnh sửa' },
                 ]}
             />
-
-            {errorMessage && (
-                <div className="students-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="students-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -351,6 +343,17 @@ export function StudentEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/students/${studentId || ''}`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

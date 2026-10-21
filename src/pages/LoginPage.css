@@ -748,3 +748,167 @@
     text-decoration: underline;
 }
 
+/* =========================================================================
+   Quick Login for Roles / Đăng nhập nhanh theo phân quyền
+   ========================================================================= */
+.quick-login-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed #cbd5e1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-login-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 2px;
+}
+
+.quick-login-divider-line {
+    flex: 1;
+    height: 1px;
+    background-color: #e2e8f0;
+}
+
+.quick-login-divider-text {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+.quick-login-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quick-login-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.quick-login-card:hover:not(:disabled) {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    transform: translateY(-1px);
+}
+
+.quick-login-card:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.quick-login-card:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.quick-login-card.is-loading {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+}
+
+.quick-card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.quick-role-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.quick-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.quick-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.quick-role-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.quick-role-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+}
+
+.quick-role-email {
+    font-size: 12px;
+    color: #64748b;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quick-card-action {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #2563eb;
+    white-space: nowrap;
+    padding-left: 8px;
+    transition: transform 0.15s ease;
+}
+
+.quick-login-card:hover:not(:disabled) .quick-card-action {
+    transform: translateX(3px);
+}
+
+.quick-login-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+    text-align: center;
+}
+
+.quick-login-hint code {
+    background-color: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.hint-icon {
+    font-size: 14px;
+}
+
+

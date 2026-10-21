@@ -5,6 +5,7 @@ import { createUserApi, fetchAvailableRolesApi, type CreateUserData, ApiError } 
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { toast } from '../components/ToastPortal'
 import '../components/UserModal.css'
 
 interface FormErrors {
@@ -44,8 +45,6 @@ export function UserCreatePage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     useEffect(() => {
         let isMounted = true
@@ -100,8 +99,6 @@ export function UserCreatePage() {
         if (!validate()) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: CreateUserData = {
             name: name.trim(),
@@ -114,16 +111,14 @@ export function UserCreatePage() {
 
         try {
             const created = await createUserApi(requestFn, payload)
-            setSuccessMessage(getSuccessMessage('CREATE_USER_SUCCESS', 'Tạo tài khoản người dùng thành công!'))
+            const msg = getSuccessMessage('CREATE_USER_SUCCESS', 'Tạo tài khoản người dùng thành công!')
+            toast.success(msg)
             setTimeout(() => {
                 navigate(`/users/${created.id}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi tạo người dùng.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi tạo người dùng.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
@@ -156,17 +151,6 @@ export function UserCreatePage() {
                     { label: 'Thêm mới' },
                 ]}
             />
-
-            {errorMessage && (
-                <div className="modal-banner banner-error" role="alert" style={{ margin: '0 0 16px 0' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="modal-banner banner-success" role="alert" style={{ margin: '0 0 16px 0' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div style={{ maxWidth: '780px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>

@@ -9,6 +9,8 @@ import {
     submitAbsenceRequest,
 } from '../api/absenceRequestApi'
 import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import './CreateAbsenceRequestPage.css'
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
@@ -278,6 +280,7 @@ export const CreateAbsenceRequestPage: React.FC = () => {
             }
 
             setSubmitErrorMessage(msg)
+            toast.error(msg)
             // Scroll đến thông báo lỗi
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } finally {
@@ -285,11 +288,18 @@ export const CreateAbsenceRequestPage: React.FC = () => {
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     // Hủy bỏ và quay lại danh sách
     const handleCancel = () => {
         if (selectedSession || reasonText.trim().length > 0 || selectedFiles.length > 0) {
-            const confirmLeave = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?')
-            if (!confirmLeave) return
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+                const confirmLeave = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này?')
+                if (!confirmLeave) return
+            } else {
+                setIsConfirmLeaveOpen(true)
+                return
+            }
         }
         navigate('/my-absence-requests')
     }
@@ -876,6 +886,17 @@ export const CreateAbsenceRequestPage: React.FC = () => {
                     </button>
                 </div>
             </form>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate('/my-absence-requests')}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

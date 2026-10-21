@@ -45,6 +45,12 @@
   border: 1px solid #b45309;
 }
 
+.leads-toast-info {
+  background: #1e3a8a;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+}
+
 .leads-toast-icon {
   display: flex;
   align-items: center;
@@ -62,6 +68,10 @@
 
 .leads-toast-warning .leads-toast-icon {
   color: #fde68a;
+}
+
+.leads-toast-info .leads-toast-icon {
+  color: #93c5fd;
 }
 
 .leads-toast-message {

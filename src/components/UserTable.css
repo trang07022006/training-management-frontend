@@ -221,8 +221,15 @@
 }
 
 .btn-manage-role:hover:not(:disabled) {
-    background-color: #c7d2fe;
-    color: #3730a3;
+    background-color: #4338ca !important;
+    border-color: #3730a3 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(67, 56, 202, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-manage-role:hover:not(:disabled) svg {
+    stroke: #ffffff !important;
 }
 
 .btn-edit-user {
@@ -241,9 +248,15 @@
 }
 
 .btn-edit-user:hover:not(:disabled) {
-    background-color: #dbeafe;
-    border-color: #93c5fd;
-    color: #1d4ed8;
+    background-color: #2563eb !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-edit-user:hover:not(:disabled) svg {
+    stroke: #ffffff !important;
 }
 
 .btn-edit-user:disabled {
@@ -258,18 +271,24 @@
     padding: 6px 12px;
     font-size: 0.8rem;
     font-weight: 600;
-    color: #b91c1c;
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
+    color: #be123c;
+    background-color: #fff1f2;
+    border: 1px solid #fecdd3;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
 
 .btn-lock-user:hover:not(:disabled) {
-    background-color: #fee2e2;
-    border-color: #fca5a5;
-    color: #991b1b;
+    background-color: #e11d48 !important;
+    border-color: #be123c !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-lock-user:hover:not(:disabled) svg {
+    stroke: #ffffff !important;
 }
 
 .btn-lock-user:disabled {
@@ -293,9 +312,15 @@
 }
 
 .btn-unlock-user:hover:not(:disabled) {
-    background-color: #d1fae5;
-    border-color: #6ee7b7;
-    color: #065f46;
+    background-color: #16a34a !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-unlock-user:hover:not(:disabled) svg {
+    stroke: #ffffff !important;
 }
 
 .btn-unlock-user:disabled {

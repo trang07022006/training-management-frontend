@@ -9,6 +9,8 @@ import {
 } from '../api/scheduleApi'
 import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
@@ -71,27 +73,37 @@ export function ScheduleSessionDetailPage() {
         }
     }, [classId, scheduleId, requestFn])
 
-    const handleCancelSession = async () => {
+    const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+
+    const handleCancelSession = () => {
         if (!classId || !scheduleId) return
         const trimmed = cancelReason.trim()
         if (!trimmed) {
             setCancelError('Vui lòng nhập lý do hủy buổi học.')
             return
         }
+        setIsConfirmOpen(true)
+    }
 
-        const confirmed = window.confirm(`Bạn có chắc chắn muốn hủy Buổi #${schedule?.session_number}? Thông báo sẽ được ghi nhận trong hệ thống cho giảng viên và học viên.`)
-        if (!confirmed) return
+    const confirmCancelSession = async () => {
+        if (!classId || !scheduleId || isCancelling) return
+        const trimmed = cancelReason.trim()
 
         setIsCancelling(true)
         setCancelError(null)
 
         try {
             const res = await cancelClassScheduleItem(requestFn, classId, scheduleId, { reason: trimmed })
-            setSuccessMessage(getSuccessMessage('CANCEL_SCHEDULE_SUCCESS', `Đã hủy buổi học thành công. Đã ghi nhận thông báo cho ${res.notifications_sent} người liên quan trong hệ thống.`))
+            const msg = getSuccessMessage('CANCEL_SCHEDULE_SUCCESS', `Đã hủy buổi học thành công. Đã ghi nhận thông báo cho ${res.notifications_sent} người liên quan trong hệ thống.`)
+            setSuccessMessage(msg)
+            toast.success(msg)
             setSchedule(res.schedule)
             setCancelReason('')
+            setIsConfirmOpen(false)
         } catch (err: unknown) {
-            setCancelError(getErrorMessage(err, 'Lỗi khi hủy buổi học.'))
+            const errText = getErrorMessage(err, 'Lỗi khi hủy buổi học.')
+            setCancelError(errText)
+            toast.error(errText)
         } finally {
             setIsCancelling(false)
         }
@@ -315,6 +327,18 @@ export function ScheduleSessionDetailPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmOpen}
+                title="Xác nhận hủy buổi học"
+                message={`Bạn có chắc chắn muốn hủy Buổi #${schedule?.session_number}? Thông báo sẽ được ghi nhận trong hệ thống cho giảng viên và học viên.`}
+                confirmText="Hủy buổi học"
+                cancelText="Quay lại"
+                type="danger"
+                isLoading={isCancelling}
+                onConfirm={confirmCancelSession}
+                onCancel={() => setIsConfirmOpen(false)}
+            />
         </div>
     )
 }

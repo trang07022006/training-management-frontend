@@ -7,6 +7,64 @@ import { LoginForm } from '../components/LoginForm'
 import { getErrorMessage } from '../utils/errorMessages'
 import './LoginPage.css'
 
+const QUICK_ROLES = [
+    {
+        role: 'admin',
+        title: 'Quản trị viên',
+        email: 'admin@ictu.edu.vn',
+        password: 'Admin@123',
+        icon: '👑',
+        badge: 'Admin',
+        desc: 'Toàn quyền quản trị hệ thống',
+        color: '#dc2626',
+        bg: '#fef2f2',
+    },
+    {
+        role: 'training_manager',
+        title: 'Quản lý đào tạo',
+        email: 'manager.demo@daotao.edu.vn',
+        password: 'Admin@123',
+        icon: '🎓',
+        badge: 'Quản lý',
+        desc: 'Chương trình & Môn học',
+        color: '#2563eb',
+        bg: '#eff6ff',
+    },
+    {
+        role: 'trainer',
+        title: 'Giảng viên',
+        email: 'trainer.demo@daotao.edu.vn',
+        password: 'Admin@123',
+        icon: '👨‍🏫',
+        badge: 'Giảng viên',
+        desc: 'Lớp học & Điểm danh',
+        color: '#0891b2',
+        bg: '#ecfeff',
+    },
+    {
+        role: 'trainee',
+        title: 'Học viên',
+        email: 'trainee.demo@daotao.edu.vn',
+        password: 'Admin@123',
+        icon: '🎒',
+        badge: 'Học viên',
+        desc: 'Thời khóa biểu & Xin vắng',
+        color: '#16a34a',
+        bg: '#f0fdf4',
+    },
+    {
+        role: 'consultant',
+        title: 'Tư vấn tuyển sinh',
+        email: 'consultant.demo@daotao.edu.vn',
+        password: 'Admin@123',
+        icon: '💼',
+        badge: 'Tư vấn viên',
+        desc: 'Tư vấn & Khách tiềm năng',
+        color: '#d97706',
+        bg: '#fffbeb',
+    },
+]
+
 export function LoginPage() {
     const { hasSession, startSession, apiOrigin, role } = useSession()
     const navigate = useNavigate()
@@ -15,6 +73,16 @@ export function LoginPage() {
     const [isLocked, setIsLocked] = useState(false)
     const [isInactive, setIsInactive] = useState(false)
     const [tempLockSeconds, setTempLockSeconds] = useState<number | null>(null)
+    const [prefillEmail, setPrefillEmail] = useState('')
+    const [prefillPassword, setPrefillPassword] = useState('')
+    const [activeQuickRole, setActiveQuickRole] = useState<string | null>(null)
+
+    const handleQuickLogin = (email: string, pass: string, roleCode: string) => {
+        setPrefillEmail(email)
+        setPrefillPassword(pass)
+        setActiveQuickRole(roleCode)
+        handleLogin(email, pass, false)
+    }
 
     const handleTempLockEnd = () => {
         setTempLockSeconds(null)
@@ -334,7 +402,51 @@ export function LoginPage() {
                         tempLockSeconds={tempLockSeconds}
                         onTempLockEnd={handleTempLockEnd}
                         onInputChange={handleInputChange}
+                        prefillEmail={prefillEmail}
+                        prefillPassword={prefillPassword}
                     />
+
+                    {/* Quick Login for Roles / Đăng nhập nhanh theo phân quyền */}
+                    <div className="quick-login-section" aria-label="Đăng nhập nhanh theo phân quyền">
+                        <div className="quick-login-divider">
+                            <span className="quick-login-divider-line" />
+                            <span className="quick-login-divider-text">ĐĂNG NHẬP NHANH THEO PHÂN QUYỀN</span>
+                            <span className="quick-login-divider-line" />
+                        </div>
+
+                        <div className="quick-login-grid">
+                            {QUICK_ROLES.map((q) => (
+                                <button
+                                    key={q.role}
+                                    type="button"
+                                    className={`quick-login-card ${activeQuickRole === q.role && isLoading ? 'is-loading' : ''}`}
+                                    onClick={() => handleQuickLogin(q.email, q.password, q.role)}
+                                    disabled={isLoading}
+                                    title={`Đăng nhập nhanh với vai trò ${q.title} (${q.email})`}
+                                >
+                                    <div className="quick-card-left">
+                                        <span className="quick-role-icon" aria-hidden="true">{q.icon}</span>
+                                        <div className="quick-card-info">
+                                            <div className="quick-card-header">
+                                                <span className="quick-role-title">{q.title}</span>
+                                                <span className="quick-role-badge" style={{ color: q.color, backgroundColor: q.bg }}>
+                                                    {q.badge}
+                                                </span>
+                                            </div>
+                                            <span className="quick-role-email">{q.email}</span>
+                                        </div>
+                                    </div>
+                                    <span className="quick-card-action">
+                                        {activeQuickRole === q.role && isLoading ? 'Đang vào...' : 'Vào ngay →'}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="quick-login-hint">
+                            <span className="hint-icon">💡</span>
+                            <span>Mật khẩu mặc định: <strong>Admin@123</strong> • Bấm 1 chạm để truy cập ngay</span>
+                        </div>
+                    </div>
 
                     <div className="login-public-links">
                         <span>Bạn cần tư vấn chương trình đào tạo? </span>

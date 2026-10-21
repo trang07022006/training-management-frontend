@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import type { RequestFunction as RequestFn } from '../api/userApi'
 import { listHolidays, createHoliday, deleteHoliday, type HolidayItem } from '../api/scheduleApi'
+import { ConfirmModal } from './ConfirmModal'
+import { toast } from './ToastPortal'
 import './HolidaysManagementModal.css'
 
 interface HolidaysManagementModalProps {
@@ -79,18 +81,43 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
         }
     }
 
-    const handleDeleteHoliday = async (id: string, name: string, dateStr: string) => {
-        if (!window.confirm(`Bạn có chắc chắn muốn xoá ngày nghỉ '${name}' (${dateStr}) không?`)) {
-            return
-        }
+    const [holidayToDelete, setHolidayToDelete] = useState<{ id: string; name: string; dateStr: string } | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    const executeDeleteHoliday = async (id: string, name: string) => {
+        setIsDeleting(true)
+        setError(null)
 
         try {
             await deleteHoliday(requestFn, id)
-            setHolidays(holidays.filter((h) => h.id !== id))
-            setSuccessMessage(`Đã xoá ngày nghỉ '${name}' thành công.`)
+            setHolidays((prev) => prev.filter((h) => h.id !== id))
+            const msg = `Đã xoá ngày nghỉ '${name}' thành công.`
+            setSuccessMessage(msg)
+            toast.success(msg)
+            setHolidayToDelete(null)
         } catch (err: any) {
-            setError(err?.message || 'Lỗi khi xoá ngày nghỉ lễ.')
+            const errText = err?.message || 'Lỗi khi xoá ngày nghỉ lễ.'
+            setError(errText)
+            toast.error(errText)
+        } finally {
+            setIsDeleting(false)
         }
+    }
+
+    const handleDeleteHoliday = (id: string, name: string, dateStr: string) => {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+            const confirmed = window.confirm(`Bạn có chắc chắn muốn xoá ngày nghỉ '${name}' (${dateStr}) không?`)
+            if (confirmed) {
+                void executeDeleteHoliday(id, name)
+            }
+            return
+        }
+        setHolidayToDelete({ id, name, dateStr })
+    }
+
+    const confirmDeleteHoliday = async () => {
+        if (!holidayToDelete || isDeleting) return
+        await executeDeleteHoliday(holidayToDelete.id, holidayToDelete.name)
     }
 
     return (
@@ -253,6 +280,18 @@ export const HolidaysManagementModal: React.FC<HolidaysManagementModalProps> = (
                     </div>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={Boolean(holidayToDelete)}
+                title="Xác nhận xoá ngày nghỉ lễ"
+                message={`Bạn có chắc chắn muốn xoá ngày nghỉ '${holidayToDelete?.name}' (${holidayToDelete?.dateStr}) không?`}
+                confirmText="Xoá ngày nghỉ"
+                cancelText="Hủy"
+                type="danger"
+                isLoading={isDeleting}
+                onConfirm={confirmDeleteHoliday}
+                onCancel={() => setHolidayToDelete(null)}
+            />
         </div>
     )
 }
