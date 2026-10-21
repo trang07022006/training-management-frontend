@@ -306,7 +306,7 @@ export function SubjectSessionCreatePage() {
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <button
                             type="button"
-                            className="btn-back"
+                            className="btn-cancel"
                             onClick={handleCancel}
                             disabled={isSubmitting}
                         >

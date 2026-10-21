@@ -135,11 +135,11 @@
     align-items: center;
     gap: 4px;
     padding: 6px 12px;
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #ffffff;
-    background-color: var(--btn-red-bg, #dc2626);
-    border: 1px solid var(--btn-red-bg, #dc2626);
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -147,8 +147,9 @@
 }
 
 .btn-revoke-role:hover:not(:disabled) {
-    background-color: var(--btn-red-hover, #b91c1c);
-    border-color: var(--btn-red-hover, #b91c1c);
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
 }
 
 .btn-revoke-role:disabled {

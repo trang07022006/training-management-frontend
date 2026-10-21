@@ -12,7 +12,6 @@ import { getUserRoleDisplay } from '../navigation/userProfileUtils'
 import { ProfileAvatarSection } from '../components/ProfileAvatarSection'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { getErrorMessage } from '../utils/errorMessages'
-import { ToastPortal } from '../components/ToastPortal'
 import './UserProfilePage.css'
 
 const VIETNAMESE_PHONE_REGEX = /^0[35789]\d{8}$/
@@ -401,13 +400,16 @@ export function UserProfilePage() {
                 </div>
             </header>
 
-            {/* Notification Toast for Personal Info */}
+            {/* Notification Banners for Personal Info */}
             {activeTab === 'personal' && successMessage && (
-                <ToastPortal
-                    success={successMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                    successTestId="profile-success-message"
-                />
+                <div
+                    className="profile-alert profile-alert-success"
+                    role="alert"
+                    data-testid="profile-success-message"
+                >
+                    <span className="alert-icon" aria-hidden="true">✓</span>
+                    <span>{successMessage}</span>
+                </div>
             )}
 
             {activeTab === 'personal' && errorMessage && (
@@ -675,11 +677,10 @@ export function UserProfilePage() {
                                 </div>
 
                                 {passwordSuccessMessage && (
-                                    <ToastPortal
-                                        success={passwordSuccessMessage}
-                                        onCloseSuccess={() => setPasswordSuccessMessage(null)}
-                                        successTestId="password-success-message"
-                                    />
+                                    <div className="profile-alert profile-alert-success" role="status" data-testid="password-success-message">
+                                        <span className="alert-icon" aria-hidden="true">✓</span>
+                                        <span>{passwordSuccessMessage}</span>
+                                    </div>
                                 )}
                                 {passwordErrorMessage && (
                                     <div className="profile-alert profile-alert-error" role="alert" data-testid="password-error-message">

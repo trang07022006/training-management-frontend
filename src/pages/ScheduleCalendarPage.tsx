@@ -14,7 +14,6 @@ import {
     formatScheduleStatus,
 } from '../utils/scheduleDisplayUtils'
 import { PageHeader } from '../components/PageHeader'
-import { ToastPortal } from '../components/ToastPortal'
 import './ScheduleCalendarPage.css'
 
 function formatDateISO(d: Date): string {
@@ -349,13 +348,11 @@ export function ScheduleCalendarPage() {
                 </div>
             </div>
 
-            {/* Toast Notifications */}
+            {/* Thông báo lỗi */}
             {error && (
-                <ToastPortal
-                    error={error}
-                    onCloseError={() => setError(null)}
-                    errorTestId="calendar-error-alert"
-                />
+                <div className="calendar-alert error" data-testid="calendar-error-alert">
+                    <span>⚠️ {error}</span>
+                </div>
             )}
 
             {/* Nội dung lịch */}

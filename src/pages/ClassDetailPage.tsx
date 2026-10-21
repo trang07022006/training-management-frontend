@@ -18,7 +18,6 @@ import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
-import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules'
@@ -141,7 +140,7 @@ export function ClassDetailPage() {
                     <span>{errorMessage}</span>
                 </div>
                 <div style={{ marginTop: '16px' }}>
-                    <button type="button" className="btn-back" onClick={() => navigate('/classes')}>
+                    <button type="button" className="btn-secondary" onClick={() => navigate('/classes')}>
                         Quay lại danh sách lớp học
                     </button>
                 </div>
@@ -177,7 +176,7 @@ export function ClassDetailPage() {
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <button
                             type="button"
-                            className="btn-back"
+                            className="btn-secondary"
                             onClick={() => navigate('/classes')}
                         >
                             Quay lại danh sách
@@ -194,8 +193,8 @@ export function ClassDetailPage() {
                         {canManageSchedule && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/generate`}
-                                className="btn-purple"
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none' }}
+                                className="btn-secondary"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#0284c7', color: '#fff' }}
                             >
                                 <span>📅 Sinh thời khóa biểu</span>
                             </Link>
@@ -206,14 +205,15 @@ export function ClassDetailPage() {
 
             <DetailNavTabs items={navItems} />
 
-            {/* Toast Notifications */}
-            {(errorMessage || successMessage) && (
-                <ToastPortal
-                    success={successMessage}
-                    error={errorMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                    onCloseError={() => setErrorMessage(null)}
-                />
+            {errorMessage && (
+                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{errorMessage}</span>
+                </div>
+            )}
+            {successMessage && (
+                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{successMessage}</span>
+                </div>
             )}
 
             {/* TAB 1: THÔNG TIN CHUNG */}
@@ -481,22 +481,22 @@ export function ClassDetailPage() {
                                                     <div style={{ display: 'inline-flex', gap: '6px' }}>
                                                         <Link
                                                             to={`/students/${st.student_id}/reserve?classId=${classData.id}`}
-                                                            className="btn-reserve"
-                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderRadius: '6px' }}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
                                                         >
                                                             Bảo lưu
                                                         </Link>
                                                         <Link
                                                             to={`/students/${st.student_id}/transfer?classId=${classData.id}`}
-                                                            className="btn-blue"
-                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderRadius: '6px' }}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#3b82f6', color: '#1d4ed8' }}
                                                         >
                                                             Chuyển lớp
                                                         </Link>
                                                         <Link
                                                             to={`/students/${st.student_id}/drop?classId=${classData.id}`}
-                                                            className="btn-drop"
-                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderRadius: '6px' }}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#ef4444', color: '#b91c1c' }}
                                                         >
                                                             Thôi học
                                                         </Link>
@@ -583,8 +583,8 @@ export function ClassDetailPage() {
                                                     {canTakeOrViewAttendance && sch.status !== 'cancelled' && (
                                                         <Link
                                                             to={`/classes/${classData.id}/schedules/${sch.id}/attendance`}
-                                                            className="btn-action-attendance btn-green"
-                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderRadius: '6px' }}
+                                                            className="btn-action-attendance"
+                                                            style={{ padding: '4px 8px', fontSize: '12px', color: '#0284c7', background: '#eff6ff', borderRadius: '4px', textDecoration: 'none', border: '1px solid #bfdbfe', fontWeight: 500 }}
                                                         >
                                                             Điểm danh
                                                         </Link>

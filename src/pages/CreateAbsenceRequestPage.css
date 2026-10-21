@@ -23,19 +23,20 @@
     align-items: center;
     gap: 6px;
     padding: 8px 14px;
-    background: var(--btn-gray-bg, #475569);
-    border: none;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
     font-size: 13.5px;
     font-weight: 500;
-    color: #ffffff;
+    color: #334155;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .btn-back-nav:hover {
-    background: var(--btn-gray-hover, #334155);
-    color: #ffffff;
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
 }
 
 .breadcrumb-path {
@@ -174,18 +175,19 @@
 
 .btn-change-session {
     padding: 6px 12px;
-    background: var(--btn-blue-bg, #1d4ed8);
-    border: none;
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
     font-size: 12.5px;
     font-weight: 600;
-    color: #ffffff;
+    color: #1d4ed8;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .btn-change-session:hover {
-    background: var(--btn-blue-hover, #1e40af);
+    background: #eff6ff;
+    border-color: #93c5fd;
 }
 
 .selected-session-details-grid {
@@ -604,8 +606,8 @@
 }
 
 .btn-mobile-select.btn-selected {
-    background: var(--btn-blue-bg, #1d4ed8);
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    background: #2563eb;
+    border: 1px solid #2563eb;
     color: #ffffff;
 }
 
@@ -889,36 +891,37 @@
 
 .btn-cancel {
     padding: 10px 20px;
-    background: var(--btn-red-bg, #dc2626);
-    border: none;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff;
+    color: #475569;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .btn-cancel:hover:not(:disabled) {
-    background: var(--btn-red-hover, #b91c1c);
-    color: #ffffff;
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
 .btn-submit-absence {
     padding: 10px 24px;
-    background: var(--btn-blue-bg, #1d4ed8);
-    border: none;
+    background: #2563eb;
+    border: 1px solid #2563eb;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
     color: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(29, 78, 216, 0.25);
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
 }
 
 .btn-submit-absence:hover:not(:disabled) {
-    background: var(--btn-blue-hover, #1e40af);
+    background: #1d4ed8;
+    border-color: #1d4ed8;
 }
 
 .btn-submit-absence:disabled,

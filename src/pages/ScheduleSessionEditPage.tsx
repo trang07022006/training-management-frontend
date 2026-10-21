@@ -17,7 +17,6 @@ import { ClassroomSelect } from '../components/ClassroomSelect'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SHIFT_OPTIONS } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
-import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export function ScheduleSessionEditPage() {
@@ -240,7 +239,7 @@ export function ScheduleSessionEditPage() {
                     <span>Buổi học này đã được điểm danh, hệ thống tự động khóa tính năng chỉnh sửa.</span>
                 </div>
                 <div style={{ marginTop: '16px' }}>
-                    <button type="button" className="btn-back" onClick={() => navigate(`/classes/${classData.id}/schedules/${schedule.id}`)}>
+                    <button type="button" className="btn-secondary" onClick={() => navigate(`/classes/${classData.id}/schedules/${schedule.id}`)}>
                         Quay lại chi tiết buổi học
                     </button>
                 </div>
@@ -272,14 +271,15 @@ export function ScheduleSessionEditPage() {
 
             <DetailNavTabs items={navItems} />
 
-            {/* Toast Notifications */}
-            {(errorMessage || successMessage) && (
-                <ToastPortal
-                    success={successMessage}
-                    error={errorMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                    onCloseError={() => setErrorMessage(null)}
-                />
+            {errorMessage && (
+                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{errorMessage}</span>
+                </div>
+            )}
+            {successMessage && (
+                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{successMessage}</span>
+                </div>
             )}
 
             {conflicts.length > 0 && (
@@ -460,7 +460,7 @@ export function ScheduleSessionEditPage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary btn-save"
+                            className="btn-primary"
                             disabled={isSubmitting || isBlocked}
                         >
                             {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}

@@ -5,7 +5,6 @@ import { createLead, checkLeadPhone, LEAD_SOURCES } from '../api/leadApi'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
 import { Breadcrumb } from '../components/Breadcrumb'
 import { getErrorMessage } from '../utils/errorMessages'
-import { ToastPortal } from '../components/ToastPortal'
 import './LeadsPage.css'
 
 export function LeadCreatePage() {
@@ -123,7 +122,7 @@ export function LeadCreatePage() {
                     </h1>
                     <button
                         type="button"
-                        className="btn-back"
+                        className="btn-clear-filter"
                         onClick={() => navigate('/leads')}
                         disabled={isSubmitting}
                     >
@@ -131,10 +130,11 @@ export function LeadCreatePage() {
                     </button>
                 </div>
 
-                <ToastPortal
-                    error={apiError}
-                    onCloseError={() => setApiError(null)}
-                />
+                {apiError && (
+                    <div className="modal-banner-error" role="alert" style={{ marginBottom: '20px' }}>
+                        {apiError}
+                    </div>
+                )}
 
                 <div className="lead-detail-section" style={{ background: '#fff', padding: '24px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                     <form onSubmit={handleSubmit}>
@@ -249,7 +249,7 @@ export function LeadCreatePage() {
                         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
                             <button
                                 type="button"
-                                className="btn-cancel"
+                                className="btn-clear-filter"
                                 onClick={() => navigate('/leads')}
                                 disabled={isSubmitting}
                             >
@@ -257,7 +257,7 @@ export function LeadCreatePage() {
                             </button>
                             <button
                                 type="submit"
-                                className="btn-primary"
+                                className="btn-filter"
                                 disabled={isSubmitting}
                                 style={{ minWidth: '120px' }}
                             >

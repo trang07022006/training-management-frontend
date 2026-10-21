@@ -91,7 +91,6 @@ import { ClassroomsPage } from './pages/ClassroomsPage'
 
 import { UserProfilePage } from './pages/UserProfilePage'
 import { PublicConsultationPage } from './pages/PublicConsultationPage'
-import { ToastProvider } from './context/ToastContext'
 import { getApiOrigin } from './utils/apiConfig'
 
 const apiOrigin = getApiOrigin()
@@ -100,11 +99,10 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <SessionProvider apiOrigin={apiOrigin}>
-        <ToastProvider>
-          <SessionRedirect />
-          <SessionNotice />
+        <SessionRedirect />
+        <SessionNotice />
 
-          <Routes>
+        <Routes>
           {/* Public Website Routes (Không yêu cầu đăng nhập) */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
@@ -287,7 +285,6 @@ createRoot(document.getElementById('root')!).render(
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
-        </ToastProvider>
       </SessionProvider>
     </BrowserRouter>
   </StrictMode>,

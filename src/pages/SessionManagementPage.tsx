@@ -82,7 +82,7 @@ function SessionList() {
                                     <td><span className="session-management-date">{formatVietnamDate(s.learning_date)}</span><span className="session-management-subline">{formatTimeStr(s.start_time)} – {formatTimeStr(s.end_time)}</span></td>
                                     <td>{formatInstructorLabel(s.instructor_name, s.instructor_id)}<span className="session-management-subline">{formatRoomLabel(s.room_id, s.room_name, s.is_online, s.online_link)}</span></td>
                                     <td><span className={`session-management-badge ${state.className}`}>{state.label}</span>{s.attendance_checked && <span className="session-management-subline">Đã điểm danh</span>}</td>
-                                    <td><div className="session-management-row-actions"><Link to={detail} className="btn-action-view">Chi tiết</Link>{!locked && <Link to={`${detail}/edit`} className="btn-action-edit">Sửa / Dời lịch</Link>}</div></td>
+                                    <td><div className="session-management-row-actions"><Link to={detail}>Chi tiết</Link>{!locked && <Link to={`${detail}/edit`}>Sửa / Dời lịch</Link>}</div></td>
                                 </tr>
                             })}
                         </tbody></table>

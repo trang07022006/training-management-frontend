@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getStudentDetail, updateStudentProfile, type StudentDetail, type UpdateStudentPayload, ApiError } from '../api/studentApi'
 import { PageHeader } from '../components/PageHeader'
-import { ToastPortal } from '../components/ToastPortal'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './StudentsPage.css'
@@ -212,12 +211,16 @@ export function StudentEditPage() {
                 ]}
             />
 
-            <ToastPortal
-                error={errorMessage}
-                success={successMessage}
-                onCloseError={() => setErrorMessage(null)}
-                onCloseSuccess={() => setSuccessMessage(null)}
-            />
+            {errorMessage && (
+                <div className="students-alert error" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{errorMessage}</span>
+                </div>
+            )}
+            {successMessage && (
+                <div className="students-alert success" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{successMessage}</span>
+                </div>
+            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -332,7 +335,7 @@ export function StudentEditPage() {
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <button
                             type="button"
-                            className="btn-back"
+                            className="btn-cancel"
                             onClick={handleCancel}
                             disabled={isSubmitting}
                         >
@@ -340,7 +343,7 @@ export function StudentEditPage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary btn-save"
+                            className="btn-primary"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Đang lưu...' : 'Lưu hồ sơ'}

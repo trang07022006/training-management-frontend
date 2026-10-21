@@ -250,7 +250,7 @@ export function TrainingProgramCreatePage() {
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <button
                             type="button"
-                            className="btn-back"
+                            className="btn-cancel"
                             onClick={() => navigate('/training-programs')}
                             disabled={isSubmitting}
                         >
@@ -258,10 +258,10 @@ export function TrainingProgramCreatePage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary btn-create"
+                            className="btn-primary"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Đang tạo...' : 'Tạo chương trình'}
+                            {isSubmitting ? 'Đang lưu...' : 'Lưu chương trình'}
                         </button>
                     </div>
                 </form>

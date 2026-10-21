@@ -11,7 +11,6 @@ import {
     submitAbsenceRequest,
 } from '../api/absenceRequestApi'
 import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
-import { ToastPortal } from '../components/ToastPortal'
 import './StudentAbsenceRequestsPage.css'
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
@@ -349,6 +348,7 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                         className="btn-primary-create"
                         onClick={() => navigate('/my-absence-requests/new')}
                         data-testid="create-absence-page-btn"
+                        style={{ background: '#2563eb' }}
                     >
                         <span style={{ fontSize: 16 }}>＋</span> Gửi đơn xin phép vắng
                     </button>
@@ -365,15 +365,19 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Notification Toast */}
-            <ToastPortal
-                error={errorMessage}
-                success={successMessage}
-                onCloseError={() => setErrorMessage(null)}
-                onCloseSuccess={() => setSuccessMessage(null)}
-                errorTestId="error-banner"
-                successTestId="success-banner"
-            />
+            {/* Alert Messages */}
+            {errorMessage && (
+                <div className="alert-message alert-error" role="alert" data-testid="error-banner">
+                    <span>⚠️ {errorMessage}</span>
+                    <button className="alert-close-btn" onClick={() => setErrorMessage(null)} title="Đóng">✕</button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="alert-message alert-success" role="status" data-testid="success-banner">
+                    <span>✓ {successMessage}</span>
+                    <button className="alert-close-btn" onClick={() => setSuccessMessage(null)} title="Đóng">✕</button>
+                </div>
+            )}
 
             {/* Filter Card */}
             <div className="absence-filter-card">
@@ -719,7 +723,7 @@ export const StudentAbsenceRequestsPage: React.FC = () => {
                             <div className="modal-dialog-footer">
                                 <button
                                     type="button"
-                                    className="btn-cancel"
+                                    className="btn-secondary"
                                     onClick={handleCloseCreateModal}
                                     disabled={isSubmitting}
                                     data-testid="cancel-create-btn"

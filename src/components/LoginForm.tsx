@@ -32,8 +32,6 @@ export function LoginForm({
     const [password, setPassword] = useState('')
     const [remember, setRemember] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
-    const [emailError, setEmailError] = useState<string | null>(null)
-    const [passwordError, setPasswordError] = useState<string | null>(null)
     const [countdown, setCountdown] = useState<number | null>(() =>
         typeof tempLockSeconds === 'number' && tempLockSeconds > 0 ? tempLockSeconds : null,
     )
@@ -76,56 +74,23 @@ export function LoginForm({
         if (shouldHideSubmit || isLoading) {
             return
         }
-
-        const form = e.currentTarget
-        const emailInput = form.elements.namedItem('email') as HTMLInputElement | null
-        const passwordInput = form.elements.namedItem('password') as HTMLInputElement | null
-        const rememberInput = form.elements.namedItem('remember') as HTMLInputElement | null
-
-        const rawEmail = emailInput?.value ?? email
-        const rawPassword = passwordInput?.value ?? password
-        const currentRemember = rememberInput ? rememberInput.checked : remember
-
-        const trimmedEmail = rawEmail.trim()
-        let hasError = false
-
-        if (!trimmedEmail) {
-            setEmailError('Email là bắt buộc.')
-            hasError = true
-        } else {
-            setEmailError(null)
-        }
-
-        if (!rawPassword) {
-            setPasswordError('Mật khẩu là bắt buộc.')
-            hasError = true
-        } else {
-            setPasswordError(null)
-        }
-
-        if (hasError) {
-            return
-        }
-
         if (onSubmit) {
-            onSubmit(trimmedEmail, rawPassword, currentRemember)
+            onSubmit(email, password, remember)
         }
     }
 
     function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
         setEmail(e.target.value)
-        if (emailError) setEmailError(null)
         onInputChange?.()
     }
 
     function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
         setPassword(e.target.value)
-        if (passwordError) setPasswordError(null)
         onInputChange?.()
     }
 
     return (
-        <form className="login-form" onSubmit={handleSubmit} noValidate>
+        <form className="login-form" onSubmit={handleSubmit} noValidate={false}>
             {errorMessage && (
                 <div className="login-error-alert" role="alert">
                     <svg className="alert-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -163,18 +128,13 @@ export function LoginForm({
                         type="email"
                         autoComplete="email"
                         required
-                        className={`form-input ${emailError ? 'is-invalid' : ''}`}
+                        className="form-input"
                         placeholder="name@example.com"
                         value={email}
                         onChange={handleEmailChange}
                         disabled={isLoading || shouldHideSubmit}
                     />
                 </div>
-                {emailError && (
-                    <div className="form-field-error" data-testid="login-email-error">
-                        {emailError}
-                    </div>
-                )}
             </div>
 
             <div className="form-group">
@@ -197,7 +157,7 @@ export function LoginForm({
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
                         required
-                        className={`form-input form-input-password ${passwordError ? 'is-invalid' : ''}`}
+                        className="form-input form-input-password"
                         placeholder="Nhập mật khẩu"
                         value={password}
                         onChange={handlePasswordChange}
@@ -232,11 +192,6 @@ export function LoginForm({
                         )}
                     </button>
                 </div>
-                {passwordError && (
-                    <div className="form-field-error" data-testid="login-password-error">
-                        {passwordError}
-                    </div>
-                )}
             </div>
 
             <div className="form-actions-row">

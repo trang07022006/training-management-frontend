@@ -6,8 +6,6 @@ import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { getRoleLabel } from '../auth/roleRouting'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
-import { ToastPortal } from '../components/ToastPortal'
-import { setFlashToast } from '../context/ToastContext'
 import '../components/UserModal.css'
 
 interface FormErrors {
@@ -123,10 +121,11 @@ export function UserEditPage() {
 
         try {
             await updateUserApi(requestFn, userId, payload)
-            const successMsg = getSuccessMessage('UPDATE_USER_SUCCESS', 'Cập nhật thông tin người dùng thành công!')
-            setFlashToast('success', successMsg)
+            setSuccessMessage(getSuccessMessage('UPDATE_USER_SUCCESS', 'Cập nhật thông tin người dùng thành công!'))
             setIsDirty(false)
-            navigate(`/users/${userId}`)
+            setTimeout(() => {
+                navigate(`/users/${userId}`)
+            }, 800)
         } catch (err: unknown) {
             if (err instanceof ApiError) {
                 setErrorMessage(err.message)
@@ -207,16 +206,14 @@ export function UserEditPage() {
             />
 
             {errorMessage && (
-                <ToastPortal
-                    error={errorMessage}
-                    onCloseError={() => setErrorMessage(null)}
-                />
+                <div className="modal-banner banner-error" role="alert" style={{ margin: '0 0 16px 0' }}>
+                    <span>{errorMessage}</span>
+                </div>
             )}
             {successMessage && (
-                <ToastPortal
-                    success={successMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                />
+                <div className="modal-banner banner-success" role="alert" style={{ margin: '0 0 16px 0' }}>
+                    <span>{successMessage}</span>
+                </div>
             )}
 
             <div style={{ maxWidth: '780px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -300,7 +297,7 @@ export function UserEditPage() {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                         <button
                             type="button"
-                            className="btn-secondary"
+                            className="btn-cancel"
                             onClick={handleCancel}
                             disabled={isSubmitting}
                         >
@@ -308,7 +305,7 @@ export function UserEditPage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary btn-save"
+                            className="btn-submit"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}

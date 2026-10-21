@@ -32,7 +32,6 @@ import { getErrorMessage } from '../utils/errorMessages'
 import { getSubjects, type Subject } from '../api/subjectApi'
 import { getProgramStatusLabel } from '../api/trainingProgramApi'
 import { Breadcrumb } from '../components/Breadcrumb'
-import { ToastPortal } from '../components/ToastPortal'
 import './ProgramStructurePage.css'
 
 export interface ProgramStructurePageProps {
@@ -693,16 +692,33 @@ export function ProgramStructurePage({
                 </div>
             </header>
 
-            {/* Toast Notifications */}
-            {(successMessage || errorMessage) && (
-                <ToastPortal
-                    success={successMessage}
-                    error={errorMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                    onCloseError={() => setErrorMessage(null)}
-                    successTestId="banner-success"
-                    errorTestId="banner-error"
-                />
+            {/* Success and Error Banners */}
+            {successMessage && (
+                <div className="structure-banner structure-banner-success" role="status" data-testid="banner-success">
+                    <p className="structure-banner-message">✓ {successMessage}</p>
+                    <button
+                        type="button"
+                        className="structure-banner-close"
+                        aria-label="Đóng thông báo"
+                        onClick={() => setSuccessMessage(null)}
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="structure-banner structure-banner-error" role="alert" data-testid="banner-error">
+                    <p className="structure-banner-message">⚠ {errorMessage}</p>
+                    <button
+                        type="button"
+                        className="structure-banner-close"
+                        aria-label="Đóng thông báo lỗi"
+                        onClick={() => setErrorMessage(null)}
+                    >
+                        ×
+                    </button>
+                </div>
             )}
 
             {isProgramArchived && (

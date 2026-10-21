@@ -224,28 +224,19 @@
 }
 
 .btn-action-view {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  height: 32px;
-  padding: 0 10px;
-  background: var(--btn-teal-bg, #0f766e);
-  border: 1px solid var(--btn-teal-bg, #0f766e);
-  color: #ffffff;
-  border-radius: 6px;
-  font-size: 0.8125rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
   font-weight: 600;
-  line-height: 1;
   cursor: pointer;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: all 0.18s ease;
 }
 
 .btn-action-view:hover {
-  background: var(--btn-teal-hover, #115e59);
-  border-color: var(--btn-teal-hover, #115e59);
+  background: #e2e8f0;
 }
 
 /* Pagination */
@@ -605,8 +596,8 @@
 .btn-modal-close {
   height: 38px;
   padding: 0 20px;
-  background: var(--btn-gray-bg, #475569);
-  color: #ffffff;
+  background: #e2e8f0;
+  color: #334155;
   border: none;
   border-radius: 6px;
   font-weight: 600;
@@ -616,69 +607,8 @@
 }
 
 .btn-modal-close:hover {
-  background: var(--btn-gray-hover, #334155);
-  color: #ffffff;
-}
-
-.btn-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--btn-gray-bg, #475569);
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.88rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-back:hover:not(:disabled) {
-  background: var(--btn-gray-hover, #334155);
-  color: #ffffff;
-}
-
-.btn-cancel {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--btn-red-bg, #dc2626);
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.88rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-cancel:hover:not(:disabled) {
-  background: var(--btn-red-hover, #b91c1c);
-  color: #ffffff;
-}
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: var(--btn-blue-bg, #1d4ed8);
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 20px;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--btn-blue-hover, #1e40af);
-  color: #ffffff;
+  background: #cbd5e1;
+  color: #0f172a;
 }
 
 /* Empty & Loading states */
@@ -1100,53 +1030,41 @@
 }
 
 .btn-action-edit {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    height: 32px;
-    padding: 0 10px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1;
-    border-radius: 6px;
-    border: 1px solid var(--btn-orange-bg, #c2410c);
-    background: var(--btn-orange-bg, #c2410c);
-    color: #ffffff;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 4px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
     cursor: pointer;
     transition: all 0.15s ease;
     margin-left: 0.35rem;
 }
 
 .btn-action-edit:hover {
-    background: var(--btn-orange-hover, #9a3412);
-    border-color: var(--btn-orange-hover, #9a3412);
-    color: #ffffff;
+    background: #f1f5f9;
+    color: #0874c9;
+    border-color: #93c5fd;
 }
 
 .btn-action-delete {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    height: 32px;
-    padding: 0 10px;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1;
-    border-radius: 6px;
-    border: 1px solid var(--btn-red-bg, #dc2626);
-    background: var(--btn-red-bg, #dc2626);
-    color: #ffffff;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #dc2626;
     cursor: pointer;
     transition: all 0.15s ease;
     margin-left: 0.35rem;
 }
 
 .btn-action-delete:hover {
-    background: var(--btn-red-hover, #b91c1c);
-    border-color: var(--btn-red-hover, #b91c1c);
-    color: #ffffff;
+    background: #fee2e2;
+    color: #b91c1c;
+    border-color: #f87171;
 }
 
 /* Custom Delete Confirmation Modal - Always Centered in Viewport */
@@ -1917,26 +1835,19 @@
 }
 
 .btn-action-convert {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  height: 32px;
-  padding: 0 10px;
-  background: var(--btn-green-bg, #15803d);
+  background: #10b981;
   color: #ffffff;
-  border: 1px solid var(--btn-green-bg, #15803d);
-  border-radius: 6px;
-  font-size: 0.8125rem;
+  border: 1px solid #059669;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.82rem;
   font-weight: 600;
-  line-height: 1;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-action-convert:hover:not(:disabled) {
-  background: var(--btn-green-hover, #166534);
-  border-color: var(--btn-green-hover, #166534);
+  background: #059669;
 }
 
 .btn-action-convert:disabled {
@@ -2010,28 +1921,22 @@
 
 /* Rejection Action Button in List View */
 .btn-action-reject {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  height: 32px;
-  padding: 0 10px;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1;
-  border-radius: 6px;
-  border: 1px solid var(--btn-red-bg, #dc2626);
-  background: var(--btn-red-bg, #dc2626);
-  color: #ffffff;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  color: #dc2626;
   cursor: pointer;
   transition: all 0.15s ease;
   margin-left: 0.35rem;
 }
 
 .btn-action-reject:hover {
-  background: var(--btn-red-hover, #b91c1c);
-  border-color: var(--btn-red-hover, #b91c1c);
-  color: #ffffff;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #f87171;
 }
 
 /* Invalid state for rejection modal inputs */

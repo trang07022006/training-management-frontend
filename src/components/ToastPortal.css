@@ -2,7 +2,7 @@
 
 .leads-toast-container {
   position: fixed;
-  top: calc(68px + 14px); /* 14px directly below the 68px header */
+  top: calc(68px + 14px); /* 14px below the 68px header */
   right: 24px;
   z-index: 999999; /* Higher than modals (1000) and headers (99) */
   display: flex;
@@ -22,18 +22,11 @@
   border-radius: 8px;
   font-size: 0.92rem;
   font-weight: 500;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.28), 0 8px 10px -6px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.22), 0 8px 10px -6px rgba(0, 0, 0, 0.12);
   animation: leadsToastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  line-height: 1.45;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.leads-toast:focus-visible {
-  outline: 2px solid #ffffff;
-  outline-offset: 2px;
-}
-
-/* Nền đậm chuẩn hóa cho 4 loại */
 .leads-toast-success {
   background: #065f46;
   color: #ffffff;
@@ -50,12 +43,6 @@
   background: #92400e;
   color: #ffffff;
   border: 1px solid #b45309;
-}
-
-.leads-toast-info {
-  background: #1e40af;
-  color: #ffffff;
-  border: 1px solid #2563eb;
 }
 
 .leads-toast-icon {
@@ -77,15 +64,10 @@
   color: #fde68a;
 }
 
-.leads-toast-info .leads-toast-icon {
-  color: #93c5fd;
-}
-
 .leads-toast-message {
   flex: 1;
   line-height: 1.45;
   word-break: break-word;
-  overflow-wrap: break-word;
 }
 
 .leads-toast-close {
@@ -97,21 +79,11 @@
   padding: 0 4px;
   line-height: 1;
   opacity: 0.8;
-  transition: opacity 0.15s, transform 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
+  transition: opacity 0.15s;
 }
 
 .leads-toast-close:hover {
   opacity: 1;
-  transform: scale(1.1);
-}
-
-.leads-toast-close:focus-visible {
-  outline: 2px solid #ffffff;
-  outline-offset: 1px;
 }
 
 @keyframes leadsToastSlideIn {
@@ -125,12 +97,11 @@
   }
 }
 
-/* Responsive breakpoint for Mobile (360px - 768px) */
+/* Responsive breakpoint for Mobile & Tablet */
 @media (max-width: 768px) {
   .leads-toast-container {
     top: calc(60px + 12px); /* 12px below 60px mobile header */
     right: 12px;
-    left: 12px;
     width: calc(100% - 24px);
     max-width: none;
   }
@@ -138,6 +109,5 @@
   .leads-toast {
     padding: 12px 14px;
     font-size: 0.88rem;
-    gap: 10px;
   }
 }

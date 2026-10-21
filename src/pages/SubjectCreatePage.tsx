@@ -279,7 +279,7 @@ export function SubjectCreatePage() {
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <button
                             type="button"
-                            className="btn-back"
+                            className="btn-cancel"
                             onClick={() => navigate('/subjects')}
                             disabled={isSubmitting}
                         >
@@ -287,10 +287,10 @@ export function SubjectCreatePage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary btn-create"
+                            className="btn-primary"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? 'Đang thêm...' : 'Thêm môn học'}
+                            {isSubmitting ? 'Đang lưu...' : 'Lưu môn học'}
                         </button>
                     </div>
                 </form>

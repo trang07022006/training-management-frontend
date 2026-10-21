@@ -54,43 +54,6 @@
   --info-bg: #eff6ff;
   --info-border: #bfdbfe;
 
-  /* Standardized Action Button Tokens */
-  --btn-blue-bg: #1d4ed8;
-  --btn-blue-hover: #1e40af;
-  --btn-blue-active: #172554;
-  --btn-blue-border: #1d4ed8;
-  --btn-blue-hover-bg: #1e40af;
-
-  --btn-green-bg: #15803d;
-  --btn-green-hover: #166534;
-  --btn-green-active: #14532d;
-  --btn-green-border: #15803d;
-
-  --btn-orange-bg: #c2410c;
-  --btn-orange-hover: #9a3412;
-  --btn-orange-active: #7c2d12;
-  --btn-orange-border: #c2410c;
-
-  --btn-teal-bg: #0f766e;
-  --btn-teal-hover: #115e59;
-  --btn-teal-active: #134e4a;
-  --btn-teal-border: #0f766e;
-
-  --btn-purple-bg: #7e22ce;
-  --btn-purple-hover: #6b21a8;
-  --btn-purple-active: #581c87;
-  --btn-purple-border: #7e22ce;
-
-  --btn-red-bg: #dc2626;
-  --btn-red-hover: #b91c1c;
-  --btn-red-active: #991b1b;
-  --btn-red-border: #dc2626;
-
-  --btn-gray-bg: #475569;
-  --btn-gray-hover: #334155;
-  --btn-gray-active: #1e293b;
-  --btn-gray-border: #475569;
-
   /* Radii */
   --radius-xs: 4px;
   --radius-sm: 6px;
@@ -238,363 +201,75 @@ button {
   box-sizing: border-box;
 }
 
-/* =========================================================================
-   Standardized Button System (Quy chuẩn hệ thống nút bấm ICTU theo loại hành động)
-   - Thêm / Tạo mới: xanh dương
-   - Lưu / Gửi / Phê duyệt / Hoàn tất: xanh lá
-   - Sửa / Chỉnh sửa: cam đậm
-   - Xem / Chi tiết: xanh ngọc đậm
-   - Buổi học / Cấu trúc / Cấu hình: tím
-   - Xóa / Hủy bỏ / Từ chối / Thôi học: đỏ
-   - Quay lại / Đóng: xám đậm
-   - Xác nhận: kế thừa màu của hành động được xác nhận
-   ========================================================================= */
-
-.ictu-btn,
-.btn {
+/* Standard Buttons */
+.ictu-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.88rem;
   font-weight: 600;
-  height: 38px;
-  padding: 0 16px;
-  border-radius: 6px;
+  padding: 9px 18px;
+  border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+  transition: all 0.18s ease-in-out;
   text-decoration: none;
-  white-space: nowrap;
-  line-height: 1;
+  line-height: 1.25;
   box-sizing: border-box;
-  user-select: none;
 }
 
-.ictu-btn:active:not(:disabled),
-.btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.ictu-btn:focus-visible,
-.btn:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-}
-
-/* Kích thước */
-.ictu-btn-sm,
-.btn-sm {
-  height: 30px;
-  padding: 0 10px;
-  font-size: 0.8125rem; /* 13px */
-  gap: 6px;
-  border-radius: 5px;
-}
-
-.ictu-btn-lg,
-.btn-lg {
-  height: 44px;
-  padding: 0 20px;
-  font-size: 0.9375rem; /* 15px */
-  border-radius: 8px;
-}
-
-/* 1. Thêm / Tạo mới: Xanh dương */
-.ictu-btn-blue,
-.ictu-btn-primary,
-.btn-blue,
-.btn-primary,
-.btn-create,
-.btn-add {
-  background-color: var(--btn-blue-bg, #1d4ed8);
+.ictu-btn-primary {
+  background: linear-gradient(135deg, #0874c9 0%, #065ca3 100%);
   color: #ffffff;
-  border-color: var(--btn-blue-bg, #1d4ed8);
+  border-color: #0874c9;
+  box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
 }
 
-.ictu-btn-blue:hover:not(:disabled),
-.ictu-btn-primary:hover:not(:disabled),
-.btn-blue:hover:not(:disabled),
-.btn-primary:hover:not(:disabled),
-.btn-create:hover:not(:disabled),
-.btn-add:hover:not(:disabled) {
-  background-color: var(--btn-blue-hover, #1e40af);
-  border-color: var(--btn-blue-hover, #1e40af);
+.ictu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0984e3 0%, #0874c9 100%);
   color: #ffffff;
+  box-shadow: 0 4px 12px rgba(8, 116, 201, 0.35);
+  transform: translateY(-1px);
 }
 
-.ictu-btn-blue:active:not(:disabled),
-.ictu-btn-primary:active:not(:disabled),
-.btn-blue:active:not(:disabled),
-.btn-primary:active:not(:disabled),
-.btn-create:active:not(:disabled),
-.btn-add:active:not(:disabled) {
-  background-color: var(--btn-blue-active, #172554);
-  border-color: var(--btn-blue-active, #172554);
+.ictu-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
-/* 2. Lưu / Gửi / Phê duyệt / Hoàn tất: Xanh lá */
-.ictu-btn-green,
-.ictu-btn-success,
-.btn-green,
-.btn-success,
-.btn-save,
-.btn-submit,
-.btn-approve,
-.btn-complete {
-  background-color: var(--btn-green-bg, #15803d);
-  color: #ffffff;
-  border-color: var(--btn-green-bg, #15803d);
+.ictu-btn-secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
 }
 
-.ictu-btn-green:hover:not(:disabled),
-.ictu-btn-success:hover:not(:disabled),
-.btn-green:hover:not(:disabled),
-.btn-success:hover:not(:disabled),
-.btn-save:hover:not(:disabled),
-.btn-submit:hover:not(:disabled),
-.btn-approve:hover:not(:disabled),
-.btn-complete:hover:not(:disabled) {
-  background-color: var(--btn-green-hover, #166534);
-  border-color: var(--btn-green-hover, #166534);
-  color: #ffffff;
+.ictu-btn-secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  color: #0f172a;
 }
 
-.ictu-btn-green:active:not(:disabled),
-.ictu-btn-success:active:not(:disabled),
-.btn-green:active:not(:disabled),
-.btn-success:active:not(:disabled),
-.btn-save:active:not(:disabled),
-.btn-submit:active:not(:disabled),
-.btn-approve:active:not(:disabled),
-.btn-complete:active:not(:disabled) {
-  background-color: var(--btn-green-active, #14532d);
-  border-color: var(--btn-green-active, #14532d);
-}
-
-/* 3. Sửa / Chỉnh sửa: Cam đậm */
-.ictu-btn-orange,
-.ictu-btn-warning,
-.btn-orange,
-.btn-warning,
-.btn-edit,
-.btn-reserve,
-.btn-suspend {
-  background-color: var(--btn-orange-bg, #c2410c);
-  color: #ffffff;
-  border-color: var(--btn-orange-bg, #c2410c);
-}
-
-.ictu-btn-orange:hover:not(:disabled),
-.ictu-btn-warning:hover:not(:disabled),
-.btn-orange:hover:not(:disabled),
-.btn-warning:hover:not(:disabled),
-.btn-edit:hover:not(:disabled),
-.btn-reserve:hover:not(:disabled),
-.btn-suspend:hover:not(:disabled) {
-  background-color: var(--btn-orange-hover, #9a3412);
-  border-color: var(--btn-orange-hover, #9a3412);
-  color: #ffffff;
-}
-
-.ictu-btn-orange:active:not(:disabled),
-.ictu-btn-warning:active:not(:disabled),
-.btn-orange:active:not(:disabled),
-.btn-warning:active:not(:disabled),
-.btn-edit:active:not(:disabled),
-.btn-reserve:active:not(:disabled),
-.btn-suspend:active:not(:disabled) {
-  background-color: var(--btn-orange-active, #7c2d12);
-  border-color: var(--btn-orange-active, #7c2d12);
-}
-
-/* 4. Xem / Chi tiết: Xanh ngọc đậm */
-.ictu-btn-teal,
-.btn-teal,
-.btn-view,
-.btn-detail {
-  background-color: var(--btn-teal-bg, #0f766e);
-  color: #ffffff;
-  border-color: var(--btn-teal-bg, #0f766e);
-}
-
-.ictu-btn-teal:hover:not(:disabled),
-.btn-teal:hover:not(:disabled),
-.btn-view:hover:not(:disabled),
-.btn-detail:hover:not(:disabled) {
-  background-color: var(--btn-teal-hover, #115e59);
-  border-color: var(--btn-teal-hover, #115e59);
-  color: #ffffff;
-}
-
-.ictu-btn-teal:active:not(:disabled),
-.btn-teal:active:not(:disabled),
-.btn-view:active:not(:disabled),
-.btn-detail:active:not(:disabled) {
-  background-color: var(--btn-teal-active, #134e4a);
-  border-color: var(--btn-teal-active, #134e4a);
-}
-
-/* 5. Buổi học / Cấu trúc / Cấu hình: Tím */
-.ictu-btn-purple,
-.btn-purple,
-.btn-sessions,
-.btn-structure,
-.btn-config {
-  background-color: var(--btn-purple-bg, #7e22ce);
-  color: #ffffff;
-  border-color: var(--btn-purple-bg, #7e22ce);
-}
-
-.ictu-btn-purple:hover:not(:disabled),
-.btn-purple:hover:not(:disabled),
-.btn-sessions:hover,
-.btn-structure:hover,
-.btn-config:hover:not(:disabled) {
-  background-color: var(--btn-purple-hover, #6b21a8);
-  border-color: var(--btn-purple-hover, #6b21a8);
-  color: #ffffff;
-}
-
-.ictu-btn-purple:active:not(:disabled),
-.btn-purple:active:not(:disabled),
-.btn-sessions:active,
-.btn-structure:active,
-.btn-config:active:not(:disabled) {
-  background-color: var(--btn-purple-active, #581c87);
-  border-color: var(--btn-purple-active, #581c87);
-}
-
-/* 6. Xóa / Hủy bỏ / Từ chối / Thôi học: Đỏ */
-.ictu-btn-red,
-.ictu-btn-danger,
-.btn-red,
-.btn-danger,
-.btn-cancel,
-.btn-delete,
-.btn-reject,
-.btn-drop {
-  background-color: var(--btn-red-bg, #dc2626);
-  color: #ffffff;
-  border-color: var(--btn-red-bg, #dc2626);
-}
-
-.ictu-btn-red:hover:not(:disabled),
-.ictu-btn-danger:hover:not(:disabled),
-.btn-red:hover:not(:disabled),
-.btn-danger:hover:not(:disabled),
-.btn-cancel:hover:not(:disabled),
-.btn-delete:hover:not(:disabled),
-.btn-reject:hover:not(:disabled),
-.btn-drop:hover:not(:disabled) {
-  background-color: var(--btn-red-hover, #b91c1c);
-  border-color: var(--btn-red-hover, #b91c1c);
-  color: #ffffff;
-}
-
-.ictu-btn-red:active:not(:disabled),
-.ictu-btn-danger:active:not(:disabled),
-.btn-red:active:not(:disabled),
-.btn-danger:active:not(:disabled),
-.btn-cancel:active:not(:disabled),
-.btn-delete:active:not(:disabled),
-.btn-reject:active:not(:disabled),
-.btn-drop:active:not(:disabled) {
-  background-color: var(--btn-red-active, #991b1b);
-  border-color: var(--btn-red-active, #991b1b);
-}
-
-/* 7. Quay lại / Đóng: Xám đậm */
-.ictu-btn-gray,
-.ictu-btn-secondary,
-.btn-gray,
-.btn-secondary,
-.btn-back,
-.btn-close {
-  background-color: var(--btn-gray-bg, #475569);
-  color: #ffffff;
-  border-color: var(--btn-gray-bg, #475569);
-}
-
-.ictu-btn-gray:hover:not(:disabled),
-.ictu-btn-secondary:hover:not(:disabled),
-.btn-gray:hover:not(:disabled),
-.btn-secondary:hover:not(:disabled),
-.btn-back:hover:not(:disabled),
-.btn-close:hover:not(:disabled) {
-  background-color: var(--btn-gray-hover, #334155);
-  border-color: var(--btn-gray-hover, #334155);
-  color: #ffffff;
-}
-
-.ictu-btn-gray:active:not(:disabled),
-.ictu-btn-secondary:active:not(:disabled),
-.btn-gray:active:not(:disabled),
-.btn-secondary:active:not(:disabled),
-.btn-back:active:not(:disabled),
-.btn-close:active:not(:disabled) {
-  background-color: var(--btn-gray-active, #1e293b);
-  border-color: var(--btn-gray-active, #1e293b);
-}
-
-/* 6. Outline */
-.ictu-btn-outline,
-.btn-outline {
+.ictu-btn-outline {
   background-color: transparent;
-  color: #1d4ed8;
-  border-color: #1d4ed8;
+  color: #0874c9;
+  border-color: #0874c9;
 }
 
-.ictu-btn-outline:hover:not(:disabled),
-.btn-outline:hover:not(:disabled) {
-  background-color: #eff6ff;
-  color: #1e40af;
-  border-color: #1e40af;
+.ictu-btn-outline:hover:not(:disabled) {
+  background-color: #eaf4ff;
+  color: #064b8e;
 }
 
-/* Trạng thái Disabled */
-.ictu-btn:disabled,
-.ictu-btn[disabled],
-.btn:disabled,
-.btn[disabled] {
-  background-color: #e2e8f0 !important;
-  color: #94a3b8 !important;
-  border-color: #cbd5e1 !important;
-  cursor: not-allowed !important;
-  box-shadow: none !important;
-  transform: none !important;
-  pointer-events: none;
+.ictu-btn-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+  border-color: #dc2626;
 }
 
-/* Spinner for Loading State */
-.ictu-btn-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #ffffff;
-  border-radius: 50%;
-  animation: ictuBtnSpin 0.6s linear infinite;
-}
-
-.ictu-btn-outline .ictu-btn-spinner {
-  border-color: rgba(29, 78, 216, 0.3);
-  border-top-color: #1d4ed8;
-}
-
-@keyframes ictuBtnSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.ictu-btn-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1em;
-  line-height: 1;
+.ictu-btn-danger:hover:not(:disabled) {
+  background-color: #b91c1c;
 }
 
 /* Standard Badges */

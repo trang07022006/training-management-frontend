@@ -166,7 +166,7 @@ export function TrainingProgramDetailPage() {
                 </div>
 
                 <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-                    <Link to={`/training-programs/${program.id}/structure`} className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Link to={`/training-programs/${program.id}/structure`} className="btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         <span>📂 Quản lý cấu trúc khung chương trình & Môn tiên quyết</span>
                     </Link>
                 </div>

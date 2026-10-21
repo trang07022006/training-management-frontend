@@ -414,7 +414,7 @@ export function CreateUserModal({
                     <div className="modal-footer">
                         <button
                             type="button"
-                            className="btn-cancel"
+                            className="btn-secondary"
                             data-testid="btn-cancel-create"
                             onClick={handleClose}
                             disabled={isSubmitting}

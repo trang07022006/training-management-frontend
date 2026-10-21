@@ -266,7 +266,7 @@ function EditUserFormContent({
                 <div className="modal-footer">
                     <button
                         type="button"
-                        className="btn-cancel"
+                        className="btn-secondary"
                         data-testid="btn-cancel-edit"
                         onClick={onClose}
                         disabled={isSubmitting}

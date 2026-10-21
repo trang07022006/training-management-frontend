@@ -426,7 +426,7 @@ export function SubjectEditPage() {
                         </button>
                         <button
                             type="submit"
-                            className="btn-primary btn-save"
+                            className="btn-primary"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}

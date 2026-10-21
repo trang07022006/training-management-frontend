@@ -17,7 +17,6 @@ import { fetchUsersApi, type User } from '../api/userApi'
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
-import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export interface ClassSubjectInstructorAssignPageProps {
@@ -541,7 +540,7 @@ export function ClassSubjectInstructorAssignPage({
                 actions={
                     <button
                         type="button"
-                        className="btn-back"
+                        className="btn-secondary"
                         onClick={() => navigate(`/classes/${classId}/instructors`)}
                     >
                         Quay lại danh sách phân công
@@ -568,13 +567,10 @@ export function ClassSubjectInstructorAssignPage({
                 </div>
             )}
 
-            {/* Toast Notifications */}
             {successMessage && (
-                <ToastPortal
-                    success={successMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                    successTestId="assign-success"
-                />
+                <div className="classes-alert success" data-testid="assign-success" role="alert" style={{ marginBottom: 16 }}>
+                    <span>✓ {successMessage}</span>
+                </div>
             )}
 
             <div className="instructor-assign-card">
@@ -1020,7 +1016,7 @@ export function ClassSubjectInstructorAssignPage({
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
                         <button
                             type="button"
-                            className="btn-cancel"
+                            className="btn-secondary"
                             data-testid="cancel-assignment-btn"
                             onClick={() => navigate(`/classes/${classId}/instructors`)}
                         >

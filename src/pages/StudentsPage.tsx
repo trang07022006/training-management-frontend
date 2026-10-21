@@ -12,7 +12,6 @@ import {
 } from '../api/studentApi'
 import { getErrorMessage } from '../utils/errorMessages'
 import { formatVietnamDate } from '../utils/dateUtils'
-import { ToastPortal } from '../components/ToastPortal'
 import './StudentsPage.css'
 
 export interface StudentsPageProps {
@@ -225,15 +224,23 @@ export function StudentsPage({
                 </div>
             </div>
 
-            {/* Thông báo Toast */}
-            <ToastPortal
-                success={alertMessage?.type === 'success' ? alertMessage.text : null}
-                error={alertMessage?.type === 'error' ? alertMessage.text : null}
-                onCloseSuccess={() => setAlertMessage(null)}
-                onCloseError={() => setAlertMessage(null)}
-                successTestId="success-alert"
-                errorTestId="error-alert"
-            />
+            {/* Thông báo Alert */}
+            {alertMessage && (
+                <div
+                    className={`students-alert ${alertMessage.type}`}
+                    data-testid={alertMessage.type === 'success' ? 'success-alert' : 'error-alert'}
+                >
+                    <span>{alertMessage.text}</span>
+                    <button
+                        type="button"
+                        className="btn-close"
+                        onClick={() => setAlertMessage(null)}
+                        aria-label="Đóng thông báo"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
 
             {/* Thanh tìm kiếm */}
             <form className="students-search-bar" onSubmit={handleSearchSubmit} data-testid="search-form">

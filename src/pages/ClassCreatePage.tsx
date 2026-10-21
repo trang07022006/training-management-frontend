@@ -6,7 +6,6 @@ import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgra
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
-import { ToastPortal } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 interface FormErrors {
@@ -150,14 +149,15 @@ export function ClassCreatePage() {
                 ]}
             />
 
-            {/* Toast Notifications */}
-            {(errorMessage || successMessage) && (
-                <ToastPortal
-                    success={successMessage}
-                    error={errorMessage}
-                    onCloseSuccess={() => setSuccessMessage(null)}
-                    onCloseError={() => setErrorMessage(null)}
-                />
+            {errorMessage && (
+                <div className="classes-alert error" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{errorMessage}</span>
+                </div>
+            )}
+            {successMessage && (
+                <div className="classes-alert success" role="alert" style={{ marginBottom: '16px' }}>
+                    <span>{successMessage}</span>
+                </div>
             )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
@@ -257,7 +257,7 @@ export function ClassCreatePage() {
                     <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <button
                             type="button"
-                            className="btn-back"
+                            className="btn-cancel"
                             onClick={() => navigate('/classes')}
                             disabled={isSubmitting}
                         >

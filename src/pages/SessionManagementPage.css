@@ -24,12 +24,8 @@
 .session-management tbody tr:last-child td { border-bottom: 0; }
 .session-management-subline { display: block; margin-top: 5px; color: var(--text-muted); font-size: 12px; }
 .session-management-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.session-management-row-actions { min-width: 145px; display: inline-flex; gap: 8px; align-items: center; }
-.session-management-row-actions a { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: 32px; padding: 0 12px; font-size: 0.8125rem; font-weight: 600; line-height: 1; border-radius: 6px; text-decoration: none; color: #ffffff; border: 1px solid transparent; transition: background-color 150ms ease, border-color 150ms ease; white-space: nowrap; }
-.session-management-row-actions a.btn-action-view, .session-management-row-actions a:first-child { background-color: var(--btn-teal-bg, #0f766e); border-color: var(--btn-teal-bg, #0f766e); }
-.session-management-row-actions a.btn-action-view:hover, .session-management-row-actions a:first-child:hover { background-color: var(--btn-teal-hover, #115e59); border-color: var(--btn-teal-hover, #115e59); }
-.session-management-row-actions a.btn-action-edit, .session-management-row-actions a:nth-child(2) { background-color: var(--btn-orange-bg, #c2410c); border-color: var(--btn-orange-bg, #c2410c); }
-.session-management-row-actions a.btn-action-edit:hover, .session-management-row-actions a:nth-child(2):hover { background-color: var(--btn-orange-hover, #9a3412); border-color: var(--btn-orange-hover, #9a3412); }
+.session-management-row-actions { min-width: 145px; }
+.session-management-row-actions a { font-size: 12px; padding: 6px 10px; min-height: 36px; }
 .session-management-badge { display: inline-flex; padding: 5px 10px; border-radius: var(--radius-pill); background: var(--info-bg); color: var(--info); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .session-management-badge.cancelled { background: var(--danger-bg); color: var(--danger); }
 .session-management-badge.completed { background: var(--bg-surface-alt); color: var(--text-muted); }

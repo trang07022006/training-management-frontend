@@ -490,7 +490,7 @@ export function StudentDropPage() {
                                 <div className="lifecycle-actions">
                                     <button
                                         type="button"
-                                        className="btn-cancel"
+                                        className="btn-secondary"
                                         onClick={() => navigate(`/students/${studentId}`)}
                                         disabled={isSubmitting}
                                     >
@@ -498,7 +498,8 @@ export function StudentDropPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="btn-drop"
+                                        className="btn-primary"
+                                        style={{ backgroundColor: '#dc2626', borderColor: '#b91c1c' }}
                                         data-testid="btn-preview-drop"
                                         disabled={isSubmitting}
                                     >
@@ -560,7 +561,7 @@ export function StudentDropPage() {
                         <div className="lifecycle-modal-footer">
                             <button
                                 type="button"
-                                className="btn-back"
+                                className="btn-secondary"
                                 onClick={() => setShowConfirmModal(false)}
                                 disabled={isSubmitting}
                             >
@@ -568,7 +569,8 @@ export function StudentDropPage() {
                             </button>
                             <button
                                 type="button"
-                                className="btn-drop"
+                                className="btn-primary"
+                                style={{ backgroundColor: '#dc2626', borderColor: '#b91c1c' }}
                                 data-testid="btn-confirm-drop"
                                 onClick={handleConfirmDrop}
                                 disabled={isSubmitting}

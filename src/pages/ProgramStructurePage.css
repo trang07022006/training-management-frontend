@@ -492,54 +492,51 @@
 }
 
 .btn-sm-prereq {
-    background-color: var(--btn-purple-bg, #7e22ce);
-    color: #ffffff;
-    border: 1px solid var(--btn-purple-bg, #7e22ce);
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
-    padding: 4px 10px;
+    padding: 4px 9px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
 
 .btn-sm-prereq:hover {
-    background-color: var(--btn-purple-hover, #6b21a8);
-    border-color: var(--btn-purple-hover, #6b21a8);
+    background: #dbeafe;
 }
 
 .btn-sm-edit {
-    background-color: var(--btn-orange-bg, #c2410c);
-    color: #ffffff;
-    border: 1px solid var(--btn-orange-bg, #c2410c);
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
     border-radius: 6px;
-    padding: 4px 10px;
+    padding: 4px 9px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
 
 .btn-sm-edit:hover {
-    background-color: var(--btn-orange-hover, #9a3412);
-    border-color: var(--btn-orange-hover, #9a3412);
+    background: #f1f5f9;
 }
 
 .btn-sm-remove {
-    background-color: var(--btn-red-bg, #dc2626);
-    color: #ffffff;
-    border: 1px solid var(--btn-red-bg, #dc2626);
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid #fecdd3;
     border-radius: 6px;
-    padding: 4px 10px;
+    padding: 4px 9px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
 
 .btn-sm-remove:hover {
-    background-color: var(--btn-red-hover, #b91c1c);
-    border-color: var(--btn-red-hover, #b91c1c);
+    background: #ffe4e6;
 }
 
 /* Empty State */
@@ -803,91 +800,54 @@
     margin: 0;
 }
 
-.btn-primary-add {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background-color: var(--btn-blue-bg, #1d4ed8);
-    color: #ffffff;
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
-    border-radius: 8px;
-    padding: 9px 18px;
-    font-size: 0.9375rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.btn-primary-add:hover:not(:disabled) {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
-}
-
 .btn-modal-cancel {
-    background-color: var(--btn-red-bg, #dc2626);
-    border: 1px solid var(--btn-red-bg, #dc2626);
-    color: #ffffff;
-    padding: 8px 18px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 8px 16px;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.15s ease;
 }
 
-.btn-modal-cancel:hover:not(:disabled) {
-    background-color: var(--btn-red-hover, #b91c1c);
-    border-color: var(--btn-red-hover, #b91c1c);
+.btn-modal-cancel:hover {
+    background: #f8fafc;
 }
 
 .btn-modal-submit {
-    background-color: var(--btn-blue-bg, #1d4ed8);
-    border: 1px solid var(--btn-blue-bg, #1d4ed8);
+    background: #2563eb;
+    border: none;
     color: #ffffff;
     padding: 8px 18px;
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.15s ease;
 }
 
 .btn-modal-submit:hover:not(:disabled) {
-    background-color: var(--btn-blue-hover, #1e40af);
-    border-color: var(--btn-blue-hover, #1e40af);
+    background: #1d4ed8;
 }
 
 .btn-modal-submit:disabled {
-    background-color: #e2e8f0;
-    border-color: #cbd5e1;
-    color: #94a3b8;
+    background: #94a3b8;
     cursor: not-allowed;
 }
 
 .btn-modal-danger {
-    background-color: var(--btn-red-bg, #dc2626);
-    border: 1px solid var(--btn-red-bg, #dc2626);
+    background: #e11d48;
+    border: none;
     color: #ffffff;
     padding: 8px 18px;
     border-radius: 8px;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.15s ease;
 }
 
 .btn-modal-danger:hover:not(:disabled) {
-    background-color: var(--btn-red-hover, #b91c1c);
-    border-color: var(--btn-red-hover, #b91c1c);
-}
-
-.btn-modal-cancel:disabled,
-.btn-modal-danger:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: #e2e8f0;
-    border-color: #cbd5e1;
-    color: #94a3b8;
+    background: #be123c;
 }
 
 /* Prerequisite Modal Specifics */
@@ -914,31 +874,28 @@
 }
 
 .btn-prereq-del {
-    background-color: var(--btn-red-bg, #dc2626);
-    border: 1px solid var(--btn-red-bg, #dc2626);
-    color: #ffffff;
-    font-size: 0.82rem;
+    background: transparent;
+    border: none;
+    color: #e11d48;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    padding: 4px 10px;
-    border-radius: 6px;
-    transition: background-color 0.15s ease;
+    padding: 4px 8px;
 }
 
 .btn-prereq-del:hover {
-    background-color: var(--btn-red-hover, #b91c1c);
-    border-color: var(--btn-red-hover, #b91c1c);
+    text-decoration: underline;
 }
 
 /* Action button for table in TrainingProgramsPage */
 .btn-action-structure {
-    background-color: var(--btn-purple-bg, #7e22ce);
-    color: #ffffff;
-    border: 1px solid var(--btn-purple-bg, #7e22ce);
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
     border-radius: 6px;
-    padding: 6px 12px;
+    padding: 4px 10px;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 500;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -946,8 +903,7 @@
 }
 
 .btn-action-structure:hover {
-    background-color: var(--btn-purple-hover, #6b21a8);
-    border-color: var(--btn-purple-hover, #6b21a8);
+    background: #dbeafe;
 }
 
 /* Responsive Breakpoints */
