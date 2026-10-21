@@ -91,6 +91,8 @@ import { ClassroomsPage } from './pages/ClassroomsPage'
 
 import { UserProfilePage } from './pages/UserProfilePage'
 import { PublicConsultationPage } from './pages/PublicConsultationPage'
+import { SpeedGradingPage } from './pages/SpeedGradingPage'
+import { MySubmissionViewPage } from './pages/MySubmissionViewPage'
 import { getApiOrigin } from './utils/apiConfig'
 
 const apiOrigin = getApiOrigin()
@@ -280,6 +282,30 @@ createRoot(document.getElementById('root')!).render(
               </Route>
               <Route path="/change-password" element={<ChangePasswordPage />} />
               <Route path="/profile" element={<UserProfilePage />} />
+
+              {/* Speed Grading & Submission Module - SCRUM-267 */}
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.SUBMISSION_GRADE}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/speed-grading" element={<SpeedGradingPage />} />
+                <Route path="/assignments/:assignmentId/speed-grading" element={<SpeedGradingPage />} />
+              </Route>
+              <Route
+                element={
+                  <RequirePermission
+                    requiredPermission={SYSTEM_PERMISSIONS.SUBMISSION_VIEW_OWN}
+                    fallbackPath="/forbidden"
+                  />
+                }
+              >
+                <Route path="/my-submission" element={<MySubmissionViewPage />} />
+                <Route path="/assignments/:assignmentId/my-submission" element={<MySubmissionViewPage />} />
+              </Route>
             </Route>
           </Route>
 

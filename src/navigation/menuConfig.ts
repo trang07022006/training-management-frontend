@@ -38,6 +38,10 @@ export const SYSTEM_PERMISSIONS = {
     ABSENCE_REQUEST: 'absence.request',
     ABSENCE_VIEW: 'absence.view',
     ABSENCE_REVIEW: 'absence.review',
+    SUBMISSION_VIEW: 'submission.view',
+    SUBMISSION_GRADE: 'submission.grade',
+    SUBMISSION_PUBLISH: 'submission.publish',
+    SUBMISSION_VIEW_OWN: 'submission.view_own',
 } as const
 
 export type SystemPermission =
@@ -70,12 +74,16 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.ATTENDANCE_TAKE,
         SYSTEM_PERMISSIONS.ABSENCE_VIEW,
         SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
+        SYSTEM_PERMISSIONS.SUBMISSION_VIEW,
+        SYSTEM_PERMISSIONS.SUBMISSION_GRADE,
+        SYSTEM_PERMISSIONS.SUBMISSION_PUBLISH,
     ],
     trainee: [
         SYSTEM_PERMISSIONS.COURSE_VIEW,
         SYSTEM_PERMISSIONS.SESSION_VIEW,
         SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
         SYSTEM_PERMISSIONS.ABSENCE_REQUEST,
+        SYSTEM_PERMISSIONS.SUBMISSION_VIEW_OWN,
     ],
     user: [
         SYSTEM_PERMISSIONS.SESSION_VIEW,
@@ -98,6 +106,8 @@ export const ROLE_PERMISSIONS_MAP: Record<string, readonly string[]> = {
         SYSTEM_PERMISSIONS.ATTENDANCE_MANAGE,
         SYSTEM_PERMISSIONS.ABSENCE_VIEW,
         SYSTEM_PERMISSIONS.ABSENCE_REVIEW,
+        SYSTEM_PERMISSIONS.SUBMISSION_VIEW,
+        SYSTEM_PERMISSIONS.SUBMISSION_PUBLISH,
     ],
 }
 
@@ -229,7 +239,21 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         icon: 'user-graduate',
         requiredPermission: SYSTEM_PERMISSIONS.COURSE_VIEW,
     },
-        {
+    {
+        key: 'speed_grading',
+        label: 'Chấm điểm bài nộp',
+        path: '/speed-grading',
+        icon: 'check-circle',
+        requiredPermission: SYSTEM_PERMISSIONS.SUBMISSION_GRADE,
+    },
+    {
+        key: 'my_submission',
+        label: 'Bài nộp của tôi',
+        path: '/my-submission',
+        icon: 'file-text',
+        requiredPermission: SYSTEM_PERMISSIONS.SUBMISSION_VIEW_OWN,
+    },
+    {
         key: 'leads',
         label: 'Tư vấn tuyển sinh',
         path: '/leads',
