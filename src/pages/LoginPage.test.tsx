@@ -192,4 +192,144 @@ describe('SCRUM-30: Giao diện đăng nhập (LoginPage & LoginForm)', () => {
         const alert = await screen.findByRole('alert')
         expect(alert.textContent).toBe('Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
     })
+
+    it('hiển thị lỗi nhập liệu cạnh trường khi để trống và không gửi request', async () => {
+        const fetcher = setup('/login')
+
+        const submitBtn = screen.getByRole('button', { name: 'Đăng nhập' })
+        fireEvent.click(submitBtn)
+
+        expect(fetcher).not.toHaveBeenCalled()
+        expect(await screen.findByTestId('login-email-error')).toBeDefined()
+        expect(screen.getByTestId('login-email-error').textContent).toBe('Email là bắt buộc.')
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'user@example.com' },
+        })
+        fireEvent.click(submitBtn)
+
+        expect(fetcher).not.toHaveBeenCalled()
+        expect(await screen.findByTestId('login-password-error')).toBeDefined()
+        expect(screen.getByTestId('login-password-error').textContent).toBe('Mật khẩu là bắt buộc.')
+    })
+
+    it('không trim khoảng trắng của mật khẩu khi gửi form', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({
+                    access_token: 'acc-token',
+                    refresh_token: 'ref-token',
+                    token_type: 'Bearer',
+                    user: { id: 'usr-1', email: 'test@example.com', role: 'admin' },
+                }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: '  test@example.com  ' },
+        })
+        // Mật khẩu có khoảng trắng đầu và cuối
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: '  SecretPass123!  ' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        expect(fetcher).toHaveBeenCalledTimes(1)
+        const callBody = JSON.parse(fetcher.mock.calls[0][1]?.body as string)
+        expect(callBody.email).toBe('test@example.com')
+        expect(callBody.password).toBe('  SecretPass123!  ')
+    })
+
+    it('nút hiện/ẩn mật khẩu type=button không kích hoạt gửi form và bảo toàn giá trị mật khẩu', async () => {
+        const fetcher = setup('/login')
+
+        const passwordInput = screen.getByLabelText('Mật khẩu')
+        fireEvent.change(passwordInput, { target: { value: 'MySecretPassword123' } })
+
+        const toggleBtn = screen.getByRole('button', { name: 'Hiện mật khẩu' })
+        expect(toggleBtn.getAttribute('type')).toBe('button')
+
+        fireEvent.click(toggleBtn)
+
+        expect(fetcher).not.toHaveBeenCalled()
+        expect((passwordInput as HTMLInputElement).value).toBe('MySecretPassword123')
+        expect(passwordInput.getAttribute('type')).toBe('text')
+    })
+
+    it('phân biệt lỗi máy chủ 500: hiển thị toast lỗi máy chủ, không quy thành sai mật khẩu', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({ message: 'Internal Server Error' }),
+                { status: 500, headers: { 'Content-Type': 'application/json' } },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'admin@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'Password123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const toastMsg = await screen.findByTestId('toast-error')
+        expect(toastMsg.textContent).toContain('Có lỗi máy chủ, vui lòng thử lại sau.')
+        expect(toastMsg.textContent).not.toContain('Email hoặc mật khẩu không đúng')
+    })
+
+    it('phân biệt lỗi 503 SESSION_STORAGE_UNAVAILABLE: thông báo máy chủ tạm thời không lưu được phiên', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({ code: 'SESSION_STORAGE_UNAVAILABLE' }),
+                { status: 503, headers: { 'Content-Type': 'application/json' } },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'admin@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'Password123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const toastMsg = await screen.findByTestId('toast-error')
+        expect(toastMsg.textContent).toContain('Hệ thống máy chủ tạm thời không thể lưu phiên đăng nhập')
+        expect(toastMsg.textContent).not.toContain('Email hoặc mật khẩu không đúng')
+    })
+
+    it('phân biệt lỗi mạng: hiển thị thông báo kết nối, không quy thành sai mật khẩu', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'admin@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'Password123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const toastMsg = await screen.findByTestId('toast-error')
+        expect(toastMsg.textContent).toContain('Không thể kết nối')
+        expect(toastMsg.textContent).not.toContain('Email hoặc mật khẩu không đúng')
+    })
+
+    it('nhấn vào nhãn text "Ghi nhớ đăng nhập" toggle checkbox thành công', () => {
+        setup('/login')
+
+        const checkbox = screen.getByRole('checkbox', { name: 'Ghi nhớ đăng nhập' }) as HTMLInputElement
+        expect(checkbox.checked).toBe(false)
+
+        const labelText = screen.getByText('Ghi nhớ đăng nhập')
+        fireEvent.click(labelText)
+        expect(checkbox.checked).toBe(true)
+
+        fireEvent.click(labelText)
+        expect(checkbox.checked).toBe(false)
+    })
 })

@@ -440,24 +440,32 @@
 }
 
 /* Actions Row: Remember Me & Forgot Password */
-.form-actions-row {
+.login-form .form-actions-row {
     display: flex;
+    flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    width: 100%;
     font-size: 13.5px;
     gap: 8px;
+    margin-top: 4px;
+    margin-bottom: 20px;
+    padding: 0;
+    border: none;
 }
 
-.checkbox-container {
+.login-form .checkbox-container {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
     user-select: none;
     color: #475569;
+    font-weight: 400;
+    margin: 0;
 }
 
-.checkbox-container input[type="checkbox"] {
+.login-form .checkbox-container input[type="checkbox"] {
     position: absolute;
     opacity: 0;
     cursor: pointer;
@@ -465,7 +473,7 @@
     width: 0;
 }
 
-.checkbox-custom {
+.login-form .checkbox-custom {
     display: inline-block;
     width: 17px;
     height: 17px;
@@ -475,18 +483,19 @@
     transition: all 0.15s ease;
     box-sizing: border-box;
     position: relative;
+    flex-shrink: 0;
 }
 
-.checkbox-container:hover .checkbox-custom {
+.login-form .checkbox-container:hover .checkbox-custom {
     border-color: #2563eb;
 }
 
-.checkbox-container input[type="checkbox"]:checked ~ .checkbox-custom {
+.login-form .checkbox-container input[type="checkbox"]:checked ~ .checkbox-custom {
     background-color: #2563eb;
     border-color: #2563eb;
 }
 
-.checkbox-container input[type="checkbox"]:checked ~ .checkbox-custom::after {
+.login-form .checkbox-container input[type="checkbox"]:checked ~ .checkbox-custom::after {
     content: "";
     position: absolute;
     left: 4.5px;
@@ -498,33 +507,59 @@
     transform: rotate(45deg);
 }
 
-.checkbox-container input[type="checkbox"]:focus-visible ~ .checkbox-custom {
+.login-form .checkbox-container input[type="checkbox"]:focus-visible ~ .checkbox-custom {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
 }
 
-.checkbox-label {
+.login-form .checkbox-label {
     font-size: 13.5px;
+    color: #475569;
+    font-weight: 500;
+    line-height: 1.4;
+    cursor: pointer;
 }
 
-.forgot-password-link {
+.login-form .forgot-password-link {
     color: #2563eb;
     text-decoration: none;
     font-weight: 500;
+    font-size: 13.5px;
     cursor: pointer;
     position: relative;
     z-index: 2;
+    white-space: nowrap;
     transition: color 0.15s ease, text-decoration 0.15s ease;
 }
 
-.forgot-password-link:hover {
+.login-form .forgot-password-link:hover {
     color: #1d4ed8;
     text-decoration: underline;
 }
 
-.forgot-password-link:focus-visible {
+.login-form .forgot-password-link:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
     border-radius: 2px;
+}
+
+.login-form .form-field-error {
+    color: #dc2626;
+    font-size: 12.5px;
+    font-weight: 500;
+    margin-top: 5px;
+    line-height: 1.35;
+}
+
+.login-form .form-input.is-invalid {
+    border-color: #dc2626;
+    background-color: #fffaf0;
+}
+
+.login-form .form-input.is-invalid:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
 }
 
 /* Submit Button */
@@ -708,10 +743,13 @@
         font-size: 13px;
     }
 
-    .form-actions-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
+    .login-form .form-actions-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        row-gap: 10px;
+        column-gap: 12px;
+        align-items: center;
+        justify-content: space-between;
     }
 }
 

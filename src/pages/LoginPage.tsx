@@ -1,20 +1,25 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
 import { useSession } from '../auth/SessionProvider'
 import { getRoleHomePath } from '../auth/roleRouting'
 import { LoginForm } from '../components/LoginForm'
+import { ToastPortal } from '../components/ToastPortal'
+import { useToast } from '../context/ToastContext'
 import { getErrorMessage } from '../utils/errorMessages'
 import './LoginPage.css'
 
 export function LoginPage() {
     const { hasSession, startSession, apiOrigin, role } = useSession()
+    const { showError } = useToast()
     const navigate = useNavigate()
     const [isLoading, setIsLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [toastError, setToastError] = useState<string | null>(null)
     const [isLocked, setIsLocked] = useState(false)
     const [isInactive, setIsInactive] = useState(false)
     const [tempLockSeconds, setTempLockSeconds] = useState<number | null>(null)
+    const isSubmittingRef = useRef(false)
 
     const handleTempLockEnd = () => {
         setTempLockSeconds(null)
@@ -25,13 +30,23 @@ export function LoginPage() {
         if (isLocked || isInactive) {
             setIsLocked(false)
             setIsInactive(false)
+        }
+        if (errorMessage) {
             setErrorMessage(null)
+        }
+        if (toastError) {
+            setToastError(null)
         }
     }
 
     async function handleLogin(email: string, password: string, remember = false) {
+        if (isSubmittingRef.current || isLoading) {
+            return
+        }
+        isSubmittingRef.current = true
         setIsLoading(true)
         setErrorMessage(null)
+        setToastError(null)
 
         try {
             const origin = apiOrigin || window.location.origin
@@ -72,25 +87,65 @@ export function LoginPage() {
                     }
                     setTempLockSeconds(seconds)
                     setErrorMessage(rawMsg || 'Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá số lần cho phép. Vui lòng thử lại sau.')
-                } else if (code === 'ACCOUNT_LOCKED') {
+                    setToastError(null)
+                } else if (response.status === 403 && (code === 'ACCOUNT_LOCKED' || (rawMsg && rawMsg.includes('đang bị khóa')))) {
                     setIsLocked(true)
                     setIsInactive(false)
                     setTempLockSeconds(null)
                     setErrorMessage(rawMsg || 'Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
-                } else if (code === 'ACCOUNT_INACTIVE' || code === 'ACCOUNT_DISABLED') {
+                    setToastError(null)
+                } else if (response.status === 403 && (code === 'ACCOUNT_INACTIVE' || code === 'ACCOUNT_DISABLED' || (rawMsg && rawMsg.includes('không hoạt động')))) {
                     setIsInactive(true)
                     setIsLocked(false)
                     setTempLockSeconds(null)
                     setErrorMessage(rawMsg || 'Tài khoản hiện không hoạt động. Vui lòng liên hệ quản trị viên.')
+                    setToastError(null)
+                } else if (response.status === 401) {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    const msg = rawMsg && (rawMsg.includes('không đúng') || rawMsg.includes('Email'))
+                        ? rawMsg
+                        : 'Email hoặc mật khẩu không đúng.'
+                    setErrorMessage(msg)
+                    setToastError(null)
+                } else if (response.status === 429) {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    const msg = rawMsg || 'Bạn đã gửi quá nhiều yêu cầu đăng nhập. Vui lòng thử lại sau ít phút.'
+                    setErrorMessage(null)
+                    setToastError(msg)
+                    showError(msg)
+                } else if (response.status === 500) {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    const msg = 'Có lỗi máy chủ, vui lòng thử lại sau.'
+                    setErrorMessage(null)
+                    setToastError(msg)
+                    showError(msg)
+                } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+                    setIsLocked(false)
+                    setIsInactive(false)
+                    setTempLockSeconds(null)
+                    const msg = code === 'SESSION_STORAGE_UNAVAILABLE'
+                        ? 'Hệ thống máy chủ tạm thời không thể lưu phiên đăng nhập. Vui lòng thử lại sau.'
+                        : 'Máy chủ tạm thời không khả dụng. Vui lòng thử lại sau.'
+                    setErrorMessage(null)
+                    setToastError(msg)
+                    showError(msg)
                 } else {
                     setIsLocked(false)
                     setIsInactive(false)
                     setTempLockSeconds(null)
-                    const message = getErrorMessage(
-                        { code, message: rawMsg },
-                        'Email hoặc mật khẩu không đúng.',
+                    const msg = getErrorMessage(
+                        { code, message: rawMsg, status: response.status },
+                        'Đã có lỗi xảy ra trong quá trình xử lý. Vui lòng thử lại.',
                     )
-                    setErrorMessage(message)
+                    setErrorMessage(null)
+                    setToastError(msg)
+                    showError(msg)
                 }
                 return
             }
@@ -103,7 +158,10 @@ export function LoginPage() {
                 typeof data.access_token !== 'string' ||
                 typeof data.refresh_token !== 'string'
             ) {
-                setErrorMessage('Phản hồi đăng nhập không hợp lệ.')
+                const msg = 'Phản hồi đăng nhập không hợp lệ từ máy chủ.'
+                setErrorMessage(null)
+                setToastError(msg)
+                showError(msg)
                 return
             }
 
@@ -200,11 +258,19 @@ export function LoginPage() {
                 navigate(targetPath, { replace: true })
             }
         } catch (err: unknown) {
-            setErrorMessage(
-                getErrorMessage(err, 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.'),
+            setIsLocked(false)
+            setIsInactive(false)
+            setTempLockSeconds(null)
+            const netMsg = getErrorMessage(
+                err,
+                'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.',
             )
+            setErrorMessage(null)
+            setToastError(netMsg)
+            showError(netMsg)
         } finally {
             setIsLoading(false)
+            isSubmittingRef.current = false
         }
     }
 
@@ -212,6 +278,10 @@ export function LoginPage() {
 
     return (
         <main className="login-page-container">
+            <ToastPortal
+                error={toastError}
+                onCloseError={() => setToastError(null)}
+            />
             {/* Background ICTU Campus with frosted white overlay */}
             <div className="login-page-bg" aria-hidden="true">
                 <div className="login-page-bg-img" />
