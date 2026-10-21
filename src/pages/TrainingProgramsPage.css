@@ -175,47 +175,58 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
-/* Success & Error Banners */
+/* Success & Error Banners - Synchronized to Top-Right Viewport */
 .programs-banner {
+    position: fixed;
+    top: calc(68px + 14px);
+    right: 24px;
+    z-index: 999999;
+    max-width: 480px;
+    width: calc(100% - 48px);
     border-radius: 8px;
     padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.22), 0 8px 10px -6px rgba(0, 0, 0, 0.12);
+    animation: leadsToastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .programs-banner-success {
-    background-color: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    background-color: #065f46;
+    border: 1px solid #047857;
+    color: #ffffff;
 }
 
 .programs-banner-error {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b91c1c;
+    background-color: #991b1b;
+    border: 1px solid #b91c1c;
+    color: #ffffff;
 }
 
 .programs-banner-message {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin: 0;
     font-weight: 500;
+    line-height: 1.45;
 }
 
 .programs-banner-close {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 1.25rem;
+    font-size: 1.35rem;
     line-height: 1;
-    padding: 4px 8px;
+    padding: 0 4px;
     border-radius: 4px;
     color: inherit;
-    opacity: 0.8;
+    opacity: 0.85;
+    transition: opacity 0.15s ease;
 }
 
 .programs-banner-close:hover {
@@ -443,14 +454,20 @@
 }
 
 .btn-action-delete {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
+    background: #fff1f2;
+    border: 1.5px solid #fecdd3;
+    color: #be123c;
 }
 
 .btn-action-delete:hover:not(:disabled) {
-    background: #fee2e2;
-    border-color: #fca5a5;
+    background: #e11d48 !important;
+    border-color: #be123c !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35);
+}
+
+.btn-action-delete:hover:not(:disabled) svg {
+    stroke: #ffffff !important;
 }
 
 .btn-action-edit:disabled,

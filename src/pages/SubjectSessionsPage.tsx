@@ -68,7 +68,8 @@ export function SubjectSessionsPage({
     const [subjectStatus, setSubjectStatus] = useState<string>(initialSubject?.status || 'active')
     const [sessions, setSessions] = useState<SubjectSession[]>(initialSessions || [])
     const [loading, setLoading] = useState<boolean>(!initialSessions && Boolean(subjectId))
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [pageError, setPageError] = useState<string | null>(null)
+    const [actionError, setActionError] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     // Modals State
@@ -116,7 +117,14 @@ export function SubjectSessionsPage({
 
     // Load data function
     const loadData = useCallback(async () => {
-        if (!subjectId) return
+        if (!subjectId) {
+            setPageError('Mã định danh môn học không hợp lệ.')
+            setLoading(false)
+            return
+        }
+
+        setLoading(true)
+        setPageError(null)
 
         try {
             // Lấy danh sách sessions
@@ -137,48 +145,29 @@ export function SubjectSessionsPage({
                 // Nếu getSubject lỗi thì giữ nguyên status mặc định
             }
         } catch (err) {
-            const msg = err instanceof ApiError ? err.message : 'Lỗi khi tải dữ liệu buổi học.'
-            setErrorMessage(msg)
+            const msg = getErrorMessage(err, 'Lỗi khi tải dữ liệu buổi học.')
+            setPageError(msg)
+            setSessions([])
         } finally {
             setLoading(false)
         }
     }, [requestFn, subjectId])
 
     useEffect(() => {
-        let isMounted = true
-        if (!subjectId || initialSessions) return
-
-        getSubjectSessions(requestFn, subjectId)
-            .then(async (res) => {
-                if (isMounted) {
-                    setSubject(res.subject)
-                    if (res.subject.status) {
-                        setSubjectStatus(res.subject.status)
-                    }
-                    setSessions(res.items.sort((a, b) => a.session_number - b.session_number))
-                    setLoading(false)
-
-                    try {
-                        const subjDetail = await getSubject(requestFn, subjectId)
-                        if (isMounted && subjDetail.status) {
-                            setSubjectStatus(subjDetail.status)
-                        }
-                    } catch {
-                        // ignore
-                    }
-                }
-            })
-            .catch((err: unknown) => {
-                if (isMounted) {
-                    setErrorMessage(getErrorMessage(err, 'Lỗi khi tải dữ liệu buổi học.'))
-                    setLoading(false)
-                }
-            })
-
-        return () => {
-            isMounted = false
+        if (!subjectId) {
+            setPageError('Mã định danh môn học không hợp lệ.')
+            setLoading(false)
+            return
         }
-    }, [subjectId, requestFn, initialSessions])
+
+        if (initialSessions) {
+            setSessions(initialSessions)
+            setLoading(false)
+            return
+        }
+
+        void loadData()
+    }, [subjectId, initialSessions, loadData])
 
     // ESC key handler for modals
     useEffect(() => {
@@ -348,7 +337,7 @@ export function SubjectSessionsPage({
             session_number: idx + 1,
         }))
         setSessions(updatedLocal)
-        setErrorMessage(null)
+        setActionError(null)
 
         try {
             const sessionIds = reordered.map((s) => s.id)
@@ -358,7 +347,7 @@ export function SubjectSessionsPage({
         } catch (err) {
             // Rollback on failure
             setSessions(previousSessions)
-            setErrorMessage(
+            setActionError(
                 err instanceof ApiError
                     ? err.message
                     : 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
@@ -583,7 +572,7 @@ export function SubjectSessionsPage({
                         </div>
                     </div>
 
-                    {canManage && (
+                    {canManage && subject && !loading && !pageError && (
                         <div className="subject-sessions-actions">
                             <button
                                 type="button"
@@ -656,14 +645,14 @@ export function SubjectSessionsPage({
             )}
 
             {/* Error Message Banner */}
-            {errorMessage && (
+            {actionError && (
                 <div className="sessions-banner sessions-banner-error" data-testid="banner-error" role="alert">
-                    <p className="sessions-banner-message">⚠ {errorMessage}</p>
+                    <p className="sessions-banner-message">⚠ {actionError}</p>
                     <button
                         type="button"
                         className="sessions-banner-close"
                         aria-label="Đóng thông báo lỗi"
-                        onClick={() => setErrorMessage(null)}
+                        onClick={() => setActionError(null)}
                     >
                         ×
                     </button>
@@ -675,6 +664,46 @@ export function SubjectSessionsPage({
                 <div className="sessions-loading-state" data-testid="loading-state">
                     <div className="spinner" />
                     <p>Đang tải danh sách buổi học...</p>
+                </div>
+            ) : pageError ? (
+                /* Error State */
+                <div className="sessions-error-state" data-testid="error-state" role="alert">
+                    <div className="sessions-error-icon" aria-hidden="true">
+                        <svg
+                            width="28"
+                            height="28"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                    </div>
+                    <h3>Không thể tải danh sách buổi học</h3>
+                    <p data-testid="sessions-error-message">{pageError}</p>
+                    <div className="sessions-error-actions">
+                        <button
+                            type="button"
+                            className="btn-primary"
+                            data-testid="btn-retry"
+                            onClick={() => void loadData()}
+                        >
+                            Thử lại
+                        </button>
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            data-testid="btn-back-to-subjects"
+                            onClick={() => navigate('/subjects')}
+                        >
+                            Quay lại danh sách môn học
+                        </button>
+                    </div>
                 </div>
             ) : sessions.length === 0 ? (
                 /* Empty State */

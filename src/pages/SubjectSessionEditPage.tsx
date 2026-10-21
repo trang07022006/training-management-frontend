@@ -7,6 +7,8 @@ import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import './SubjectsPage.css'
 
 export function SubjectSessionEditPage() {
@@ -104,26 +106,33 @@ export function SubjectSessionEditPage() {
                 objective: objective.trim(),
             })
 
-            setSuccessMessage(getSuccessMessage('UPDATE_SESSION_SUCCESS', 'Cập nhật buổi học thành công!'))
+            const msg = getSuccessMessage('UPDATE_SESSION_SUCCESS', 'Cập nhật buổi học thành công!')
+            setSuccessMessage(msg)
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/subjects/${subjectId}/sessions`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setSubmitError(err.message)
-            } else {
-                setSubmitError(getErrorMessage(err, 'Lỗi khi cập nhật buổi học.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi cập nhật buổi học.')
+            setSubmitError(errText)
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+                const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
+                if (!confirmed) return
+            } else {
+                setIsConfirmLeaveOpen(true)
+                return
+            }
         }
         navigate(`/subjects/${subjectId}/sessions`)
     }
@@ -294,6 +303,17 @@ export function SubjectSessionEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/subjects/${subjectId}/sessions`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

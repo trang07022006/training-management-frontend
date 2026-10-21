@@ -880,7 +880,7 @@
 }
 
 /* Actions Row */
-.form-actions-row {
+.create-absence-page-container .form-actions-row {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -973,11 +973,11 @@
         justify-content: center;
     }
 
-    .form-actions-row {
+    .create-absence-page-container .form-actions-row {
         flex-direction: column-reverse;
     }
 
-    .form-actions-row button {
+    .create-absence-page-container .form-actions-row button {
         width: 100%;
     }
 }

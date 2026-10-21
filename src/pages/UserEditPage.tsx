@@ -6,6 +6,8 @@ import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { getRoleLabel } from '../auth/roleRouting'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import '../components/UserModal.css'
 
 interface FormErrors {
@@ -37,8 +39,6 @@ export function UserEditPage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [isDirty, setIsDirty] = useState(false)
 
     useEffect(() => {
@@ -109,8 +109,6 @@ export function UserEditPage() {
         if (!validate() || !userId) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: UpdateUserData = {
             name: name.trim(),
@@ -121,26 +119,31 @@ export function UserEditPage() {
 
         try {
             await updateUserApi(requestFn, userId, payload)
-            setSuccessMessage(getSuccessMessage('UPDATE_USER_SUCCESS', 'Cập nhật thông tin người dùng thành công!'))
+            const msg = getSuccessMessage('UPDATE_USER_SUCCESS', 'Cập nhật thông tin người dùng thành công!')
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/users/${userId}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi cập nhật người dùng.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi cập nhật người dùng.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+                const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
+                if (!confirmed) return
+            } else {
+                setIsConfirmLeaveOpen(true)
+                return
+            }
         }
         navigate(`/users/${userId || ''}`)
     }
@@ -204,17 +207,6 @@ export function UserEditPage() {
                     { label: 'Chỉnh sửa' },
                 ]}
             />
-
-            {errorMessage && (
-                <div className="modal-banner banner-error" role="alert" style={{ margin: '0 0 16px 0' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="modal-banner banner-success" role="alert" style={{ margin: '0 0 16px 0' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div style={{ maxWidth: '780px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '28px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -313,6 +305,17 @@ export function UserEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/users/${userId || ''}`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

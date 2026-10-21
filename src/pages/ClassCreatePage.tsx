@@ -4,6 +4,7 @@ import { useSession } from '../auth/SessionProvider'
 import { createClass, type CreateClassInput, ApiError } from '../api/classApi'
 import { getTrainingPrograms, type TrainingProgram } from '../api/trainingProgramApi'
 import { PageHeader } from '../components/PageHeader'
+import { TrainingProgramSelect } from '../components/TrainingProgramSelect'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './ClassesPage.css'
@@ -183,23 +184,15 @@ export function ClassCreatePage() {
                             <label className="form-label" htmlFor="create-class-program">
                                 Chương trình đào tạo <span className="required">*</span>
                             </label>
-                            <select
+                            <TrainingProgramSelect
                                 id="create-class-program"
-                                className={`form-select ${formErrors.program_id ? 'error' : ''}`}
                                 value={programId}
-                                onChange={(e) => setProgramId(e.target.value)}
+                                onChange={(val) => setProgramId(val)}
+                                programs={programs}
+                                placeholder="-- Chọn chương trình đào tạo --"
                                 disabled={isSubmitting || isLoadingPrograms}
-                            >
-                                {isLoadingPrograms ? (
-                                    <option value="">Đang tải chương trình đào tạo...</option>
-                                ) : (
-                                    programs.map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.code} - {p.name}
-                                        </option>
-                                    ))
-                                )}
-                            </select>
+                                hasError={Boolean(formErrors.program_id)}
+                            />
                             {formErrors.program_id && <div className="form-error">{formErrors.program_id}</div>}
                         </div>
                     </div>

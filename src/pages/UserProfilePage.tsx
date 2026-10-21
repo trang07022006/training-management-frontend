@@ -77,6 +77,31 @@ export function UserProfilePage() {
     const [passwordErrorMessage, setPasswordErrorMessage] = useState<string | null>(null)
     const [passwordSuccessMessage, setPasswordSuccessMessage] = useState<string | null>(null)
 
+    // Auto-dismiss notification alerts after 4.5 seconds
+    useEffect(() => {
+        if (!successMessage) return
+        const t = setTimeout(() => setSuccessMessage(null), 4500)
+        return () => clearTimeout(t)
+    }, [successMessage])
+
+    useEffect(() => {
+        if (!errorMessage) return
+        const t = setTimeout(() => setErrorMessage(null), 6000)
+        return () => clearTimeout(t)
+    }, [errorMessage])
+
+    useEffect(() => {
+        if (!passwordSuccessMessage) return
+        const t = setTimeout(() => setPasswordSuccessMessage(null), 4500)
+        return () => clearTimeout(t)
+    }, [passwordSuccessMessage])
+
+    useEffect(() => {
+        if (!passwordErrorMessage) return
+        const t = setTimeout(() => setPasswordErrorMessage(null), 6000)
+        return () => clearTimeout(t)
+    }, [passwordErrorMessage])
+
     // Calculate dirty state by comparing current form fields with backend profile
     const isDirty = Boolean(
         profile && (
@@ -407,8 +432,18 @@ export function UserProfilePage() {
                     role="alert"
                     data-testid="profile-success-message"
                 >
-                    <span className="alert-icon" aria-hidden="true">✓</span>
-                    <span>{successMessage}</span>
+                    <div className="profile-alert-body">
+                        <span className="alert-icon" aria-hidden="true">✓</span>
+                        <span>{successMessage}</span>
+                    </div>
+                    <button
+                        type="button"
+                        className="profile-alert-close"
+                        onClick={() => setSuccessMessage(null)}
+                        aria-label="Đóng thông báo"
+                    >
+                        ✕
+                    </button>
                 </div>
             )}
 
@@ -418,8 +453,18 @@ export function UserProfilePage() {
                     role="alert"
                     data-testid="profile-error-message"
                 >
-                    <span className="alert-icon" aria-hidden="true">⚠️</span>
-                    <span>{errorMessage}</span>
+                    <div className="profile-alert-body">
+                        <span className="alert-icon" aria-hidden="true">⚠️</span>
+                        <span>{errorMessage}</span>
+                    </div>
+                    <button
+                        type="button"
+                        className="profile-alert-close"
+                        onClick={() => setErrorMessage(null)}
+                        aria-label="Đóng thông báo"
+                    >
+                        ✕
+                    </button>
                 </div>
             )}
 
@@ -678,14 +723,34 @@ export function UserProfilePage() {
 
                                 {passwordSuccessMessage && (
                                     <div className="profile-alert profile-alert-success" role="status" data-testid="password-success-message">
-                                        <span className="alert-icon" aria-hidden="true">✓</span>
-                                        <span>{passwordSuccessMessage}</span>
+                                        <div className="profile-alert-body">
+                                            <span className="alert-icon" aria-hidden="true">✓</span>
+                                            <span>{passwordSuccessMessage}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="profile-alert-close"
+                                            onClick={() => setPasswordSuccessMessage(null)}
+                                            aria-label="Đóng thông báo"
+                                        >
+                                            ✕
+                                        </button>
                                     </div>
                                 )}
                                 {passwordErrorMessage && (
                                     <div className="profile-alert profile-alert-error" role="alert" data-testid="password-error-message">
-                                        <span className="alert-icon" aria-hidden="true">⚠️</span>
-                                        <span>{passwordErrorMessage}</span>
+                                        <div className="profile-alert-body">
+                                            <span className="alert-icon" aria-hidden="true">⚠️</span>
+                                            <span>{passwordErrorMessage}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="profile-alert-close"
+                                            onClick={() => setPasswordErrorMessage(null)}
+                                            aria-label="Đóng thông báo"
+                                        >
+                                            ✕
+                                        </button>
                                     </div>
                                 )}
 

@@ -10,6 +10,8 @@ export interface LoginFormProps {
     tempLockSeconds?: number | null
     onTempLockEnd?: () => void
     onInputChange?: () => void
+    prefillEmail?: string
+    prefillPassword?: string
     initialEmail?: string
     initialPassword?: string
 }
@@ -29,11 +31,30 @@ export function LoginForm({
     tempLockSeconds = null,
     onTempLockEnd,
     onInputChange,
+    prefillEmail,
+    prefillPassword,
     initialEmail,
     initialPassword,
 }: LoginFormProps) {
-    const [email, setEmail] = useState(initialEmail || '')
-    const [password, setPassword] = useState(initialPassword || '')
+    const effectiveEmail = prefillEmail ?? initialEmail ?? ''
+    const effectivePassword = prefillPassword ?? initialPassword ?? ''
+
+    const [email, setEmail] = useState(effectiveEmail)
+    const [password, setPassword] = useState(effectivePassword)
+
+    useEffect(() => {
+        const val = prefillEmail ?? initialEmail
+        if (val !== undefined) {
+            setEmail(val)
+        }
+    }, [prefillEmail, initialEmail])
+
+    useEffect(() => {
+        const val = prefillPassword ?? initialPassword
+        if (val !== undefined) {
+            setPassword(val)
+        }
+    }, [prefillPassword, initialPassword])
     const [remember, setRemember] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
 
