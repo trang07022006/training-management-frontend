@@ -183,6 +183,27 @@ export function ClassDetailPage() {
                 }
                 actions={
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {canTakeOrViewAttendance && (
+                            <Link
+                                to={`/classes/${classData.id}/attendance-summary`}
+                                className="btn-secondary"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: '#ecfdf5',
+                                    color: '#047857',
+                                    borderColor: '#a7f3d0',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                }}
+                                title="Xem Bảng chuyên cần tổng hợp của lớp"
+                            >
+                                <span>📊 Bảng chuyên cần</span>
+                            </Link>
+                        )}
                         <button
                             type="button"
                             className="btn-secondary"
@@ -228,6 +249,45 @@ export function ClassDetailPage() {
             {/* TAB 1: THÔNG TIN CHUNG */}
             {activeTab === 'info' && (
                 <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    {canTakeOrViewAttendance && (
+                        <div style={{
+                            marginBottom: '20px',
+                            padding: '14px 18px',
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                        }}>
+                            <div>
+                                <strong style={{ color: '#166534', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>📊</span> Bảng chuyên cần tổng hợp theo lớp (SCRUM-256)
+                                </strong>
+                                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#15803d' }}>
+                                    Theo dõi ma trận điểm danh theo buổi, số buổi vắng và tỷ lệ chuyên cần (%) để phát hiện nguy cơ bỏ học.
+                                </p>
+                            </div>
+                            <Link
+                                to={`/classes/${classData.id}/attendance-summary`}
+                                className="btn-primary"
+                                style={{
+                                    background: '#059669',
+                                    borderColor: '#047857',
+                                    color: '#ffffff',
+                                    padding: '8px 16px',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                }}
+                            >
+                                Mở Bảng chuyên cần tổng hợp →
+                            </Link>
+                        </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                         <div className="detail-item">
                             <span style={{ fontSize: '13px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Mã lớp học</span>
