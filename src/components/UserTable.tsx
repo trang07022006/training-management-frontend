@@ -1,4 +1,6 @@
+import { useInRouterContext, Link } from 'react-router'
 import { type User, getStatusInfo } from '../api/userApi'
+import { getRoleLabel } from '../auth/roleRouting'
 import './UserTable.css'
 
 export interface UserTableProps {
@@ -17,6 +19,8 @@ const ROLE_LABELS: Record<string, string> = {
     trainer: 'Giảng viên',
     trainee: 'Học viên',
     user: 'Người dùng',
+    consultant: 'Tư vấn tuyển sinh',
+    training_manager: 'Quản lý đào tạo',
 }
 
 export function UserTable({
@@ -29,6 +33,7 @@ export function UserTable({
     emptyMessage = 'Không có dữ liệu người dùng.',
     isActionLoading = false,
 }: UserTableProps) {
+    const inRouter = useInRouterContext()
     if (!users || users.length === 0) {
         return (
             <div className="user-table-container" data-testid="user-table-empty-container">
@@ -45,24 +50,35 @@ export function UserTable({
                 <table className="user-table" data-testid="user-table">
                     <thead>
                         <tr>
-                            <th scope="col">Họ và tên</th>
-                            <th scope="col">Email</th>
-                            <th scope="col">Số điện thoại</th>
-                            <th scope="col">Vai trò</th>
-                            <th scope="col">Trạng thái</th>
-                            {canManage && <th scope="col" style={{ textAlign: 'right' }}>Thao tác</th>}
+                            <th scope="col" className="col-user-name">Họ và tên</th>
+                            <th scope="col" className="col-user-email">Email</th>
+                            <th scope="col" className="col-user-phone">Số điện thoại</th>
+                            <th scope="col" className="col-user-role">Vai trò</th>
+                            <th scope="col" className="col-user-status">Trạng thái</th>
+                            {canManage && <th scope="col" className="col-user-actions" style={{ textAlign: 'right' }}>Thao tác</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {users.map((u) => {
                             const roleKey = (u.role || 'user').toLowerCase()
-                            const roleText = ROLE_LABELS[roleKey] || u.role || 'Người dùng'
+                            const roleText = ROLE_LABELS[roleKey] || getRoleLabel(u.role) || 'Người dùng'
                             const { key: statusKey, label: statusText } = getStatusInfo(u.status)
 
                             return (
                                 <tr key={u.id} data-testid={`user-row-${u.id}`}>
                                     <td className="user-cell-name" title={u.name}>
-                                        {u.name}
+                                        {inRouter ? (
+                                            <Link
+                                                to={`/users/${u.id}`}
+                                                className="user-name-link"
+                                                style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'none' }}
+                                                data-testid={`user-link-${u.id}`}
+                                            >
+                                                {u.name}
+                                            </Link>
+                                        ) : (
+                                            u.name
+                                        )}
                                     </td>
                                     <td className="user-cell-email" title={u.email}>
                                         {u.email}

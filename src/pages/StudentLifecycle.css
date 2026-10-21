@@ -1,0 +1,533 @@
+/* Student Lifecycle CSS (SCRUM-252) */
+/* Đồng bộ vùng nội dung, căn lề và thiết kế responsive với Hồ sơ học viên (StudentsPage.css) */
+@import './StudentsPage.css';
+
+.lifecycle-container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    color: #1e293b;
+}
+
+/* KHỐI TÓM TẮT HỌC VIÊN THU GỌN */
+.lifecycle-student-summary {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lifecycle-summary-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lifecycle-summary-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+    border: 1px solid #e2e8f0;
+}
+
+.lifecycle-summary-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.lifecycle-summary-name-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.lifecycle-summary-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    word-break: break-word;
+}
+
+.lifecycle-summary-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #64748b;
+    flex-wrap: wrap;
+    line-height: 1.4;
+}
+
+.lifecycle-meta-sep {
+    color: #cbd5e1;
+}
+
+.lifecycle-program-text {
+    color: #0369a1;
+    font-weight: 600;
+}
+
+/* THẺ FORM NGHIỆP VỤ */
+.lifecycle-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+    padding: 24px;
+    margin-bottom: 24px;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.lifecycle-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lifecycle-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+/* LƯỚI TRƯỜNG DỮ LIỆU ĐA CỘT (DESKTOP 2 CỘT, MOBILE 1 CỘT) */
+.lifecycle-form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 24px;
+    margin-bottom: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lifecycle-form-group {
+    margin-bottom: 20px;
+    min-width: 0;
+    box-sizing: border-box;
+    scroll-margin-top: 90px;
+}
+
+.lifecycle-form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.lifecycle-form-label .required {
+    color: #ef4444;
+    margin-left: 4px;
+}
+
+.lifecycle-form-control {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #1e293b;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    box-sizing: border-box;
+    min-height: 42px;
+    scroll-margin-top: 90px;
+}
+
+.lifecycle-form-control:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.lifecycle-form-control.has-error {
+    border-color: #ef4444 !important;
+    background-color: #fffafa;
+}
+
+.lifecycle-form-control.has-error:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
+textarea.lifecycle-form-control {
+    min-height: 100px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
+.lifecycle-form-hint {
+    font-size: 12.5px;
+    color: #64748b;
+    margin-top: 6px;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+/* THÔNG BÁO LỖI THEO TỪNG TRƯỜNG DỮ LIỆU */
+.lifecycle-field-error {
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    animation: fieldErrorFadeIn 0.15s ease-out;
+}
+
+@keyframes fieldErrorFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* KHỐI TÁC ĐỘNG NGHIỆP VỤ */
+.lifecycle-impact-box {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-left: 4px solid #0284c7;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 20px 0;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.lifecycle-impact-box.danger {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #ef4444;
+}
+
+.lifecycle-impact-box.warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-left: 4px solid #f59e0b;
+}
+
+.lifecycle-impact-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0369a1;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lifecycle-impact-box.danger .lifecycle-impact-title {
+    color: #b91c1c;
+}
+
+.lifecycle-impact-box.warning .lifecycle-impact-title {
+    color: #b45309;
+}
+
+.lifecycle-impact-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.6;
+}
+
+/* THÔNG BÁO ALERT */
+.lifecycle-alert {
+    padding: 14px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    width: 100%;
+    line-height: 1.45;
+}
+
+.lifecycle-alert.error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.lifecycle-alert.success {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.lifecycle-action-alert {
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+/* THANH NÚT THAO TÁC */
+.lifecycle-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lifecycle-actions button,
+.lifecycle-actions a {
+    min-height: 42px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* HỘP THOẠI XÁC NHẬN (MODAL) */
+.lifecycle-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.lifecycle-modal-dialog {
+    background: #ffffff;
+    border-radius: 14px;
+    max-width: 580px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    animation: modalSlideIn 0.2s ease-out;
+    box-sizing: border-box;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.lifecycle-modal-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.lifecycle-modal-header h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.lifecycle-modal-body {
+    padding: 24px;
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.5;
+    overflow-y: auto;
+    flex: 1;
+    box-sizing: border-box;
+}
+
+.lifecycle-modal-summary {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    box-sizing: border-box;
+}
+
+.lifecycle-modal-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e2e8f0;
+    gap: 16px;
+}
+
+.lifecycle-modal-summary-row:last-child {
+    border-bottom: none;
+}
+
+.lifecycle-modal-summary-label {
+    font-weight: 500;
+    color: #64748b;
+    flex-shrink: 0;
+    width: 140px;
+}
+
+.lifecycle-modal-summary-val {
+    font-weight: 600;
+    color: #0f172a;
+    text-align: right;
+    word-break: break-word;
+    flex: 1;
+}
+
+.lifecycle-modal-footer {
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+.lifecycle-modal-footer button {
+    min-height: 40px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    box-sizing: border-box;
+}
+
+/* RESPONSIVE TRÊN TABLET VÀ MOBILE (360PX+) */
+@media (max-width: 768px) {
+    .lifecycle-form-grid-2 {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 640px) {
+    .lifecycle-student-summary {
+        padding: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .lifecycle-summary-main {
+        width: 100%;
+    }
+
+    .lifecycle-summary-avatar {
+        display: none;
+    }
+
+    .lifecycle-card {
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+    }
+
+    .lifecycle-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .lifecycle-actions button,
+    .lifecycle-actions a {
+        width: 100%;
+    }
+
+    .lifecycle-modal-backdrop {
+        padding: 10px;
+    }
+
+    .lifecycle-modal-header {
+        padding: 14px 16px;
+    }
+
+    .lifecycle-modal-body {
+        padding: 16px;
+    }
+
+    .lifecycle-modal-summary {
+        padding: 10px 12px;
+    }
+
+    .lifecycle-modal-summary-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .lifecycle-modal-summary-label {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .lifecycle-modal-summary-val {
+        text-align: left;
+        width: 100%;
+    }
+
+    .lifecycle-modal-footer {
+        padding: 12px 16px;
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .lifecycle-modal-footer button {
+        width: 100%;
+    }
+}
