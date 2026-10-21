@@ -1,0 +1,211 @@
+/* SpeedGradingPage.css - SCRUM-267 */
+
+.speed-grading-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    background: #f8fafc;
+    overflow: hidden;
+}
+
+/* Header bar */
+.speed-grading-topbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.topbar-title h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.topbar-progress {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.progress-text {
+    font-size: 0.875rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+.progress-track {
+    width: 140px;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #10b981;
+    transition: width 0.3s;
+}
+
+.btn-publish {
+    background: #7c3aed;
+    color: #ffffff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+
+.btn-publish:hover {
+    background: #6d28d9;
+}
+
+/* Split-pane workspace */
+.speed-grading-workspace {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    height: calc(100% - 60px);
+    overflow: hidden;
+}
+
+/* Left Pane: Preview */
+.preview-pane {
+    padding: 20px;
+    overflow-y: auto;
+    border-right: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.submission-meta-card {
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.student-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.student-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.repo-card {
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.repo-btn {
+    background: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.preview-viewer-box {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Right Pane: Grading Panel */
+.grading-pane {
+    background: #ffffff;
+    padding: 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.nav-bar-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 20px;
+}
+
+.score-box-container {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.score-large-input {
+    width: 110px;
+    padding: 10px;
+    font-size: 1.75rem;
+    font-weight: 800;
+    text-align: center;
+    border: 2px solid #2563eb;
+    border-radius: 8px;
+}
+
+.btn-next-action {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    width: 100%;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-next-action:hover {
+    background: #059669;
+}
+
+.btn-audit {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: 10px;
+}
