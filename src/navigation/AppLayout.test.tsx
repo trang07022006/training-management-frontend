@@ -39,4 +39,30 @@ describe('SCRUM-23 Phase 4: AppLayout Integration', () => {
         expect(screen.getByTestId('app-header')).toBeDefined()
         expect(screen.getByText('Trang Tổng Quan Hệ Thống')).toBeDefined()
     })
+
+    it('2. bấm nút toggle trên header kích hoạt trạng thái ẩn/hiện sidebar', async () => {
+        const { fireEvent } = await import('@testing-library/react')
+        render(
+            <MemoryRouter initialEntries={['/']}>
+                <SessionProvider apiOrigin="http://localhost:5000">
+                    <SessionInitializer role="admin" />
+                    <Routes>
+                        <Route element={<AppLayout />}>
+                            <Route path="/" element={<h1>Trang Tổng Quan Hệ Thống</h1>} />
+                        </Route>
+                    </Routes>
+                </SessionProvider>
+            </MemoryRouter>,
+        )
+
+        const toggleBtn = screen.getByTestId('sidebar-toggle-button')
+        const sidebar = screen.getByTestId('app-sidebar')
+        expect(sidebar.classList.contains('is-collapsed')).toBe(false)
+
+        fireEvent.click(toggleBtn)
+        expect(sidebar.classList.contains('is-collapsed')).toBe(true)
+
+        fireEvent.click(toggleBtn)
+        expect(sidebar.classList.contains('is-collapsed')).toBe(false)
+    })
 })

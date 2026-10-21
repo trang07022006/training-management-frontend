@@ -96,7 +96,7 @@ function Scrum24TestApp({ initialEntry = '/' }: { initialEntry?: string }) {
                                     />
                                 }
                             >
-                                <Route path="/trainee" element={<div data-testid="trainee-content">Nội Dung Trainee</div>} />
+                                <Route path="/my-schedule" element={<div data-testid="trainee-content">Nội Dung Trainee</div>} />
                             </Route>
 
                             <Route path="/change-password" element={<ChangePasswordPage />} />
@@ -249,7 +249,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
                     </SessionProvider>
                 </MemoryRouter>,
             )
-            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/admin')
+            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/dashboard')
             u1()
 
             const { unmount: u2 } = render(
@@ -261,7 +261,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
                     </SessionProvider>
                 </MemoryRouter>,
             )
-            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainer')
+            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
             u2()
 
             render(
@@ -273,7 +273,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
                     </SessionProvider>
                 </MemoryRouter>,
             )
-            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainee')
+            expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
         })
     })
 
@@ -428,7 +428,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
 
         it('21. Menu Permission regression: Admin hiển thị đúng các menu quản trị', () => {
             render(
-                <MemoryRouter initialEntries={['/admin']}>
+                <MemoryRouter initialEntries={['/users']}>
                     <SessionProvider apiOrigin="http://localhost:5000">
                         <FullSessionWrapper role="admin">
                             <AppLayout />
@@ -437,7 +437,7 @@ describe('SCRUM-81: Test Tổng Thể Error Pages (SCRUM-24 Test Matrix)', () =>
                 </MemoryRouter>,
             )
             expect(screen.getByTestId('menu-item-overview')).toBeDefined()
-            expect(screen.getByTestId('menu-item-admin_dashboard')).toBeDefined()
+            expect(screen.getByTestId('menu-item-users')).toBeDefined()
         })
 
         it('22. RequirePermission regression: từ chối quyền không xác định bằng Default Deny', () => {

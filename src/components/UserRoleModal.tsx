@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from '../auth/SessionProvider'
 import {
     fetchUserRolesApi,
@@ -9,6 +9,7 @@ import {
     type RoleItem,
 } from '../api/userApi'
 import { getErrorMessage } from '../utils/errorMessages'
+import { getRoleDisplayName } from '../auth/roleRouting'
 import './UserModal.css'
 import './UserRoleModal.css'
 
@@ -68,25 +69,40 @@ function UserRoleModalContent({
         }
     }, [user.id, requestFn])
 
-    // Phân vai trò cho người dùng
-    const handleAssign = async (e: FormEvent) => {
-        e.preventDefault()
-        if (!selectedRoleId || isActionLoading) return
+    // Phân vai trò cho người dùng (tự động gán ngay khi chọn vai trò)
+    const handleRoleSelect = async (roleId: string) => {
+        if (!roleId || isActionLoading) return
 
+        // Không gửi request nếu người dùng đã có vai trò này
+        if (userRoles.some((r) => String(r.id) === String(roleId))) {
+            setSelectedRoleId('')
+            return
+        }
+
+        setSelectedRoleId(roleId)
         setIsActionLoading(true)
         setErrorMessage(null)
         setSuccessMessage(null)
 
         try {
-            const result = await assignUserRoleApi(requestFn, user.id, selectedRoleId)
+            const result = await assignUserRoleApi(requestFn, user.id, roleId)
             const newlyAssignedRole = result.role
-            const nextRoles = [...userRoles.filter((r) => r.id !== newlyAssignedRole.id), newlyAssignedRole]
+            const nextRoles = [
+                ...userRoles.filter((r) => String(r.id) !== String(newlyAssignedRole.id)),
+                newlyAssignedRole,
+            ]
             setUserRoles(nextRoles)
             setSelectedRoleId('')
-            setSuccessMessage(`Đã gán vai trò "${newlyAssignedRole.name}" cho người dùng.`)
+            setSuccessMessage(`Đã gán vai trò ${getRoleDisplayName(newlyAssignedRole)}.`)
             onRoleUpdated?.(user, nextRoles)
         } catch (err: unknown) {
-            setErrorMessage(getErrorMessage(err, 'Gán vai trò thất bại.'))
+            setSelectedRoleId('')
+            const msg = getErrorMessage(err, 'Không thể gán vai trò. Vui lòng thử lại.')
+            setErrorMessage(
+                msg.includes('thất bại') || msg.includes('Đã xảy ra lỗi')
+                    ? 'Không thể gán vai trò. Vui lòng thử lại.'
+                    : msg,
+            )
         } finally {
             setIsActionLoading(false)
         }
@@ -104,7 +120,7 @@ function UserRoleModalContent({
             await revokeUserRoleApi(requestFn, user.id, role.id)
             const nextRoles = userRoles.filter((r) => r.id !== role.id)
             setUserRoles(nextRoles)
-            setSuccessMessage(`Đã gỡ vai trò "${role.name}" khỏi người dùng.`)
+            setSuccessMessage(`Đã gỡ vai trò "${getRoleDisplayName(role)}" khỏi người dùng.`)
             onRoleUpdated?.(user, nextRoles)
         } catch (err: unknown) {
             setErrorMessage(getErrorMessage(err, 'Gỡ vai trò thất bại.'))
@@ -209,8 +225,7 @@ function UserRoleModalContent({
                                         <div key={role.id} className="current-role-item" data-testid={`role-item-${role.id}`}>
                                             <div className="role-item-info">
                                                 <div className="role-item-header">
-                                                    <span className="role-item-name">{role.name}</span>
-                                                    <span className="role-item-code">({role.code})</span>
+                                                    <span className="role-item-name">{getRoleDisplayName(role)}</span>
                                                 </div>
                                                 {role.description && (
                                                     <p className="role-item-desc">{role.description}</p>
@@ -222,7 +237,7 @@ function UserRoleModalContent({
                                                 data-testid={`btn-revoke-role-${role.id}`}
                                                 onClick={() => void handleRevoke(role)}
                                                 disabled={isActionLoading}
-                                                aria-label={`Gỡ vai trò ${role.name}`}
+                                                aria-label={`Gỡ vai trò ${getRoleDisplayName(role)}`}
                                             >
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -246,12 +261,12 @@ function UserRoleModalContent({
                                 <span>Phân vai trò mới</span>
                             </h3>
 
-                            <form onSubmit={handleAssign} className="assign-role-group">
+                            <div className="assign-role-group">
                                 <select
                                     className="form-select"
                                     data-testid="select-assign-role"
                                     value={selectedRoleId}
-                                    onChange={(e) => setSelectedRoleId(e.target.value)}
+                                    onChange={(e) => void handleRoleSelect(e.target.value)}
                                     disabled={isActionLoading || unassignedRoles.length === 0}
                                     aria-label="Chọn vai trò để phân quyền"
                                 >
@@ -262,21 +277,20 @@ function UserRoleModalContent({
                                     </option>
                                     {unassignedRoles.map((r) => (
                                         <option key={r.id} value={r.id}>
-                                            {r.name} ({r.code})
+                                            {getRoleDisplayName(r)}
                                         </option>
                                     ))}
                                 </select>
-
-                                <button
-                                    type="submit"
-                                    className="btn-assign-role"
-                                    data-testid="btn-assign-role-submit"
-                                    disabled={!selectedRoleId || isActionLoading}
-                                >
-                                    {isActionLoading && <span className="btn-spinner" aria-hidden="true" />}
-                                    <span>Gán vai trò</span>
-                                </button>
-                            </form>
+                                {isActionLoading && (
+                                    <span
+                                        className="role-inline-loading"
+                                        data-testid="assign-role-loading"
+                                    >
+                                        <span className="btn-spinner" aria-hidden="true" />
+                                        <span>Đang gán...</span>
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </>
                 )}
