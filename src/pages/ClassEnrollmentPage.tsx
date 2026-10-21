@@ -123,12 +123,15 @@ export function ClassEnrollmentPage() {
         }
     }
 
-    // Thay đổi trạng thái điểm danh cho một học viên
-    const handleStudentAttendanceChange = (studentId: string, status: AttendanceStatus | null) => {
-        setStudentAttendance((prev) => ({
-            ...prev,
-            [studentId]: status,
-        }))
+    // Thay đổi trạng thái điểm danh cho một học viên (bấm lại trạng thái đang chọn để hủy chọn)
+    const handleStudentAttendanceChange = (studentId: string, status: AttendanceStatus) => {
+        setStudentAttendance((prev) => {
+            const nextStatus = prev[studentId] === status ? null : status
+            return {
+                ...prev,
+                [studentId]: nextStatus,
+            }
+        })
         // Nếu học viên chưa được chọn trong checkbox, tự động chọn
         if (!selectedStudentIds.includes(studentId)) {
             setSelectedStudentIds((prev) => [...prev, studentId])
@@ -397,7 +400,7 @@ export function ClassEnrollmentPage() {
                                     <th>Họ và tên</th>
                                     <th>Email</th>
                                     <th>Số điện thoại</th>
-                                    <th style={{ minWidth: '550px' }}>Trạng thái điểm danh</th>
+                                    <th style={{ minWidth: '450px' }}>Trạng thái điểm danh</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -478,19 +481,6 @@ export function ClassEnrollmentPage() {
                                                         <span className="status-badge-box badge-u">U</span>
                                                         <span className="status-tick-label">Vắng không phép</span>
                                                         {currentAttendance === 'unexcused' && <span className="tick-check-icon">✓</span>}
-                                                    </button>
-
-                                                    {/* ? - Chưa điểm danh */}
-                                                    <button
-                                                        type="button"
-                                                        className={`status-tick-btn status-btn unmarked ${!currentAttendance ? 'active' : ''}`}
-                                                        onClick={() => handleStudentAttendanceChange(st.id, null)}
-                                                        title="Chưa điểm danh (?)"
-                                                        aria-checked={!currentAttendance}
-                                                    >
-                                                        <span className="status-badge-box badge-unmarked">?</span>
-                                                        <span className="status-tick-label">Chưa điểm danh</span>
-                                                        {!currentAttendance && <span className="tick-check-icon">✓</span>}
                                                     </button>
                                                 </div>
                                             </td>

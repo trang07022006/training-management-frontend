@@ -84,10 +84,10 @@ describe('ClassEnrollmentPage - Attendance Selection in Status Column', () => {
     ]
 
     function renderPage() {
-        vi.spyOn(classApi, 'getClassDetail').mockResolvedValue(mockClass)
-        vi.spyOn(enrollmentApi, 'getClassRoster').mockResolvedValue({ items: [], total: 0, class_id: 'cls-123' })
-        vi.spyOn(studentApi, 'listStudents').mockResolvedValue({ items: mockStudents, total: 1, page: 1, page_size: 50 })
-        vi.spyOn(scheduleApi, 'getClassSchedules').mockResolvedValue({ class_id: 'cls-123', class_code: 'CNTT-K21A', total_sessions: 1, schedules: mockSchedules })
+        vi.spyOn(classApi, 'getClassDetail').mockResolvedValue(mockClass as any)
+        vi.spyOn(enrollmentApi, 'getClassRoster').mockResolvedValue({ items: [], total: 0 } as any)
+        vi.spyOn(studentApi, 'listStudents').mockResolvedValue({ items: mockStudents, total: 1, page: 1, page_size: 50 } as any)
+        vi.spyOn(scheduleApi, 'getClassSchedules').mockResolvedValue({ class_id: 'cls-123', class_code: 'CNTT-K21A', total: 1, schedules: mockSchedules } as any)
 
         return render(
             <MemoryRouter initialEntries={['/classes/cls-123/enrollments/new']}>
@@ -102,7 +102,7 @@ describe('ClassEnrollmentPage - Attendance Selection in Status Column', () => {
         )
     }
 
-    it('renders the status column with attendance badge options P, L, E, U, ?', async () => {
+    it('renders the status column with attendance badge options P, L, E, U', async () => {
         renderPage()
 
         await waitFor(() => {
@@ -118,7 +118,8 @@ describe('ClassEnrollmentPage - Attendance Selection in Status Column', () => {
         expect(screen.getByTitle('Đi muộn (L)')).toBeDefined()
         expect(screen.getByTitle('Vắng có phép (E)')).toBeDefined()
         expect(screen.getByTitle('Vắng không phép (U)')).toBeDefined()
-        expect(screen.getByTitle('Chưa điểm danh (?)')).toBeDefined()
+        // Chưa điểm danh button must NOT exist
+        expect(screen.queryByTitle('Chưa điểm danh (?)')).toBeNull()
     })
 
     it('selecting attendance option marks button active and auto checks student', async () => {
@@ -126,11 +127,13 @@ describe('ClassEnrollmentPage - Attendance Selection in Status Column', () => {
             message: 'Thành công',
             data: {} as any,
         })
-        const enrollSpy = vi.spyOn(enrollmentApi, 'enrollStudents').mockResolvedValue({
-            message: 'Ghi danh thành công',
+        vi.spyOn(enrollmentApi, 'enrollStudents').mockResolvedValue({
             class_id: 'cls-123',
-            enrolled_student_ids: ['st-01'],
+            class_code: 'CNTT-K21A',
+            enrolled_count: 1,
             total_enrolled: 6,
+            max_capacity: 30,
+            items: [],
         })
 
         renderPage()
@@ -166,5 +169,22 @@ describe('ClassEnrollmentPage - Attendance Selection in Status Column', () => {
                 }),
             )
         })
+    })
+
+    it('clicking an already selected attendance status toggles it off', async () => {
+        renderPage()
+
+        await waitFor(() => {
+            expect(screen.getByText('dat')).toBeDefined()
+        })
+
+        const lateBtn = screen.getByTitle('Đi muộn (L)')
+        // First click -> active
+        fireEvent.click(lateBtn)
+        expect(lateBtn.getAttribute('aria-checked')).toBe('true')
+
+        // Second click -> toggle off
+        fireEvent.click(lateBtn)
+        expect(lateBtn.getAttribute('aria-checked')).toBe('false')
     })
 })
