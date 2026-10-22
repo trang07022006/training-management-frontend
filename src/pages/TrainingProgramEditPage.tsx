@@ -4,6 +4,8 @@ import { useSession } from '../auth/SessionProvider'
 import { getTrainingProgram, updateTrainingProgram, type TrainingProgram, type UpdateTrainingProgramInput, type TrainingProgramStatus, ApiError } from '../api/trainingProgramApi'
 import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './TrainingProgramsPage.css'
@@ -13,6 +15,7 @@ interface FormErrors {
     name?: string
     duration_semesters?: string
     standard_tuition_fee?: string
+    absence_alert_threshold?: string
     general?: string
 }
 
@@ -32,13 +35,12 @@ export function TrainingProgramEditPage() {
     const [name, setName] = useState('')
     const [durationSemesters, setDurationSemesters] = useState('8')
     const [standardTuitionFee, setStandardTuitionFee] = useState('')
+    const [absenceAlertThreshold, setAbsenceAlertThreshold] = useState('20')
     const [description, setDescription] = useState('')
     const [status, setStatus] = useState<TrainingProgramStatus>('draft')
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [isDirty, setIsDirty] = useState(false)
 
     useEffect(() => {
@@ -60,6 +62,7 @@ export function TrainingProgramEditPage() {
                     setName(data.name)
                     setDurationSemesters(data.duration_semesters ? String(data.duration_semesters) : '')
                     setStandardTuitionFee(data.standard_tuition_fee !== null && data.standard_tuition_fee !== undefined ? String(data.standard_tuition_fee) : '')
+                    setAbsenceAlertThreshold(data.absence_alert_threshold !== null && data.absence_alert_threshold !== undefined ? String(data.absence_alert_threshold) : '20')
                     setDescription(data.description || '')
                     setStatus(data.status)
                     setIsLoading(false)
@@ -112,6 +115,18 @@ export function TrainingProgramEditPage() {
             }
         }
 
+        if (absenceAlertThreshold.trim() !== '') {
+            const thresholdNum = Number(absenceAlertThreshold)
+            if (isNaN(thresholdNum) || thresholdNum < 0 || thresholdNum > 100) {
+                errors.absence_alert_threshold = 'Ngưỡng cảnh báo vắng phải từ 0% đến 100%.'
+            } else if (absenceAlertThreshold.includes('.')) {
+                const dec = absenceAlertThreshold.split('.')[1].replace(/0+$/, '')
+                if (dec.length > 2) {
+                    errors.absence_alert_threshold = 'Ngưỡng chỉ được phép có tối đa 2 chữ số thập phân.'
+                }
+            }
+        }
+
         setFormErrors(errors)
         return Object.keys(errors).length === 0
     }
@@ -121,8 +136,6 @@ export function TrainingProgramEditPage() {
         if (!validate() || !programId) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: UpdateTrainingProgramInput = {
             code: code.trim().toUpperCase(),
@@ -130,31 +143,32 @@ export function TrainingProgramEditPage() {
             description: description.trim() || null,
             duration_semesters: durationSemesters.trim() !== '' ? Number(durationSemesters) : null,
             standard_tuition_fee: standardTuitionFee.trim() !== '' ? Number(standardTuitionFee) : null,
+            absence_alert_threshold: absenceAlertThreshold.trim() !== '' ? Number(absenceAlertThreshold) : 20.0,
             status,
         }
 
         try {
             await updateTrainingProgram(requestFn, programId, payload)
-            setSuccessMessage(getSuccessMessage('UPDATE_PROGRAM_SUCCESS', 'Cập nhật chương trình đào tạo thành công!'))
+            const msg = getSuccessMessage('UPDATE_PROGRAM_SUCCESS', 'Cập nhật chương trình đào tạo thành công!')
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/training-programs/${programId}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi cập nhật chương trình đào tạo.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi cập nhật chương trình đào tạo.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            setIsConfirmLeaveOpen(true)
+            return
         }
         navigate(`/training-programs/${programId || ''}`)
     }
@@ -228,17 +242,6 @@ export function TrainingProgramEditPage() {
             />
 
             <DetailNavTabs items={navItems} />
-
-            {errorMessage && (
-                <div className="programs-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="programs-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -343,6 +346,30 @@ export function TrainingProgramEditPage() {
                     </div>
 
                     <div className="form-group">
+                        <label className="form-label" htmlFor="edit-program-absence-threshold">
+                            Ngưỡng cảnh báo vắng (%) <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 'normal' }}>(Mặc định: 20%)</span>
+                        </label>
+                        <input
+                            id="edit-program-absence-threshold"
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="0.01"
+                            className={`form-input ${formErrors.absence_alert_threshold ? 'error' : ''}`}
+                            value={absenceAlertThreshold}
+                            onChange={(e) => {
+                                setAbsenceAlertThreshold(e.target.value)
+                                setIsDirty(true)
+                            }}
+                            disabled={isSubmitting}
+                        />
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                            💡 Cảnh báo được kích hoạt khi tỷ lệ vắng của học viên trong lớp (A / N × 100) lớn hơn ngưỡng này. Giá trị từ 0.00% đến 100.00%.
+                        </div>
+                        {formErrors.absence_alert_threshold && <div className="form-error">{formErrors.absence_alert_threshold}</div>}
+                    </div>
+
+                    <div className="form-group">
                         <label className="form-label" htmlFor="edit-program-desc">
                             Mô tả chương trình
                         </label>
@@ -378,6 +405,17 @@ export function TrainingProgramEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/training-programs/${programId || ''}`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

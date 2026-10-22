@@ -1,6 +1,6 @@
 /**
- * Training Program API Client (SCRUM-122 - Activity A6).
- * Quản lý Chương trình đào tạo: danh sách, chi tiết, tạo mới, cập nhật, xóa.
+ * Training Program API Client (SCRUM-122 - Activity A6 & SCRUM-257 AC1).
+ * Quản lý Chương trình đào tạo: danh sách, chi tiết, tạo mới, cập nhật, xóa, và cấu hình ngưỡng cảnh báo vắng.
  * Tuân thủ tuyệt đối API Contract backend (/api/v1/training-programs).
  */
 
@@ -18,6 +18,7 @@ export interface TrainingProgram {
     description: string | null
     duration_semesters: number | null
     standard_tuition_fee: number | null
+    absence_alert_threshold?: number
     status: TrainingProgramStatus
     created_at: string
     updated_at: string
@@ -29,6 +30,7 @@ export interface CreateTrainingProgramInput {
     description?: string | null
     duration_semesters?: number | null
     standard_tuition_fee?: number | null
+    absence_alert_threshold?: number
     status?: TrainingProgramStatus
 }
 
@@ -38,6 +40,7 @@ export interface UpdateTrainingProgramInput {
     description?: string | null
     duration_semesters?: number | null
     standard_tuition_fee?: number | null
+    absence_alert_threshold?: number
     status?: TrainingProgramStatus
 }
 
@@ -47,6 +50,7 @@ export interface PatchTrainingProgramInput {
     description?: string | null
     duration_semesters?: number | null
     standard_tuition_fee?: number | null
+    absence_alert_threshold?: number
     status?: TrainingProgramStatus
 }
 
@@ -63,6 +67,24 @@ export interface TrainingProgramListResponseData {
     page: number
     page_size: number
     total_pages: number
+}
+
+export interface AbsenceThresholdAudit {
+    id: string
+    program_id: string
+    old_threshold: number
+    new_threshold: number
+    changed_by: string
+    reason?: string | null
+    created_at: string
+}
+
+export interface ProgramAbsenceThresholdData {
+    program_id: string
+    program_code: string
+    program_name: string
+    absence_alert_threshold: number
+    audits: AbsenceThresholdAudit[]
 }
 
 export const PROGRAM_STATUS_LABELS: Record<TrainingProgramStatus, string> = {
@@ -270,6 +292,64 @@ export async function deleteTrainingProgram(
     }
 
     return body.data ?? { id }
+}
+
+/**
+ * Lấy cấu hình ngưỡng cảnh báo vắng và lịch sử audit của chương trình đào tạo (SCRUM-257 AC1).
+ * GET /v1/training-programs/<program_id>/absence-alert-threshold
+ */
+export async function getProgramAbsenceThreshold(
+    requestFn: RequestFunction,
+    programId: string,
+): Promise<ProgramAbsenceThresholdData> {
+    const path = `/api/v1/training-programs/${encodeURIComponent(programId.trim())}/absence-alert-threshold`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (res.status === 404 ? 'PROGRAM_NOT_FOUND' : 'API_ERROR')
+        const message = getErrorMessage({ code, message: body.message }, 'Không thể lấy cấu hình ngưỡng cảnh báo vắng.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
+}
+
+/**
+ * Cập nhật cấu hình ngưỡng cảnh báo vắng của chương trình đào tạo (SCRUM-257 AC1).
+ * PUT /api/v1/training-programs/<program_id>/absence-alert-threshold
+ */
+export async function updateProgramAbsenceThreshold(
+    requestFn: RequestFunction,
+    programId: string,
+    payloadOrThreshold: number | { threshold: number; reason?: string },
+    optionalReason?: string,
+): Promise<ProgramAbsenceThresholdData> {
+    const finalThreshold = typeof payloadOrThreshold === 'number' ? payloadOrThreshold : payloadOrThreshold.threshold
+    const finalReason = typeof payloadOrThreshold === 'number' ? optionalReason : payloadOrThreshold.reason
+    const path = `/api/v1/training-programs/${encodeURIComponent(programId.trim())}/absence-alert-threshold`
+    const res = await requestFn(path, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            threshold: finalThreshold,
+            reason: finalReason?.trim() || undefined,
+        }),
+    })
+    const body = await res.json().catch(() => ({}))
+
+    if (!res.ok) {
+        const code = body.code || (
+            res.status === 400 ? 'VALIDATION_ERROR' :
+            res.status === 403 ? 'FORBIDDEN' :
+            res.status === 404 ? 'PROGRAM_NOT_FOUND' :
+            'UPDATE_ERROR'
+        )
+        const message = getErrorMessage({ code, message: body.message }, 'Không thể cập nhật cấu hình ngưỡng cảnh báo vắng.')
+        throw new ApiError(message, code, res.status)
+    }
+
+    return body.data
 }
 
 // Aliases cho tính linh hoạt và tương thích

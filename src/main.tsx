@@ -63,6 +63,7 @@ import { ScheduleSessionDetailPage } from './pages/ScheduleSessionDetailPage'
 import { ScheduleSessionEditPage } from './pages/ScheduleSessionEditPage'
 import { ScheduleCalendarPage } from './pages/ScheduleCalendarPage'
 import { StudentSchedulePage } from './pages/StudentSchedulePage'
+import { StudentAttendanceHistoryPage } from './pages/StudentAttendanceHistoryPage'
 import { StudentAbsenceRequestsPage } from './pages/StudentAbsenceRequestsPage'
 import { CreateAbsenceRequestPage } from './pages/CreateAbsenceRequestPage'
 import { InstructorAbsenceManagementPage } from './pages/InstructorAbsenceManagementPage'
@@ -203,6 +204,8 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/classes/:classId/instructors" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/students" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/schedules" element={<ClassDetailPage />} />
+                <Route path="/classes/:classId/attendance-summary" element={<ClassDetailPage />} />
+                <Route path="/classes/:classId/assignments" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/enrollments/new" element={<ClassEnrollmentPage />} />
                 <Route path="/classes/:classId/subjects/:classSubjectId/instructors" element={<ClassSubjectInstructorAssignPage />} />
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/generate" element={<ScheduleGeneratePage />} /></Route>
@@ -224,6 +227,17 @@ createRoot(document.getElementById('root')!).render(
                   }
                 >
                   <Route path="/my-schedule" element={<StudentSchedulePage />} />
+                </Route>
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredRole="trainee"
+                      requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW}
+                      fallbackPath="/dashboard"
+                    />
+                  }
+                >
+                  <Route path="/my-attendance-history" element={<StudentAttendanceHistoryPage />} />
                 </Route>
                 <Route
                   element={

@@ -212,3 +212,39 @@ export async function updateStudentProfile(
 
     return body.data
 }
+
+export interface StudentAbsenceAlertItem {
+    alert_id: string
+    class_id: string
+    class_code: string
+    program_id: string
+    program_code?: string
+    program_name?: string
+    absent_sessions: number
+    total_sessions: number
+    absence_rate: number
+    absence_rate_formatted: string
+    threshold: number
+    threshold_formatted: string
+    first_triggered_at?: string
+    last_evaluated_at?: string
+    is_flagged: boolean
+    tooltip: string
+}
+
+/**
+ * Lấy danh sách cảnh báo vắng vượt ngưỡng đang hoạt động của học viên (SCRUM-257 - AC2).
+ * GET /api/v1/students/<id>/absence-alerts
+ */
+export async function getStudentAbsenceAlerts(
+    requestFn: RequestFunction,
+    studentId: string,
+): Promise<StudentAbsenceAlertItem[]> {
+    const path = `/api/v1/students/${encodeURIComponent(studentId.trim())}/absence-alerts`
+    const res = await requestFn(path, { method: 'GET' })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) {
+        return []
+    }
+    return body.data || []
+}

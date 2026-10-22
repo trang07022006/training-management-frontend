@@ -462,7 +462,7 @@ function ClassesPageBase({
         // Tải danh sách học viên đã có trong lớp để đánh dấu disabled
         try {
             const roster = await getClassRoster(requestFnRef.current, cls.id)
-            const enrolledIds = roster.items.map((i) => i.student_id)
+            const enrolledIds = roster.items.map((i) => i.student_id || '').filter(Boolean)
             setAlreadyEnrolledIds(enrolledIds)
         } catch {
             setAlreadyEnrolledIds([])
@@ -772,9 +772,22 @@ function ClassesPageBase({
                             {classes.map((cls) => (
                                 <tr key={cls.id} data-testid={`class-row-${cls.id}`}>
                                     <td>
-                                        <span className="class-code-badge" data-testid={`class-code-${cls.id}`}>
+                                        <button
+                                            type="button"
+                                            className="class-code-badge"
+                                            onClick={() => navigate && navigate(`/classes/${cls.id}/attendance-summary`)}
+                                            style={{
+                                                cursor: 'pointer',
+                                                border: '1px solid #bfdbfe',
+                                                background: '#eff6ff',
+                                                color: '#1d4ed8',
+                                                fontWeight: 700,
+                                            }}
+                                            title="Xem Bảng chuyên cần tổng hợp của lớp"
+                                            data-testid={`class-code-${cls.id}`}
+                                        >
                                             {cls.class_code}
-                                        </span>
+                                        </button>
                                     </td>
                                     <td data-testid={`class-program-${cls.id}`}>
                                         {cls.program_name || cls.program_code || cls.program_id}
@@ -816,6 +829,32 @@ function ClassesPageBase({
                                     </td>
                                     <td>
                                         <div className="action-buttons-group">
+                                            <button
+                                                type="button"
+                                                className="btn-action-attendance-summary"
+                                                onClick={() => {
+                                                    if (navigate) {
+                                                        navigate(`/classes/${cls.id}/attendance-summary`)
+                                                    }
+                                                }}
+                                                data-testid={`attendance-summary-class-${cls.id}`}
+                                                title="Xem Bảng chuyên cần tổng hợp của lớp (SCRUM-256)"
+                                                style={{
+                                                    backgroundColor: '#059669',
+                                                    color: '#ffffff',
+                                                    border: 'none',
+                                                    padding: '6px 10px',
+                                                    borderRadius: '4px',
+                                                    fontWeight: 600,
+                                                    fontSize: '0.8rem',
+                                                    cursor: 'pointer',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px',
+                                                }}
+                                            >
+                                                📊 Chuyên cần
+                                            </button>
                                             <button
                                                 type="button"
                                                 className="btn-action-view"

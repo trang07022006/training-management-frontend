@@ -4,6 +4,8 @@ import { useSession } from '../auth/SessionProvider'
 import { getSubject, updateSubject, type Subject, type UpdateSubjectInput, type SubjectStatus, ApiError } from '../api/subjectApi'
 import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './SubjectsPage.css'
@@ -41,8 +43,6 @@ export function SubjectEditPage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [isDirty, setIsDirty] = useState(false)
 
     useEffect(() => {
@@ -136,8 +136,6 @@ export function SubjectEditPage() {
         if (!validate() || !subjectId) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: UpdateSubjectInput = {
             code: code.trim().toUpperCase(),
@@ -152,26 +150,26 @@ export function SubjectEditPage() {
 
         try {
             await updateSubject(requestFn, subjectId, payload)
-            setSuccessMessage(getSuccessMessage('UPDATE_SUBJECT_SUCCESS', 'Cập nhật môn học thành công!'))
+            const msg = getSuccessMessage('UPDATE_SUBJECT_SUCCESS', 'Cập nhật môn học thành công!')
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/subjects/${subjectId}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi cập nhật môn học.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi cập nhật môn học.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            setIsConfirmLeaveOpen(true)
+            return
         }
         navigate(`/subjects/${subjectId || ''}`)
     }
@@ -245,17 +243,6 @@ export function SubjectEditPage() {
             />
 
             <DetailNavTabs items={navItems} />
-
-            {errorMessage && (
-                <div className="subjects-alert error" role="alert">
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="subjects-alert success" role="alert">
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -434,6 +421,17 @@ export function SubjectEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/subjects/${subjectId || ''}`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

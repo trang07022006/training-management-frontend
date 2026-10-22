@@ -11,6 +11,8 @@ import {
     type RoleItem,
 } from '../api/userApi'
 import { PageHeader } from '../components/PageHeader'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { getRoleLabel } from '../auth/roleRouting'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
@@ -35,6 +37,7 @@ export function UserRolePage() {
     const [isActionLoading, setIsActionLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
+    const [roleToRevoke, setRoleToRevoke] = useState<{ id: string | number; name: string } | null>(null)
 
     const loadData = useCallback(async () => {
         if (!userId) return
@@ -72,31 +75,43 @@ export function UserRolePage() {
 
         try {
             await assignUserRoleApi(requestFn, userId, selectedRoleId)
-            setSuccessMessage(getSuccessMessage('ASSIGN_ROLE_SUCCESS', 'Phân vai trò cho người dùng thành công!'))
+            const msg = getSuccessMessage('ASSIGN_ROLE_SUCCESS', 'Phân vai trò cho người dùng thành công!')
+            setSuccessMessage(msg)
+            toast.success(msg)
             setSelectedRoleId('')
             await loadData()
         } catch (err: unknown) {
-            setErrorMessage(getErrorMessage(err, 'Lỗi khi gán vai trò.'))
+            const errText = getErrorMessage(err, 'Lỗi khi gán vai trò.')
+            setErrorMessage(errText)
+            toast.error(errText)
         } finally {
             setIsActionLoading(false)
         }
     }
 
-    const handleRevokeRole = async (roleId: string | number, roleName: string) => {
+    const handleRevokeRole = (roleId: string | number, roleName: string) => {
         if (!userId || isActionLoading) return
-        const confirmed = window.confirm(`Bạn có chắc muốn gỡ vai trò "${roleName}" khỏi người dùng này?`)
-        if (!confirmed) return
+        setRoleToRevoke({ id: roleId, name: roleName })
+    }
+
+    const confirmRevokeRole = async () => {
+        if (!userId || !roleToRevoke || isActionLoading) return
 
         setIsActionLoading(true)
         setErrorMessage(null)
         setSuccessMessage(null)
 
         try {
-            await revokeUserRoleApi(requestFn, userId, roleId)
-            setSuccessMessage(getSuccessMessage('REVOKE_ROLE_SUCCESS', `Đã gỡ vai trò "${roleName}" thành công!`))
+            await revokeUserRoleApi(requestFn, userId, roleToRevoke.id)
+            const msg = getSuccessMessage('REVOKE_ROLE_SUCCESS', `Đã gỡ vai trò "${roleToRevoke.name}" thành công!`)
+            setSuccessMessage(msg)
+            toast.success(msg)
+            setRoleToRevoke(null)
             await loadData()
         } catch (err: unknown) {
-            setErrorMessage(getErrorMessage(err, 'Lỗi khi gỡ vai trò.'))
+            const errText = getErrorMessage(err, 'Lỗi khi gỡ vai trò.')
+            setErrorMessage(errText)
+            toast.error(errText)
         } finally {
             setIsActionLoading(false)
         }
@@ -273,6 +288,18 @@ export function UserRolePage() {
                     </button>
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={Boolean(roleToRevoke)}
+                title="Xác nhận gỡ vai trò"
+                message={`Bạn có chắc muốn gỡ vai trò "${roleToRevoke?.name}" khỏi người dùng này?`}
+                confirmText="Gỡ vai trò"
+                cancelText="Hủy"
+                type="danger"
+                isLoading={isActionLoading}
+                onConfirm={confirmRevokeRole}
+                onCancel={() => setRoleToRevoke(null)}
+            />
         </div>
     )
 }

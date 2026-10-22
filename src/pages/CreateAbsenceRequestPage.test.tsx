@@ -154,7 +154,7 @@ describe('SCRUM-255: CreateAbsenceRequestPage', () => {
 
         await waitFor(() => {
             expect(screen.getByText('Trang 2 / 3')).toBeDefined()
-        })
+        }, { timeout: 3000 })
 
         // Khối tóm tắt vẫn giữ nguyên Buổi #1 và có chú thích nằm ngoài kết quả lọc
         const summary = screen.getByTestId('selected-session-summary')

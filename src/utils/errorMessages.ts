@@ -95,6 +95,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // ----------------------------------------------------
     // 9. LỖI KỸ THUẬT / HỆ THỐNG / DATABASE KHÁC
     // ----------------------------------------------------
+    REQUEST_FAILED: 'Không thể kết nối hoặc yêu cầu không thành công. Vui lòng thử lại.',
+    STUDENT_PROFILE_NOT_FOUND: 'Không tìm thấy hồ sơ học viên liên kết với tài khoản này.',
     SESSION_STORAGE_UNAVAILABLE: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     UNKNOWN_DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
@@ -513,6 +515,7 @@ export function getErrorMessage(
             [
                 'INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR', 'AVATAR_REQUIRED', 'AVATAR_TOO_LARGE', 'INVALID_AVATAR_TYPE', 'AVATAR_NOT_FOUND', 'AVATAR_STORAGE_ERROR', 'AVATAR_UPLOAD_FAILED',
                 'SCHEDULE_ALREADY_EXISTS', 'INSTRUCTOR_CONFLICT', 'ROOM_CONFLICT', 'SCHEDULE_CONFLICT_DETECTED', 'SUBJECT_NOT_IN_CLASS', 'DAYS_OF_WEEK_REQUIRED', 'START_DATE_REQUIRED', 'INVALID_START_DATE', 'TOTAL_SESSIONS_REQUIRED', 'INVALID_TOTAL_SESSIONS', 'SHIFT_REQUIRED', 'INVALID_SHIFT_TIME', 'SCHEDULE_NOT_FOUND', 'SCHEDULE_ATTENDANCE_ALREADY_CHECKED',
+                'INVALID_PARAMS',
             ].includes(code) &&
             rawMessage &&
             isFriendlyVietnamese(rawMessage)
@@ -520,6 +523,22 @@ export function getErrorMessage(
             return rawMessage
         }
         return ERROR_MESSAGES[code]
+    }
+
+    if (normCode === 'REQUEST_FAILED' || upperMsg === 'REQUEST_FAILED') {
+        if (status === 404) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (status === 403) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        if (status === 401) {
+            return ERROR_MESSAGES['401']
+        }
+        if (status === 500) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+        return safeFallback !== DEFAULT_FALLBACK_ERROR ? safeFallback : ERROR_MESSAGES.REQUEST_FAILED
     }
 
     // Ánh xạ lỗi xác thực và phân quyền qua status hoặc message khi mã code không chuyên biệt

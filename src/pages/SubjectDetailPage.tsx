@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getSubject, getSubjectStatusLabel, type Subject, ApiError } from '../api/subjectApi'
@@ -8,10 +8,17 @@ import { getErrorMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './SubjectsPage.css'
 
-export function SubjectDetailPage() {
-    const { subjectId } = useParams<{ subjectId: string }>()
+export interface SubjectDetailPageProps {
+    subjectIdProp?: string
+    customRequest?: (path: string, init?: RequestInit) => Promise<Response>
+}
+
+export function SubjectDetailPage({ subjectIdProp, customRequest }: SubjectDetailPageProps = {}) {
+    const routeParams = useParams<{ subjectId: string }>()
+    const subjectId = subjectIdProp || routeParams.subjectId || ''
     const navigate = useNavigate()
-    const { request: requestFn, permissions, role } = useSession()
+    const { request: sessionRequest, permissions, role } = useSession()
+    const requestFn = customRequest || sessionRequest
 
     const canManage = permissions?.includes(SYSTEM_PERMISSIONS.COURSE_MANAGE) || role === 'admin'
 
@@ -19,10 +26,9 @@ export function SubjectDetailPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-    useEffect(() => {
-        let isMounted = true
+    const loadSubject = useCallback(() => {
         if (!subjectId) {
-            setErrorMessage('Mã môn học không hợp lệ.')
+            setErrorMessage('Mã định danh môn học không hợp lệ.')
             setIsLoading(false)
             return
         }
@@ -32,30 +38,30 @@ export function SubjectDetailPage() {
 
         getSubject(requestFn, subjectId)
             .then((data) => {
-                if (isMounted) {
-                    setSubject(data)
-                    setIsLoading(false)
-                }
+                setSubject(data)
+                setIsLoading(false)
             })
             .catch((err) => {
-                if (isMounted) {
-                    if (err instanceof ApiError && err.status === 404) {
-                        setErrorMessage('Không tìm thấy môn học yêu cầu. Môn học có thể đã bị xóa hoặc không tồn tại.')
-                    } else {
-                        setErrorMessage(getErrorMessage(err, 'Lỗi khi tải thông tin môn học.'))
-                    }
-                    setIsLoading(false)
+                if (err instanceof ApiError && err.status === 404) {
+                    setErrorMessage('Không tìm thấy môn học yêu cầu. Môn học có thể đã bị xóa hoặc không tồn tại.')
+                } else if (err instanceof ApiError && err.status === 400) {
+                    setErrorMessage(getErrorMessage(err, 'Mã định danh môn học không hợp lệ.'))
+                } else if (err instanceof ApiError && err.status === 403) {
+                    setErrorMessage(getErrorMessage(err, 'Bạn không có quyền xem thông tin môn học này.'))
+                } else {
+                    setErrorMessage(getErrorMessage(err, 'Lỗi khi tải thông tin môn học.'))
                 }
+                setIsLoading(false)
             })
-
-        return () => {
-            isMounted = false
-        }
     }, [subjectId, requestFn])
+
+    useEffect(() => {
+        loadSubject()
+    }, [loadSubject])
 
     if (isLoading) {
         return (
-            <div className="subjects-container">
+            <div className="subjects-container" data-testid="subject-detail-loading">
                 <div className="subjects-loading">
                     <div className="spinner" />
                     <span>Đang tải thông tin môn học...</span>
@@ -66,7 +72,7 @@ export function SubjectDetailPage() {
 
     if (errorMessage || !subject) {
         return (
-            <div className="subjects-container">
+            <div className="subjects-container" data-testid="subject-detail-error">
                 <PageHeader
                     title="Chi tiết môn học"
                     breadcrumbs={[
@@ -74,11 +80,24 @@ export function SubjectDetailPage() {
                         { label: 'Chi tiết' },
                     ]}
                 />
-                <div className="subjects-alert error" role="alert">
+                <div className="subjects-alert error" role="alert" data-testid="subject-detail-error-alert">
                     <span>{errorMessage || 'Không tìm thấy môn học.'}</span>
                 </div>
-                <div style={{ marginTop: '16px' }}>
-                    <button type="button" className="btn-secondary" onClick={() => navigate('/subjects')}>
+                <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                        type="button"
+                        className="btn-primary"
+                        data-testid="btn-retry"
+                        onClick={loadSubject}
+                    >
+                        Thử lại
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-secondary"
+                        data-testid="btn-back-to-subjects"
+                        onClick={() => navigate('/subjects')}
+                    >
                         Quay lại danh sách môn học
                     </button>
                 </div>

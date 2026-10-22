@@ -5,6 +5,7 @@ import { createTrainingProgram, type CreateTrainingProgramInput, type TrainingPr
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { toast } from '../components/ToastPortal'
 import './TrainingProgramsPage.css'
 
 interface FormErrors {
@@ -12,6 +13,7 @@ interface FormErrors {
     name?: string
     duration_semesters?: string
     standard_tuition_fee?: string
+    absence_alert_threshold?: string
     general?: string
 }
 
@@ -25,13 +27,12 @@ export function TrainingProgramCreatePage() {
     const [name, setName] = useState('')
     const [durationSemesters, setDurationSemesters] = useState('8')
     const [standardTuitionFee, setStandardTuitionFee] = useState('')
+    const [absenceAlertThreshold, setAbsenceAlertThreshold] = useState('20')
     const [description, setDescription] = useState('')
     const [status, setStatus] = useState<TrainingProgramStatus>('draft')
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const validate = (): boolean => {
         const errors: FormErrors = {}
@@ -64,6 +65,18 @@ export function TrainingProgramCreatePage() {
             }
         }
 
+        if (absenceAlertThreshold.trim() !== '') {
+            const thresholdNum = Number(absenceAlertThreshold)
+            if (isNaN(thresholdNum) || thresholdNum < 0 || thresholdNum > 100) {
+                errors.absence_alert_threshold = 'Ngưỡng cảnh báo vắng phải từ 0% đến 100%.'
+            } else if (absenceAlertThreshold.includes('.')) {
+                const dec = absenceAlertThreshold.split('.')[1].replace(/0+$/, '')
+                if (dec.length > 2) {
+                    errors.absence_alert_threshold = 'Ngưỡng chỉ được phép có tối đa 2 chữ số thập phân.'
+                }
+            }
+        }
+
         setFormErrors(errors)
         return Object.keys(errors).length === 0
     }
@@ -73,8 +86,6 @@ export function TrainingProgramCreatePage() {
         if (!validate()) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: CreateTrainingProgramInput = {
             code: code.trim().toUpperCase(),
@@ -82,21 +93,20 @@ export function TrainingProgramCreatePage() {
             description: description.trim() || null,
             duration_semesters: durationSemesters.trim() !== '' ? Number(durationSemesters) : null,
             standard_tuition_fee: standardTuitionFee.trim() !== '' ? Number(standardTuitionFee) : null,
+            absence_alert_threshold: absenceAlertThreshold.trim() !== '' ? Number(absenceAlertThreshold) : 20.0,
             status,
         }
 
         try {
             const created = await createTrainingProgram(requestFn, payload)
-            setSuccessMessage(getSuccessMessage('CREATE_PROGRAM_SUCCESS', 'Tạo chương trình đào tạo thành công!'))
+            const msg = getSuccessMessage('CREATE_PROGRAM_SUCCESS', 'Tạo chương trình đào tạo thành công!')
+            toast.success(msg)
             setTimeout(() => {
                 navigate(`/training-programs/${created.id}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi tạo chương trình đào tạo.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi tạo chương trình đào tạo.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
@@ -129,17 +139,6 @@ export function TrainingProgramCreatePage() {
                     { label: 'Thêm mới' },
                 ]}
             />
-
-            {errorMessage && (
-                <div className="programs-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="programs-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -230,6 +229,28 @@ export function TrainingProgramCreatePage() {
                             />
                             {formErrors.standard_tuition_fee && <div className="form-error">{formErrors.standard_tuition_fee}</div>}
                         </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="create-program-absence-threshold">
+                            Ngưỡng cảnh báo vắng (%) <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 'normal' }}>(Mặc định: 20%)</span>
+                        </label>
+                        <input
+                            id="create-program-absence-threshold"
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="0.01"
+                            className={`form-input ${formErrors.absence_alert_threshold ? 'error' : ''}`}
+                            placeholder="VD: 20"
+                            value={absenceAlertThreshold}
+                            onChange={(e) => setAbsenceAlertThreshold(e.target.value)}
+                            disabled={isSubmitting}
+                        />
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                            💡 Cảnh báo được kích hoạt khi tỷ lệ vắng của học viên trong lớp (A / N × 100) lớn hơn ngưỡng này. Giá trị từ 0.00% đến 100.00%.
+                        </div>
+                        {formErrors.absence_alert_threshold && <div className="form-error">{formErrors.absence_alert_threshold}</div>}
                     </div>
 
                     <div className="form-group">

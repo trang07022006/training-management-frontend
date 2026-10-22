@@ -18,9 +18,12 @@ import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ClassAttendanceSummaryView } from './ClassAttendanceSummaryView'
+import { ClassAssignmentsView } from '../components/ClassAssignmentsView'
+import { getClassAttendanceSummary, type AbsenceAlertInfo } from '../api/attendanceSummaryApi'
 import './ClassesPage.css'
 
-export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules'
+export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules' | 'attendance-summary' | 'assignments'
 
 export function ClassDetailPage() {
     const { classId } = useParams<{ classId: string }>()
@@ -46,18 +49,25 @@ export function ClassDetailPage() {
         normalizedRoles.includes('trainer') ||
         normalizedRoles.includes('training_manager')
 
+    const isStudentOnly =
+        normalizedRoles.includes('trainee') &&
+        !normalizedRoles.some((r) => ['admin', 'training_manager', 'trainer', 'teacher'].includes(r))
+
     // Determine active tab from URL pathname
     let activeTab: ClassDetailTab = 'info'
     if (location.pathname.endsWith('/subjects')) activeTab = 'subjects'
     else if (location.pathname.endsWith('/instructors')) activeTab = 'instructors'
     else if (location.pathname.endsWith('/students')) activeTab = 'students'
     else if (location.pathname.endsWith('/schedules')) activeTab = 'schedules'
+    else if (location.pathname.endsWith('/attendance-summary')) activeTab = canTakeOrViewAttendance ? 'attendance-summary' : 'info'
+    else if (location.pathname.endsWith('/assignments')) activeTab = 'assignments'
 
     // Data states
     const [classData, setClassData] = useState<TrainingClass | null>(null)
     const [subjects, setSubjects] = useState<ClassSubjectItem[]>([])
     const [students, setStudents] = useState<EnrollmentItem[]>([])
     const [schedules, setSchedules] = useState<ClassScheduleItem[]>([])
+    const [studentAlerts, setStudentAlerts] = useState<Record<string, AbsenceAlertInfo>>({})
 
     const [isLoading, setIsLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -80,6 +90,21 @@ export function ClassDetailPage() {
             } else if (activeTab === 'students') {
                 const roster = await getClassRoster(requestFn, classId).catch(() => ({ items: [] }))
                 setStudents(roster.items || [])
+                if (canTakeOrViewAttendance && !isStudentOnly) {
+                    getClassAttendanceSummary(requestFn, classId, { page: 1, page_size: 100 })
+                        .then((sumRes) => {
+                            const map: Record<string, AbsenceAlertInfo> = {}
+                            if (sumRes?.students) {
+                                sumRes.students.forEach((st) => {
+                                    if (st.student_id && st.absence_alert) {
+                                        map[st.student_id] = st.absence_alert
+                                    }
+                                })
+                            }
+                            setStudentAlerts(map)
+                        })
+                        .catch(() => {})
+                }
             } else if (activeTab === 'schedules') {
                 const scheds = await getClassSchedules(requestFn, classId).catch(() => ({ schedules: [] }))
                 setSchedules(scheds?.schedules || [])
@@ -98,6 +123,12 @@ export function ClassDetailPage() {
     useEffect(() => {
         loadClass()
     }, [loadClass])
+
+    useEffect(() => {
+        if (location.pathname.endsWith('/attendance-summary') && !canTakeOrViewAttendance && classId) {
+            navigate(`/classes/${classId}`, { replace: true })
+        }
+    }, [location.pathname, canTakeOrViewAttendance, classId, navigate])
 
     const handleStatusChange = async (newStatus: ClassStatus) => {
         if (!classId || isUpdatingStatus) return
@@ -157,6 +188,18 @@ export function ClassDetailPage() {
         { key: 'students', label: `Học viên (${classData.enrolled_count}/${classData.max_capacity})`, path: `/classes/${classData.id}/students` },
         { key: 'schedules', label: 'Thời khóa biểu', path: `/classes/${classData.id}/schedules` },
     ]
+    if (canTakeOrViewAttendance) {
+        navItems.push({
+            key: 'attendance-summary',
+            label: 'Chuyên cần tổng hợp',
+            path: `/classes/${classData.id}/attendance-summary`,
+        })
+    }
+    navItems.push({
+        key: 'assignments',
+        label: 'Bài tập',
+        path: `/classes/${classData.id}/assignments`,
+    })
 
     return (
         <div className="classes-container" data-testid="class-detail-page">
@@ -174,6 +217,27 @@ export function ClassDetailPage() {
                 }
                 actions={
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {canTakeOrViewAttendance && (
+                            <Link
+                                to={`/classes/${classData.id}/attendance-summary`}
+                                className="btn-secondary"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: '#ecfdf5',
+                                    color: '#047857',
+                                    borderColor: '#a7f3d0',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                }}
+                                title="Xem Bảng chuyên cần tổng hợp của lớp"
+                            >
+                                <span>📊 Bảng chuyên cần</span>
+                            </Link>
+                        )}
                         <button
                             type="button"
                             className="btn-secondary"
@@ -219,6 +283,45 @@ export function ClassDetailPage() {
             {/* TAB 1: THÔNG TIN CHUNG */}
             {activeTab === 'info' && (
                 <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    {canTakeOrViewAttendance && (
+                        <div style={{
+                            marginBottom: '20px',
+                            padding: '14px 18px',
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                        }}>
+                            <div>
+                                <strong style={{ color: '#166534', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>📊</span> Bảng chuyên cần tổng hợp theo lớp (SCRUM-256)
+                                </strong>
+                                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#15803d' }}>
+                                    Theo dõi ma trận điểm danh theo buổi, số buổi vắng và tỷ lệ chuyên cần (%) để phát hiện nguy cơ bỏ học.
+                                </p>
+                            </div>
+                            <Link
+                                to={`/classes/${classData.id}/attendance-summary`}
+                                className="btn-primary"
+                                style={{
+                                    background: '#059669',
+                                    borderColor: '#047857',
+                                    color: '#ffffff',
+                                    padding: '8px 16px',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                }}
+                            >
+                                Mở Bảng chuyên cần tổng hợp →
+                            </Link>
+                        </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                         <div className="detail-item">
                             <span style={{ fontSize: '13px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Mã lớp học</span>
@@ -425,7 +528,7 @@ export function ClassDetailPage() {
                 <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>
-                            Danh sách học viên ({students.length} / {classData.max_capacity})
+                            Danh sách học viên ({students.length}{isStudentOnly ? '' : ` / ${classData.max_capacity}`})
                         </h3>
                         {canManage && (
                             <Link to={`/classes/${classData.id}/enrollments/new`} className="btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
@@ -442,6 +545,25 @@ export function ClassDetailPage() {
                                     Thực hiện ghi danh học viên ngay
                                 </Link>
                             )}
+                        </div>
+                    ) : isStudentOnly ? (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="classes-table" style={{ width: '100%' }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{ width: '80px', textAlign: 'center' }}>STT</th>
+                                        <th>Họ và tên</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.map((st, idx) => (
+                                        <tr key={st.order_index ?? idx + 1}>
+                                            <td style={{ textAlign: 'center' }}>{st.order_index ?? (idx + 1)}</td>
+                                            <td style={{ color: '#0f172a', fontWeight: 500 }}>{st.full_name || '—'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : (
                         <div style={{ overflowX: 'auto' }}>
@@ -464,9 +586,33 @@ export function ClassDetailPage() {
                                             <td>{idx + 1}</td>
                                             <td><strong>{st.student_code || '—'}</strong></td>
                                             <td>
-                                                <Link to={`/students/${st.student_id}`} style={{ color: '#0284c7', fontWeight: 500 }}>
-                                                    {st.full_name || '—'}
-                                                </Link>
+                                                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                                    <Link to={`/students/${st.student_id}`} style={{ color: '#0284c7', fontWeight: 500 }}>
+                                                        {st.full_name || '—'}
+                                                    </Link>
+                                                    {Boolean(st.student_id && studentAlerts[st.student_id]?.is_flagged) && (
+                                                        <span
+                                                            data-testid={`absence-alert-flag-${st.student_code}`}
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                backgroundColor: '#fef2f2',
+                                                                color: '#b91c1c',
+                                                                border: '1px solid #fecaca',
+                                                                borderRadius: '4px',
+                                                                padding: '2px 6px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 600,
+                                                                cursor: 'help',
+                                                            }}
+                                                            title={st.student_id ? (studentAlerts[st.student_id]?.tooltip || `Vắng ${studentAlerts[st.student_id]?.absent_sessions}/${studentAlerts[st.student_id]?.total_sessions} buổi — ${studentAlerts[st.student_id]?.absence_rate}%, vượt ngưỡng ${studentAlerts[st.student_id]?.threshold}%`) : ''}
+                                                            aria-label={st.student_id ? (studentAlerts[st.student_id]?.tooltip || 'Vắng vượt ngưỡng') : 'Vắng vượt ngưỡng'}
+                                                        >
+                                                            ⚠️ Vắng vượt ngưỡng
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td>{st.email || '—'}</td>
                                             <td>{st.phone || '—'}</td>
@@ -607,6 +753,16 @@ export function ClassDetailPage() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* TAB 6: CHUYÊN CẦN TỔNG HỢP (SCRUM-256) */}
+            {activeTab === 'attendance-summary' && canTakeOrViewAttendance && (
+                <ClassAttendanceSummaryView classId={classData.id} classCode={classData.class_code} />
+            )}
+
+            {/* TAB 7: BÀI TẬP & LÀM LẠI BÀI (SCRUM-269) */}
+            {activeTab === 'assignments' && (
+                <ClassAssignmentsView classId={classData.id} classCode={classData.class_code} />
             )}
         </div>
     )

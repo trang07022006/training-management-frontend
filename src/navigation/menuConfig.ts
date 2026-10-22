@@ -209,6 +209,14 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     },
     {
+        key: 'my_attendance_history',
+        label: 'Lịch sử điểm danh',
+        path: '/my-attendance-history',
+        icon: 'clock-rotate-left',
+        requiredRole: 'trainee',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
+    },
+    {
         key: 'my_absence_requests',
         label: 'Đơn xin phép vắng',
         path: '/my-absence-requests',
@@ -322,6 +330,14 @@ export function filterMenuItems(
         // Menu đơn xin phép vắng (SCRUM-255):
         // Chỉ hiển thị cho học viên (trainee)
         if (item.key === 'my_absence_requests') {
+            if (!userRoles.includes('trainee')) {
+                return false
+            }
+        }
+
+        // Menu lịch sử điểm danh (SCRUM-258):
+        // Dành riêng cho học viên (trainee). Giảng viên, quản trị viên và các vai trò khác không hiển thị.
+        if (item.key === 'my_attendance_history') {
             if (!userRoles.includes('trainee')) {
                 return false
             }

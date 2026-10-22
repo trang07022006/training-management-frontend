@@ -1,14 +1,17 @@
 import { useEffect, useState, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getClassDetail, type TrainingClass } from '../api/classApi'
 import { enrollStudents, getClassRoster } from '../api/enrollmentApi'
 import { listStudents, type Student } from '../api/studentApi'
+import { getClassSchedules, type ClassScheduleItem } from '../api/scheduleApi'
+import { saveSessionAttendance, type AttendanceStatus } from '../api/attendanceApi'
 import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './ClassesPage.css'
+import './SessionAttendance.css'
 
 export function ClassEnrollmentPage() {
     const { classId } = useParams<{ classId: string }>()
@@ -28,6 +31,12 @@ export function ClassEnrollmentPage() {
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([])
     const [searchKeyword, setSearchKeyword] = useState('')
 
+    // State phục vụ điểm danh trên danh sách học viên
+    const [schedules, setSchedules] = useState<ClassScheduleItem[]>([])
+    const [selectedScheduleId, setSelectedScheduleId] = useState<string>('')
+    const [studentAttendance, setStudentAttendance] = useState<Record<string, AttendanceStatus | null>>({})
+    const [isSavingAttendance, setIsSavingAttendance] = useState(false)
+
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -44,13 +53,20 @@ export function ClassEnrollmentPage() {
             getClassDetail(requestFn, classId),
             getClassRoster(requestFn, classId).catch(() => ({ items: [] })),
             listStudents(requestFn, { page: 1, page_size: 50 }).catch(() => ({ items: [] })),
+            getClassSchedules(requestFn, classId).catch(() => ({ schedules: [] })),
         ])
-            .then(([cls, roster, studentsRes]) => {
+            .then(([cls, roster, studentsRes, schedsRes]) => {
                 if (isMounted) {
                     setClassData(cls)
-                    const enrolledSet = new Set<string>((roster.items || []).map((i) => i.student_id))
+                    const enrolledSet = new Set<string>((roster.items || []).map((i) => i.student_id || '').filter(Boolean))
                     setAlreadyEnrolledIds(enrolledSet)
                     setAllStudents(studentsRes.items || [])
+                    const schedList = (schedsRes as { schedules?: ClassScheduleItem[] })?.schedules || []
+                    setSchedules(schedList)
+                    const firstWithId = schedList.find((s) => Boolean(s.id))
+                    if (firstWithId?.id) {
+                        setSelectedScheduleId(firstWithId.id)
+                    }
                     setIsLoading(false)
                 }
             })
@@ -107,6 +123,61 @@ export function ClassEnrollmentPage() {
         }
     }
 
+    // Thay đổi trạng thái điểm danh cho một học viên (bấm lại trạng thái đang chọn để hủy chọn)
+    const handleStudentAttendanceChange = (studentId: string, status: AttendanceStatus) => {
+        setStudentAttendance((prev) => {
+            const nextStatus = prev[studentId] === status ? null : status
+            return {
+                ...prev,
+                [studentId]: nextStatus,
+            }
+        })
+        // Nếu học viên chưa được chọn trong checkbox, tự động chọn
+        if (!selectedStudentIds.includes(studentId)) {
+            setSelectedStudentIds((prev) => [...prev, studentId])
+        }
+    }
+
+    // Lưu riêng kết quả điểm danh cho buổi học đang chọn
+    const handleSaveAttendanceOnly = async () => {
+        if (!classId || !selectedScheduleId) return
+        const attendanceEntries = Object.entries(studentAttendance).filter(([_, st]) => st !== null)
+        if (attendanceEntries.length === 0) {
+            setErrorMessage('Vui lòng chọn trạng thái điểm danh (Có mặt, Đi muộn, Vắng) cho ít nhất một học viên trước khi lưu.')
+            return
+        }
+
+        setIsSavingAttendance(true)
+        setErrorMessage(null)
+        setSuccessMessage(null)
+
+        try {
+            // Tự động ghi danh các học viên chưa trong lớp để backend chấp nhận bản ghi điểm danh
+            const unEnrolledIds = attendanceEntries.map(([sId]) => sId).filter((id) => !alreadyEnrolledIds.has(id))
+            if (unEnrolledIds.length > 0) {
+                await enrollStudents(requestFn, classId, unEnrolledIds)
+                setAlreadyEnrolledIds((prev) => new Set([...prev, ...unEnrolledIds]))
+            }
+
+            const items = attendanceEntries.map(([sId, st]) => ({
+                student_id: sId,
+                status: st as AttendanceStatus,
+                notes: 'Điểm danh từ danh sách học viên',
+            }))
+
+            await saveSessionAttendance(requestFn, selectedScheduleId, {
+                attendances: items,
+                reason: `Lưu điểm danh ${items.length} học viên từ danh sách lớp`,
+            })
+
+            setSuccessMessage(`Đã lưu kết quả điểm danh thành công cho ${items.length} học viên!`)
+        } catch (err: unknown) {
+            setErrorMessage(getErrorMessage(err, 'Lỗi khi lưu kết quả điểm danh.'))
+        } finally {
+            setIsSavingAttendance(false)
+        }
+    }
+
     const handleSubmit = async () => {
         if (!classId || selectedStudentIds.length === 0) return
 
@@ -121,7 +192,27 @@ export function ClassEnrollmentPage() {
 
         try {
             await enrollStudents(requestFn, classId, selectedStudentIds)
-            setSuccessMessage(getSuccessMessage('ENROLL_SUCCESS', `Ghi danh thành công ${selectedStudentIds.length} học viên vào lớp!`))
+
+            // Lưu điểm danh kèm theo nếu có buổi học và trạng thái điểm danh được tích
+            const attendanceEntries = Object.entries(studentAttendance).filter(
+                ([id, st]) => selectedStudentIds.includes(id) && st !== null,
+            )
+            if (selectedScheduleId && attendanceEntries.length > 0) {
+                try {
+                    await saveSessionAttendance(requestFn, selectedScheduleId, {
+                        attendances: attendanceEntries.map(([sId, st]) => ({
+                            student_id: sId,
+                            status: st as AttendanceStatus,
+                            notes: 'Điểm danh khi ghi danh vào lớp',
+                        })),
+                        reason: `Điểm danh ${attendanceEntries.length} học viên khi ghi danh vào lớp`,
+                    })
+                } catch (attErr) {
+                    console.warn('Lỗi lưu điểm danh kèm ghi danh:', attErr)
+                }
+            }
+
+            setSuccessMessage(getSuccessMessage('ENROLL_SUCCESS', `Ghi danh & lưu trạng thái điểm danh thành công cho ${selectedStudentIds.length} học viên!`))
             setTimeout(() => {
                 navigate(`/classes/${classId}/students`)
             }, 800)
@@ -244,6 +335,44 @@ export function ClassEnrollmentPage() {
                     </div>
                 </div>
 
+                {/* Toolbar chọn buổi học để tích điểm danh */}
+                {schedules.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+                        <label htmlFor="session-select" style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                            📅 Buổi học để điểm danh:
+                        </label>
+                        <select
+                            id="session-select"
+                            className="form-input"
+                            style={{ maxWidth: '340px', padding: '6px 10px', fontSize: '13px' }}
+                            value={selectedScheduleId}
+                            onChange={(e) => setSelectedScheduleId(e.target.value)}
+                        >
+                            {schedules.map((sch) => (
+                                <option key={sch.id || sch.session_number} value={sch.id || ''}>
+                                    Buổi #{sch.session_number} ({sch.learning_date ? new Date(sch.learning_date).toLocaleDateString('vi-VN') : '—'}) - {sch.shift === 'morning' ? 'Sáng' : sch.shift === 'afternoon' ? 'Chiều' : sch.shift === 'evening' ? 'Tối' : (sch.start_time?.substring(0, 5) || '')}
+                                </option>
+                            ))}
+                        </select>
+                        <Link
+                            to={`/classes/${classId}/attendance-summary`}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px', fontSize: '13px', textDecoration: 'none' }}
+                        >
+                            📊 Bảng chuyên cần lớp
+                        </Link>
+                        {selectedScheduleId && (
+                            <Link
+                                to={`/classes/${classId}/schedules/${selectedScheduleId}/attendance`}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '13px', textDecoration: 'none' }}
+                            >
+                                📋 Sổ điểm danh đầy đủ
+                            </Link>
+                        )}
+                    </div>
+                )}
+
                 {isExceedingCapacity && (
                     <div className="classes-alert error" style={{ marginBottom: '16px' }} role="alert">
                         <span>Cảnh báo: Bạn đã chọn {selectedStudentIds.length} học viên, vượt quá {remainingCapacity} chỗ còn lại!</span>
@@ -271,12 +400,13 @@ export function ClassEnrollmentPage() {
                                     <th>Họ và tên</th>
                                     <th>Email</th>
                                     <th>Số điện thoại</th>
-                                    <th>Trạng thái</th>
+                                    <th style={{ minWidth: '450px' }}>Trạng thái điểm danh</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {availableStudents.map((st) => {
                                     const isSelected = selectedStudentIds.includes(st.id)
+                                    const currentAttendance = studentAttendance[st.id]
                                     return (
                                         <tr
                                             key={st.id}
@@ -295,10 +425,64 @@ export function ClassEnrollmentPage() {
                                             <td>{st.full_name}</td>
                                             <td>{st.email || '—'}</td>
                                             <td>{st.phone || '—'}</td>
-                                            <td>
-                                                <span className="badge badge-success">
-                                                    {st.status || 'Hoạt động'}
-                                                </span>
+                                            <td onClick={(e) => e.stopPropagation()}>
+                                                <div
+                                                    className="status-tick-group status-btn-group"
+                                                    role="radiogroup"
+                                                    aria-label={`Điểm danh cho ${st.full_name}`}
+                                                >
+                                                    {/* P - Có mặt */}
+                                                    <button
+                                                        type="button"
+                                                        className={`status-tick-btn status-btn present ${currentAttendance === 'present' ? 'active' : ''}`}
+                                                        onClick={() => handleStudentAttendanceChange(st.id, 'present')}
+                                                        title="Có mặt (P)"
+                                                        aria-checked={currentAttendance === 'present'}
+                                                    >
+                                                        <span className="status-badge-box badge-p">P</span>
+                                                        <span className="status-tick-label">Có mặt</span>
+                                                        {currentAttendance === 'present' && <span className="tick-check-icon">✓</span>}
+                                                    </button>
+
+                                                    {/* L - Đi muộn */}
+                                                    <button
+                                                        type="button"
+                                                        className={`status-tick-btn status-btn late ${currentAttendance === 'late' ? 'active' : ''}`}
+                                                        onClick={() => handleStudentAttendanceChange(st.id, 'late')}
+                                                        title="Đi muộn (L)"
+                                                        aria-checked={currentAttendance === 'late'}
+                                                    >
+                                                        <span className="status-badge-box badge-l">L</span>
+                                                        <span className="status-tick-label">Đi muộn</span>
+                                                        {currentAttendance === 'late' && <span className="tick-check-icon">✓</span>}
+                                                    </button>
+
+                                                    {/* E - Vắng có phép */}
+                                                    <button
+                                                        type="button"
+                                                        className={`status-tick-btn status-btn excused ${currentAttendance === 'excused' ? 'active' : ''}`}
+                                                        onClick={() => handleStudentAttendanceChange(st.id, 'excused')}
+                                                        title="Vắng có phép (E)"
+                                                        aria-checked={currentAttendance === 'excused'}
+                                                    >
+                                                        <span className="status-badge-box badge-e">E</span>
+                                                        <span className="status-tick-label">Vắng có phép</span>
+                                                        {currentAttendance === 'excused' && <span className="tick-check-icon">✓</span>}
+                                                    </button>
+
+                                                    {/* U - Vắng không phép */}
+                                                    <button
+                                                        type="button"
+                                                        className={`status-tick-btn status-btn unexcused ${currentAttendance === 'unexcused' ? 'active' : ''}`}
+                                                        onClick={() => handleStudentAttendanceChange(st.id, 'unexcused')}
+                                                        title="Vắng không phép (U)"
+                                                        aria-checked={currentAttendance === 'unexcused'}
+                                                    >
+                                                        <span className="status-badge-box badge-u">U</span>
+                                                        <span className="status-tick-label">Vắng không phép</span>
+                                                        {currentAttendance === 'unexcused' && <span className="tick-check-icon">✓</span>}
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     )
@@ -308,20 +492,31 @@ export function ClassEnrollmentPage() {
                     </div>
                 )}
 
-                <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
                     <button
                         type="button"
                         className="btn-cancel"
                         onClick={() => navigate(`/classes/${classId}/students`)}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isSavingAttendance}
                     >
                         Quay lại
                     </button>
+                    {selectedScheduleId && (
+                        <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ borderColor: '#16a34a', color: '#15803d', fontWeight: 600 }}
+                            onClick={handleSaveAttendanceOnly}
+                            disabled={isSubmitting || isSavingAttendance || Object.values(studentAttendance).filter(Boolean).length === 0}
+                        >
+                            {isSavingAttendance ? 'Đang lưu điểm danh...' : `💾 Lưu điểm danh (${Object.values(studentAttendance).filter(Boolean).length} học viên)`}
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="btn-primary"
                         onClick={handleSubmit}
-                        disabled={isSubmitting || selectedStudentIds.length === 0 || isExceedingCapacity}
+                        disabled={isSubmitting || isSavingAttendance || selectedStudentIds.length === 0 || isExceedingCapacity}
                     >
                         {isSubmitting ? 'Đang ghi danh...' : `Xác nhận ghi danh (${selectedStudentIds.length} học viên)`}
                     </button>

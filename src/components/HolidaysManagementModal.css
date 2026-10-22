@@ -148,16 +148,20 @@
 }
 
 .btn-del-holiday {
-    background: none;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    padding: 4px 8px;
-    border-radius: 4px;
+    background: #fff1f2;
+    border: 1.5px solid #fecdd3;
+    color: #be123c;
+    padding: 5px 10px;
+    border-radius: 6px;
     font-size: 0.8rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.18s ease;
 }
 
-.btn-del-holiday:hover {
-    background: #fef2f2;
+.btn-del-holiday:hover:not(:disabled) {
+    background: #e11d48 !important;
+    border-color: #be123c !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(225, 29, 72, 0.35);
 }

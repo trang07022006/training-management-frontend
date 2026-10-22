@@ -8,6 +8,7 @@ import {
     reviewAbsenceRequest,
 } from '../api/absenceRequestApi'
 import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
+import { toast } from '../components/ToastPortal'
 import './InstructorAbsenceManagementPage.css'
 
 export const InstructorAbsenceManagementPage: React.FC = () => {
@@ -90,12 +91,8 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
         }
     }
 
-    // Đóng modal có xác nhận nếu đang nhập dở lý do từ chối
+    // Đóng modal xem/duyệt đơn
     const handleCloseReviewModal = () => {
-        if (showRejectForm && rejectionReason.trim().length > 0) {
-            const confirmDiscard = window.confirm('Bạn đang nhập lý do từ chối chưa lưu. Bạn có chắc chắn muốn đóng?')
-            if (!confirmDiscard) return
-        }
         setSelectedRequest(null)
         setShowRejectForm(false)
         setRejectionReason('')
@@ -105,8 +102,6 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
     // Phê duyệt đơn (approve)
     const handleApproveRequest = async () => {
         if (!selectedRequest) return
-        const confirmApprove = window.confirm('Bạn có chắc chắn muốn phê duyệt đơn xin phép vắng này? Điểm danh của học viên sẽ được cập nhật thành Vắng có phép.')
-        if (!confirmApprove) return
 
         setIsReviewing(true)
         setErrorMessage(null)
@@ -116,7 +111,9 @@ export const InstructorAbsenceManagementPage: React.FC = () => {
             const updated = await reviewAbsenceRequest(request, selectedRequest.id, {
                 action: 'approve',
             })
-            setSuccessMessage(`Đã phê duyệt đơn xin phép vắng của học viên ${updated.student_name || ''}. Điểm danh buổi học đã được cập nhật thành Vắng có phép.`)
+            const msg = `Đã phê duyệt đơn xin phép vắng của học viên ${updated.student_name || ''}. Điểm danh buổi học đã được cập nhật thành Vắng có phép.`
+            setSuccessMessage(msg)
+            toast.success(msg)
             setSelectedRequest(updated)
             loadRequests()
         } catch (err: unknown) {

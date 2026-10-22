@@ -24,7 +24,7 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
 }
 
 interface StudentDraftEdit {
-    status: AttendanceStatus
+    status: AttendanceStatus | null
     notes?: string
 }
 
@@ -71,7 +71,7 @@ export function SessionAttendancePage() {
                     return {
                         ...st,
                         status: draft.status,
-                        status_label: STATUS_LABELS[draft.status],
+                        status_label: draft.status ? STATUS_LABELS[draft.status] : 'Chưa điểm danh',
                         notes: draft.notes !== undefined ? draft.notes : st.notes,
                     }
                 }
@@ -163,7 +163,7 @@ export function SessionAttendancePage() {
     }
 
     // Cập nhật trạng thái điểm danh cho một học viên
-    const handleStatusChange = (studentId: string, newStatus: AttendanceStatus) => {
+    const handleStatusChange = (studentId: string, newStatus: AttendanceStatus | null) => {
         if (!sheetData?.session_info.can_edit) return
         setDraftEdits((prev) => {
             const currentNotes =
@@ -182,7 +182,11 @@ export function SessionAttendancePage() {
         setPageStudents((prev) =>
             prev.map((s) =>
                 s.student_id === studentId
-                    ? { ...s, status: newStatus, status_label: STATUS_LABELS[newStatus] }
+                    ? {
+                          ...s,
+                          status: newStatus,
+                          status_label: newStatus ? STATUS_LABELS[newStatus] : 'Chưa điểm danh',
+                      }
                     : s,
             ),
         )
@@ -264,7 +268,8 @@ export function SessionAttendancePage() {
             const lateCount = edits.filter((e) => e.status === 'late').length
             const excusedCount = edits.filter((e) => e.status === 'excused').length
             const unexcusedCount = edits.filter((e) => e.status === 'unexcused').length
-            const nonPresentCount = lateCount + excusedCount + unexcusedCount
+            const unmarkedCount = edits.filter((e) => e.status === null).length
+            const nonPresentCount = lateCount + excusedCount + unexcusedCount + unmarkedCount
             const presentCount = Math.max(0, total - nonPresentCount)
 
             return {
@@ -273,22 +278,45 @@ export function SessionAttendancePage() {
                 late: lateCount,
                 excused: excusedCount,
                 unexcused: unexcusedCount,
-                unmarked: 0,
+                unmarked: unmarkedCount,
                 isDraft: true,
             }
         }
 
         // Trường hợp chỉnh sửa thủ công riêng lẻ
+        let presentCount = savedStats.present_count
+        let lateCount = savedStats.late_count
+        let excusedCount = savedStats.excused_count
+        let unexcusedCount = savedStats.unexcused_count
+        let unmarkedCount = savedStats.unmarked_count
+
+        pageStudents.forEach((st) => {
+            const orig = sheetData?.students.find((s) => s.student_id === st.student_id)
+            if (orig && orig.status !== st.status) {
+                if (orig.status === 'present') presentCount = Math.max(0, presentCount - 1)
+                else if (orig.status === 'late') lateCount = Math.max(0, lateCount - 1)
+                else if (orig.status === 'excused') excusedCount = Math.max(0, excusedCount - 1)
+                else if (orig.status === 'unexcused') unexcusedCount = Math.max(0, unexcusedCount - 1)
+                else unmarkedCount = Math.max(0, unmarkedCount - 1)
+
+                if (st.status === 'present') presentCount++
+                else if (st.status === 'late') lateCount++
+                else if (st.status === 'excused') excusedCount++
+                else if (st.status === 'unexcused') unexcusedCount++
+                else unmarkedCount++
+            }
+        })
+
         return {
             total,
-            present: savedStats.present_count,
-            late: savedStats.late_count,
-            excused: savedStats.excused_count,
-            unexcused: savedStats.unexcused_count,
-            unmarked: savedStats.unmarked_count,
+            present: presentCount,
+            late: lateCount,
+            excused: excusedCount,
+            unexcused: unexcusedCount,
+            unmarked: unmarkedCount,
             isDraft: true,
         }
-    }, [savedStats, isDirty, markAllPresentDraft, draftEdits])
+    }, [savedStats, isDirty, markAllPresentDraft, draftEdits, pageStudents, sheetData])
 
     // Danh sách học viên hiển thị trên trang hiện tại theo bộ lọc tìm kiếm
     const displayStudents = useMemo(() => {
@@ -322,20 +350,30 @@ export function SessionAttendancePage() {
                 payload.mark_all_present = true
                 payload.reason = 'Đánh dấu tất cả có mặt cho toàn bộ buổi học'
                 if (Object.keys(draftEdits).length > 0) {
-                    payload.attendances = Object.entries(draftEdits).map(([sId, edit]) => ({
-                        student_id: sId,
-                        status: edit.status,
-                        notes: edit.notes?.trim() || undefined,
-                    }))
+                    payload.attendances = Object.entries(draftEdits)
+                        .filter(([_, edit]) => edit.status !== null)
+                        .map(([sId, edit]) => ({
+                            student_id: sId,
+                            status: edit.status as AttendanceStatus,
+                            notes: edit.notes?.trim() || undefined,
+                        }))
                     payload.reason = 'Đánh dấu tất cả có mặt và cập nhật các học viên ngoại lệ'
                 }
             } else {
-                payload.attendances = Object.entries(draftEdits).map(([sId, edit]) => ({
-                    student_id: sId,
-                    status: edit.status,
-                    notes: edit.notes?.trim() || undefined,
-                }))
-                payload.reason = `Cập nhật điểm danh cho ${Object.keys(draftEdits).length} học viên`
+                const validAttendances = Object.entries(draftEdits)
+                    .filter(([_, edit]) => edit.status !== null)
+                    .map(([sId, edit]) => ({
+                        student_id: sId,
+                        status: edit.status as AttendanceStatus,
+                        notes: edit.notes?.trim() || undefined,
+                    }))
+                if (validAttendances.length === 0) {
+                    setErrorMessage('Vui lòng chọn trạng thái điểm danh cho ít nhất một học viên trước khi lưu.')
+                    setIsSaving(false)
+                    return
+                }
+                payload.attendances = validAttendances
+                payload.reason = `Cập nhật điểm danh cho ${validAttendances.length} học viên`
             }
 
             const res = await saveSessionAttendance(requestFn, scheduleId, payload)
@@ -387,14 +425,23 @@ export function SessionAttendancePage() {
                 >
                     <span>⚠️ {errorMessage}</span>
                 </div>
-                <button
-                    type="button"
-                    className="btn-history-view"
-                    onClick={() => navigate(-1)}
-                    style={{ marginTop: '12px' }}
-                >
-                    ← Quay lại
-                </button>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button
+                        type="button"
+                        className="btn-history-view"
+                        onClick={() => loadSheetData(1, limit, searchQuery)}
+                        data-testid="retry-attendance-btn"
+                    >
+                        🔄 Thử lại
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-history-view"
+                        onClick={() => navigate(-1)}
+                    >
+                        ← Quay lại
+                    </button>
+                </div>
             </div>
         )
     }
@@ -488,6 +535,14 @@ export function SessionAttendancePage() {
                                     ✓ Đã điểm danh
                                 </span>
                             )}
+                            <Link
+                                to={`/classes/${sessionInfo.class_id}/attendance-summary`}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                title="Xem bảng chuyên cần tổng hợp của lớp"
+                            >
+                                📊 Bảng tổng hợp
+                            </Link>
                         </div>
                     </div>
 
@@ -678,7 +733,7 @@ export function SessionAttendancePage() {
                             <th style={{ width: '50px', textAlign: 'center' }}>STT</th>
                             <th style={{ width: '130px' }}>Mã học viên</th>
                             <th>Họ và tên</th>
-                            <th style={{ width: '380px', textAlign: 'center' }}>Trạng thái điểm danh</th>
+                            <th style={{ minWidth: '630px', textAlign: 'center' }}>Trạng thái điểm danh</th>
                             <th style={{ width: '220px' }}>Ghi chú</th>
                         </tr>
                     </thead>
@@ -711,42 +766,84 @@ export function SessionAttendancePage() {
                                             )}
                                         </td>
                                         <td style={{ textAlign: 'center' }}>
-                                            <div className="status-btn-group" role="group" aria-label={`Trạng thái của ${st.full_name}`}>
+                                            <div
+                                                className="status-tick-group status-btn-group"
+                                                role="radiogroup"
+                                                aria-label={`Trạng thái của ${st.full_name}`}
+                                            >
+                                                {/* P - Có mặt */}
                                                 <button
                                                     type="button"
-                                                    className={`status-btn present ${st.status === 'present' ? 'active' : ''}`}
+                                                    className={`status-tick-btn status-btn present ${st.status === 'present' ? 'active' : ''}`}
                                                     onClick={() => handleStatusChange(st.student_id, 'present')}
                                                     disabled={!canEdit}
                                                     data-testid={`btn-present-${st.student_id}`}
+                                                    title="Có mặt (P)"
+                                                    aria-checked={st.status === 'present'}
                                                 >
-                                                    Có mặt
+                                                    <span className="status-badge-box badge-p">P</span>
+                                                    <span className="status-tick-label">Có mặt</span>
+                                                    {st.status === 'present' && <span className="tick-check-icon" aria-hidden="true">✓</span>}
                                                 </button>
+
+                                                {/* L - Đi muộn */}
                                                 <button
                                                     type="button"
-                                                    className={`status-btn late ${st.status === 'late' ? 'active' : ''}`}
+                                                    className={`status-tick-btn status-btn late ${st.status === 'late' ? 'active' : ''}`}
                                                     onClick={() => handleStatusChange(st.student_id, 'late')}
                                                     disabled={!canEdit}
                                                     data-testid={`btn-late-${st.student_id}`}
+                                                    title="Đi muộn (L)"
+                                                    aria-checked={st.status === 'late'}
                                                 >
-                                                    Đi muộn
+                                                    <span className="status-badge-box badge-l">L</span>
+                                                    <span className="status-tick-label">Đi muộn</span>
+                                                    {st.status === 'late' && <span className="tick-check-icon" aria-hidden="true">✓</span>}
                                                 </button>
+
+                                                {/* E - Vắng có phép */}
                                                 <button
                                                     type="button"
-                                                    className={`status-btn excused ${st.status === 'excused' ? 'active' : ''}`}
+                                                    className={`status-tick-btn status-btn excused ${st.status === 'excused' ? 'active' : ''}`}
                                                     onClick={() => handleStatusChange(st.student_id, 'excused')}
                                                     disabled={!canEdit}
                                                     data-testid={`btn-excused-${st.student_id}`}
+                                                    title="Vắng có phép (E)"
+                                                    aria-checked={st.status === 'excused'}
                                                 >
-                                                    Có phép
+                                                    <span className="status-badge-box badge-e">E</span>
+                                                    <span className="status-tick-label">Vắng có phép</span>
+                                                    {st.status === 'excused' && <span className="tick-check-icon" aria-hidden="true">✓</span>}
                                                 </button>
+
+                                                {/* U - Vắng không phép */}
                                                 <button
                                                     type="button"
-                                                    className={`status-btn unexcused ${st.status === 'unexcused' ? 'active' : ''}`}
+                                                    className={`status-tick-btn status-btn unexcused ${st.status === 'unexcused' ? 'active' : ''}`}
                                                     onClick={() => handleStatusChange(st.student_id, 'unexcused')}
                                                     disabled={!canEdit}
                                                     data-testid={`btn-unexcused-${st.student_id}`}
+                                                    title="Vắng không phép (U)"
+                                                    aria-checked={st.status === 'unexcused'}
                                                 >
-                                                    Không phép
+                                                    <span className="status-badge-box badge-u">U</span>
+                                                    <span className="status-tick-label">Vắng không phép</span>
+                                                    {st.status === 'unexcused' && <span className="tick-check-icon" aria-hidden="true">✓</span>}
+                                                </button>
+
+                                                {/* ? - Chưa điểm danh */}
+                                                <button
+                                                    type="button"
+                                                    className={`status-tick-btn status-btn unmarked ${st.status === null ? 'active' : ''}`}
+                                                    onClick={() => handleStatusChange(st.student_id, null)}
+                                                    disabled={!canEdit}
+                                                    data-testid={`btn-unmarked-${st.student_id}`}
+                                                    title="Chưa điểm danh (?)"
+                                                    aria-checked={st.status === null}
+                                                >
+                                                    <span className="status-badge-box badge-unmarked">?</span>
+                                                    <span className="status-tick-label">Chưa điểm danh</span>
+                                                    {st.status === null && <span className="tick-check-icon" aria-hidden="true">✓</span>}
                                                 </button>
                                             </div>
                                             {st.status === null && (
@@ -808,39 +905,64 @@ export function SessionAttendancePage() {
                                 <div className="attendance-card-btn-grid">
                                     <button
                                         type="button"
-                                        className={`mobile-status-btn ${st.status === 'present' ? 'active present' : ''}`}
+                                        className={`mobile-status-btn mobile-tick-btn present ${st.status === 'present' ? 'active present' : ''}`}
                                         onClick={() => handleStatusChange(st.student_id, 'present')}
                                         disabled={!canEdit}
                                         data-testid={`mobile-btn-present-${st.student_id}`}
+                                        aria-checked={st.status === 'present'}
                                     >
-                                        Có mặt
+                                        <span className="status-badge-box badge-p">P</span>
+                                        <span>Có mặt</span>
+                                        {st.status === 'present' && <span className="tick-check-icon">✓</span>}
                                     </button>
                                     <button
                                         type="button"
-                                        className={`mobile-status-btn ${st.status === 'late' ? 'active late' : ''}`}
+                                        className={`mobile-status-btn mobile-tick-btn late ${st.status === 'late' ? 'active late' : ''}`}
                                         onClick={() => handleStatusChange(st.student_id, 'late')}
                                         disabled={!canEdit}
                                         data-testid={`mobile-btn-late-${st.student_id}`}
+                                        aria-checked={st.status === 'late'}
                                     >
-                                        Đi muộn
+                                        <span className="status-badge-box badge-l">L</span>
+                                        <span>Đi muộn</span>
+                                        {st.status === 'late' && <span className="tick-check-icon">✓</span>}
                                     </button>
                                     <button
                                         type="button"
-                                        className={`mobile-status-btn ${st.status === 'excused' ? 'active excused' : ''}`}
+                                        className={`mobile-status-btn mobile-tick-btn excused ${st.status === 'excused' ? 'active excused' : ''}`}
                                         onClick={() => handleStatusChange(st.student_id, 'excused')}
                                         disabled={!canEdit}
                                         data-testid={`mobile-btn-excused-${st.student_id}`}
+                                        aria-checked={st.status === 'excused'}
                                     >
-                                        Có phép
+                                        <span className="status-badge-box badge-e">E</span>
+                                        <span>Vắng có phép</span>
+                                        {st.status === 'excused' && <span className="tick-check-icon">✓</span>}
                                     </button>
                                     <button
                                         type="button"
-                                        className={`mobile-status-btn ${st.status === 'unexcused' ? 'active unexcused' : ''}`}
+                                        className={`mobile-status-btn mobile-tick-btn unexcused ${st.status === 'unexcused' ? 'active unexcused' : ''}`}
                                         onClick={() => handleStatusChange(st.student_id, 'unexcused')}
                                         disabled={!canEdit}
                                         data-testid={`mobile-btn-unexcused-${st.student_id}`}
+                                        aria-checked={st.status === 'unexcused'}
                                     >
-                                        Không phép
+                                        <span className="status-badge-box badge-u">U</span>
+                                        <span>Vắng không phép</span>
+                                        {st.status === 'unexcused' && <span className="tick-check-icon">✓</span>}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`mobile-status-btn mobile-tick-btn unmarked ${st.status === null ? 'active unmarked' : ''}`}
+                                        onClick={() => handleStatusChange(st.student_id, null)}
+                                        disabled={!canEdit}
+                                        data-testid={`mobile-btn-unmarked-${st.student_id}`}
+                                        style={{ gridColumn: 'span 2' }}
+                                        aria-checked={st.status === null}
+                                    >
+                                        <span className="status-badge-box badge-unmarked">?</span>
+                                        <span>Chưa điểm danh</span>
+                                        {st.status === null && <span className="tick-check-icon">✓</span>}
                                     </button>
                                 </div>
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router'
 import { Sidebar } from './Sidebar'
 import { AppHeader } from './AppHeader'
+import { GlobalToastContainer } from '../components/ToastPortal'
 import './AppLayout.css'
 
 /**
@@ -35,6 +36,8 @@ export function AppLayout() {
                 <div className="app-main-bg-img" />
                 <div className="app-main-bg-overlay" />
             </div>
+
+            <GlobalToastContainer />
 
             <Sidebar
                 isOpen={sidebarOpen}

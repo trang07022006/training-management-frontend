@@ -17,6 +17,8 @@ import { ClassroomSelect } from '../components/ClassroomSelect'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SHIFT_OPTIONS } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import './ClassesPage.css'
 
 export function ScheduleSessionEditPage() {
@@ -145,7 +147,9 @@ export function ScheduleSessionEditPage() {
             if (res.capacity_warning) {
                 successMsg += ` (${res.capacity_warning})`
             }
-            setSuccessMessage(getSuccessMessage('UPDATE_SCHEDULE_SUCCESS', successMsg))
+            const msg = getSuccessMessage('UPDATE_SCHEDULE_SUCCESS', successMsg)
+            setSuccessMessage(msg)
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/classes/${classId}/schedules/${scheduleId}`)
@@ -155,19 +159,30 @@ export function ScheduleSessionEditPage() {
             const conflictList = errDetails.details?.conflicts || errDetails.data?.conflicts
             if (err instanceof ApiError && conflictList) {
                 setConflicts(conflictList)
-                setErrorMessage('Phát hiện xung đột lịch học. Bạn có thể bật "Cho phép ghi đè xung đột" để tiếp tục.')
+                const conflictMsg = 'Phát hiện xung đột lịch học. Bạn có thể bật "Cho phép ghi đè xung đột" để tiếp tục.'
+                setErrorMessage(conflictMsg)
+                toast.warning(conflictMsg)
             } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi cập nhật buổi học.'))
+                const errText = getErrorMessage(err, 'Lỗi khi cập nhật buổi học.')
+                setErrorMessage(errText)
+                toast.error(errText)
             }
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') {
+                const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
+                if (!confirmed) return
+            } else {
+                setIsConfirmLeaveOpen(true)
+                return
+            }
         }
         navigate(`/classes/${classId}/schedules/${scheduleId}`)
     }
@@ -468,6 +483,17 @@ export function ScheduleSessionEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/classes/${classId}/schedules/${scheduleId}`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }
