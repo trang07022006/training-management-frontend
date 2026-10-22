@@ -3,12 +3,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor, cleanup } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router'
-import { StudentDetailPage, getStudentStatusBadge, getClassStatusBadge, getEnrollmentStatusBadge } from './StudentDetailPage'
+import { StudentDetailPage, getStudentStatusBadge, getClassStatusBadge, getEnrollmentStatusBadge, getLifecycleActionBadge, getLifecycleStatusBadge } from './StudentDetailPage'
 import type { StudentDetail } from '../api/studentApi'
+import type { StudentLifecycleHistoryItem } from '../api/studentLifecycleApi'
+
+let mockSessionRole = 'admin'
+let mockSessionPermissions = ['course.manage']
 
 afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
+    mockSessionRole = 'admin'
+    mockSessionPermissions = ['course.manage']
 })
 
 const mockStudentEnrolled: StudentDetail = {
@@ -69,14 +75,59 @@ const mockStudentEmptyAndLong: StudentDetail = {
     updated_at: '2026-03-01T08:00:00Z',
 }
 
+const mockLifecycleItems: StudentLifecycleHistoryItem[] = [
+    {
+        id: 'hist-drop-01',
+        student_id: 'stu-001',
+        action_type: 'drop',
+        source_class_code: 'CNTT-K21A',
+        effective_date: '2026-10-18',
+        reason: 'Lý do thôi học đặc biệt',
+        status: 'applied',
+        performer_name: 'Quản lý đào tạo ICTU',
+        created_at: '2026-10-18T10:00:00Z',
+    },
+    {
+        id: 'hist-transfer-02',
+        student_id: 'stu-001',
+        action_type: 'transfer',
+        source_class_code: 'CNTT-K20B',
+        target_class_code: 'CNTT-K21A',
+        effective_date: '2026-10-10',
+        reason: 'Lý do chuyển lớp ca tối',
+        status: 'applied',
+        performer_name: 'Quản lý đào tạo ICTU',
+        created_at: '2026-10-10T10:00:00Z',
+    },
+    {
+        id: 'hist-reserve-03',
+        student_id: 'stu-001',
+        action_type: 'reserve',
+        source_class_code: 'CNTT-K20B',
+        effective_date: '2026-11-01',
+        reason: 'Lý do bảo lưu 2 tháng',
+        status: 'pending',
+        performer_name: 'Quản lý đào tạo ICTU',
+        created_at: '2026-10-01T10:00:00Z',
+    },
+]
+
 vi.mock('../auth/SessionProvider', () => ({
     useSession: () => ({
         request: vi.fn(),
-        permissions: ['course.manage'],
-        role: 'admin',
-        roles: ['admin'],
+        permissions: mockSessionPermissions,
+        role: mockSessionRole,
+        roles: [mockSessionRole],
     }),
 }))
+
+vi.mock('../api/studentLifecycleApi', async (importOriginal) => {
+    const actual = await importOriginal<Record<string, unknown>>()
+    return {
+        ...actual,
+        getStudentLifecycleHistory: vi.fn(() => Promise.resolve(mockLifecycleItems)),
+    }
+})
 
 vi.mock('../api/studentApi', async (importOriginal) => {
     const actual = await importOriginal<Record<string, unknown>>()
@@ -195,6 +246,91 @@ describe('StudentDetailPage Interface & Business Logic Tests', () => {
 
             // Class history empty state
             expect(screen.getByText('Chưa có lịch sử lớp học nào trước đây.')).toBeDefined()
+        })
+
+        it('does not display lifecycle history card for admin without training_manager role (RBAC)', async () => {
+            mockSessionRole = 'admin'
+            mockSessionPermissions = ['course.manage']
+
+            render(
+                <MemoryRouter initialEntries={['/students/stu-001']}>
+                    <Routes>
+                        <Route path="/students/:studentId" element={<StudentDetailPage />} />
+                    </Routes>
+                </MemoryRouter>
+            )
+
+            await waitFor(() => {
+                expect(screen.getByTestId('student-detail-page')).toBeDefined()
+            })
+
+            // Admin without training_manager cannot see lifecycle history card
+            expect(screen.queryByTestId('lifecycle-history-card')).toBeNull()
+        })
+
+        it('displays full lifecycle history for training_manager with all 3 actions (SCRUM-252.4)', async () => {
+            mockSessionRole = 'training_manager'
+            mockSessionPermissions = ['course.manage', 'student.lifecycle_manage']
+
+            render(
+                <MemoryRouter initialEntries={['/students/stu-001']}>
+                    <Routes>
+                        <Route path="/students/:studentId" element={<StudentDetailPage />} />
+                    </Routes>
+                </MemoryRouter>
+            )
+
+            await waitFor(() => {
+                expect(screen.getByTestId('student-detail-page')).toBeDefined()
+            })
+
+            // Lifecycle history card and table exist
+            expect(screen.getByTestId('lifecycle-history-card')).toBeDefined()
+            expect(screen.getByTestId('lifecycle-history-table')).toBeDefined()
+            expect(screen.getByText(/Lịch sử biến động học tập \(3\)/)).toBeDefined()
+
+            // Check item 1 (Thôi học)
+            const dropItem = screen.getByTestId('lifecycle-history-item-hist-drop-01')
+            expect(dropItem).toBeDefined()
+            expect(dropItem.textContent).toContain('Thôi học')
+            expect(dropItem.textContent).toContain('Lớp CNTT-K21A')
+            expect(dropItem.textContent).toContain('Lý do thôi học đặc biệt')
+            expect(dropItem.textContent).toContain('Đã hiệu lực')
+            expect(dropItem.textContent).toContain('Quản lý đào tạo ICTU')
+
+            // Check item 2 (Chuyển lớp)
+            const transferItem = screen.getByTestId('lifecycle-history-item-hist-transfer-02')
+            expect(transferItem).toBeDefined()
+            expect(transferItem.textContent).toContain('Chuyển lớp')
+            expect(transferItem.textContent).toContain('CNTT-K20B ➔ CNTT-K21A')
+            expect(transferItem.textContent).toContain('Lý do chuyển lớp ca tối')
+            expect(transferItem.textContent).toContain('Đã hiệu lực')
+
+            // Check item 3 (Bảo lưu)
+            const reserveItem = screen.getByTestId('lifecycle-history-item-hist-reserve-03')
+            expect(reserveItem).toBeDefined()
+            expect(reserveItem.textContent).toContain('Bảo lưu')
+            expect(reserveItem.textContent).toContain('Lớp CNTT-K20B')
+            expect(reserveItem.textContent).toContain('Lý do bảo lưu 2 tháng')
+            expect(reserveItem.textContent).toContain('Chờ hiệu lực')
+        })
+    })
+
+    describe('Lifecycle Badge Helper Unit Tests', () => {
+        it('maps lifecycle action badges correctly', () => {
+            expect(getLifecycleActionBadge('reserve').label).toBe('Bảo lưu')
+            expect(getLifecycleActionBadge('reserve').icon).toBe('⏸️')
+            expect(getLifecycleActionBadge('transfer').label).toBe('Chuyển lớp')
+            expect(getLifecycleActionBadge('transfer').icon).toBe('🔄')
+            expect(getLifecycleActionBadge('drop').label).toBe('Thôi học')
+            expect(getLifecycleActionBadge('drop').icon).toBe('🛑')
+            expect(getLifecycleActionBadge('unknown').label).toBe('unknown')
+        })
+
+        it('maps lifecycle status badges correctly', () => {
+            expect(getLifecycleStatusBadge('applied').label).toBe('Đã hiệu lực')
+            expect(getLifecycleStatusBadge('pending').label).toBe('Chờ hiệu lực')
+            expect(getLifecycleStatusBadge('other').label).toBe('other')
         })
     })
 })

@@ -264,4 +264,64 @@ describe('SCRUM-227: Thời khóa biểu dạng lịch tuần và tháng', () =>
             expect(screen.queryByTestId('schedule-detail-modal')).toBeNull()
         })
     })
+
+    it('bỏ badge "Hôm nay" trong tiêu đề ngày, giữ class today-col phân biệt nền và giữ nút Hôm nay trên navbar', async () => {
+        render(
+            <MemoryRouter>
+                <ScheduleCalendarPage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('week-calendar-view')).toBeDefined()
+        })
+
+        // Nút Hôm nay trên thanh điều hướng vẫn tồn tại và hoạt động
+        const btnToday = screen.getByTestId('btn-today')
+        expect(btnToday).toBeDefined()
+        expect(btnToday.textContent?.trim()).toBe('Hôm nay')
+
+        // Không còn badge "Hôm nay" trong ô tiêu đề ngày của lịch
+        const todayBadge = document.querySelector('.today-badge')
+        expect(todayBadge).toBeNull()
+
+        // Cột ngày hôm nay vẫn được phân biệt bằng class today-col
+        const todayCol = document.querySelector('.week-day-column.today-col')
+        expect(todayCol).not.toBeNull()
+
+        // Kiểm tra 7 cột đều có week-col-header chứa đúng 2 phần tử (tên thứ và ngày)
+        const headers = document.querySelectorAll('.week-col-header')
+        expect(headers.length).toBe(7)
+        headers.forEach((h) => {
+            expect(h.querySelector('.col-day-name')).not.toBeNull()
+            expect(h.querySelector('.col-date-text')).not.toBeNull()
+            // Không có badge phụ gây lệch chiều cao
+            expect(h.children.length).toBe(2)
+        })
+    })
+
+    it('áp dụng phân biệt ngày hiện tại nhất quán ở chế độ tháng với today-cell', async () => {
+        render(
+            <MemoryRouter>
+                <ScheduleCalendarPage />
+            </MemoryRouter>
+        )
+
+        await waitFor(() => {
+            expect(screen.getByTestId('week-calendar-view')).toBeDefined()
+        })
+
+        // Chuyển sang chế độ xem tháng
+        fireEvent.click(screen.getByTestId('btn-view-month'))
+
+        await waitFor(() => {
+            expect(screen.getByTestId('month-calendar-view')).toBeDefined()
+        })
+
+        // Ô ngày hôm nay có class today-cell
+        const todayMonthCell = document.querySelector('.month-cell.today-cell')
+        expect(todayMonthCell).not.toBeNull()
+        expect(todayMonthCell?.getAttribute('data-testid')).toBe(`month-cell-${todayStr}`)
+    })
 })
+

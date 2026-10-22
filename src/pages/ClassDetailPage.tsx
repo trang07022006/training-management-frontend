@@ -18,9 +18,10 @@ import { DetailNavTabs } from '../components/DetailNavTabs'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { ClassAttendanceSummaryView } from './ClassAttendanceSummaryView'
 import './ClassesPage.css'
 
-export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules'
+export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules' | 'attendance-summary'
 
 export function ClassDetailPage() {
     const { classId } = useParams<{ classId: string }>()
@@ -37,6 +38,14 @@ export function ClassDetailPage() {
 
     const effectiveSchedulePermissions = permissions?.length ? permissions : getRolePermissions(normalizedRoles)
     const canManageSchedule = effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.SCHEDULE_MANAGE)
+    const canLifecycleManage =
+        permissions?.includes(SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE) ||
+        normalizedRoles.includes('training_manager')
+    const canTakeOrViewAttendance =
+        effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.ATTENDANCE_VIEW) ||
+        effectiveSchedulePermissions.includes(SYSTEM_PERMISSIONS.ATTENDANCE_TAKE) ||
+        normalizedRoles.includes('trainer') ||
+        normalizedRoles.includes('training_manager')
 
     // Determine active tab from URL pathname
     let activeTab: ClassDetailTab = 'info'
@@ -44,6 +53,7 @@ export function ClassDetailPage() {
     else if (location.pathname.endsWith('/instructors')) activeTab = 'instructors'
     else if (location.pathname.endsWith('/students')) activeTab = 'students'
     else if (location.pathname.endsWith('/schedules')) activeTab = 'schedules'
+    else if (location.pathname.endsWith('/attendance-summary')) activeTab = 'attendance-summary'
 
     // Data states
     const [classData, setClassData] = useState<TrainingClass | null>(null)
@@ -149,6 +159,13 @@ export function ClassDetailPage() {
         { key: 'students', label: `Học viên (${classData.enrolled_count}/${classData.max_capacity})`, path: `/classes/${classData.id}/students` },
         { key: 'schedules', label: 'Thời khóa biểu', path: `/classes/${classData.id}/schedules` },
     ]
+    if (canTakeOrViewAttendance) {
+        navItems.push({
+            key: 'attendance-summary',
+            label: 'Chuyên cần tổng hợp',
+            path: `/classes/${classData.id}/attendance-summary`,
+        })
+    }
 
     return (
         <div className="classes-container" data-testid="class-detail-page">
@@ -166,6 +183,27 @@ export function ClassDetailPage() {
                 }
                 actions={
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {canTakeOrViewAttendance && (
+                            <Link
+                                to={`/classes/${classData.id}/attendance-summary`}
+                                className="btn-secondary"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    background: '#ecfdf5',
+                                    color: '#047857',
+                                    borderColor: '#a7f3d0',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                }}
+                                title="Xem Bảng chuyên cần tổng hợp của lớp"
+                            >
+                                <span>📊 Bảng chuyên cần</span>
+                            </Link>
+                        )}
                         <button
                             type="button"
                             className="btn-secondary"
@@ -182,7 +220,7 @@ export function ClassDetailPage() {
                                 <span>+ Ghi danh học viên</span>
                             </Link>
                         )}
-                        {canManage && (
+                        {canManageSchedule && (
                             <Link
                                 to={`/classes/${classData.id}/schedules/generate`}
                                 className="btn-secondary"
@@ -211,6 +249,45 @@ export function ClassDetailPage() {
             {/* TAB 1: THÔNG TIN CHUNG */}
             {activeTab === 'info' && (
                 <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                    {canTakeOrViewAttendance && (
+                        <div style={{
+                            marginBottom: '20px',
+                            padding: '14px 18px',
+                            background: '#f0fdf4',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                        }}>
+                            <div>
+                                <strong style={{ color: '#166534', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>📊</span> Bảng chuyên cần tổng hợp theo lớp (SCRUM-256)
+                                </strong>
+                                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#15803d' }}>
+                                    Theo dõi ma trận điểm danh theo buổi, số buổi vắng và tỷ lệ chuyên cần (%) để phát hiện nguy cơ bỏ học.
+                                </p>
+                            </div>
+                            <Link
+                                to={`/classes/${classData.id}/attendance-summary`}
+                                className="btn-primary"
+                                style={{
+                                    background: '#059669',
+                                    borderColor: '#047857',
+                                    color: '#ffffff',
+                                    padding: '8px 16px',
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                }}
+                            >
+                                Mở Bảng chuyên cần tổng hợp →
+                            </Link>
+                        </div>
+                    )}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                         <div className="detail-item">
                             <span style={{ fontSize: '13px', color: '#64748b', display: 'block', marginBottom: '4px' }}>Mã lớp học</span>
@@ -447,6 +524,7 @@ export function ClassDetailPage() {
                                         <th>Số điện thoại</th>
                                         <th>Ngày ghi danh</th>
                                         <th>Trạng thái</th>
+                                        {canLifecycleManage && <th style={{ textAlign: 'right' }}>Thao tác</th>}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -467,6 +545,33 @@ export function ClassDetailPage() {
                                                     {st.status === 'enrolled' ? 'Đã ghi danh' : (st.status || 'Đang học')}
                                                 </span>
                                             </td>
+                                            {canLifecycleManage && (
+                                                <td style={{ textAlign: 'right' }}>
+                                                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                                        <Link
+                                                            to={`/students/${st.student_id}/reserve?classId=${classData.id}`}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#f59e0b', color: '#b45309' }}
+                                                        >
+                                                            Bảo lưu
+                                                        </Link>
+                                                        <Link
+                                                            to={`/students/${st.student_id}/transfer?classId=${classData.id}`}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#3b82f6', color: '#1d4ed8' }}
+                                                        >
+                                                            Chuyển lớp
+                                                        </Link>
+                                                        <Link
+                                                            to={`/students/${st.student_id}/drop?classId=${classData.id}`}
+                                                            className="btn-secondary"
+                                                            style={{ padding: '4px 10px', fontSize: '12px', textDecoration: 'none', borderColor: '#ef4444', color: '#b91c1c' }}
+                                                        >
+                                                            Thôi học
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))}
                                 </tbody>
@@ -544,6 +649,15 @@ export function ClassDetailPage() {
                                                     >
                                                         Chi tiết
                                                     </Link>
+                                                    {canTakeOrViewAttendance && sch.status !== 'cancelled' && (
+                                                        <Link
+                                                            to={`/classes/${classData.id}/schedules/${sch.id}/attendance`}
+                                                            className="btn-action-attendance"
+                                                            style={{ padding: '4px 8px', fontSize: '12px', color: '#0284c7', background: '#eff6ff', borderRadius: '4px', textDecoration: 'none', border: '1px solid #bfdbfe', fontWeight: 500 }}
+                                                        >
+                                                            Điểm danh
+                                                        </Link>
+                                                    )}
                                                     {canManageSchedule && sch.status !== 'completed' && sch.status !== 'cancelled' && !sch.attendance_checked && (
                                                         <Link
                                                             to={`/classes/${classData.id}/schedules/${sch.id}/edit`}
@@ -562,6 +676,11 @@ export function ClassDetailPage() {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* TAB 6: CHUYÊN CẦN TỔNG HỢP (SCRUM-256) */}
+            {activeTab === 'attendance-summary' && (
+                <ClassAttendanceSummaryView classId={classData.id} classCode={classData.class_code} />
             )}
         </div>
     )

@@ -1,0 +1,294 @@
+/* =========================================================================
+   Quick Role Login Component Styles (Giao diện đăng nhập nhanh phân quyền)
+   ========================================================================= */
+
+.quick-role-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px dashed #e2e8f0;
+    width: 100%;
+}
+
+.quick-role-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.quick-role-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-role-icon {
+    font-size: 1.1rem;
+}
+
+.quick-role-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.quick-role-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #2563eb;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.quick-role-toggle-btn:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+/* Quick Role Chips (Horizontal compact bar) */
+.quick-role-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.quick-role-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: #f8fafc;
+    color: #334155;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.quick-role-chip:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+.quick-role-chip:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.quick-role-chip:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.chip-role-admin {
+    border-color: #c7d2fe;
+    background: #eef2ff;
+    color: #4338ca;
+}
+.chip-role-admin:hover:not(:disabled) {
+    background: #e0e7ff;
+}
+
+.chip-role-training_manager {
+    border-color: #bae6fd;
+    background: #f0f9ff;
+    color: #0369a1;
+}
+.chip-role-training_manager:hover:not(:disabled) {
+    background: #e0f2fe;
+}
+
+.chip-role-trainer {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+.chip-role-trainer:hover:not(:disabled) {
+    background: #d1fae5;
+}
+
+.chip-role-trainee {
+    border-color: #fde68a;
+    background: #fffbeb;
+    color: #b45309;
+}
+.chip-role-trainee:hover:not(:disabled) {
+    background: #fef3c7;
+}
+
+.chip-role-consultant {
+    border-color: #fbcfe8;
+    background: #fdf2f8;
+    color: #be185d;
+}
+.chip-role-consultant:hover:not(:disabled) {
+    background: #fce7f3;
+}
+
+/* Detailed Role Cards Grid */
+.quick-role-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+    animation: fadeInQuickRole 0.2s ease-out;
+}
+
+@keyframes fadeInQuickRole {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.quick-role-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    transition: all 0.16s ease;
+}
+
+.quick-role-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.quick-role-card-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+}
+
+.quick-role-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.quick-role-card-texts {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.quick-role-card-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.quick-role-card-role-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.quick-role-card-desc {
+    font-size: 0.73rem;
+    color: #64748b;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quick-role-card-email {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-family: monospace;
+}
+
+/* Actions in card */
+.quick-role-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+    flex-shrink: 0;
+}
+
+.btn-quick-fill {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.14s ease;
+}
+
+.btn-quick-fill:hover:not(:disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+.btn-quick-login-direct {
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.14s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.btn-quick-login-direct:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.btn-quick-login-direct:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-quick-login-direct:disabled,
+.btn-quick-fill:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.quick-role-hint {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}

@@ -375,7 +375,6 @@ export function ScheduleCalendarPage() {
                                     <div className="week-col-header">
                                         <span className="col-day-name">{col.dayName}</span>
                                         <span className="col-date-text">{col.displayDate}</span>
-                                        {col.isToday && <span className="today-badge">Hôm nay</span>}
                                     </div>
 
                                     <div className="week-col-body">

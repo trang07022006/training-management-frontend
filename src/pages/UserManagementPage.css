@@ -190,18 +190,27 @@
     margin: 0;
 }
 
-/* Success State */
+/* Success State - Synchronized to Top-Right Viewport */
 .user-success-banner {
-    background-color: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #065f46;
+    position: fixed;
+    top: calc(68px + 14px);
+    right: 24px;
+    z-index: 999999;
+    max-width: 480px;
+    width: calc(100% - 48px);
+    background-color: #065f46;
+    border: 1px solid #047857;
+    color: #ffffff;
     border-radius: 8px;
-    padding: 14px 20px;
+    padding: 14px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.22), 0 8px 10px -6px rgba(0, 0, 0, 0.12);
+    animation: leadsToastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .user-success-message {
@@ -210,22 +219,24 @@
     gap: 10px;
     margin: 0;
     font-weight: 500;
+    color: #ffffff;
 }
 
 .user-close-banner-btn {
     background: none;
     border: none;
-    color: #065f46;
-    font-size: 1.25rem;
+    color: #ffffff;
+    font-size: 1.35rem;
     line-height: 1;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 0 4px;
     border-radius: 4px;
-    transition: background-color 0.15s ease;
+    opacity: 0.85;
+    transition: opacity 0.15s ease;
 }
 
 .user-close-banner-btn:hover {
-    background-color: #d1fae5;
+    opacity: 1;
 }
 
 /* Error State */

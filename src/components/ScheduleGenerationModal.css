@@ -270,13 +270,17 @@
     margin-top: 6px;
 }
 
-.checkbox-label {
+.schedule-modal-card .checkbox-label {
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
     font-weight: 500;
     font-size: 0.9rem;
+    color: #334155;
+}
+
+.schedule-modal-card .checkbox-label.conflict-override-label {
     color: #dc2626;
 }
 

@@ -63,12 +63,19 @@ import { ScheduleSessionDetailPage } from './pages/ScheduleSessionDetailPage'
 import { ScheduleSessionEditPage } from './pages/ScheduleSessionEditPage'
 import { ScheduleCalendarPage } from './pages/ScheduleCalendarPage'
 import { StudentSchedulePage } from './pages/StudentSchedulePage'
+import { StudentAbsenceRequestsPage } from './pages/StudentAbsenceRequestsPage'
+import { CreateAbsenceRequestPage } from './pages/CreateAbsenceRequestPage'
+import { InstructorAbsenceManagementPage } from './pages/InstructorAbsenceManagementPage'
 import { SessionManagementPage } from './pages/SessionManagementPage'
 
 // Student Pages
 import { StudentsPage } from './pages/StudentsPage'
 import { StudentDetailPage } from './pages/StudentDetailPage'
 import { StudentEditPage } from './pages/StudentEditPage'
+import { StudentReservePage } from './pages/StudentReservePage'
+import { StudentTransferPage } from './pages/StudentTransferPage'
+import { StudentDropPage } from './pages/StudentDropPage'
+import { SessionAttendancePage } from './pages/SessionAttendancePage'
 
 // Lead Pages
 import { LeadsPage } from './pages/LeadsPage'
@@ -175,6 +182,18 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/students" element={<StudentsPage />} />
                 <Route path="/students/:studentId" element={<StudentDetailPage />} />
                 <Route path="/students/:studentId/edit" element={<StudentEditPage />} />
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredPermission={SYSTEM_PERMISSIONS.STUDENT_LIFECYCLE_MANAGE}
+                      fallbackPath="/forbidden"
+                    />
+                  }
+                >
+                  <Route path="/students/:studentId/reserve" element={<StudentReservePage />} />
+                  <Route path="/students/:studentId/transfer" element={<StudentTransferPage />} />
+                  <Route path="/students/:studentId/drop" element={<StudentDropPage />} />
+                </Route>
 
                 {/* Classes */}
                 <Route path="/classes" element={<ClassesPage />} />
@@ -184,11 +203,16 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/classes/:classId/instructors" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/students" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/schedules" element={<ClassDetailPage />} />
+                <Route path="/classes/:classId/attendance-summary" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/enrollments/new" element={<ClassEnrollmentPage />} />
                 <Route path="/classes/:classId/subjects/:classSubjectId/instructors" element={<ClassSubjectInstructorAssignPage />} />
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/generate" element={<ScheduleGeneratePage />} /></Route>
                 <Route path="/classes/:classId/schedules/:scheduleId" element={<ScheduleSessionDetailPage />} />
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/:scheduleId/edit" element={<ScheduleSessionEditPage />} /></Route>
+                <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.ATTENDANCE_VIEW} fallbackPath="/forbidden" />}>
+                  <Route path="/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                  <Route path="/classes/:classId/schedules/:scheduleId/attendance" element={<SessionAttendancePage />} />
+                </Route>
 
                 {/* Schedules */}
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_VIEW} fallbackPath="/forbidden" />}><Route path="/schedules" element={<ScheduleCalendarPage />} /></Route>
@@ -201,6 +225,27 @@ createRoot(document.getElementById('root')!).render(
                   }
                 >
                   <Route path="/my-schedule" element={<StudentSchedulePage />} />
+                </Route>
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredPermission={SYSTEM_PERMISSIONS.ABSENCE_REQUEST}
+                      fallbackPath="/forbidden"
+                    />
+                  }
+                >
+                  <Route path="/my-absence-requests" element={<StudentAbsenceRequestsPage />} />
+                  <Route path="/my-absence-requests/new" element={<CreateAbsenceRequestPage />} />
+                </Route>
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredPermission={SYSTEM_PERMISSIONS.ABSENCE_REVIEW}
+                      fallbackPath="/forbidden"
+                    />
+                  }
+                >
+                  <Route path="/instructor/absence-requests" element={<InstructorAbsenceManagementPage />} />
                 </Route>
 
                 {/* Holidays */}

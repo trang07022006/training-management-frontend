@@ -4,6 +4,7 @@ import { useSession } from '../auth/SessionProvider'
 import { createSubject, type CreateSubjectInput, type SubjectStatus, ApiError } from '../api/subjectApi'
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
+import { toast } from '../components/ToastPortal'
 import './SubjectsPage.css'
 
 interface FormErrors {
@@ -31,8 +32,6 @@ export function SubjectCreatePage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const validate = (): boolean => {
         const errors: FormErrors = {}
@@ -83,8 +82,6 @@ export function SubjectCreatePage() {
         if (!validate()) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: CreateSubjectInput = {
             code: code.trim().toUpperCase(),
@@ -99,16 +96,14 @@ export function SubjectCreatePage() {
 
         try {
             const created = await createSubject(requestFn, payload)
-            setSuccessMessage(getSuccessMessage('CREATE_SUBJECT_SUCCESS', 'Tạo môn học thành công!'))
+            const msg = getSuccessMessage('CREATE_SUBJECT_SUCCESS', 'Tạo môn học thành công!')
+            toast.success(msg)
             setTimeout(() => {
                 navigate(`/subjects/${created.id}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi tạo môn học.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi tạo môn học.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
@@ -124,17 +119,6 @@ export function SubjectCreatePage() {
                     { label: 'Thêm mới' },
                 ]}
             />
-
-            {errorMessage && (
-                <div className="subjects-alert error" role="alert">
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="subjects-alert success" role="alert">
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>

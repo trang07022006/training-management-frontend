@@ -4,6 +4,8 @@ import { useSession } from '../auth/SessionProvider'
 import { getTrainingProgram, updateTrainingProgram, type TrainingProgram, type UpdateTrainingProgramInput, type TrainingProgramStatus, ApiError } from '../api/trainingProgramApi'
 import { PageHeader } from '../components/PageHeader'
 import { DetailNavTabs } from '../components/DetailNavTabs'
+import { ConfirmModal } from '../components/ConfirmModal'
+import { toast } from '../components/ToastPortal'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import './TrainingProgramsPage.css'
@@ -37,8 +39,6 @@ export function TrainingProgramEditPage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [isDirty, setIsDirty] = useState(false)
 
     useEffect(() => {
@@ -121,8 +121,6 @@ export function TrainingProgramEditPage() {
         if (!validate() || !programId) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: UpdateTrainingProgramInput = {
             code: code.trim().toUpperCase(),
@@ -135,26 +133,26 @@ export function TrainingProgramEditPage() {
 
         try {
             await updateTrainingProgram(requestFn, programId, payload)
-            setSuccessMessage(getSuccessMessage('UPDATE_PROGRAM_SUCCESS', 'Cập nhật chương trình đào tạo thành công!'))
+            const msg = getSuccessMessage('UPDATE_PROGRAM_SUCCESS', 'Cập nhật chương trình đào tạo thành công!')
+            toast.success(msg)
             setIsDirty(false)
             setTimeout(() => {
                 navigate(`/training-programs/${programId}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi cập nhật chương trình đào tạo.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi cập nhật chương trình đào tạo.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
     }
 
+    const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState(false)
+
     const handleCancel = () => {
         if (isDirty) {
-            const confirmed = window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang?')
-            if (!confirmed) return
+            setIsConfirmLeaveOpen(true)
+            return
         }
         navigate(`/training-programs/${programId || ''}`)
     }
@@ -228,17 +226,6 @@ export function TrainingProgramEditPage() {
             />
 
             <DetailNavTabs items={navItems} />
-
-            {errorMessage && (
-                <div className="programs-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="programs-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
@@ -378,6 +365,17 @@ export function TrainingProgramEditPage() {
                     </div>
                 </form>
             </div>
+
+            <ConfirmModal
+                isOpen={isConfirmLeaveOpen}
+                title="Rời khỏi trang?"
+                message="Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời khỏi trang này không?"
+                confirmText="Rời khỏi"
+                cancelText="Ở lại"
+                type="warning"
+                onConfirm={() => navigate(`/training-programs/${programId || ''}`)}
+                onCancel={() => setIsConfirmLeaveOpen(false)}
+            />
         </div>
     )
 }

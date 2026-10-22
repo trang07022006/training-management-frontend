@@ -5,6 +5,7 @@ import { createTrainingProgram, type CreateTrainingProgramInput, type TrainingPr
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
+import { toast } from '../components/ToastPortal'
 import './TrainingProgramsPage.css'
 
 interface FormErrors {
@@ -30,8 +31,6 @@ export function TrainingProgramCreatePage() {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
     const validate = (): boolean => {
         const errors: FormErrors = {}
@@ -73,8 +72,6 @@ export function TrainingProgramCreatePage() {
         if (!validate()) return
 
         setIsSubmitting(true)
-        setErrorMessage(null)
-        setSuccessMessage(null)
 
         const payload: CreateTrainingProgramInput = {
             code: code.trim().toUpperCase(),
@@ -87,16 +84,14 @@ export function TrainingProgramCreatePage() {
 
         try {
             const created = await createTrainingProgram(requestFn, payload)
-            setSuccessMessage(getSuccessMessage('CREATE_PROGRAM_SUCCESS', 'Tạo chương trình đào tạo thành công!'))
+            const msg = getSuccessMessage('CREATE_PROGRAM_SUCCESS', 'Tạo chương trình đào tạo thành công!')
+            toast.success(msg)
             setTimeout(() => {
                 navigate(`/training-programs/${created.id}`)
             }, 800)
         } catch (err: unknown) {
-            if (err instanceof ApiError) {
-                setErrorMessage(err.message)
-            } else {
-                setErrorMessage(getErrorMessage(err, 'Lỗi khi tạo chương trình đào tạo.'))
-            }
+            const errText = err instanceof ApiError ? err.message : getErrorMessage(err, 'Lỗi khi tạo chương trình đào tạo.')
+            toast.error(errText)
         } finally {
             setIsSubmitting(false)
         }
@@ -129,17 +124,6 @@ export function TrainingProgramCreatePage() {
                     { label: 'Thêm mới' },
                 ]}
             />
-
-            {errorMessage && (
-                <div className="programs-alert error" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{errorMessage}</span>
-                </div>
-            )}
-            {successMessage && (
-                <div className="programs-alert success" role="alert" style={{ marginBottom: '16px' }}>
-                    <span>{successMessage}</span>
-                </div>
-            )}
 
             <div className="modal-content" style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                 <form onSubmit={handleSubmit} noValidate>
