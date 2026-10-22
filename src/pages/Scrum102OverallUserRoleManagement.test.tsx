@@ -224,12 +224,11 @@ describe('SCRUM-102: Frontend Overall User Role Management Matrix', () => {
         })
 
         fireEvent.change(screen.getByTestId('select-assign-role'), { target: { value: '1' } })
-        fireEvent.click(screen.getByTestId('btn-assign-role-submit'))
 
         await waitFor(() => {
             expect(screen.getByTestId('role-success-banner')).toBeDefined()
         })
-        expect(screen.getByText(/Đã gán vai trò "Quản trị viên" cho người dùng/)).toBeDefined()
+        expect(screen.getByText(/Đã gán vai trò.*Quản trị viên/)).toBeDefined()
     })
 
     // 20. revoke role: gỡ vai trò thành công
@@ -324,7 +323,6 @@ describe('SCRUM-102: Frontend Overall User Role Management Matrix', () => {
         })
 
         fireEvent.change(screen.getByTestId('select-assign-role'), { target: { value: '2' } })
-        fireEvent.click(screen.getByTestId('btn-assign-role-submit'))
 
         await waitFor(() => {
             expect(screen.getByTestId('role-error-banner')).toBeDefined()

@@ -10,6 +10,10 @@ export interface LoginFormProps {
     tempLockSeconds?: number | null
     onTempLockEnd?: () => void
     onInputChange?: () => void
+    prefillEmail?: string
+    prefillPassword?: string
+    initialEmail?: string
+    initialPassword?: string
 }
 
 function formatTime(totalSeconds: number): string {
@@ -27,11 +31,44 @@ export function LoginForm({
     tempLockSeconds = null,
     onTempLockEnd,
     onInputChange,
+    prefillEmail,
+    prefillPassword,
+    initialEmail,
+    initialPassword,
 }: LoginFormProps) {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const effectiveEmail = prefillEmail ?? initialEmail ?? ''
+    const effectivePassword = prefillPassword ?? initialPassword ?? ''
+
+    const [email, setEmail] = useState(effectiveEmail)
+    const [password, setPassword] = useState(effectivePassword)
+
+    useEffect(() => {
+        const val = prefillEmail ?? initialEmail
+        if (val !== undefined) {
+            setEmail(val)
+        }
+    }, [prefillEmail, initialEmail])
+
+    useEffect(() => {
+        const val = prefillPassword ?? initialPassword
+        if (val !== undefined) {
+            setPassword(val)
+        }
+    }, [prefillPassword, initialPassword])
     const [remember, setRemember] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
+
+    useEffect(() => {
+        if (initialEmail !== undefined) {
+            setEmail(initialEmail)
+        }
+    }, [initialEmail])
+
+    useEffect(() => {
+        if (initialPassword !== undefined) {
+            setPassword(initialPassword)
+        }
+    }, [initialPassword])
     const [countdown, setCountdown] = useState<number | null>(() =>
         typeof tempLockSeconds === 'number' && tempLockSeconds > 0 ? tempLockSeconds : null,
     )
@@ -221,8 +258,20 @@ export function LoginForm({
                 >
                     {isLoading ? (
                         <span className="loading-state">
-                            <span className="spinner" aria-hidden="true" />
-                            <span>Đang xử lý...</span>
+                            <span className="login-btn-spinner spinner" aria-hidden="true">
+                                <svg
+                                    className="spinner-svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                >
+                                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                                    <path d="M12 2a10 10 0 0 1 10 10" />
+                                </svg>
+                            </span>
+                            <span className="loading-state-text">Đang xử lý...</span>
                         </span>
                     ) : (
                         <span>Đăng nhập</span>

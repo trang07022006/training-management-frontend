@@ -1,0 +1,265 @@
+/* =========================================================================
+   ADMISSIONS PAGE CSS
+   ========================================================================= */
+
+.admissions-page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.admissions-banner {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f6fd 100%);
+  padding: 56px 0 44px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.admissions-banner-container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.admissions-eyebrow {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0874c9;
+  background-color: #eff6ff;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.admissions-title {
+  font-size: 2.35rem;
+  font-weight: 850;
+  color: #0b2852;
+  letter-spacing: -0.025em;
+  margin: 0 0 10px 0;
+}
+
+.admissions-subtitle {
+  font-size: 1.05rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.admissions-content-section {
+  padding: 72px 0 96px 0;
+  background-color: #f8fafc;
+}
+
+.admissions-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.admissions-section-header {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 52px auto;
+}
+
+.section-step-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0874c9;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.admissions-heading {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0b2852;
+  margin: 0 0 10px 0;
+}
+
+.admissions-desc {
+  font-size: 1rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Steps Grid */
+.admissions-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 56px;
+}
+
+.admission-step-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  transition: all 0.22s ease;
+  position: relative;
+}
+
+.admission-step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  border-color: #93c5fd;
+}
+
+.step-number-badge {
+  font-size: 1.3rem;
+  font-weight: 850;
+  color: #0874c9;
+  background-color: #eff6ff;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.step-title {
+  font-size: 1.15rem;
+  font-weight: 750;
+  color: #0b2852;
+  margin: 0 0 10px 0;
+  line-height: 1.35;
+}
+
+.step-desc {
+  font-size: 0.92rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+  flex: 1;
+}
+
+.step-link {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #0874c9;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: auto;
+  transition: all 0.15s ease;
+}
+
+.step-link:hover {
+  color: #0369a1;
+  transform: translateX(2px);
+}
+
+/* CTA Box */
+.admissions-cta-box {
+  background: linear-gradient(135deg, #0b2852 0%, #071e3d 100%);
+  border-radius: 20px;
+  padding: 44px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  color: #ffffff;
+  box-shadow: 0 16px 36px rgba(11, 40, 82, 0.15);
+}
+
+.cta-box-title {
+  font-size: 1.45rem;
+  font-weight: 750;
+  margin: 0 0 8px 0;
+  color: #ffffff;
+}
+
+.cta-box-desc {
+  font-size: 0.98rem;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.admissions-cta-buttons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.btn-adm-primary {
+  padding: 12px 22px;
+  background: linear-gradient(135deg, #0874c9, #0284c7);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-adm-primary:hover {
+  background: linear-gradient(135deg, #065b9e, #0369a1);
+  transform: translateY(-1px);
+}
+
+.btn-adm-outline {
+  padding: 12px 20px;
+  background-color: transparent;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-adm-outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .admissions-steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admissions-cta-box {
+    flex-direction: column;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .admissions-cta-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-adm-primary,
+  .btn-adm-outline {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .admissions-steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admissions-title {
+    font-size: 1.85rem;
+  }
+
+  .admissions-heading {
+    font-size: 1.55rem;
+  }
+}
