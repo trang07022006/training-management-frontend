@@ -19,9 +19,10 @@ import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatScheduleStatus } from '../utils/scheduleDisplayUtils'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { ClassAttendanceSummaryView } from './ClassAttendanceSummaryView'
+import { ClassAssignmentsView } from '../components/ClassAssignmentsView'
 import './ClassesPage.css'
 
-export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules' | 'attendance-summary'
+export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules' | 'attendance-summary' | 'assignments'
 
 export function ClassDetailPage() {
     const { classId } = useParams<{ classId: string }>()
@@ -53,7 +54,8 @@ export function ClassDetailPage() {
     else if (location.pathname.endsWith('/instructors')) activeTab = 'instructors'
     else if (location.pathname.endsWith('/students')) activeTab = 'students'
     else if (location.pathname.endsWith('/schedules')) activeTab = 'schedules'
-    else if (location.pathname.endsWith('/attendance-summary')) activeTab = 'attendance-summary'
+    else if (location.pathname.endsWith('/attendance-summary')) activeTab = canTakeOrViewAttendance ? 'attendance-summary' : 'info'
+    else if (location.pathname.endsWith('/assignments')) activeTab = 'assignments'
 
     // Data states
     const [classData, setClassData] = useState<TrainingClass | null>(null)
@@ -100,6 +102,12 @@ export function ClassDetailPage() {
     useEffect(() => {
         loadClass()
     }, [loadClass])
+
+    useEffect(() => {
+        if (location.pathname.endsWith('/attendance-summary') && !canTakeOrViewAttendance && classId) {
+            navigate(`/classes/${classId}`, { replace: true })
+        }
+    }, [location.pathname, canTakeOrViewAttendance, classId, navigate])
 
     const handleStatusChange = async (newStatus: ClassStatus) => {
         if (!classId || isUpdatingStatus) return
@@ -166,6 +174,11 @@ export function ClassDetailPage() {
             path: `/classes/${classData.id}/attendance-summary`,
         })
     }
+    navItems.push({
+        key: 'assignments',
+        label: 'Bài tập',
+        path: `/classes/${classData.id}/assignments`,
+    })
 
     return (
         <div className="classes-container" data-testid="class-detail-page">
@@ -679,8 +692,13 @@ export function ClassDetailPage() {
             )}
 
             {/* TAB 6: CHUYÊN CẦN TỔNG HỢP (SCRUM-256) */}
-            {activeTab === 'attendance-summary' && (
+            {activeTab === 'attendance-summary' && canTakeOrViewAttendance && (
                 <ClassAttendanceSummaryView classId={classData.id} classCode={classData.class_code} />
+            )}
+
+            {/* TAB 7: BÀI TẬP & LÀM LẠI BÀI (SCRUM-269) */}
+            {activeTab === 'assignments' && (
+                <ClassAssignmentsView classId={classData.id} classCode={classData.class_code} />
             )}
         </div>
     )

@@ -204,6 +204,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/classes/:classId/students" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/schedules" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/attendance-summary" element={<ClassDetailPage />} />
+                <Route path="/classes/:classId/assignments" element={<ClassDetailPage />} />
                 <Route path="/classes/:classId/enrollments/new" element={<ClassEnrollmentPage />} />
                 <Route path="/classes/:classId/subjects/:classSubjectId/instructors" element={<ClassSubjectInstructorAssignPage />} />
                 <Route element={<RequirePermission requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_MANAGE} fallbackPath="/forbidden" />}><Route path="/classes/:classId/schedules/generate" element={<ScheduleGeneratePage />} /></Route>
