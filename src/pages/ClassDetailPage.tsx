@@ -20,6 +20,7 @@ import { formatShiftLabel, formatRoomLabel, formatInstructorLabel, formatSchedul
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { ClassAttendanceSummaryView } from './ClassAttendanceSummaryView'
 import { ClassAssignmentsView } from '../components/ClassAssignmentsView'
+import { getClassAttendanceSummary, type AbsenceAlertInfo } from '../api/attendanceSummaryApi'
 import './ClassesPage.css'
 
 export type ClassDetailTab = 'info' | 'subjects' | 'instructors' | 'students' | 'schedules' | 'attendance-summary' | 'assignments'
@@ -62,6 +63,7 @@ export function ClassDetailPage() {
     const [subjects, setSubjects] = useState<ClassSubjectItem[]>([])
     const [students, setStudents] = useState<EnrollmentItem[]>([])
     const [schedules, setSchedules] = useState<ClassScheduleItem[]>([])
+    const [studentAlerts, setStudentAlerts] = useState<Record<string, AbsenceAlertInfo>>({})
 
     const [isLoading, setIsLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -84,6 +86,21 @@ export function ClassDetailPage() {
             } else if (activeTab === 'students') {
                 const roster = await getClassRoster(requestFn, classId).catch(() => ({ items: [] }))
                 setStudents(roster.items || [])
+                if (canTakeOrViewAttendance) {
+                    getClassAttendanceSummary(requestFn, classId, { page: 1, page_size: 100 })
+                        .then((sumRes) => {
+                            const map: Record<string, AbsenceAlertInfo> = {}
+                            if (sumRes?.students) {
+                                sumRes.students.forEach((st) => {
+                                    if (st.student_id && st.absence_alert) {
+                                        map[st.student_id] = st.absence_alert
+                                    }
+                                })
+                            }
+                            setStudentAlerts(map)
+                        })
+                        .catch(() => {})
+                }
             } else if (activeTab === 'schedules') {
                 const scheds = await getClassSchedules(requestFn, classId).catch(() => ({ schedules: [] }))
                 setSchedules(scheds?.schedules || [])
@@ -546,9 +563,33 @@ export function ClassDetailPage() {
                                             <td>{idx + 1}</td>
                                             <td><strong>{st.student_code || '—'}</strong></td>
                                             <td>
-                                                <Link to={`/students/${st.student_id}`} style={{ color: '#0284c7', fontWeight: 500 }}>
-                                                    {st.full_name || '—'}
-                                                </Link>
+                                                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                                    <Link to={`/students/${st.student_id}`} style={{ color: '#0284c7', fontWeight: 500 }}>
+                                                        {st.full_name || '—'}
+                                                    </Link>
+                                                    {studentAlerts[st.student_id]?.is_flagged && (
+                                                        <span
+                                                            data-testid={`absence-alert-flag-${st.student_code}`}
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                backgroundColor: '#fef2f2',
+                                                                color: '#b91c1c',
+                                                                border: '1px solid #fecaca',
+                                                                borderRadius: '4px',
+                                                                padding: '2px 6px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 600,
+                                                                cursor: 'help',
+                                                            }}
+                                                            title={studentAlerts[st.student_id].tooltip || `Vắng ${studentAlerts[st.student_id].absent_sessions}/${studentAlerts[st.student_id].total_sessions} buổi — ${studentAlerts[st.student_id].absence_rate}%, vượt ngưỡng ${studentAlerts[st.student_id].threshold}%`}
+                                                            aria-label={studentAlerts[st.student_id].tooltip || 'Vắng vượt ngưỡng'}
+                                                        >
+                                                            ⚠️ Vắng vượt ngưỡng
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td>{st.email || '—'}</td>
                                             <td>{st.phone || '—'}</td>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
-import { getStudentDetail, type StudentDetail, ApiError } from '../api/studentApi'
+import { getStudentDetail, getStudentAbsenceAlerts, type StudentDetail, type StudentAbsenceAlertItem, ApiError } from '../api/studentApi'
 import { getStudentLifecycleHistory, type StudentLifecycleHistoryItem } from '../api/studentLifecycleApi'
 import { PageHeader } from '../components/PageHeader'
 import { getErrorMessage } from '../utils/errorMessages'
@@ -111,6 +111,7 @@ export function StudentDetailPage() {
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [lifecycleHistory, setLifecycleHistory] = useState<StudentLifecycleHistoryItem[]>([])
     const [loadingHistory, setLoadingHistory] = useState(false)
+    const [absenceAlerts, setAbsenceAlerts] = useState<StudentAbsenceAlertItem[]>([])
 
     useEffect(() => {
         let isMounted = true
@@ -140,6 +141,14 @@ export function StudentDetailPage() {
                     setIsLoading(false)
                 }
             })
+
+        getStudentAbsenceAlerts(requestFn, studentId)
+            .then((alerts) => {
+                if (isMounted) {
+                    setAbsenceAlerts(alerts)
+                }
+            })
+            .catch(() => {})
 
         if (canLifecycleManage) {
             setLoadingHistory(true)
@@ -322,6 +331,98 @@ export function StudentDetailPage() {
                 )}
             </div>
 
+            {/* PHẦN 1.5: SCRUM-257 AC2: CẢNH BÁO VẮNG VƯỢT NGƯỠNG */}
+            {absenceAlerts && absenceAlerts.length > 0 && (
+                <div
+                    className="student-detail-card"
+                    data-testid="student-absence-alerts-card"
+                    style={{ border: '1px solid #fecaca', background: '#fff5f5' }}
+                >
+                    <div className="student-detail-card-header" style={{ borderBottom: '1px solid #fee2e2' }}>
+                        <h3 className="student-detail-card-title" style={{ color: '#991b1b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>⚠️</span> Cảnh báo vắng vượt ngưỡng ({absenceAlerts.length} lớp)
+                        </h3>
+                    </div>
+                    <div style={{ padding: '16px' }}>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#7f1d1d' }}>
+                            Học viên hiện đang vượt ngưỡng số buổi vắng cho phép tại các lớp sau. Cần liên hệ và can thiệp kịp thời:
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {absenceAlerts.map((alert) => (
+                                <div
+                                    key={alert.alert_id}
+                                    data-testid={`student-absence-alert-item-${alert.class_code}`}
+                                    style={{
+                                        background: '#ffffff',
+                                        border: '1px solid #fca5a5',
+                                        borderRadius: '8px',
+                                        padding: '12px 16px',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        flexWrap: 'wrap',
+                                        gap: '12px',
+                                    }}
+                                >
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                            <strong style={{ color: '#b91c1c', fontSize: '15px' }}>
+                                                Lớp {alert.class_code}
+                                            </strong>
+                                            {alert.program_name && (
+                                                <span style={{ fontSize: '13px', color: '#64748b' }}>
+                                                    • Chương trình: {alert.program_name}
+                                                </span>
+                                            )}
+                                            <span
+                                                style={{
+                                                    background: '#fee2e2',
+                                                    color: '#991b1b',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '4px',
+                                                    fontSize: '12px',
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                Vắng {alert.absent_sessions}/{alert.total_sessions} buổi ({alert.absence_rate_formatted})
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '13px', color: '#475569' }}>
+                                            Ngưỡng cho phép: <strong>{alert.threshold_formatted}</strong> • Tỷ lệ hiện tại: <strong style={{ color: '#dc2626' }}>{alert.absence_rate_formatted}</strong>
+                                            {alert.first_triggered_at && (
+                                                <span style={{ marginLeft: '8px', color: '#64748b', fontSize: '12px' }}>
+                                                    (Ghi nhận lúc: {new Date(alert.first_triggered_at).toLocaleString('vi-VN')})
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Link
+                                            to={`/classes/${alert.class_id}/attendance-summary`}
+                                            className="btn-secondary"
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                borderColor: '#f87171',
+                                                color: '#b91c1c',
+                                                background: '#fff',
+                                                padding: '6px 12px',
+                                                fontSize: '13px',
+                                                textDecoration: 'none',
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            📊 Xem bảng chuyên cần lớp
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* PHẦN 2: CÁC LỚP ĐANG HỌC */}
             <div className="student-detail-card" data-testid="current-class-card">
                 <div className="student-detail-card-header">
@@ -357,6 +458,21 @@ export function StudentDetailPage() {
                                             {eStatus && (
                                                 <span className={`enrollment-status-badge ${eStatus.className}`}>
                                                     {eStatus.label}
+                                                </span>
+                                            )}
+                                            {absenceAlerts.some((a) => a.class_id === cid) && (
+                                                <span
+                                                    style={{
+                                                        backgroundColor: '#fef2f2',
+                                                        color: '#b91c1c',
+                                                        border: '1px solid #fecaca',
+                                                        borderRadius: '4px',
+                                                        padding: '2px 6px',
+                                                        fontSize: '11px',
+                                                        fontWeight: 600,
+                                                    }}
+                                                >
+                                                    ⚠️ Vắng vượt ngưỡng
                                                 </span>
                                             )}
                                         </div>
@@ -605,4 +721,3 @@ export function StudentDetailPage() {
         </div>
     )
 }
-

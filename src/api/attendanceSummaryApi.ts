@@ -55,6 +55,19 @@ export interface StudentAttendanceSummary {
     unrecorded_ended_count: number
 }
 
+export interface AbsenceAlertInfo {
+    is_flagged: boolean
+    status: 'active' | 'inactive' | 'none'
+    absent_sessions: number
+    total_sessions: number
+    absence_rate: number
+    threshold: number
+    insufficient_data?: boolean
+    tooltip?: string
+    first_triggered_at?: string
+    last_evaluated_at?: string
+}
+
 export interface StudentSummaryRow {
     student_id: string
     student_code: string
@@ -65,6 +78,7 @@ export interface StudentSummaryRow {
     lifecycle_status?: string | null
     summary: StudentAttendanceSummary
     session_statuses: Record<string, AttendanceSummaryCell>
+    absence_alert?: AbsenceAlertInfo
 }
 
 export interface AttendanceSummaryClassInfo {
@@ -92,6 +106,7 @@ export interface AttendanceSummaryCalculationRules {
     eligible_condition?: string
     unrecorded_notice?: string
     future_notice?: string
+    absence_alert_rule?: string
     note?: string
 }
 
@@ -105,6 +120,11 @@ export interface AttendanceSummaryData {
         sort_order: string
     }
     calculation_rules: AttendanceSummaryCalculationRules
+    absence_alert_summary?: {
+        flagged_count: number
+        threshold: number
+        threshold_formatted?: string
+    }
 }
 
 export type ClassAttendanceSummaryResponse = AttendanceSummaryData

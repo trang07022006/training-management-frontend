@@ -346,6 +346,33 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
                 </div>
             )}
 
+            {/* 6.5. SCRUM-257 AC2: Absence Alert Summary Banner */}
+            {summaryData && summaryData.absence_alert_summary && summaryData.absence_alert_summary.flagged_count > 0 && (
+                <div
+                    style={{
+                        background: '#fef2f2',
+                        border: '1px solid #fecaca',
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                        marginBottom: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        color: '#991b1b',
+                        fontSize: '13px',
+                    }}
+                    role="alert"
+                    data-testid="absence-alert-summary-banner"
+                >
+                    <span style={{ fontSize: '18px' }}>⚠️</span>
+                    <div>
+                        <strong>Cảnh báo vắng vượt ngưỡng:</strong> Có{' '}
+                        <strong style={{ textDecoration: 'underline' }}>{summaryData.absence_alert_summary.flagged_count}</strong> học viên
+                        đang vượt ngưỡng vắng cho phép ({summaryData.absence_alert_summary.threshold_formatted || '20%'}). Vui lòng kiểm tra các học viên được gắn cờ đỏ bên dưới để can thiệp kịp thời.
+                    </div>
+                </div>
+            )}
+
             {/* 7. Matrix Data Table (AC1, AC2, AC3) */}
             {summaryData && summaryData.students.length > 0 && (
                 <div className="matrix-table-card">
@@ -405,7 +432,31 @@ export function ClassAttendanceSummaryView({ classId, classCode }: Props) {
                                                 <strong style={{ color: '#0f172a' }}>{st.student_code}</strong>
                                             </td>
                                             <td className="col-sticky-name" title={st.full_name}>
-                                                {st.full_name}
+                                                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                                    <span>{st.full_name}</span>
+                                                    {st.absence_alert?.is_flagged && (
+                                                        <span
+                                                            data-testid={`absence-alert-flag-${st.student_code}`}
+                                                            style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px',
+                                                                backgroundColor: '#fef2f2',
+                                                                color: '#b91c1c',
+                                                                border: '1px solid #fecaca',
+                                                                borderRadius: '4px',
+                                                                padding: '2px 6px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 600,
+                                                                cursor: 'help',
+                                                            }}
+                                                            title={st.absence_alert.tooltip || `Vắng ${st.absence_alert.absent_sessions}/${st.absence_alert.total_sessions} buổi — ${st.absence_alert.absence_rate}%, vượt ngưỡng ${st.absence_alert.threshold}%`}
+                                                            aria-label={st.absence_alert.tooltip || 'Vắng vượt ngưỡng'}
+                                                        >
+                                                            ⚠️ Vắng vượt ngưỡng
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {st.lifecycle_status === 'reserved' && (
                                                     <span style={{ fontSize: '11px', color: '#d97706', display: 'block' }}>[Bảo lưu]</span>
                                                 )}
