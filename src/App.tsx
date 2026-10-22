@@ -287,6 +287,8 @@ export function App() {
                             ? '#dcfce7'
                             : n.change_type === 'absence_rejected'
                             ? '#fee2e2'
+                            : n.change_type === 'absence_alert'
+                            ? '#fee2e2'
                             : '#e0e7ff',
                         color:
                           n.change_type === 'cancelled'
@@ -296,6 +298,8 @@ export function App() {
                             : n.change_type === 'absence_approved'
                             ? '#15803d'
                             : n.change_type === 'absence_rejected'
+                            ? '#b91c1c'
+                            : n.change_type === 'absence_alert'
                             ? '#b91c1c'
                             : '#3730a3',
                       }}
@@ -308,6 +312,8 @@ export function App() {
                         ? 'Đơn được duyệt'
                         : n.change_type === 'absence_rejected'
                         ? 'Đơn bị từ chối'
+                        : n.change_type === 'absence_alert'
+                        ? 'Vắng vượt ngưỡng'
                         : 'Cập nhật'}
                     </span>
                   </div>
@@ -328,6 +334,20 @@ export function App() {
                         data-testid={`link-to-absence-${n.id}`}
                       >
                         → Xem đơn xin nghỉ
+                      </Link>
+                    )}
+                    {n.change_type === 'absence_alert' && (
+                      <Link
+                        to={n.class_id ? `/classes/${n.class_id}/attendance-summary` : '/classes'}
+                        style={{
+                          fontSize: '0.75rem',
+                          color: '#dc2626',
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                        }}
+                        data-testid={`link-to-absence-alert-${n.id}`}
+                      >
+                        → Xem bảng chuyên cần
                       </Link>
                     )}
                   </div>
