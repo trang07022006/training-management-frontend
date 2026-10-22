@@ -425,14 +425,23 @@ export function SessionAttendancePage() {
                 >
                     <span>⚠️ {errorMessage}</span>
                 </div>
-                <button
-                    type="button"
-                    className="btn-history-view"
-                    onClick={() => navigate(-1)}
-                    style={{ marginTop: '12px' }}
-                >
-                    ← Quay lại
-                </button>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                    <button
+                        type="button"
+                        className="btn-history-view"
+                        onClick={() => loadSheetData(1, limit, searchQuery)}
+                        data-testid="retry-attendance-btn"
+                    >
+                        🔄 Thử lại
+                    </button>
+                    <button
+                        type="button"
+                        className="btn-history-view"
+                        onClick={() => navigate(-1)}
+                    >
+                        ← Quay lại
+                    </button>
+                </div>
             </div>
         )
     }

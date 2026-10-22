@@ -95,6 +95,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // ----------------------------------------------------
     // 9. LỖI KỸ THUẬT / HỆ THỐNG / DATABASE KHÁC
     // ----------------------------------------------------
+    REQUEST_FAILED: 'Không thể kết nối hoặc yêu cầu không thành công. Vui lòng thử lại.',
+    STUDENT_PROFILE_NOT_FOUND: 'Không tìm thấy hồ sơ học viên liên kết với tài khoản này.',
     SESSION_STORAGE_UNAVAILABLE: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     UNKNOWN_DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
@@ -521,6 +523,22 @@ export function getErrorMessage(
             return rawMessage
         }
         return ERROR_MESSAGES[code]
+    }
+
+    if (normCode === 'REQUEST_FAILED' || upperMsg === 'REQUEST_FAILED') {
+        if (status === 404) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (status === 403) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        if (status === 401) {
+            return ERROR_MESSAGES['401']
+        }
+        if (status === 500) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+        return safeFallback !== DEFAULT_FALLBACK_ERROR ? safeFallback : ERROR_MESSAGES.REQUEST_FAILED
     }
 
     // Ánh xạ lỗi xác thực và phân quyền qua status hoặc message khi mã code không chuyên biệt

@@ -5,6 +5,7 @@ import {
     getMyAttendanceHistory,
     type StudentAttendanceHistoryData,
 } from '../api/attendanceHistoryApi'
+import { getErrorMessage } from '../utils/errorMessages'
 import './StudentAttendanceHistoryPage.css'
 
 export function StudentAttendanceHistoryPage() {
@@ -53,8 +54,8 @@ export function StudentAttendanceHistoryPage() {
             if (!selectedClassId && res.selected_class_id) {
                 setSelectedClassId(res.selected_class_id)
             }
-        } catch (err: any) {
-            setErrorMessage(err?.message || 'Không thể tải lịch sử điểm danh. Vui lòng thử lại.')
+        } catch (err: unknown) {
+            setErrorMessage(getErrorMessage(err, 'Không thể tải lịch sử điểm danh. Vui lòng thử lại.'))
         } finally {
             setIsLoading(false)
         }
