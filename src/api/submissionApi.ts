@@ -247,3 +247,33 @@ export async function gradeSubmission(
     return body.data as SubmissionDetailItem
 }
 
+export interface SubmitAssignmentPayload {
+    submission_type?: string
+    content?: string
+    file_url?: string
+    file_name?: string
+    file_size?: number
+    repo_url?: string
+}
+
+/**
+ * Học viên nộp bài tập lần đầu.
+ */
+export async function submitAssignment(
+    requestFn: RequestFn,
+    assignmentId: string,
+    payload: SubmitAssignmentPayload,
+): Promise<SubmissionDetailItem> {
+    const res = await requestFn(`/api/v1/assignments/${encodeURIComponent(assignmentId)}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    })
+    const body = await res.json()
+    if (!res.ok || body.status !== 'success') {
+        throw new Error(body.message || 'Lỗi khi nộp bài tập.')
+    }
+    return body.data as SubmissionDetailItem
+}
+
+
