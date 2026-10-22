@@ -151,7 +151,23 @@ describe('submissionApi client tests - SCRUM-269', () => {
 
         const result = await getMySubmission(mockRequestFn, 'a-1')
         expect(mockRequestFn).toHaveBeenCalledWith('/api/v1/assignments/a-1/my-submission', { method: 'GET' })
-        expect(result.id).toBe('sub-mine')
+        expect(result?.id).toBe('sub-mine')
+    })
+
+    it('getMySubmission returns null when student has not submitted yet (404 / SUBMISSION_NOT_FOUND)', async () => {
+        const mockRequestFn = vi.fn().mockResolvedValue({
+            ok: false,
+            status: 404,
+            json: async () => ({
+                status: 'error',
+                code: 'SUBMISSION_NOT_FOUND',
+                message: 'Bạn chưa nộp bài cho bài tập này.',
+            }),
+        })
+
+        const result = await getMySubmission(mockRequestFn, 'a-1')
+        expect(mockRequestFn).toHaveBeenCalledWith('/api/v1/assignments/a-1/my-submission', { method: 'GET' })
+        expect(result).toBeNull()
     })
 
     it('getClassAssignments loads assignments for a class', async () => {

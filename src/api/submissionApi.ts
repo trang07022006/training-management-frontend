@@ -152,11 +152,20 @@ export async function getAssignmentSubmissions(
 export async function getMySubmission(
     requestFn: RequestFn,
     assignmentId: string,
-): Promise<SubmissionDetailItem> {
+): Promise<SubmissionDetailItem | null> {
     const res = await requestFn(`/api/v1/assignments/${encodeURIComponent(assignmentId)}/my-submission`, {
         method: 'GET',
     })
-    const body = await res.json()
+    if (res.status === 404) {
+        return null
+    }
+    const body = await res.json().catch(() => null)
+    if (!body) {
+        return null
+    }
+    if (body.code === 'SUBMISSION_NOT_FOUND') {
+        return null
+    }
     if (!res.ok || body.status !== 'success') {
         throw new Error(body.message || 'Lỗi khi tải bài nộp của bạn.')
     }

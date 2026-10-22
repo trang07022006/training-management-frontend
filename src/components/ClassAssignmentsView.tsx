@@ -3,7 +3,6 @@ import { useSession } from '../auth/SessionProvider'
 import {
     getClassAssignments,
     getAssignmentSubmissions,
-    getSubmissionDetail,
     getMySubmission,
     type AssignmentItem,
     type SubmissionDetailItem,
@@ -28,6 +27,7 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
     const [mySubmission, setMySubmission] = useState<SubmissionDetailItem | null>(null)
 
     const [isLoading, setIsLoading] = useState(true)
+    const [isSubmissionLoading, setIsSubmissionLoading] = useState(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -53,12 +53,9 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
             if (list.length > 0) {
                 setSelectedAssignmentId(list[0].id)
             } else {
-                // Fallback demo assignment if none in this class
-                const demoSub = await getSubmissionDetail(request, 'sub-scrum269-demo').catch(() => null)
-                if (demoSub) {
-                    setSubmissions([demoSub])
-                    setMySubmission(demoSub)
-                }
+                setSelectedAssignmentId('')
+                setSubmissions([])
+                setMySubmission(null)
             }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Lỗi khi tải bài tập của lớp'
@@ -75,24 +72,25 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
     // 2. Tải bài nộp khi chọn bài tập
     const loadSubmissions = useCallback(async (assignmentId: string) => {
         if (!assignmentId) return
+        setIsSubmissionLoading(true)
+        setMySubmission(null)
         try {
             if (isTrainerOrAdmin) {
                 const res = await getAssignmentSubmissions(request, assignmentId).catch(() => null)
                 if (res && res.submissions) {
                     setSubmissions(res.submissions)
                 } else {
-                    const fallback = await getSubmissionDetail(request, 'sub-scrum269-demo').catch(() => null)
-                    if (fallback) setSubmissions([fallback])
+                    setSubmissions([])
                 }
             } else {
-                const mySub = await getMySubmission(request, assignmentId).catch(async () => {
-                    return await getSubmissionDetail(request, 'sub-scrum269-demo').catch(() => null)
-                })
+                const mySub = await getMySubmission(request, assignmentId).catch(() => null)
                 setMySubmission(mySub)
             }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : 'Lỗi khi tải bài nộp'
             setErrorMessage(msg)
+        } finally {
+            setIsSubmissionLoading(false)
         }
     }, [request, isTrainerOrAdmin])
 
@@ -198,7 +196,10 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
                             key={asg.id}
                             type="button"
                             className={`assignment-tab-btn ${asg.id === selectedAssignmentId ? 'active' : ''}`}
-                            onClick={() => setSelectedAssignmentId(asg.id)}
+                            onClick={() => {
+                                setSelectedAssignmentId(asg.id)
+                                setMySubmission(null)
+                            }}
                         >
                             {asg.title}
                         </button>
@@ -206,15 +207,34 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
                 </div>
             )}
 
-            {!isLoading && (
+            {/* KHI CHƯA CÓ BÀI TẬP NÀO TRONG LỚP */}
+            {!isLoading && assignments.length === 0 && (
+                <div style={{ padding: '40px 20px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1', marginTop: '16px' }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>📂</div>
+                    <p style={{ fontSize: '16px', fontWeight: 600, color: '#334155', margin: '0 0 6px 0' }}>
+                        Lớp học chưa có bài tập nào
+                    </p>
+                    {isTrainerOrAdmin ? (
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                            Giảng viên nhấn vào nút "<strong>+ Giao bài tập mới</strong>" ở trên để bắt đầu giao bài tập cho học viên.
+                        </p>
+                    ) : (
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                            Hiện tại giảng viên chưa giao bài tập nào cho lớp học này.
+                        </p>
+                    )}
+                </div>
+            )}
+
+            {!isLoading && assignments.length > 0 && (
                 <div className="assignments-content">
                     {/* THÔNG TIN BÀI TẬP ĐANG CHỌN */}
                     <div className="assignment-card-header">
                         <div className="assignment-meta-left">
                             <span className="badge-assignment-type">Bài tập lớp</span>
-                            <h4>{currentAssignment?.title || submissions[0]?.assignment_title || 'Bài tập Lập trình Web: Xây dựng RESTful API'}</h4>
+                            <h4>{currentAssignment?.title || 'Chi tiết bài tập'}</h4>
                             <p className="assignment-desc">
-                                {currentAssignment?.description || 'Yêu cầu hoàn thiện chức năng, mã nguồn và unit test theo tài liệu hướng dẫn.'}
+                                {currentAssignment?.description || 'Chưa có mô tả chi tiết cho bài tập này.'}
                             </p>
                             {currentAssignment?.due_date && (
                                 <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
@@ -224,7 +244,7 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
                         </div>
                         <div className="assignment-meta-right">
                             <span className="score-badge">
-                                Thang điểm: {currentAssignment?.max_score ?? submissions[0]?.assignment_max_score ?? 10} điểm
+                                Thang điểm: {currentAssignment?.max_score ?? 10} điểm
                             </span>
                         </div>
                     </div>
@@ -237,7 +257,12 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
                                 <span className="total-badge">{submissions.length} bài nộp</span>
                             </div>
 
-                            {submissions.length === 0 ? (
+                            {isSubmissionLoading ? (
+                                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                                    <div className="spinner" style={{ margin: '0 auto 8px auto' }} />
+                                    <span>Đang tải danh sách bài nộp...</span>
+                                </div>
+                            ) : submissions.length === 0 ? (
                                 <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', background: '#f8fafc', borderRadius: '8px' }}>
                                     Chưa có học viên nào nộp bài cho bài tập này.
                                 </div>
@@ -368,8 +393,15 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
                     {/* GÓC NHÌN HỌC VIÊN */}
                     {!isTrainerOrAdmin && (
                         <div className="student-submission-section">
+                            {isSubmissionLoading && (
+                                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                                    <div className="spinner" style={{ margin: '0 auto 8px auto' }} />
+                                    <span>Đang kiểm tra trạng thái bài nộp...</span>
+                                </div>
+                            )}
+
                             {/* NẾU CHƯA NỘP BÀI: HIỂN THỊ FORM NỘP BÀI TẬP */}
-                            {!mySubmission && currentAssignment && (
+                            {!isSubmissionLoading && !mySubmission && currentAssignment && (
                                 <StudentSubmitCard
                                     assignmentId={currentAssignment.id}
                                     assignmentTitle={currentAssignment.title}
@@ -381,7 +413,7 @@ export const ClassAssignmentsView: React.FC<Props> = ({ classId, classCode }) =>
                             )}
 
                             {/* NẾU ĐÃ CÓ BÀI NỘP */}
-                            {mySubmission && (
+                            {!isSubmissionLoading && mySubmission && (
                                 <>
                                     {/* THẺ KẾT QUẢ ĐÁNH GIÁ (NẾU ĐÃ ĐƯỢC CHẤM) */}
                                     {mySubmission.status === 'graded' && (
