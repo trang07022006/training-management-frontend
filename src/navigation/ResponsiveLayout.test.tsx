@@ -67,7 +67,7 @@ describe('SCRUM-23 Phase 5: Responsive Layout on Mobile (360px Viewport)', () =>
                     <Routes>
                         <Route element={<AppLayout />}>
                             <Route path="/" element={<h1>Trang Tổng Quan</h1>} />
-                            <Route path="/admin" element={<h1>Trang Quản Trị</h1>} />
+                            <Route path="/users" element={<h1>Quản lý Người Dùng</h1>} />
                         </Route>
                     </Routes>
                 </SessionProvider>
@@ -80,9 +80,9 @@ describe('SCRUM-23 Phase 5: Responsive Layout on Mobile (360px Viewport)', () =>
         const sidebar = screen.getByTestId('app-sidebar')
         expect(sidebar.classList.contains('is-open')).toBe(true)
 
-        // Bấm vào menu item "Bảng quản trị"
-        const adminMenuItem = screen.getByTestId('menu-item-admin_dashboard')
-        fireEvent.click(adminMenuItem)
+        // Bấm vào menu item "Quản lý Người dùng"
+        const usersMenuItem = screen.getByTestId('menu-item-users')
+        fireEvent.click(usersMenuItem)
 
         // Sidebar tự động đóng lại để không che khuất nội dung trang
         expect(sidebar.classList.contains('is-open')).toBe(false)

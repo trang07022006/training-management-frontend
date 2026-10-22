@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent, type ReactNode } from 'react'
 import './UserFilterBar.css'
 
 export interface UserFilters {
@@ -11,12 +11,14 @@ export interface UserFilterBarProps {
     initialFilters?: Partial<UserFilters>
     onFilterChange: (filters: UserFilters) => void
     isLoading?: boolean
+    actionSlot?: ReactNode
 }
 
 export function UserFilterBar({
     initialFilters,
     onFilterChange,
     isLoading = false,
+    actionSlot,
 }: UserFilterBarProps) {
     const [search, setSearch] = useState<string>(initialFilters?.search ?? '')
     const [role, setRole] = useState<string>(initialFilters?.role ?? '')
@@ -129,6 +131,8 @@ export function UserFilterBar({
                         <option value="admin">Quản trị viên</option>
                         <option value="trainer">Giảng viên</option>
                         <option value="trainee">Học viên</option>
+                        <option value="consultant">Tư vấn tuyển sinh</option>
+                        <option value="training_manager">Quản lý đào tạo</option>
                         <option value="user">Người dùng</option>
                     </select>
                 </div>
@@ -179,6 +183,12 @@ export function UserFilterBar({
                         <span>Đặt lại</span>
                     </button>
                 </div>
+
+                {actionSlot && (
+                    <div className="filter-extra-actions">
+                        {actionSlot}
+                    </div>
+                )}
             </form>
         </div>
     )

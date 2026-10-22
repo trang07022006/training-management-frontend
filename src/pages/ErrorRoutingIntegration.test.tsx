@@ -114,7 +114,7 @@ function IntegratedTestApp({ initialEntry = '/' }: { initialEntry?: string }) {
                                 />
                             }
                         >
-                            <Route path="/trainee" element={<div data-testid="trainee-view">Trainee View</div>} />
+                            <Route path="/my-schedule" element={<div data-testid="trainee-view">Trainee View</div>} />
                         </Route>
 
                         <Route path="/api-test" element={<ApiCaller />} />
@@ -159,7 +159,7 @@ describe('Error Routing Flow Integration (SCRUM-80)', () => {
 
         expect(screen.getByTestId('error-status-code').textContent).toBe('403')
         expect(screen.getByTestId('error-title').textContent).toBe('Không có quyền truy cập')
-        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainee')
+        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
     })
 
     it('3. 404 route flow: URL lạ không làm redirect mà hiển thị 404 Not Found', () => {
@@ -273,7 +273,7 @@ describe('Error Routing Flow Integration (SCRUM-80)', () => {
                 </SessionProvider>
             </MemoryRouter>,
         )
-        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/admin')
+        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/dashboard')
         u1()
 
         // Trainer
@@ -286,7 +286,7 @@ describe('Error Routing Flow Integration (SCRUM-80)', () => {
                 </SessionProvider>
             </MemoryRouter>,
         )
-        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainer')
+        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
         u2()
 
         // Trainee
@@ -299,6 +299,6 @@ describe('Error Routing Flow Integration (SCRUM-80)', () => {
                 </SessionProvider>
             </MemoryRouter>,
         )
-        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/trainee')
+        expect(screen.getByTestId('error-primary-action').getAttribute('href')).toBe('/my-schedule')
     })
 })

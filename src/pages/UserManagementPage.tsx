@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useInRouterContext, useSearchParams, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
 import { getRolePermissions, SYSTEM_PERMISSIONS } from '../navigation/menuConfig'
 import { fetchUsersApi, type User, type UserListParams, type RoleItem } from '../api/userApi'
@@ -10,7 +11,8 @@ import { CreateUserModal } from '../components/CreateUserModal'
 import { EditUserModal } from '../components/EditUserModal'
 import { UserRoleModal } from '../components/UserRoleModal'
 import { AccountLockModal } from '../components/AccountLockModal'
-import { BulkUserImportModal } from '../components/BulkUserImportModal'
+import { UserImportTab } from '../components/UserImportTab'
+import { Breadcrumb } from '../components/Breadcrumb'
 import './UserManagementPage.css'
 
 export interface UserManagementPageProps {
@@ -30,12 +32,13 @@ export interface UserManagementPageProps {
     pageSize?: number
 }
 
-/**
- * Trang Quản lý Người dùng (User Management Page - SCRUM-89 -> SCRUM-94 -> SCRUM-101).
- * Được bảo vệ bởi RequireSession và RequirePermission (quyền user.view).
- * Nút "Thêm người dùng" chỉ hiển thị khi có quyền user.manage.
- */
-export function UserManagementPage({
+interface UserManagementPageInternalProps extends UserManagementPageProps {
+    activeTab: 'list' | 'import'
+    onSelectTab: (tab: 'list' | 'import') => void
+    navigateFn?: (path: string) => void
+}
+
+function UserManagementPageContent({
     initialUsers,
     initialTotal,
     customRequest,
@@ -50,7 +53,10 @@ export function UserManagementPage({
     onOpenCreateModal,
     onOpenImportModal,
     pageSize: initialPageSize = 10,
-}: UserManagementPageProps) {
+    activeTab,
+    onSelectTab,
+    navigateFn,
+}: UserManagementPageInternalProps) {
     const { request: sessionRequest, role } = useSession()
     const requestFn = customRequest ?? sessionRequest
 
@@ -74,7 +80,6 @@ export function UserManagementPage({
 
     // Modal State
     const [isCreateOpen, setIsCreateOpen] = useState(false)
-    const [isImportOpen, setIsImportOpen] = useState(false)
     const [editingUser, setEditingUser] = useState<User | null>(null)
     const [roleManagingUser, setRoleManagingUser] = useState<User | null>(null)
     const [lockModalUser, setLockModalUser] = useState<User | null>(null)
@@ -143,7 +148,6 @@ export function UserManagementPage({
 
     const handleCreateSuccess = (_newUser: User) => {
         setIsCreateOpen(false)
-        // Tải lại trang 1 để đưa người dùng mới lên đầu danh sách
         setPage(1)
         void loadUsers({ page: 1 })
     }
@@ -179,9 +183,13 @@ export function UserManagementPage({
         setSuccessMessage(msg)
     }
 
+    const isDedicated = Boolean(navigateFn) && initialUsers === undefined && customRequest === undefined
+
     const handleOpenCreate = () => {
         if (onOpenCreateModal) {
             onOpenCreateModal()
+        } else if (isDedicated && navigateFn) {
+            navigateFn('/users/new')
         } else {
             setIsCreateOpen(true)
         }
@@ -191,17 +199,20 @@ export function UserManagementPage({
         if (onOpenImportModal) {
             onOpenImportModal()
         } else {
-            setIsImportOpen(true)
+            onSelectTab('import')
         }
-    }
-
-    const handleImportSuccess = () => {
-        setPage(1)
-        void loadUsers({ page: 1 })
     }
 
     return (
         <div className="user-management-page" data-testid="user-management-page">
+            <Breadcrumb
+                items={
+                    activeTab === 'import'
+                        ? [{ label: 'Người dùng', path: '/users?tab=list' }, { label: 'Import Excel' }]
+                        : [{ label: 'Người dùng' }]
+                }
+            />
+
             {/* Header section */}
             <header className="user-page-header">
                 <div className="user-page-header-text">
@@ -210,148 +221,233 @@ export function UserManagementPage({
                         {total > 0 && <span className="user-total-badge" data-testid="user-total-badge"> ({total})</span>}
                     </h1>
                     <p className="user-page-description">
-                        Xem danh sách, tìm kiếm, tạo mới và cập nhật tài khoản người dùng trong hệ thống đào tạo.
+                        Quản lý tài khoản và phân quyền trong hệ thống. Xem danh sách, tìm kiếm, tạo mới và cập nhật người dùng.
                     </p>
                 </div>
-
-                {canManageUsers && (
-                    <div className="user-page-header-actions">
-                        <button
-                            type="button"
-                            className="btn-secondary-action"
-                            data-testid="btn-import-excel"
-                            onClick={handleOpenImport}
-                        >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                            </svg>
-                            <span>Import Excel</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            className="btn-primary-action"
-                            data-testid="btn-create-user"
-                            onClick={handleOpenCreate}
-                        >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <line x1="5" y1="12" x2="19" y2="12" />
-                            </svg>
-                            <span>Thêm người dùng</span>
-                        </button>
-                    </div>
-                )}
             </header>
 
-            {/* Error Banner */}
-            {errorMessage && (
-                <div className="user-error-banner" data-testid="user-error-state" role="alert">
-                    <p className="user-error-message">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <circle cx="12" cy="12" r="10" />
-                            <line x1="12" y1="8" x2="12" y2="12" />
-                            <line x1="12" y1="16" x2="12.01" y2="16" />
-                        </svg>
-                        <span>{errorMessage}</span>
-                    </p>
-                    <button
-                        type="button"
-                        className="user-retry-btn"
-                        data-testid="btn-retry-users"
-                        onClick={() => void loadUsers()}
-                    >
-                        Thử lại
-                    </button>
-                </div>
-            )}
-
-            {/* Success Banner */}
-            {successMessage && (
-                <div className="user-success-banner" data-testid="user-success-state" role="status">
-                    <p className="user-success-message">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                            <polyline points="22 4 12 14.01 9 11.01" />
-                        </svg>
-                        <span data-testid="user-success-text">{successMessage}</span>
-                    </p>
-                    <button
-                        type="button"
-                        className="user-close-banner-btn"
-                        data-testid="btn-close-success-banner"
-                        onClick={() => setSuccessMessage(null)}
-                        aria-label="Đóng thông báo"
-                    >
-                        ×
-                    </button>
-                </div>
-            )}
-
-            {/* Search & Filter Section */}
-            <div data-testid="user-search-filter-section">
-                {searchFilterSlot !== undefined ? (
-                    searchFilterSlot
-                ) : (
-                    <UserFilterBar
-                        onFilterChange={handleFilterChange}
-                        isLoading={isLoading}
-                    />
-                )}
-            </div>
-
-            {/* Main Content Area */}
-            {isLoading ? (
-                <div className="user-state-card" data-testid="user-loading-state">
-                    <div className="user-loading-spinner" aria-hidden="true" />
-                    <p className="user-loading-text">Đang tải danh sách người dùng...</p>
-                </div>
-            ) : !errorMessage && users.length === 0 ? (
-                <div className="user-state-card" data-testid="user-empty-state">
-                    <svg className="user-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            {/* Tabs Navigation */}
+            <div className="user-management-tabs" role="tablist" aria-label="Phân hệ Quản lý người dùng">
+                <button
+                    type="button"
+                    role="tab"
+                    id="tab-user-list"
+                    aria-selected={activeTab === 'list'}
+                    aria-controls="panel-user-list"
+                    className={`user-management-tab-btn ${activeTab === 'list' ? 'active' : ''}`}
+                    data-testid="tab-user-list"
+                    onClick={() => onSelectTab('list')}
+                >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                         <circle cx="9" cy="7" r="4" />
-                        <line x1="17" y1="8" x2="23" y2="14" />
-                        <line x1="23" y1="8" x2="17" y2="14" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
-                    <h2 className="user-empty-title">Không tìm thấy người dùng</h2>
-                    <p className="user-empty-desc">
-                        Hiện tại chưa có người dùng nào hoặc không có kết quả phù hợp với tiêu chí tìm kiếm.
-                    </p>
-                </div>
-            ) : (
-                <div data-testid="user-table-section">
-                    {tableSlot !== undefined ? (
-                        tableSlot
-                    ) : (
-                        <UserTable
-                            users={users}
-                            onEdit={(u) => setEditingUser(u)}
-                            onManageRoles={(u) => setRoleManagingUser(u)}
-                            onLockUser={handleOpenLock}
-                            onUnlockUser={handleOpenUnlock}
-                            canManage={canManageUsers}
-                        />
-                    )}
-                </div>
-            )}
+                    <span>Danh sách người dùng</span>
+                </button>
 
-            {/* Pagination Section */}
-            <div data-testid="user-pagination-section">
-                {paginationSlot !== undefined ? (
-                    paginationSlot
-                ) : (
-                    <UserPagination
-                        page={page}
-                        pageSize={pageSize}
-                        total={total}
-                        onPageChange={handlePageChange}
-                        isLoading={isLoading}
-                    />
+                {canManageUsers && (
+                    <button
+                        type="button"
+                        role="tab"
+                        id="tab-user-import"
+                        aria-selected={activeTab === 'import'}
+                        aria-controls="panel-user-import"
+                        className={`user-management-tab-btn ${activeTab === 'import' ? 'active' : ''}`}
+                        data-testid="tab-user-import"
+                        onClick={handleOpenImport}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <span data-testid="btn-import-excel" onClick={handleOpenImport}>Import Excel</span>
+                    </button>
                 )}
             </div>
+
+            {/* Main Tabs Panels */}
+            {activeTab === 'import' ? (
+                <div
+                    role="tabpanel"
+                    id="panel-user-import"
+                    aria-labelledby="tab-user-import"
+                    data-testid="user-import-panel"
+                    style={{ width: '100%' }}
+                >
+                    <UserImportTab
+                        onBackToList={() => {
+                            onSelectTab('list')
+                            void loadUsers({ page: 1 })
+                        }}
+                        onSuccess={() => {
+                            void loadUsers({ page: 1 })
+                        }}
+                        customRequest={customRequest}
+                    />
+                </div>
+            ) : (
+                <div
+                    role="tabpanel"
+                    id="panel-user-list"
+                    aria-labelledby="tab-user-list"
+                    data-testid="user-list-panel"
+                    style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
+                >
+                    {/* Error Banner */}
+                    {errorMessage && (
+                        <div className="user-error-banner" data-testid="user-error-state" role="alert">
+                            <p className="user-error-message">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="8" x2="12" y2="12" />
+                                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                                </svg>
+                                <span>{errorMessage}</span>
+                            </p>
+                            <button
+                                type="button"
+                                className="user-retry-btn"
+                                data-testid="btn-retry-users"
+                                onClick={() => void loadUsers()}
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Success Banner */}
+                    {successMessage && (
+                        <div className="user-success-banner" data-testid="user-success-state" role="status">
+                            <p className="user-success-message">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                    <polyline points="22 4 12 14.01 9 11.01" />
+                                </svg>
+                                <span data-testid="user-success-text">{successMessage}</span>
+                            </p>
+                            <button
+                                type="button"
+                                className="user-close-banner-btn"
+                                data-testid="btn-close-success-banner"
+                                onClick={() => setSuccessMessage(null)}
+                                aria-label="Đóng thông báo"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Search & Filter Section */}
+                    <div data-testid="user-search-filter-section">
+                        {searchFilterSlot !== undefined ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%', flexWrap: 'wrap' }}>
+                                <div style={{ flex: 1, minWidth: '300px' }}>{searchFilterSlot}</div>
+                                {canManageUsers && (
+                                    <button
+                                        type="button"
+                                        className="btn-primary-action"
+                                        data-testid="btn-create-user"
+                                        onClick={handleOpenCreate}
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                            <line x1="12" y1="5" x2="12" y2="19" />
+                                            <line x1="5" y1="12" x2="19" y2="12" />
+                                        </svg>
+                                        <span>Thêm người dùng</span>
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <UserFilterBar
+                                onFilterChange={handleFilterChange}
+                                isLoading={isLoading}
+                                actionSlot={
+                                    canManageUsers ? (
+                                        <button
+                                            type="button"
+                                            className="btn-primary-action"
+                                            data-testid="btn-create-user"
+                                            onClick={handleOpenCreate}
+                                        >
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                                <line x1="12" y1="5" x2="12" y2="19" />
+                                                <line x1="5" y1="12" x2="19" y2="12" />
+                                            </svg>
+                                            <span>Thêm người dùng</span>
+                                        </button>
+                                    ) : null
+                                }
+                            />
+                        )}
+                    </div>
+
+                    {/* Main Content Area */}
+                    {isLoading ? (
+                        <div className="user-state-card" data-testid="user-loading-state">
+                            <div className="user-loading-spinner" aria-hidden="true" />
+                            <p className="user-loading-text">Đang tải danh sách người dùng...</p>
+                        </div>
+                    ) : !errorMessage && users.length === 0 ? (
+                        <div className="user-state-card" data-testid="user-empty-state">
+                            <svg className="user-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <line x1="17" y1="8" x2="23" y2="14" />
+                                <line x1="23" y1="8" x2="17" y2="14" />
+                            </svg>
+                            <h2 className="user-empty-title">Không tìm thấy người dùng</h2>
+                            <p className="user-empty-desc">
+                                Hiện tại chưa có người dùng nào hoặc không có kết quả phù hợp với tiêu chí tìm kiếm.
+                            </p>
+                        </div>
+                    ) : (
+                        <div data-testid="user-table-section">
+                            {tableSlot !== undefined ? (
+                                tableSlot
+                            ) : (
+                                <UserTable
+                                    users={users}
+                                    onEdit={(u) => {
+                                        if (isDedicated && navigateFn) {
+                                            navigateFn(`/users/${u.id}/edit`)
+                                        } else {
+                                            setEditingUser(u)
+                                        }
+                                    }}
+                                    onManageRoles={(u) => {
+                                        if (isDedicated && navigateFn) {
+                                            navigateFn(`/users/${u.id}/roles`)
+                                        } else {
+                                            setRoleManagingUser(u)
+                                        }
+                                    }}
+                                    onLockUser={handleOpenLock}
+                                    onUnlockUser={handleOpenUnlock}
+                                    canManage={canManageUsers}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                    {/* Pagination Section */}
+                    <div data-testid="user-pagination-section">
+                        {paginationSlot !== undefined ? (
+                            paginationSlot
+                        ) : (
+                            <UserPagination
+                                page={page}
+                                pageSize={pageSize}
+                                total={total}
+                                onPageChange={handlePageChange}
+                                isLoading={isLoading}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Create & Edit Modals */}
             {createModalSlot !== undefined ? (
@@ -404,14 +500,50 @@ export function UserManagementPage({
 
             {importModalSlot !== undefined ? (
                 importModalSlot
-            ) : (
-                <BulkUserImportModal
-                    isOpen={isImportOpen}
-                    onClose={() => setIsImportOpen(false)}
-                    onSuccess={handleImportSuccess}
-                    customRequest={customRequest}
-                />
-            )}
+            ) : null}
         </div>
     )
 }
+
+function UserManagementPageWithRouter(props: UserManagementPageProps) {
+    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const tabParam = searchParams.get('tab')
+    const activeTab = tabParam === 'import' ? 'import' : 'list'
+
+    const handleSelectTab = (newTab: 'list' | 'import') => {
+        if (newTab === 'list') {
+            setSearchParams({ tab: 'list' })
+        } else {
+            setSearchParams({ tab: 'import' })
+        }
+    }
+
+    return (
+        <UserManagementPageContent
+            {...props}
+            navigateFn={navigate}
+            activeTab={activeTab}
+            onSelectTab={handleSelectTab}
+        />
+    )
+}
+
+function UserManagementPageStandalone(props: UserManagementPageProps) {
+    const [activeTab, setActiveTab] = useState<'list' | 'import'>('list')
+    return <UserManagementPageContent {...props} activeTab={activeTab} onSelectTab={setActiveTab} />
+}
+
+/**
+ * Trang Quản lý Người dùng (User Management Page - SCRUM-89 -> SCRUM-94 -> SCRUM-101).
+ * Hỗ trợ 2 tab chính: Danh sách người dùng & Import Excel.
+ * Tự động hỗ trợ URL query (?tab=list / ?tab=import) khi có Router và fallback an toàn khi render độc lập.
+ */
+export function UserManagementPage(props: UserManagementPageProps) {
+    const inRouter = useInRouterContext()
+    if (inRouter) {
+        return <UserManagementPageWithRouter {...props} />
+    }
+    return <UserManagementPageStandalone {...props} />
+}
+

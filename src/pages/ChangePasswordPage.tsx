@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useSession } from '../auth/SessionProvider'
+import { getRoleHomePath } from '../auth/roleRouting'
 import { getErrorMessage, getSuccessMessage } from '../utils/errorMessages'
 import './ChangePasswordPage.css'
 
@@ -49,6 +50,13 @@ export function ChangePasswordPage({
 }: ChangePasswordPageProps) {
   const session = useSession()
   const request = session?.request
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const isForced = Boolean(
+    session?.mustChangePassword ||
+    (location.state && (location.state as { forced?: boolean }).forced)
+  )
 
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -135,6 +143,17 @@ export function ChangePasswordPage({
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
+
+      if (session?.setMustChangePassword) {
+        session.setMustChangePassword(false)
+      }
+
+      if (isForced) {
+        setTimeout(() => {
+          const targetPath = getRoleHomePath(session?.role)
+          navigate(targetPath, { replace: true })
+        }, 1200)
+      }
     } catch (err: unknown) {
       setInternalError(getErrorMessage(err, 'Đã có lỗi xảy ra khi đổi mật khẩu'))
     } finally {
@@ -167,6 +186,26 @@ export function ChangePasswordPage({
             Cập nhật mật khẩu định kỳ để bảo vệ tài khoản đào tạo của bạn.
           </p>
         </header>
+
+        {/* Warning Alert for Forced Password Change (SCRUM-215) */}
+        {isForced && !successMessage && (
+          <div
+            id="changePasswordForcedWarning"
+            className="change-password-alert alert-warning"
+            role="alert"
+            data-testid="force-change-password-notice"
+          >
+            <svg
+              className="alert-icon"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+            <span>Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng hệ thống.</span>
+          </div>
+        )}
 
         {/* Error Alert */}
         {errorMessage && (
@@ -389,24 +428,26 @@ export function ChangePasswordPage({
           </button>
         </form>
 
-        <footer className="change-password-footer">
-          <Link to="/" className="back-link">
-            <svg
-              className="back-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            <span>Quay lại trang chủ</span>
-          </Link>
-        </footer>
+        {!isForced && (
+          <footer className="change-password-footer">
+            <Link to="/dashboard" className="back-link">
+              <svg
+                className="back-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+              <span>Quay lại trang chủ</span>
+            </Link>
+          </footer>
+        )}
       </main>
     </div>
   )

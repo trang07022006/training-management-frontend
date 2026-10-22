@@ -1,9 +1,10 @@
-import { Navigate, Outlet } from 'react-router'
+import { Navigate, Outlet, useLocation } from 'react-router'
 
 import { useSession } from './SessionProvider'
 
 export function RequireSession() {
-    const { hasSession, isLoading } = useSession()
+    const { hasSession, isLoading, mustChangePassword } = useSession()
+    const location = useLocation()
 
     // Trong thời gian frontend đang khôi phục phiên (F5/Reload):
     // KHÔNG redirect /login ngay. Hiển thị loading spinner cho đến khi
@@ -26,5 +27,19 @@ export function RequireSession() {
         return <Navigate to="/login" replace />
     }
 
+    // SCRUM-215: Nếu tài khoản bắt buộc đổi mật khẩu lần đầu, chặn mọi route khác
+    if (mustChangePassword && location.pathname !== '/change-password') {
+        return (
+            <Navigate
+                to="/change-password"
+                replace
+                state={{
+                    forced: true,
+                    message: 'Bạn cần đổi mật khẩu trước khi tiếp tục sử dụng hệ thống.',
+                }}
+            />
+        )
+    }
+
     return <Outlet />
-}
+}
