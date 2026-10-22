@@ -1,24 +1,73 @@
 /* AppLayout Styling (SCRUM-23) */
-
+ 
 .app-layout-container {
+    position: relative;
     display: flex;
     min-height: 100vh;
     background-color: #f8fafc;
 }
 
+/* Background image & frosted white overlay for authenticated app */
+.app-main-bg {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.app-main-bg-img {
+    position: absolute;
+    inset: -14px;
+    background-image: url('/branding/ictu/sinh-vien-ictu.jpg');
+    background-size: cover;
+    background-position: center 25%;
+    background-repeat: no-repeat;
+    filter: blur(2.5px);
+    transform: scale(1.03);
+}
+
+.app-main-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
 .app-main-viewport {
+    position: relative;
+    z-index: 1;
     flex: 1;
     margin-left: 260px;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    background: transparent;
     transition: margin-left 0.25s ease-in-out;
 }
 
 .app-content-body {
+    position: relative;
+    z-index: 1;
     flex: 1;
-    padding: 24px;
+    padding: 24px 32px;
     overflow-y: auto;
+    background: transparent;
+}
+
+@media (min-width: 1440px) {
+    .app-content-body {
+        padding: 32px;
+    }
+}
+
+@media (min-width: 769px) {
+    .app-main-viewport.sidebar-collapsed {
+        margin-left: 0;
+    }
 }
 
 /* Responsive breakpoint for <= 768px and mobile viewports (SCRUM-23) */

@@ -442,5 +442,102 @@ describe('SCRUM-25: Reset Form State trên CreateUserModal', () => {
         expect((screen.getByTestId('input-create-password') as HTMLInputElement).value).toBe('')
         expect(screen.queryByDisplayValue('SecretPassword999!')).toBeNull()
     })
+
+    it('8. dropdown Vai trò hiển thị đầy đủ 6 vai trò bao gồm Tư vấn tuyển sinh và Quản lý đào tạo', () => {
+        renderWithProvider(
+            <CreateUserModal
+                isOpen={true}
+                onClose={vi.fn()}
+                onSuccess={vi.fn()}
+            />
+        )
+
+        const roleSelect = screen.getByTestId('select-create-role') as HTMLSelectElement
+        const options = Array.from(roleSelect.options).map((opt) => ({
+            value: opt.value,
+            text: opt.text,
+        }))
+
+        expect(options).toEqual([
+            { value: 'user', text: 'Người dùng' },
+            { value: 'trainee', text: 'Học viên' },
+            { value: 'trainer', text: 'Giảng viên' },
+            { value: 'consultant', text: 'Tư vấn tuyển sinh' },
+            { value: 'training_manager', text: 'Quản lý đào tạo' },
+            { value: 'admin', text: 'Quản trị viên' },
+        ])
+    })
+
+    it('9. tạo người dùng với vai trò Tư vấn tuyển sinh gửi đúng role consultant lên backend', async () => {
+        const mockCreatedConsultant: User = {
+            id: 101,
+            name: 'QA Tư vấn tuyển sinh',
+            email: 'qa.consultant@ictu.test',
+            phone: '0988776655',
+            role: 'consultant',
+            status: 'active',
+        }
+
+        let sentPayload: any = null
+        const mockRequest = vi.fn().mockImplementation(async (path: string, init?: RequestInit) => {
+            if (path === '/api/roles') {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        status: 'success',
+                        data: {
+                            items: [
+                                { id: 'r1', code: 'user', name: 'Người dùng' },
+                                { id: 'r2', code: 'trainee', name: 'Học viên' },
+                                { id: 'r3', code: 'trainer', name: 'Giảng viên' },
+                                { id: 'r4', code: 'consultant', name: 'Tư vấn tuyển sinh' },
+                                { id: 'r5', code: 'training_manager', name: 'Quản lý đào tạo' },
+                                { id: 'r6', code: 'admin', name: 'Quản trị viên' },
+                            ],
+                        },
+                    }),
+                } as unknown as Response
+            }
+            if (path === '/api/users' && init?.method === 'POST') {
+                sentPayload = JSON.parse(init.body as string)
+                return {
+                    ok: true,
+                    status: 201,
+                    json: async () => ({
+                        status: 'success',
+                        data: mockCreatedConsultant,
+                    }),
+                } as unknown as Response
+            }
+            return { ok: false, status: 404, json: async () => ({}) } as unknown as Response
+        })
+
+        const onSuccess = vi.fn()
+        renderWithProvider(
+            <CreateUserModal
+                isOpen={true}
+                onClose={vi.fn()}
+                onSuccess={onSuccess}
+                customRequest={mockRequest}
+                customRolesRequest={mockRequest}
+            />
+        )
+
+        fireEvent.change(screen.getByTestId('input-create-name'), { target: { value: 'QA Tư vấn tuyển sinh' } })
+        fireEvent.change(screen.getByTestId('input-create-email'), { target: { value: 'qa.consultant@ictu.test' } })
+        fireEvent.change(screen.getByTestId('input-create-password'), { target: { value: 'ConsultantPassword123' } })
+        fireEvent.change(screen.getByTestId('select-create-role'), { target: { value: 'consultant' } })
+
+        fireEvent.click(screen.getByTestId('btn-submit-create'))
+
+        await waitFor(() => {
+            expect(onSuccess).toHaveBeenCalledWith(mockCreatedConsultant)
+        })
+
+        expect(sentPayload).toBeDefined()
+        expect(sentPayload.role).toBe('consultant')
+        expect(sentPayload.email).toBe('qa.consultant@ictu.test')
+    })
 })
 

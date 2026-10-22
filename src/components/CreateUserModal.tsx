@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
 import { useSession } from '../auth/SessionProvider'
-import { createUserApi, type User, type CreateUserData } from '../api/userApi'
+import { createUserApi, fetchAvailableRolesApi, type User, type CreateUserData } from '../api/userApi'
 import { getErrorMessage } from '../utils/errorMessages'
+import { getRoleDisplayName } from '../auth/roleRouting'
 import './UserModal.css'
 
 export interface CreateUserModalProps {
@@ -9,6 +10,7 @@ export interface CreateUserModalProps {
     onClose: () => void
     onSuccess: (createdUser: User) => void
     customRequest?: (path: string, init?: RequestInit) => Promise<Response>
+    customRolesRequest?: (path: string, init?: RequestInit) => Promise<Response>
 }
 
 interface FormErrors {
@@ -19,14 +21,34 @@ interface FormErrors {
     general?: string
 }
 
+const ROLE_DISPLAY_ORDER: Record<string, number> = {
+    user: 1,
+    trainee: 2,
+    trainer: 3,
+    consultant: 4,
+    training_manager: 5,
+    admin: 6,
+}
+
+const DEFAULT_AVAILABLE_ROLES = [
+    { code: 'user', name: 'Người dùng' },
+    { code: 'trainee', name: 'Học viên' },
+    { code: 'trainer', name: 'Giảng viên' },
+    { code: 'consultant', name: 'Tư vấn tuyển sinh' },
+    { code: 'training_manager', name: 'Quản lý đào tạo' },
+    { code: 'admin', name: 'Quản trị viên' },
+]
+
 export function CreateUserModal({
     isOpen,
     onClose,
     onSuccess,
     customRequest,
+    customRolesRequest,
 }: CreateUserModalProps) {
     const { request: sessionRequest } = useSession()
     const requestFn = customRequest ?? sessionRequest
+    const rolesRequestFn = customRolesRequest ?? sessionRequest
 
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
@@ -35,6 +57,7 @@ export function CreateUserModal({
     const [phone, setPhone] = useState('')
     const [role, setRole] = useState('user')
     const [status, setStatus] = useState('active')
+    const [availableRoles, setAvailableRoles] = useState<{ code: string; name: string }[]>(DEFAULT_AVAILABLE_ROLES)
 
     const [errors, setErrors] = useState<FormErrors>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -76,6 +99,33 @@ export function CreateUserModal({
         resetForm()
         onClose()
     }, [resetForm, onClose])
+
+    /**
+     * Tải danh mục vai trò từ Backend API (SCRUM-97 / Business Roles).
+     */
+    useEffect(() => {
+        if (!isOpen) return
+        let isMounted = true
+
+        fetchAvailableRolesApi(rolesRequestFn)
+            .then((roles) => {
+                if (isMounted && roles && roles.length > 0) {
+                    const sorted = [...roles].sort((a, b) => {
+                        const orderA = ROLE_DISPLAY_ORDER[a.code.toLowerCase()] ?? 99
+                        const orderB = ROLE_DISPLAY_ORDER[b.code.toLowerCase()] ?? 99
+                        return orderA - orderB
+                    })
+                    setAvailableRoles(sorted)
+                }
+            })
+            .catch(() => {
+                // Giữ danh sách mặc định nếu gặp lỗi kết nối API
+            })
+
+        return () => {
+            isMounted = false
+        }
+    }, [isOpen, rolesRequestFn])
 
     /**
      * Hỗ trợ phím Escape đóng modal an toàn và reset form.
@@ -332,10 +382,11 @@ export function CreateUserModal({
                                     onChange={(e) => setRole(e.target.value)}
                                     disabled={isSubmitting}
                                 >
-                                    <option value="user">Người dùng</option>
-                                    <option value="trainee">Học viên</option>
-                                    <option value="trainer">Giảng viên</option>
-                                    <option value="admin">Quản trị viên</option>
+                                    {availableRoles.map((r) => (
+                                        <option key={r.code} value={r.code}>
+                                            {getRoleDisplayName(r)}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
 
