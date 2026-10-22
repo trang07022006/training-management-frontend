@@ -9,12 +9,12 @@ import { ApiError, type RequestFunction } from './userApi'
 export { ApiError, type RequestFunction }
 
 export interface EnrollmentItem {
-    id: string
-    class_id: string
-    student_id: string
-    status: string
-    enrolled_at: string
-    enrolled_by: string
+    id?: string
+    class_id?: string
+    student_id?: string
+    status?: string
+    enrolled_at?: string
+    enrolled_by?: string
     student_code?: string | null
     full_name?: string | null
     email?: string | null
@@ -23,6 +23,7 @@ export interface EnrollmentItem {
     enrolled_by_name?: string | null
     enrolled_by_email?: string | null
     class_code?: string | null
+    order_index?: number
 }
 
 export interface EnrollResult {

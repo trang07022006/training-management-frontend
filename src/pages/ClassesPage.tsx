@@ -462,7 +462,7 @@ function ClassesPageBase({
         // Tải danh sách học viên đã có trong lớp để đánh dấu disabled
         try {
             const roster = await getClassRoster(requestFnRef.current, cls.id)
-            const enrolledIds = roster.items.map((i) => i.student_id)
+            const enrolledIds = roster.items.map((i) => i.student_id || '').filter(Boolean)
             setAlreadyEnrolledIds(enrolledIds)
         } catch {
             setAlreadyEnrolledIds([])

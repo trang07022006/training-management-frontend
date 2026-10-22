@@ -58,7 +58,7 @@ export function ClassEnrollmentPage() {
             .then(([cls, roster, studentsRes, schedsRes]) => {
                 if (isMounted) {
                     setClassData(cls)
-                    const enrolledSet = new Set<string>((roster.items || []).map((i) => i.student_id))
+                    const enrolledSet = new Set<string>((roster.items || []).map((i) => i.student_id || '').filter(Boolean))
                     setAlreadyEnrolledIds(enrolledSet)
                     setAllStudents(studentsRes.items || [])
                     const schedList = (schedsRes as { schedules?: ClassScheduleItem[] })?.schedules || []

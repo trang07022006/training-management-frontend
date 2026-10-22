@@ -49,6 +49,10 @@ export function ClassDetailPage() {
         normalizedRoles.includes('trainer') ||
         normalizedRoles.includes('training_manager')
 
+    const isStudentOnly =
+        normalizedRoles.includes('trainee') &&
+        !normalizedRoles.some((r) => ['admin', 'training_manager', 'trainer', 'teacher'].includes(r))
+
     // Determine active tab from URL pathname
     let activeTab: ClassDetailTab = 'info'
     if (location.pathname.endsWith('/subjects')) activeTab = 'subjects'
@@ -86,7 +90,7 @@ export function ClassDetailPage() {
             } else if (activeTab === 'students') {
                 const roster = await getClassRoster(requestFn, classId).catch(() => ({ items: [] }))
                 setStudents(roster.items || [])
-                if (canTakeOrViewAttendance) {
+                if (canTakeOrViewAttendance && !isStudentOnly) {
                     getClassAttendanceSummary(requestFn, classId, { page: 1, page_size: 100 })
                         .then((sumRes) => {
                             const map: Record<string, AbsenceAlertInfo> = {}
@@ -524,7 +528,7 @@ export function ClassDetailPage() {
                 <div className="modal-content" style={{ background: '#fff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0f172a' }}>
-                            Danh sách học viên ({students.length} / {classData.max_capacity})
+                            Danh sách học viên ({students.length}{isStudentOnly ? '' : ` / ${classData.max_capacity}`})
                         </h3>
                         {canManage && (
                             <Link to={`/classes/${classData.id}/enrollments/new`} className="btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
@@ -541,6 +545,25 @@ export function ClassDetailPage() {
                                     Thực hiện ghi danh học viên ngay
                                 </Link>
                             )}
+                        </div>
+                    ) : isStudentOnly ? (
+                        <div style={{ overflowX: 'auto' }}>
+                            <table className="classes-table" style={{ width: '100%' }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{ width: '80px', textAlign: 'center' }}>STT</th>
+                                        <th>Họ và tên</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {students.map((st, idx) => (
+                                        <tr key={st.order_index ?? idx + 1}>
+                                            <td style={{ textAlign: 'center' }}>{st.order_index ?? (idx + 1)}</td>
+                                            <td style={{ color: '#0f172a', fontWeight: 500 }}>{st.full_name || '—'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : (
                         <div style={{ overflowX: 'auto' }}>
@@ -567,7 +590,7 @@ export function ClassDetailPage() {
                                                     <Link to={`/students/${st.student_id}`} style={{ color: '#0284c7', fontWeight: 500 }}>
                                                         {st.full_name || '—'}
                                                     </Link>
-                                                    {studentAlerts[st.student_id]?.is_flagged && (
+                                                    {Boolean(st.student_id && studentAlerts[st.student_id]?.is_flagged) && (
                                                         <span
                                                             data-testid={`absence-alert-flag-${st.student_code}`}
                                                             style={{
@@ -583,8 +606,8 @@ export function ClassDetailPage() {
                                                                 fontWeight: 600,
                                                                 cursor: 'help',
                                                             }}
-                                                            title={studentAlerts[st.student_id].tooltip || `Vắng ${studentAlerts[st.student_id].absent_sessions}/${studentAlerts[st.student_id].total_sessions} buổi — ${studentAlerts[st.student_id].absence_rate}%, vượt ngưỡng ${studentAlerts[st.student_id].threshold}%`}
-                                                            aria-label={studentAlerts[st.student_id].tooltip || 'Vắng vượt ngưỡng'}
+                                                            title={st.student_id ? (studentAlerts[st.student_id]?.tooltip || `Vắng ${studentAlerts[st.student_id]?.absent_sessions}/${studentAlerts[st.student_id]?.total_sessions} buổi — ${studentAlerts[st.student_id]?.absence_rate}%, vượt ngưỡng ${studentAlerts[st.student_id]?.threshold}%`) : ''}
+                                                            aria-label={st.student_id ? (studentAlerts[st.student_id]?.tooltip || 'Vắng vượt ngưỡng') : 'Vắng vượt ngưỡng'}
                                                         >
                                                             ⚠️ Vắng vượt ngưỡng
                                                         </span>
