@@ -15,6 +15,7 @@ interface FormErrors {
     name?: string
     duration_semesters?: string
     standard_tuition_fee?: string
+    absence_alert_threshold?: string
     general?: string
 }
 
@@ -34,6 +35,7 @@ export function TrainingProgramEditPage() {
     const [name, setName] = useState('')
     const [durationSemesters, setDurationSemesters] = useState('8')
     const [standardTuitionFee, setStandardTuitionFee] = useState('')
+    const [absenceAlertThreshold, setAbsenceAlertThreshold] = useState('20')
     const [description, setDescription] = useState('')
     const [status, setStatus] = useState<TrainingProgramStatus>('draft')
 
@@ -60,6 +62,7 @@ export function TrainingProgramEditPage() {
                     setName(data.name)
                     setDurationSemesters(data.duration_semesters ? String(data.duration_semesters) : '')
                     setStandardTuitionFee(data.standard_tuition_fee !== null && data.standard_tuition_fee !== undefined ? String(data.standard_tuition_fee) : '')
+                    setAbsenceAlertThreshold(data.absence_alert_threshold !== null && data.absence_alert_threshold !== undefined ? String(data.absence_alert_threshold) : '20')
                     setDescription(data.description || '')
                     setStatus(data.status)
                     setIsLoading(false)
@@ -112,6 +115,18 @@ export function TrainingProgramEditPage() {
             }
         }
 
+        if (absenceAlertThreshold.trim() !== '') {
+            const thresholdNum = Number(absenceAlertThreshold)
+            if (isNaN(thresholdNum) || thresholdNum < 0 || thresholdNum > 100) {
+                errors.absence_alert_threshold = 'Ngưỡng cảnh báo vắng phải từ 0% đến 100%.'
+            } else if (absenceAlertThreshold.includes('.')) {
+                const dec = absenceAlertThreshold.split('.')[1].replace(/0+$/, '')
+                if (dec.length > 2) {
+                    errors.absence_alert_threshold = 'Ngưỡng chỉ được phép có tối đa 2 chữ số thập phân.'
+                }
+            }
+        }
+
         setFormErrors(errors)
         return Object.keys(errors).length === 0
     }
@@ -128,6 +143,7 @@ export function TrainingProgramEditPage() {
             description: description.trim() || null,
             duration_semesters: durationSemesters.trim() !== '' ? Number(durationSemesters) : null,
             standard_tuition_fee: standardTuitionFee.trim() !== '' ? Number(standardTuitionFee) : null,
+            absence_alert_threshold: absenceAlertThreshold.trim() !== '' ? Number(absenceAlertThreshold) : 20.0,
             status,
         }
 
@@ -327,6 +343,30 @@ export function TrainingProgramEditPage() {
                             />
                             {formErrors.standard_tuition_fee && <div className="form-error">{formErrors.standard_tuition_fee}</div>}
                         </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="edit-program-absence-threshold">
+                            Ngưỡng cảnh báo vắng (%) <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 'normal' }}>(Mặc định: 20%)</span>
+                        </label>
+                        <input
+                            id="edit-program-absence-threshold"
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="0.01"
+                            className={`form-input ${formErrors.absence_alert_threshold ? 'error' : ''}`}
+                            value={absenceAlertThreshold}
+                            onChange={(e) => {
+                                setAbsenceAlertThreshold(e.target.value)
+                                setIsDirty(true)
+                            }}
+                            disabled={isSubmitting}
+                        />
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                            💡 Cảnh báo được kích hoạt khi tỷ lệ vắng của học viên trong lớp (A / N × 100) lớn hơn ngưỡng này. Giá trị từ 0.00% đến 100.00%.
+                        </div>
+                        {formErrors.absence_alert_threshold && <div className="form-error">{formErrors.absence_alert_threshold}</div>}
                     </div>
 
                     <div className="form-group">
