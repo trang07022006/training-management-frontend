@@ -209,6 +209,13 @@ export const APP_MENU_CONFIG: readonly MenuItem[] = [
         requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
     },
     {
+        key: 'my_attendance_history',
+        label: 'Lịch sử điểm danh',
+        path: '/my-attendance-history',
+        icon: 'clock-rotate-left',
+        requiredPermission: SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW,
+    },
+    {
         key: 'my_absence_requests',
         label: 'Đơn xin phép vắng',
         path: '/my-absence-requests',

@@ -63,6 +63,7 @@ import { ScheduleSessionDetailPage } from './pages/ScheduleSessionDetailPage'
 import { ScheduleSessionEditPage } from './pages/ScheduleSessionEditPage'
 import { ScheduleCalendarPage } from './pages/ScheduleCalendarPage'
 import { StudentSchedulePage } from './pages/StudentSchedulePage'
+import { StudentAttendanceHistoryPage } from './pages/StudentAttendanceHistoryPage'
 import { StudentAbsenceRequestsPage } from './pages/StudentAbsenceRequestsPage'
 import { CreateAbsenceRequestPage } from './pages/CreateAbsenceRequestPage'
 import { InstructorAbsenceManagementPage } from './pages/InstructorAbsenceManagementPage'
@@ -226,6 +227,7 @@ createRoot(document.getElementById('root')!).render(
                   }
                 >
                   <Route path="/my-schedule" element={<StudentSchedulePage />} />
+                  <Route path="/my-attendance-history" element={<StudentAttendanceHistoryPage />} />
                 </Route>
                 <Route
                   element={
