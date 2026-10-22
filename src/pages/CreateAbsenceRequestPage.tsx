@@ -10,7 +10,8 @@ import {
 } from '../api/absenceRequestApi'
 import { formatSessionShiftAndTime } from '../utils/scheduleDisplayUtils'
 import { ConfirmModal } from '../components/ConfirmModal'
-import { toast } from '../components/ToastPortal'
+import { AccessibleSelect } from '../components/AccessibleSelect'
+import { getErrorMessage } from '../utils/errorMessages'
 import './CreateAbsenceRequestPage.css'
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
@@ -115,8 +116,7 @@ export const CreateAbsenceRequestPage: React.FC = () => {
             }
         } catch (err: unknown) {
             if (currentRequestId === fetchRequestIdRef.current) {
-                const error = err as { message?: string }
-                setSessionError(error.message || 'Không thể tải danh sách buổi học.')
+                setSessionError(getErrorMessage(err, 'Không thể tải danh sách buổi học. Vui lòng thử lại.'))
             }
         } finally {
             if (currentRequestId === fetchRequestIdRef.current) {
@@ -128,6 +128,34 @@ export const CreateAbsenceRequestPage: React.FC = () => {
     useEffect(() => {
         loadSessions()
     }, [loadSessions])
+
+    // Lựa chọn lớp cho AccessibleSelect
+    const classOptions = React.useMemo(() => [
+        { value: '', label: 'Tất cả các lớp' },
+        ...filterOptions.classes.map((c) => ({
+            value: c.id,
+            label: c.class_code,
+        })),
+    ], [filterOptions.classes])
+
+    // Lựa chọn môn cho AccessibleSelect
+    const subjectOptions = React.useMemo(() => [
+        { value: '', label: 'Tất cả các môn' },
+        ...filterOptions.subjects.map((s) => ({
+            value: s.id,
+            label: s.label || s.name,
+        })),
+    ], [filterOptions.subjects])
+
+    // Xử lý thay đổi bộ lọc lớp (cascading sang môn)
+    const handleClassFilterChange = (newClassId: string) => {
+        setSelectedClassId(newClassId)
+        setPage(1)
+        // Khi đổi lớp, reset môn nếu môn cũ không còn hợp lệ
+        if (newClassId && selectedSubjectId) {
+            setSelectedSubjectId('')
+        }
+    }
 
     // Reset bộ lọc
     const handleResetFilters = () => {
@@ -269,7 +297,7 @@ export const CreateAbsenceRequestPage: React.FC = () => {
             navigate('/my-absence-requests?success=1')
         } catch (err: unknown) {
             const error = err as { code?: string; message?: string }
-            let msg = error.message || 'Không thể gửi đơn xin phép vắng.'
+            let msg = ''
 
             if (error.code === 'DUPLICATE_APPROVED_REQUEST') {
                 msg = 'Buổi học này đã có đơn xin nghỉ được duyệt trước đó. Không thể gửi thêm đơn mới.'
@@ -277,10 +305,11 @@ export const CreateAbsenceRequestPage: React.FC = () => {
                 msg = 'Buổi học này đã có đơn đang chờ giảng viên duyệt. Vui lòng chờ kết quả.'
             } else if (error.code === 'REQUEST_WINDOW_EXPIRED') {
                 msg = 'Đã quá thời hạn 48 giờ sau khi kết thúc buổi học. Không thể nộp đơn xin nghỉ.'
+            } else {
+                msg = getErrorMessage(err, 'Không thể gửi đơn xin phép vắng. Vui lòng thử lại.')
             }
 
             setSubmitErrorMessage(msg)
-            toast.error(msg)
             // Scroll đến thông báo lỗi
             window.scrollTo({ top: 0, behavior: 'smooth' })
         } finally {
@@ -441,43 +470,32 @@ export const CreateAbsenceRequestPage: React.FC = () => {
                         {/* Filter Lớp */}
                         <div className="filter-field">
                             <label htmlFor="filter-class-select">Lọc theo lớp</label>
-                            <select
+                            <AccessibleSelect
                                 id="filter-class-select"
+                                testId="filter-class-select"
                                 value={selectedClassId}
-                                onChange={(e) => {
-                                    setSelectedClassId(e.target.value)
-                                    setPage(1)
-                                }}
-                                data-testid="filter-class-select"
-                            >
-                                <option value="">Tất cả các lớp</option>
-                                {filterOptions.classes.map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.class_code}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={handleClassFilterChange}
+                                options={classOptions}
+                                placeholder="Tất cả các lớp"
+                                ariaLabel="Lọc theo lớp học"
+                            />
                         </div>
 
                         {/* Filter Môn */}
                         <div className="filter-field">
                             <label htmlFor="filter-subject-select">Lọc theo môn</label>
-                            <select
+                            <AccessibleSelect
                                 id="filter-subject-select"
+                                testId="filter-subject-select"
                                 value={selectedSubjectId}
-                                onChange={(e) => {
-                                    setSelectedSubjectId(e.target.value)
+                                onChange={(val) => {
+                                    setSelectedSubjectId(val)
                                     setPage(1)
                                 }}
-                                data-testid="filter-subject-select"
-                            >
-                                <option value="">Tất cả các môn</option>
-                                {filterOptions.subjects.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                        {s.label || s.name}
-                                    </option>
-                                ))}
-                            </select>
+                                options={subjectOptions}
+                                placeholder="Tất cả các môn"
+                                ariaLabel="Lọc theo môn học"
+                            />
                         </div>
                     </div>
 
