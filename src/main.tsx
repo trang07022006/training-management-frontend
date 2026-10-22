@@ -227,6 +227,16 @@ createRoot(document.getElementById('root')!).render(
                   }
                 >
                   <Route path="/my-schedule" element={<StudentSchedulePage />} />
+                </Route>
+                <Route
+                  element={
+                    <RequirePermission
+                      requiredRole="trainee"
+                      requiredPermission={SYSTEM_PERMISSIONS.SCHEDULE_PERSONAL_VIEW}
+                      fallbackPath="/dashboard"
+                    />
+                  }
+                >
                   <Route path="/my-attendance-history" element={<StudentAttendanceHistoryPage />} />
                 </Route>
                 <Route

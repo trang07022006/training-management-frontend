@@ -175,7 +175,7 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
         expect(dualKeys).toContain('sessions')
         expect(dualKeys).toContain('schedules_calendar')
 
-        // Trainer: có lịch giảng dạy của tôi, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có users, courses, admin_dashboard, trainer_dashboard
+        // Trainer: có lịch giảng dạy của tôi, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có my_attendance_history, users, courses, admin_dashboard, trainer_dashboard
         const trainerMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'trainer',
@@ -184,13 +184,14 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
         expect(trainerKeys).toContain('overview')
         expect(trainerKeys).toContain('my_schedule')
         expect(trainerKeys).toContain('training_programs')
+        expect(trainerKeys).not.toContain('my_attendance_history')
         expect(trainerKeys).not.toContain('trainer_dashboard')
         expect(trainerKeys).not.toContain('courses')
         expect(trainerKeys).not.toContain('users')
         expect(trainerKeys).not.toContain('admin_dashboard')
         expect(trainerKeys).not.toContain('trainee_dashboard')
 
-        // Trainee: có lịch học của tôi, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có users, courses, admin_dashboard, trainee_dashboard, trainer_dashboard
+        // Trainee: có lịch học của tôi, lịch sử điểm danh, chương trình đào tạo, tổng quan, đổi mật khẩu; KHÔNG có users, courses, admin_dashboard, trainee_dashboard, trainer_dashboard
         const traineeMenu = filterMenuItems(APP_MENU_CONFIG, {
             hasSession: true,
             role: 'trainee',
@@ -198,6 +199,7 @@ describe('SCRUM-23 Phase 1: Menu Permission Model', () => {
         const traineeKeys = traineeMenu.map((m) => m.key)
         expect(traineeKeys).toContain('overview')
         expect(traineeKeys).toContain('my_schedule')
+        expect(traineeKeys).toContain('my_attendance_history')
         expect(traineeKeys).toContain('training_programs')
         expect(traineeKeys).not.toContain('trainee_dashboard')
         expect(traineeKeys).not.toContain('courses')
