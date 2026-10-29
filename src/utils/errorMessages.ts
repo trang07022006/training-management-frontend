@@ -27,9 +27,10 @@ export const ERROR_MESSAGES: Record<string, string> = {
     ACCESS_TOKEN_EXPIRED: 'Phiên làm việc cần được làm mới.',
     SESSION_EXPIRED: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.',
     SESSION_REVOKED: 'Phiên đăng nhập đã được kết thúc. Vui lòng đăng nhập lại.',
-    UNAUTHORIZED: 'Bạn cần đăng nhập để tiếp tục.',
-    AUTH_REQUIRED: 'Bạn cần đăng nhập để tiếp tục.',
-    SESSION_INVALID: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
+    UNAUTHORIZED: 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.',
+    AUTH_REQUIRED: 'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.',
+    '401': 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.',
+    SESSION_INVALID: 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.',
     REFRESH_TOKEN_INVALID: 'Phiên đăng nhập đã kết thúc. Vui lòng đăng nhập lại.',
     TOKEN_INVALID: 'Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.',
     SESSION_CHANGED: 'Phiên đăng nhập đã thay đổi. Vui lòng tải lại trang.',
@@ -63,7 +64,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // 5. PHÂN QUYỀN
     // ----------------------------------------------------
     FORBIDDEN: 'Bạn không có quyền thực hiện thao tác này.',
-    PERMISSION_DENIED: 'Bạn không có quyền truy cập chức năng này.',
+    PERMISSION_DENIED: 'Bạn không có quyền thực hiện thao tác này.',
+    '403': 'Bạn không có quyền thực hiện thao tác này.',
 
     // ----------------------------------------------------
     // 6. QUẢN LÝ NGƯỜI DÙNG
@@ -93,6 +95,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
     // ----------------------------------------------------
     // 9. LỖI KỸ THUẬT / HỆ THỐNG / DATABASE KHÁC
     // ----------------------------------------------------
+    REQUEST_FAILED: 'Không thể kết nối hoặc yêu cầu không thành công. Vui lòng thử lại.',
+    STUDENT_PROFILE_NOT_FOUND: 'Không tìm thấy hồ sơ học viên liên kết với tài khoản này.',
     SESSION_STORAGE_UNAVAILABLE: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
     UNKNOWN_DATABASE_ERROR: 'Đã xảy ra lỗi. Vui lòng thử lại.',
@@ -137,10 +141,126 @@ export const ERROR_MESSAGES: Record<string, string> = {
     PROFILE_FIELD_NOT_EDITABLE: 'Email và vai trò không thể thay đổi từ hồ sơ cá nhân.',
     UNKNOWN_FIELD: 'Trường dữ liệu không hợp lệ.',
     EMPTY_UPDATE: 'Dữ liệu cập nhật không được để trống.',
+
+    // ----------------------------------------------------
+    // 12. ẢNH ĐẠI DIỆN (SCRUM-121)
+    // ----------------------------------------------------
+    AVATAR_REQUIRED: 'Vui lòng chọn ảnh đại diện.',
+    AVATAR_TOO_LARGE: 'Ảnh đại diện không được vượt quá 2 MB.',
+    INVALID_AVATAR_TYPE: 'Ảnh đại diện phải là JPG, JPEG, PNG hoặc WEBP.',
+    AVATAR_NOT_FOUND: 'Không tìm thấy ảnh đại diện.',
+    AVATAR_STORAGE_ERROR: 'Lỗi lưu trữ ảnh đại diện. Vui lòng thử lại.',
+    AVATAR_UPLOAD_FAILED: 'Không thể tải lên ảnh đại diện. Vui lòng thử lại.',
+
+    // ----------------------------------------------------
+    // 13. CHƯƠNG TRÌNH ĐÀO TẠO (SCRUM-122)
+    // ----------------------------------------------------
+    DUPLICATE_CODE: 'Mã chương trình đào tạo đã tồn tại.',
+    PROGRAM_NOT_FOUND: 'Không tìm thấy chương trình đào tạo.',
+    PROGRAM_IN_USE: 'Không thể xóa chương trình vì đang có dữ liệu liên quan. Hãy chuyển chương trình sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    CODE_REQUIRED: 'Mã chương trình là bắt buộc.',
+    CODE_TOO_LONG: 'Mã chương trình không được vượt quá 50 ký tự.',
+    PROGRAM_NAME_REQUIRED: 'Tên chương trình là bắt buộc.',
+
+    // ----------------------------------------------------
+    // 14. MÔN HỌC / HỌC PHẦN (SCRUM-123)
+    // ----------------------------------------------------
+    SUBJECT_NOT_FOUND: 'Không tìm thấy môn học yêu cầu.',
+    SUBJECT_IN_USE: 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa, hoặc chuyển môn sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    SUBJECT_IN_USE_PROGRAM: 'Không thể xóa môn học vì môn đang được sử dụng trong chương trình đào tạo. Hãy gỡ môn khỏi các chương trình liên quan trước khi xóa.',
+    SUBJECT_IN_USE_CLASS: 'Không thể xóa môn học vì môn đã có lớp học. Để bảo toàn dữ liệu đào tạo, môn học đã phát sinh lớp học không được phép xóa. Hãy chuyển môn học sang trạng thái Đã lưu trữ nếu không còn sử dụng.',
+    SUBJECT_IN_USE_SESSION: 'Không thể xóa môn học vì môn vẫn còn các buổi học. Hãy xử lý các buổi học liên quan trước khi xóa.',
+    SUBJECT_IN_USE_PREREQUISITE: 'Không thể xóa môn học vì môn đang được sử dụng làm môn tiên quyết. Hãy gỡ các quan hệ tiên quyết liên quan trước khi xóa.',
+    SUBJECT_CODE_EXISTS: 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.',
+    DUPLICATE_SUBJECT_CODE: 'Mã môn học này đã tồn tại. Vui lòng sử dụng mã khác.',
+    SUBJECT_NAME_REQUIRED: 'Tên môn học là bắt buộc.',
+    SUBJECT_CODE_REQUIRED: 'Mã môn học là bắt buộc.',
+    SUBJECT_CODE_TOO_LONG: 'Mã môn học không được vượt quá 50 ký tự.',
+    CREDITS_REQUIRED: 'Số tín chỉ là bắt buộc.',
+    INVALID_CREDITS: 'Số tín chỉ phải là số nguyên từ 1 đến 30.',
+    INVALID_TOTAL_SESSIONS: 'Số buổi học phải là số nguyên không âm.',
+
+    // ----------------------------------------------------
+    // 15. CẤU TRÚC CHƯƠNG TRÌNH & MÔN TIÊN QUYẾT (SCRUM-124)
+    // ----------------------------------------------------
+    SUBJECT_ALREADY_IN_PROGRAM: 'Môn học đã tồn tại trong chương trình đào tạo.',
+    PROGRAM_SUBJECT_NOT_FOUND: 'Không tìm thấy môn học trong chương trình đào tạo.',
+    PROGRAM_SUBJECT_IN_USE: 'Môn học đang là điều kiện tiên quyết của môn khác. Hãy gỡ ràng buộc tiên quyết trước.',
+    PREREQUISITE_CYCLE: 'Không thể thêm môn tiên quyết vì tạo vòng lặp phụ thuộc (chu trình).',
+    INVALID_PREREQUISITE_ORDER: 'Môn tiên quyết phải được xếp trước môn học phụ thuộc theo học kỳ hoặc thứ tự học.',
+    PREREQUISITE_ALREADY_EXISTS: 'Môn tiên quyết này đã được thiết lập.',
+    CANNOT_PREREQUISITE_SELF: 'Môn học không thể làm điều kiện tiên quyết của chính nó.',
+    PROGRAM_ARCHIVED: 'Chương trình đào tạo đã lưu trữ, không thể chỉnh sửa cấu trúc.',
+    SUBJECT_ARCHIVED: 'Môn học đã được lưu trữ, không thể chỉnh sửa buổi học.',
+    INVALID_SEMESTER: 'Học kỳ không hợp lệ.',
+    SEMESTER_EXCEEDS_DURATION: 'Học kỳ vượt quá thời gian đào tạo của chương trình.',
+
+    // ----------------------------------------------------
+    // 16. TƯ VẤN CÔNG KHAI & PHÂN CÔNG LEAD (SCRUM-125 / SCRUM-127)
+    // ----------------------------------------------------
+    PHONE_REQUIRED: 'Số điện thoại là bắt buộc.',
+    INVALID_PARAMS: 'Dữ liệu cung cấp không hợp lệ.',
+    INVALID_PROGRAM: 'Chương trình đào tạo này hiện không mở đăng ký tư vấn.',
+    CONSULTATION_RATE_LIMITED: 'Bạn vừa gửi yêu cầu tư vấn. Vui lòng thử lại sau khoảng 1 phút.',
+    INVALID_ASSIGNEE: 'Chỉ có thể phân công Lead cho nhân viên Tư vấn tuyển sinh.',
+    INACTIVE_USER: 'Người dùng không còn hoạt động, không thể nhận phân công.',
+
+    // ----------------------------------------------------
+    // 17. QUẢN LÝ BUỔI HỌC (SCRUM-129)
+    // ----------------------------------------------------
+    SUBJECT_SESSION_NOT_FOUND: 'Không tìm thấy buổi học của môn học.',
+    DUPLICATE_SESSION_NUMBER: 'Số thứ tự buổi học đã tồn tại trong môn học.',
+    TOTAL_SESSIONS_EXCEEDED: 'Số thứ tự buổi học vượt quá tổng số buổi của môn học.',
+    TOTAL_SESSIONS_IN_USE: 'Không thể giảm tổng số buổi xuống thấp hơn số thứ tự buổi học hiện có.',
+    SESSION_NUMBER_REQUIRED: 'Số thứ tự buổi học là bắt buộc.',
+    INVALID_SESSION_NUMBER: 'Số thứ tự buổi học phải là số nguyên dương lớn hơn hoặc bằng 1.',
+    TOPIC_REQUIRED: 'Chủ đề buổi học là bắt buộc.',
+    TOPIC_TOO_LONG: 'Chủ đề buổi học không được vượt quá 255 ký tự.',
+    OBJECTIVE_REQUIRED: 'Mục tiêu buổi học là bắt buộc.',
+    OBJECTIVE_TOO_LONG: 'Mục tiêu buổi học không được vượt quá 5000 ký tự.',
+    REORDER_SESSIONS_FAILED: 'Không thể cập nhật thứ tự buổi học. Vui lòng thử lại.',
+
+    // ----------------------------------------------------
+    // 18. QUẢN LÝ LỚP HỌC & GHI DANH (SCRUM-217 & SCRUM-218)
+    // ----------------------------------------------------
+    CLASS_CODE_ALREADY_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    CLASS_CODE_EXISTS: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    DUPLICATE_CLASS_CODE: 'Mã lớp đã tồn tại. Vui lòng chọn mã lớp khác.',
+    CLASS_CODE_REQUIRED: 'Mã lớp học là bắt buộc.',
+    PROGRAM_REQUIRED: 'Chương trình đào tạo là bắt buộc.',
+    INVALID_CLASS_STATUS: 'Trạng thái lớp không hợp lệ. Chỉ chấp nhận 4 trạng thái: Chuẩn bị, Đang học, Kết thúc, Huỷ.',
+    CLASS_NOT_FOUND: 'Không tìm thấy thông tin lớp học.',
+    CLASS_CAPACITY_FULL: 'Lớp học đã đủ số lượng học viên tối đa.',
+    STUDENT_ALREADY_ENROLLED: 'Học viên đã được ghi danh vào lớp học này.',
+    STUDENT_NOT_FOUND: 'Không tìm thấy thông tin học viên.',
+    INVALID_STUDENT_LIST: 'Vui lòng chọn ít nhất một học viên để ghi danh.',
+
+    // ----------------------------------------------------
+    // 13. THỜI KHÓA BIỂU & LỊCH HỌC (SCRUM-224 / SCRUM-225)
+    // ----------------------------------------------------
+    SUBJECT_NOT_IN_CLASS: 'Môn học đã chọn không thuộc lớp này. Vui lòng chọn lại.',
+    INSTRUCTOR_CONFLICT: 'Phát hiện xung đột lịch giảng viên.',
+    ROOM_CONFLICT: 'Phát hiện xung đột lịch phòng học.',
+    SCHEDULE_CONFLICT_DETECTED: 'Phát hiện xung đột lịch về giảng viên hoặc phòng học.',
+    SCHEDULE_ALREADY_EXISTS: 'Lớp học đã có thời khóa biểu.',
+    DAYS_OF_WEEK_REQUIRED: 'Vui lòng chọn ít nhất một thứ trong tuần để sinh lịch học.',
+    INVALID_DAYS_OF_WEEK: 'Danh sách thứ trong tuần không hợp lệ. Vui lòng chọn lại.',
+    START_DATE_REQUIRED: 'Ngày bắt đầu học không được để trống. Vui lòng chọn ngày bắt đầu.',
+    INVALID_START_DATE: 'Ngày bắt đầu không đúng định dạng YYYY-MM-DD. Vui lòng chọn lại.',
+    TOTAL_SESSIONS_REQUIRED: 'Số buổi học không được để trống. Vui lòng nhập số buổi học.',
+    SHIFT_REQUIRED: 'Vui lòng chọn ca học hoặc nhập giờ bắt đầu và kết thúc hợp lệ.',
+    INVALID_SHIFT_TIME: 'Vui lòng chọn ca học hoặc nhập giờ bắt đầu và kết thúc hợp lệ.',
+    SCHEDULE_NOT_FOUND: 'Không tìm thấy buổi học.',
+    SCHEDULE_ATTENDANCE_ALREADY_CHECKED: 'Không thể sửa hoặc hủy buổi học đã được điểm danh.',
 }
 
 // 2. Bản đồ ánh xạ thông báo thành công
 export const SUCCESS_MESSAGES: Record<string, string> = {
+    CREATE_SESSION_SUCCESS: 'Thêm buổi học thành công.',
+    UPDATE_SESSION_SUCCESS: 'Cập nhật buổi học thành công.',
+    REORDER_SESSIONS_SUCCESS: 'Sắp xếp lại thứ tự buổi học thành công.',
+    DELETE_SESSION_SUCCESS: 'Xóa buổi học thành công.',
+    SUBMIT_CONSULTATION_SUCCESS: 'Cảm ơn bạn đã đăng ký tư vấn. Yêu cầu của bạn đã được ghi nhận. Bộ phận tư vấn ICTU sẽ liên hệ lại với bạn trong vòng 24 giờ làm việc.',
     CHANGE_PASSWORD_SUCCESS: 'Đổi mật khẩu thành công.',
     RESET_PASSWORD_SUCCESS: 'Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.',
     CREATE_USER_SUCCESS: 'Tạo người dùng thành công.',
@@ -151,6 +271,15 @@ export const SUCCESS_MESSAGES: Record<string, string> = {
     UNLOCK_ACCOUNT_SUCCESS: 'Mở khóa tài khoản thành công.',
     FORGOT_PASSWORD_SUCCESS: 'Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu sẽ được gửi tới email của bạn.',
     UPDATE_PROFILE_SUCCESS: 'Cập nhật hồ sơ thành công.',
+    UPLOAD_AVATAR_SUCCESS: 'Cập nhật ảnh đại diện thành công.',
+    DELETE_AVATAR_SUCCESS: 'Xóa ảnh đại diện thành công.',
+    CREATE_PROGRAM_SUCCESS: 'Tạo chương trình đào tạo thành công.',
+    UPDATE_PROGRAM_SUCCESS: 'Cập nhật chương trình đào tạo thành công.',
+    DELETE_PROGRAM_SUCCESS: 'Xóa chương trình đào tạo thành công.',
+    CREATE_SUBJECT_SUCCESS: 'Tạo môn học thành công.',
+    UPDATE_SUBJECT_SUCCESS: 'Cập nhật môn học thành công.',
+    DELETE_SUBJECT_SUCCESS: 'Xóa môn học thành công.',
+    ARCHIVE_SUBJECT_SUCCESS: 'Đã lưu trữ môn học thành công.',
 }
 
 export const DEFAULT_FALLBACK_ERROR = 'Đã xảy ra lỗi. Vui lòng thử lại.'
@@ -158,6 +287,7 @@ export const NETWORK_ERROR_MESSAGE = 'Không thể kết nối tới máy chủ.
 
 const TECHNICAL_CODE_REGEX = /^[A-Z0-9_]{3,}$/
 const VIETNAMESE_ACCENT_REGEX = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i
+const TECHNICAL_ERROR_REGEX = /(?:traceback|exception|error:|stack trace|internal server error|econnrefused|fetch failed|\bat\s+\w+\s+\()/i
 
 /**
  * Kiểm tra xem chuỗi có phải là mã kỹ thuật dạng CONSTANT_CASE hay không.
@@ -173,6 +303,17 @@ export function isTechnicalCode(str?: string | null): boolean {
 export function isNetworkError(text?: string | null): boolean {
     if (!text || typeof text !== 'string') return false
     const lower = text.toLowerCase()
+    if (
+        lower.includes('400') ||
+        lower.includes('401') ||
+        lower.includes('403') ||
+        lower.includes('404') ||
+        lower.includes('500') ||
+        lower.includes('status code 4') ||
+        lower.includes('status code 5')
+    ) {
+        return false
+    }
     return (
         lower.includes('failed to fetch') ||
         lower.includes('networkerror') ||
@@ -194,43 +335,128 @@ export function isFriendlyVietnamese(text?: string | null): boolean {
     const trimmed = text.trim()
     if (!trimmed) return false
     if (isTechnicalCode(trimmed)) return false
+    if (isTechnicalError(trimmed)) return false
     return VIETNAMESE_ACCENT_REGEX.test(trimmed)
 }
 
 /**
+ * Kiểm tra chuỗi có chứa lỗi kỹ thuật, stack trace hoặc mã hệ thống hay không.
+ */
+export function isTechnicalError(text?: string | null): boolean {
+    if (!text || typeof text !== 'string') return false
+    const trimmed = text.trim()
+    if (!trimmed) return false
+    if (isTechnicalCode(trimmed)) return true
+    if (TECHNICAL_ERROR_REGEX.test(trimmed)) return true
+    return false
+}
+
+/**
+ * Chuẩn hóa fallback để đảm bảo tuyệt đối không leak mã lỗi hoặc stack trace.
+ */
+export function sanitizeFallback(fallback?: string): string {
+    if (!fallback || typeof fallback !== 'string') return DEFAULT_FALLBACK_ERROR
+    const trimmed = fallback.trim()
+    if (!trimmed) return DEFAULT_FALLBACK_ERROR
+    if (trimmed in ERROR_MESSAGES) return ERROR_MESSAGES[trimmed]
+    if (isTechnicalCode(trimmed) || isTechnicalError(trimmed)) return DEFAULT_FALLBACK_ERROR
+    if (isFriendlyVietnamese(trimmed)) return trimmed
+    return DEFAULT_FALLBACK_ERROR
+}
+
+/**
  * Hàm dùng chung ánh xạ error code hoặc error object sang thông báo tiếng Việt thân thiện.
+ * Tuân thủ quy định:
+ * - UNAUTHORIZED -> "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn."
+ * - FORBIDDEN / 403 -> "Bạn không có quyền thực hiện thao tác này."
+ * - 401 -> "Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại."
+ * - Tuyệt đối không hiển thị mã kỹ thuật, status code, backend raw error, stack trace ra UI.
  */
 export function getErrorMessage(
     errorOrCode: unknown,
     fallback?: string,
 ): string {
-    if (!errorOrCode) {
-        return fallback || DEFAULT_FALLBACK_ERROR
+    const safeFallback = sanitizeFallback(fallback)
+
+    if (errorOrCode === undefined || errorOrCode === null) {
+        return safeFallback
     }
 
-    // 1. Trường hợp là chuỗi
+    // 1. Trường hợp là number (ví dụ 401, 403)
+    if (typeof errorOrCode === 'number') {
+        if (errorOrCode === 401) {
+            return ERROR_MESSAGES['401']
+        }
+        if (errorOrCode === 403) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        if (errorOrCode === 404) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (errorOrCode === 500) {
+            return 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+        const str = String(errorOrCode)
+        if (str in ERROR_MESSAGES) {
+            return ERROR_MESSAGES[str]
+        }
+        return safeFallback
+    }
+
+    // 2. Trường hợp là chuỗi
     if (typeof errorOrCode === 'string') {
         const trimmed = errorOrCode.trim()
         if (isNetworkError(trimmed)) {
             return NETWORK_ERROR_MESSAGE
         }
+
+        const upper = trimmed.toUpperCase()
+
+        // Mapping ưu tiên mã auth / permission
+        if (trimmed === '401' || trimmed.startsWith('401')) {
+            return ERROR_MESSAGES['401']
+        }
+        if (upper === 'UNAUTHORIZED' || upper === 'AUTH_REQUIRED') {
+            return ERROR_MESSAGES.UNAUTHORIZED
+        }
+        if (upper === 'FORBIDDEN' || upper === 'PERMISSION_DENIED' || trimmed === '403' || trimmed.startsWith('403')) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        if (trimmed.includes('401')) {
+            return ERROR_MESSAGES['401']
+        }
+        if (upper.includes('UNAUTHORIZED')) {
+            return ERROR_MESSAGES.UNAUTHORIZED
+        }
+        if (upper.includes('FORBIDDEN') || trimmed.includes('403')) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+
+        if (trimmed === '404') {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (trimmed === '500') {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+
         if (trimmed in ERROR_MESSAGES) {
             return ERROR_MESSAGES[trimmed]
         }
-        if (isTechnicalCode(trimmed)) {
-            return fallback || DEFAULT_FALLBACK_ERROR
+        if (isTechnicalCode(trimmed) || isTechnicalError(trimmed)) {
+            return safeFallback
         }
         if (isFriendlyVietnamese(trimmed)) {
             return trimmed
         }
-        return fallback || DEFAULT_FALLBACK_ERROR
+        return safeFallback
     }
 
-    // 2. Trường hợp là Error hoặc Object có thuộc tính code / message
+    // 3. Trường hợp là Error hoặc Object có thuộc tính code / message / status
     let code: string | null = null
     let rawMessage: string | null = null
+    let status: number | null = null
 
-    if (typeof errorOrCode === 'object' && errorOrCode !== null) {
+    if (typeof errorOrCode === 'object') {
         const anyObj = errorOrCode as Record<string, unknown>
         if ('code' in anyObj && typeof anyObj.code === 'string') {
             code = anyObj.code.trim()
@@ -238,15 +464,23 @@ export function getErrorMessage(
         if ('message' in anyObj && typeof anyObj.message === 'string') {
             rawMessage = anyObj.message.trim()
         }
+        if ('status' in anyObj && typeof anyObj.status === 'number') {
+            status = anyObj.status
+        } else if ('statusCode' in anyObj && typeof anyObj.statusCode === 'number') {
+            status = anyObj.statusCode
+        }
     }
 
-    // Kiểm tra lỗi mạng
-    if (rawMessage && isNetworkError(rawMessage)) {
+    // Kiểm tra lỗi mạng (chỉ khi không có HTTP status code hợp lệ)
+    if ((!status || status === 0) && rawMessage && isNetworkError(rawMessage)) {
         return NETWORK_ERROR_MESSAGE
     }
 
-    // Nếu có mã code được định nghĩa trong ERROR_MESSAGES
-    if (code && code in ERROR_MESSAGES) {
+    const normCode = code?.toUpperCase()
+    const upperMsg = rawMessage?.toUpperCase() || ''
+
+    // Nếu có mã code được định nghĩa trong ERROR_MESSAGES (ngoại trừ các mã chung chung như API_ERROR)
+    if (code && code in ERROR_MESSAGES && !['API_ERROR', 'REQUEST_FAILED', 'UNKNOWN_ERROR'].includes(code)) {
         if (code === 'ACCOUNT_LOCKED' && rawMessage && (rawMessage.includes('15 phút') || rawMessage.includes('tạm thời'))) {
             return rawMessage
         }
@@ -257,7 +491,32 @@ export function getErrorMessage(
             return rawMessage
         }
         if (
-            ['INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR'].includes(code) &&
+            ((code === 'DUPLICATE_CODE') && rawMessage && rawMessage.includes('môn học') && isFriendlyVietnamese(rawMessage)) ||
+            ((code === 'SUBJECT_CODE_EXISTS' || code === 'DUPLICATE_SUBJECT_CODE') && rawMessage && isFriendlyVietnamese(rawMessage))
+        ) {
+            return rawMessage
+        }
+        if (code === 'NAME_REQUIRED' && rawMessage && (rawMessage.includes('chương trình') || rawMessage.includes('môn học')) && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'SUBJECT_IN_USE' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'SUBJECT_NOT_FOUND' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'SUBJECT_ARCHIVED' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (code === 'REORDER_SESSIONS_FAILED' && rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (
+            [
+                'INVALID_HEADER', 'MISSING_USERS_SHEET', 'INVALID_EXCEL_FILE', 'FILE_EMPTY', 'NO_DATA', 'INVALID_FILE_TYPE', 'FILE_REQUIRED', 'DUPLICATE_EMAIL_IN_FILE', 'IMPORT_FAILED', 'IMPORT_USERS_ERROR', 'AVATAR_REQUIRED', 'AVATAR_TOO_LARGE', 'INVALID_AVATAR_TYPE', 'AVATAR_NOT_FOUND', 'AVATAR_STORAGE_ERROR', 'AVATAR_UPLOAD_FAILED',
+                'SCHEDULE_ALREADY_EXISTS', 'INSTRUCTOR_CONFLICT', 'ROOM_CONFLICT', 'SCHEDULE_CONFLICT_DETECTED', 'SUBJECT_NOT_IN_CLASS', 'DAYS_OF_WEEK_REQUIRED', 'START_DATE_REQUIRED', 'INVALID_START_DATE', 'TOTAL_SESSIONS_REQUIRED', 'INVALID_TOTAL_SESSIONS', 'SHIFT_REQUIRED', 'INVALID_SHIFT_TIME', 'SCHEDULE_NOT_FOUND', 'SCHEDULE_ATTENDANCE_ALREADY_CHECKED',
+                'INVALID_PARAMS',
+            ].includes(code) &&
             rawMessage &&
             isFriendlyVietnamese(rawMessage)
         ) {
@@ -266,20 +525,99 @@ export function getErrorMessage(
         return ERROR_MESSAGES[code]
     }
 
+    if (normCode === 'REQUEST_FAILED' || upperMsg === 'REQUEST_FAILED') {
+        if (status === 404) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Không tìm thấy dữ liệu yêu cầu.'
+        }
+        if (status === 403) {
+            return ERROR_MESSAGES.FORBIDDEN
+        }
+        if (status === 401) {
+            return ERROR_MESSAGES['401']
+        }
+        if (status === 500) {
+            return fallback && fallback !== DEFAULT_FALLBACK_ERROR ? fallback : 'Có lỗi máy chủ, vui lòng thử lại.'
+        }
+        return safeFallback !== DEFAULT_FALLBACK_ERROR ? safeFallback : ERROR_MESSAGES.REQUEST_FAILED
+    }
+
+    // Ánh xạ lỗi xác thực và phân quyền qua status hoặc message khi mã code không chuyên biệt
+    if (normCode === 'UNAUTHORIZED' || normCode === 'AUTH_REQUIRED') {
+        return ERROR_MESSAGES.UNAUTHORIZED
+    }
+
+    if (
+        normCode === 'FORBIDDEN' ||
+        normCode === 'PERMISSION_DENIED' ||
+        normCode === '403' ||
+        status === 403 ||
+        upperMsg === 'FORBIDDEN' ||
+        upperMsg.startsWith('403') ||
+        upperMsg.includes('FORBIDDEN') ||
+        upperMsg.includes('403') ||
+        upperMsg.includes('PERMISSION_DENIED')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage) && rawMessage !== 'Forbidden') {
+            return rawMessage
+        }
+        return ERROR_MESSAGES.FORBIDDEN
+    }
+
+    if (
+        normCode === '401' ||
+        status === 401 ||
+        upperMsg.startsWith('401') ||
+        upperMsg.includes('401')
+    ) {
+        return ERROR_MESSAGES['401']
+    }
+
+    if (
+        status === 404 ||
+        normCode === '404' ||
+        normCode === 'NOT_FOUND' ||
+        upperMsg.startsWith('404')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        if (fallback && fallback !== DEFAULT_FALLBACK_ERROR) {
+            return fallback
+        }
+        return 'Không tìm thấy dữ liệu yêu cầu.'
+    }
+
+    if (
+        status === 500 ||
+        normCode === '500' ||
+        normCode === 'INTERNAL_SERVER_ERROR' ||
+        normCode === 'INTERNAL_ERROR' ||
+        upperMsg.startsWith('500')
+    ) {
+        if (rawMessage && isFriendlyVietnamese(rawMessage)) {
+            return rawMessage
+        }
+        return 'Có lỗi máy chủ, vui lòng thử lại.'
+    }
+
+    if (upperMsg === 'UNAUTHORIZED' || upperMsg.includes('UNAUTHORIZED')) {
+        return ERROR_MESSAGES.UNAUTHORIZED
+    }
+
     // Nếu message có trong mapper
     if (rawMessage) {
         if (rawMessage in ERROR_MESSAGES) {
             return ERROR_MESSAGES[rawMessage]
         }
-        if (isTechnicalCode(rawMessage)) {
-            return fallback || DEFAULT_FALLBACK_ERROR
+        if (isTechnicalCode(rawMessage) || isTechnicalError(rawMessage)) {
+            return safeFallback
         }
         if (isFriendlyVietnamese(rawMessage)) {
             return rawMessage
         }
     }
 
-    return fallback || DEFAULT_FALLBACK_ERROR
+    return safeFallback
 }
 
 /**

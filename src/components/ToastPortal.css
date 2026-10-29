@@ -1,0 +1,123 @@
+/* ToastPortal.css - Fixed Viewport Toast Notifications */
+
+.leads-toast-container {
+  position: fixed;
+  top: calc(68px + 14px); /* 14px below the 68px header */
+  right: 24px;
+  z-index: 999999; /* Higher than modals (1000) and headers (99) */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 480px;
+  width: calc(100% - 48px);
+}
+
+.leads-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.22), 0 8px 10px -6px rgba(0, 0, 0, 0.12);
+  animation: leadsToastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.leads-toast-success {
+  background: #065f46;
+  color: #ffffff;
+  border: 1px solid #047857;
+}
+
+.leads-toast-error {
+  background: #991b1b;
+  color: #ffffff;
+  border: 1px solid #b91c1c;
+}
+
+.leads-toast-warning {
+  background: #92400e;
+  color: #ffffff;
+  border: 1px solid #b45309;
+}
+
+.leads-toast-info {
+  background: #1e3a8a;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+}
+
+.leads-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.leads-toast-success .leads-toast-icon {
+  color: #a7f3d0;
+}
+
+.leads-toast-error .leads-toast-icon {
+  color: #fecaca;
+}
+
+.leads-toast-warning .leads-toast-icon {
+  color: #fde68a;
+}
+
+.leads-toast-info .leads-toast-icon {
+  color: #93c5fd;
+}
+
+.leads-toast-message {
+  flex: 1;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.leads-toast-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  opacity: 0.8;
+  transition: opacity 0.15s;
+}
+
+.leads-toast-close:hover {
+  opacity: 1;
+}
+
+@keyframes leadsToastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive breakpoint for Mobile & Tablet */
+@media (max-width: 768px) {
+  .leads-toast-container {
+    top: calc(60px + 12px); /* 12px below 60px mobile header */
+    right: 12px;
+    width: calc(100% - 24px);
+    max-width: none;
+  }
+
+  .leads-toast {
+    padding: 12px 14px;
+    font-size: 0.88rem;
+  }
+}

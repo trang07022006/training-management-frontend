@@ -1,0 +1,287 @@
+/* AccessibleSelect.css - Component Ô chọn danh sách có thể tiếp cận & tương tác mượt */
+
+.accessible-select-container {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+/* Trigger Button */
+.accessible-select-trigger {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: #1e293b;
+    box-sizing: border-box;
+    text-align: left;
+    gap: 8px;
+    user-select: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.accessible-select-trigger:hover:not(:disabled) {
+    border-color: #94a3b8;
+    background-color: #f8fafc;
+}
+
+.accessible-select-trigger:focus,
+.accessible-select-trigger.active {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background-color: #ffffff;
+}
+
+.accessible-select-trigger:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+}
+
+.accessible-select-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #0f172a;
+    font-weight: 500;
+}
+
+.accessible-select-trigger.is-placeholder .accessible-select-value {
+    color: #64748b;
+    font-weight: 400;
+}
+
+.accessible-select-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #64748b;
+    flex-shrink: 0;
+    transition: transform 0.16s ease, color 0.16s ease;
+}
+
+.accessible-select-arrow.rotated {
+    transform: rotate(180deg);
+    color: #2563eb;
+}
+
+/* Dropdown Popup */
+.accessible-select-popup {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+    z-index: 1050;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.accessible-select-popup.placement-bottom {
+    top: calc(100% + 4px);
+    animation: selectPopupFadeInDown 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.accessible-select-popup.placement-top {
+    bottom: calc(100% + 4px);
+    animation: selectPopupFadeInUp 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes selectPopupFadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes selectPopupFadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .accessible-select-popup,
+    .accessible-select-popup.placement-bottom,
+    .accessible-select-popup.placement-top {
+        animation: none !important;
+        transform: none !important;
+    }
+    .accessible-select-arrow {
+        transition: none !important;
+    }
+    .accessible-select-trigger {
+        transition: none !important;
+    }
+}
+
+/* Search Box */
+.accessible-select-search-box {
+    position: relative;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.accessible-select-search-input {
+    width: 100%;
+    height: 32px;
+    padding: 0 28px 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #1e293b;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.accessible-select-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.accessible-select-search-clear {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.accessible-select-search-clear:hover {
+    color: #334155;
+}
+
+/* Options List */
+.accessible-select-options-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.accessible-select-options-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.accessible-select-options-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.accessible-select-options-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.accessible-select-options-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Option Item */
+.accessible-select-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: #1e293b;
+    gap: 8px;
+    transition: background-color 0.12s ease, color 0.12s ease;
+    user-select: none;
+}
+
+.accessible-select-option.highlighted {
+    background-color: #f1f5f9;
+}
+
+.accessible-select-option.selected {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.accessible-select-option.selected.highlighted {
+    background-color: #dbeafe;
+}
+
+.accessible-select-option-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.accessible-select-option-sublabel {
+    font-size: 11.5px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.accessible-select-check-icon {
+    font-size: 13px;
+    color: #2563eb;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.accessible-select-empty-state {
+    padding: 16px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Visually hidden native select for accessibility & form/testing fallback */
+.accessible-select-native-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+

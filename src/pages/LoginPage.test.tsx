@@ -192,4 +192,62 @@ describe('SCRUM-30: Giao diện đăng nhập (LoginPage & LoginForm)', () => {
         const alert = await screen.findByRole('alert')
         expect(alert.textContent).toBe('Tài khoản đang bị khóa. Vui lòng liên hệ quản trị viên.')
     })
+
+    it('hiển thị thông báo lỗi máy chủ 500 trong form alert thay vì sai mật khẩu', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({ code: 'INTERNAL_ERROR', message: 'Internal Server Error' }),
+                { status: 500, headers: { 'Content-Type': 'application/json' } },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'user@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'ValidPassword123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toBe('Có lỗi máy chủ, vui lòng thử lại sau.')
+    })
+
+    it('hiển thị thông báo 503 SESSION_STORAGE_UNAVAILABLE trong form alert', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockResolvedValueOnce(
+            new Response(
+                JSON.stringify({ code: 'SESSION_STORAGE_UNAVAILABLE', message: 'Session storage error' }),
+                { status: 503, headers: { 'Content-Type': 'application/json' } },
+            ),
+        )
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'user@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'ValidPassword123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toBe('Hệ thống máy chủ tạm thời không thể lưu phiên đăng nhập. Vui lòng thử lại sau.')
+    })
+
+    it('hiển thị lỗi mất kết nối mạng trong form alert', async () => {
+        const fetcher = setup('/login')
+        fetcher.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+
+        fireEvent.change(screen.getByRole('textbox', { name: 'Email' }), {
+            target: { value: 'user@example.com' },
+        })
+        fireEvent.change(screen.getByLabelText('Mật khẩu'), {
+            target: { value: 'ValidPassword123!' },
+        })
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
+
+        const alert = await screen.findByRole('alert')
+        expect(alert.textContent).toBe('Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.')
+    })
 })

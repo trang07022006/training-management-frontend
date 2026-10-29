@@ -46,8 +46,10 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
         })
 
         it('map UNAUTHORIZED và AUTH_REQUIRED', () => {
-            expect(getErrorMessage('UNAUTHORIZED')).toBe('Bạn cần đăng nhập để tiếp tục.')
-            expect(getErrorMessage('AUTH_REQUIRED')).toBe('Bạn cần đăng nhập để tiếp tục.')
+            expect(getErrorMessage('UNAUTHORIZED')).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+            expect(getErrorMessage('AUTH_REQUIRED')).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+            expect(getErrorMessage('401')).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+            expect(getErrorMessage(401)).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
         })
 
         it('map ACCESS_TOKEN_EXPIRED không hiển thị mã kỹ thuật', () => {
@@ -122,9 +124,28 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
     })
 
     describe('5. Phân quyền (RBAC)', () => {
-        it('map FORBIDDEN và PERMISSION_DENIED', () => {
+        it('map FORBIDDEN, PERMISSION_DENIED và 403', () => {
             expect(getErrorMessage('FORBIDDEN')).toBe('Bạn không có quyền thực hiện thao tác này.')
-            expect(getErrorMessage('PERMISSION_DENIED')).toBe('Bạn không có quyền truy cập chức năng này.')
+            expect(getErrorMessage('PERMISSION_DENIED')).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage('403')).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(403)).toBe('Bạn không có quyền thực hiện thao tác này.')
+        })
+
+        it('map object và error có mã hoặc trạng thái phân quyền', () => {
+            expect(getErrorMessage(new Error('FORBIDDEN'))).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(new Error('UNAUTHORIZED'))).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+            expect(getErrorMessage(new Error('403 Forbidden'))).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(new Error('401 Unauthorized'))).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+            expect(getErrorMessage({ status: 403 })).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage({ status: 401 })).toBe('Phiên đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.')
+            expect(getErrorMessage({ code: 'FORBIDDEN' })).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage({ code: 'UNAUTHORIZED' })).toBe('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.')
+        })
+
+        it('không hiển thị raw error code hay stack trace ra ngoài', () => {
+            expect(getErrorMessage('Traceback (most recent call last):\n  File "server.py", line 12')).not.toContain('Traceback')
+            expect(getErrorMessage('Internal Server Error: 500 at app.py:45')).toBe('Đã xảy ra lỗi. Vui lòng thử lại.')
+            expect(getErrorMessage(new Error('Traceback at handler()'))).toBe('Đã xảy ra lỗi. Vui lòng thử lại.')
         })
     })
 
@@ -237,4 +258,105 @@ describe('errorMessages utility - Sprint 1 Vietnamese Localization', () => {
             expect(getErrorMessage({ code: 'INVALID_HEADER', message: headerMsg })).toBe(headerMsg)
         })
     })
+
+    describe('11. Ảnh đại diện người dùng (SCRUM-121)', () => {
+        it('map các mã lỗi avatar sang tiếng Việt thân thiện', () => {
+            expect(getErrorMessage('AVATAR_REQUIRED')).toBe('Vui lòng chọn ảnh đại diện.')
+            expect(getErrorMessage('AVATAR_TOO_LARGE')).toBe('Ảnh đại diện không được vượt quá 2 MB.')
+            expect(getErrorMessage('INVALID_AVATAR_TYPE')).toBe('Ảnh đại diện phải là JPG, JPEG, PNG hoặc WEBP.')
+            expect(getErrorMessage('AVATAR_NOT_FOUND')).toBe('Không tìm thấy ảnh đại diện.')
+            expect(getErrorMessage('AVATAR_STORAGE_ERROR')).toBe('Lỗi lưu trữ ảnh đại diện. Vui lòng thử lại.')
+            expect(getErrorMessage('AVATAR_UPLOAD_FAILED')).toBe('Không thể tải lên ảnh đại diện. Vui lòng thử lại.')
+        })
+
+        it('map thông báo thành công cho thao tác avatar', () => {
+            expect(getSuccessMessage('UPLOAD_AVATAR_SUCCESS')).toBe('Cập nhật ảnh đại diện thành công.')
+            expect(getSuccessMessage('DELETE_AVATAR_SUCCESS')).toBe('Xóa ảnh đại diện thành công.')
+        })
+
+        it('ưu tiên thông báo tiếng Việt có dấu chi tiết từ backend cho lỗi avatar', () => {
+            const vietnameseMsg = 'Ảnh đại diện không đúng tỷ lệ hợp lệ.'
+            expect(getErrorMessage({ code: 'INVALID_AVATAR_TYPE', message: vietnameseMsg })).toBe(vietnameseMsg)
+        })
+    })
+
+    describe('12. Quản lý chương trình đào tạo (SCRUM-122)', () => {
+        it('map các mã lỗi chương trình đào tạo sang tiếng Việt chuẩn', () => {
+            expect(getErrorMessage('DUPLICATE_CODE')).toBe('Mã chương trình đào tạo đã tồn tại.')
+            expect(getErrorMessage('PROGRAM_NOT_FOUND')).toBe('Không tìm thấy chương trình đào tạo.')
+            expect(getErrorMessage('PROGRAM_IN_USE')).toBe(
+                'Không thể xóa chương trình vì đang có dữ liệu liên quan. Hãy chuyển chương trình sang trạng thái Đã lưu trữ nếu không còn sử dụng.'
+            )
+            expect(getErrorMessage('CODE_REQUIRED')).toBe('Mã chương trình là bắt buộc.')
+            expect(getErrorMessage('CODE_TOO_LONG')).toBe('Mã chương trình không được vượt quá 50 ký tự.')
+        })
+
+        it('map thông báo thành công cho chương trình đào tạo', () => {
+            expect(getSuccessMessage('CREATE_PROGRAM_SUCCESS')).toBe('Tạo chương trình đào tạo thành công.')
+            expect(getSuccessMessage('UPDATE_PROGRAM_SUCCESS')).toBe('Cập nhật chương trình đào tạo thành công.')
+            expect(getSuccessMessage('DELETE_PROGRAM_SUCCESS')).toBe('Xóa chương trình đào tạo thành công.')
+        })
+
+        it('xử lý lỗi NAME_REQUIRED khi liên quan đến tên chương trình đào tạo', () => {
+            const backendMsg = 'Tên chương trình đào tạo không được để trống.'
+            expect(getErrorMessage({ code: 'NAME_REQUIRED', message: backendMsg })).toBe(backendMsg)
+        })
+    })
+
+    describe('14. Cấu trúc chương trình & môn tiên quyết (SCRUM-124)', () => {
+        it('map các mã lỗi cấu trúc môn học và tiên quyết sang tiếng Việt', () => {
+            expect(getErrorMessage('SUBJECT_ALREADY_IN_PROGRAM')).toBe('Môn học đã tồn tại trong chương trình đào tạo.')
+            expect(getErrorMessage('PROGRAM_SUBJECT_NOT_FOUND')).toBe('Không tìm thấy môn học trong chương trình đào tạo.')
+            expect(getErrorMessage('PROGRAM_SUBJECT_IN_USE')).toBe(
+                'Môn học đang là điều kiện tiên quyết của môn khác. Hãy gỡ ràng buộc tiên quyết trước.'
+            )
+            expect(getErrorMessage('PREREQUISITE_CYCLE')).toBe(
+                'Không thể thêm môn tiên quyết vì tạo vòng lặp phụ thuộc (chu trình).'
+            )
+            expect(getErrorMessage('INVALID_PREREQUISITE_ORDER')).toBe(
+                'Môn tiên quyết phải được xếp trước môn học phụ thuộc theo học kỳ hoặc thứ tự học.'
+            )
+        })
+    })
+
+    describe('16. HTTP Status và Network Error (SCRUM-215 Bugfix)', () => {
+        it('phân biệt HTTP 403, 404, 500 với network error', () => {
+            // 403 -> Bạn không có quyền thực hiện thao tác này
+            expect(getErrorMessage({ status: 403 })).toBe('Bạn không có quyền thực hiện thao tác này.')
+            expect(getErrorMessage(403)).toBe('Bạn không có quyền thực hiện thao tác này.')
+
+            // 404 -> Thông báo phù hợp / fallback
+            expect(getErrorMessage({ status: 404 })).toBe('Không tìm thấy dữ liệu yêu cầu.')
+            expect(getErrorMessage({ status: 404 }, 'Không thể tải lịch sử trạng thái.')).toBe(
+                'Không thể tải lịch sử trạng thái.'
+            )
+            expect(getErrorMessage({ status: 404 }, 'Không thể tải nhật ký chăm sóc.')).toBe(
+                'Không thể tải nhật ký chăm sóc.'
+            )
+
+            // 500 -> Có lỗi máy chủ, vui lòng thử lại
+            expect(getErrorMessage({ status: 500 })).toBe('Có lỗi máy chủ, vui lòng thử lại.')
+            expect(getErrorMessage(500)).toBe('Có lỗi máy chủ, vui lòng thử lại.')
+
+            // Network unreachable -> Không thể kết nối tới máy chủ
+            expect(getErrorMessage('Failed to fetch')).toBe(
+                'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.'
+            )
+            expect(getErrorMessage('NetworkError')).toBe(
+                'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối và thử lại.'
+            )
+
+            // Khi có HTTP status 404/403, không bị nhầm thành network error
+            expect(getErrorMessage({ message: 'Failed to fetch', status: 404 })).toBe(
+                'Không tìm thấy dữ liệu yêu cầu.'
+            )
+            expect(getErrorMessage({ message: 'Failed to fetch', status: 403 })).toBe(
+                'Bạn không có quyền thực hiện thao tác này.'
+            )
+        })
+    })
 })
+
+
+
+

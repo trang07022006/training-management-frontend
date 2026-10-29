@@ -1,30 +1,89 @@
 /* =========================================================================
-   UI Design System: Hệ thống Quản lý Đào tạo (Sprint 1 Standard)
-   Tone: Xanh dương (#2563eb), Trắng (#ffffff), Xám nhạt (#f8fafc, #f1f5f9)
+   UI Design System: HỆ THỐNG QUẢN LÝ ĐÀO TẠO - ĐẠI HỌC ICTU THÁI NGUYÊN
+   Brand Colors:
+     - Primary: #0874C9 (ICTU Blue)
+     - Primary Dark: #064B8E
+     - Navy / Brand Deep: #0B2852 (Sidebar & Header brand depth)
+     - Primary Light: #EAF4FF
+     - Background: #F5F8FC
+     - Surface: #FFFFFF
+     - Text Primary: #172B4D
+     - Text Secondary: #64748B
    ========================================================================= */
 
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-light: #eff6ff;
+  /* ICTU Brand Palette */
+  --ictu-primary: #102B50;
+  --ictu-primary-dark: #0B1F3A;
+  --ictu-action: #2563EB;
+  --ictu-action-hover: #1D4ED8;
+  --ictu-teal: #0F766E;
+  
+  /* Backward Compatible Semantic Tokens */
+  --primary: var(--ictu-action);
+  --primary-hover: var(--ictu-action-hover);
+  --primary-light: #eff6ff; /* light blue */
   --primary-border: #bfdbfe;
+
+  /* Neutrals & Surfaces - High Contrast & Sharp Readability */
   --text-main: #0f172a;
-  --text-muted: #64748b;
-  --bg-main: #f8fafc;
-  --bg-surface: #ffffff;
-  --border: #e2e8f0;
-  --border-subtle: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-muted: #334155;
+  --text-secondary: #334155;
+  --text-tertiary: #475569;
+  --text-inverse: #ffffff;
+
+  --bg-main: #F3F6FB;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F8FAFC;
+  --border: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  --border-focus: #2563EB;
+
+  /* Feedback Colors */
+  --success: #15803D;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+  --warning: #B45309;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --info: #2563EB;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+
+  /* Radii */
+  --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --radius-xl: 18px;
+  --radius-pill: 9999px;
 
-  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Elevation Shadows */
+  --shadow-xs: 0 1px 2px rgba(11, 40, 82, 0.04);
+  --shadow-sm: 0 1px 3px rgba(11, 40, 82, 0.06), 0 1px 2px rgba(11, 40, 82, 0.04);
+  --shadow-md: 0 4px 10px -1px rgba(11, 40, 82, 0.07), 0 2px 5px -2px rgba(11, 40, 82, 0.04);
+  --shadow-lg: 0 10px 25px -4px rgba(11, 40, 82, 0.1), 0 4px 10px -4px rgba(11, 40, 82, 0.04);
+  --shadow-card: 0 2px 8px rgba(11, 40, 82, 0.05);
+
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  font: 16px/150% var(--font-sans);
+  font: 15px/1.55 var(--font-sans);
   color: var(--text-main);
   background-color: var(--bg-main);
   font-synthesis: none;
@@ -50,6 +109,9 @@ body {
   background-color: var(--bg-main);
   color: var(--text-main);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 #root {
@@ -63,8 +125,79 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans);
-  color: var(--text-main);
+  color: #0f172a;
+  font-weight: 700;
   margin-top: 0;
+  letter-spacing: -0.015em;
+}
+
+label, .form-label {
+  color: #0f172a;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+input, select, textarea, .form-input, .form-select, .form-textarea {
+  color: #0f172a;
+  font-weight: 500;
+}
+
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: #64748b;
+  font-weight: 400;
+}
+
+p.subtitle, .page-subtitle, .ictu-page-subtitle, .card-subtitle, .section-subtitle, .form-hint {
+  color: #334155 !important;
+  font-weight: 500;
+}
+
+/* =========================================================================
+   Standard Form Validation Errors & Warnings - BOLD RED (#dc2626)
+   ========================================================================= */
+.form-error,
+.form-error-text,
+.field-error,
+.form-field-error,
+.lead-form-error,
+.validation-error,
+.text-danger,
+.warning-error-text,
+.field-validation-error,
+.error-msg,
+.invalid-feedback {
+  color: #dc2626 !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  margin-top: 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  line-height: 1.35 !important;
+}
+
+/* Red outline & subtle tint for invalid inputs */
+.form-input.error,
+.form-select.error,
+.form-textarea.error,
+input.error,
+select.error,
+textarea.error,
+.is-invalid {
+  border-color: #dc2626 !important;
+  background-color: #fffafb !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+}
+
+/* Error banners */
+.form-error-banner,
+.programs-banner-error,
+.subjects-banner-error,
+.lead-duplicate-warning-banner {
+  color: #b91c1c !important;
+  background-color: #fef2f2 !important;
+  border: 1.5px solid #fecaca !important;
+  font-weight: 600 !important;
 }
 
 /* =========================================================================
@@ -126,3 +259,507 @@ a:hover {
 button {
   font-family: inherit;
 }
+
+/* =========================================================================
+   Standardized ICTU UI Design System Components & Utilities
+   ========================================================================= */
+
+/* Standard Card */
+.ictu-card {
+  background-color: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(11, 40, 82, 0.04);
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+/* Standard Buttons */
+.ictu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s ease-in-out;
+  text-decoration: none;
+  line-height: 1.25;
+  box-sizing: border-box;
+}
+
+.ictu-btn-primary {
+  background: linear-gradient(135deg, #0874c9 0%, #065ca3 100%);
+  color: #ffffff;
+  border-color: #0874c9;
+  box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25);
+}
+
+.ictu-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0984e3 0%, #0874c9 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(8, 116, 201, 0.35);
+  transform: translateY(-1px);
+}
+
+.ictu-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ictu-btn-secondary {
+  background-color: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.ictu-btn-secondary:hover:not(:disabled) {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.ictu-btn-outline {
+  background-color: transparent;
+  color: #0874c9;
+  border-color: #0874c9;
+}
+
+.ictu-btn-outline:hover:not(:disabled) {
+  background-color: #eaf4ff;
+  color: #064b8e;
+}
+
+.ictu-btn-danger {
+  background-color: #dc2626;
+  color: #ffffff !important;
+  border-color: #dc2626;
+}
+
+.ictu-btn-danger:hover:not(:disabled) {
+  background-color: #b91c1c !important;
+  color: #ffffff !important;
+}
+
+/* ========================================================
+   GLOBAL BUTTON STANDARDIZATION & CONTRAST FIXES
+   ======================================================== */
+
+.btn-filter,
+.btn-clear-filter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+/* 1. DELETE / DANGER BUTTONS */
+.btn-action-delete,
+.btn-delete,
+.btn-danger,
+.btn-modal-delete,
+.btn-modal-danger,
+.btn-sm-remove,
+.btn-lock-user,
+.btn-remove-chip,
+.avatar-btn-danger {
+  background-color: #fff1f2 !important;
+  color: #be123c !important;
+  border: 1.5px solid #fecdd3 !important;
+  font-weight: 600;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-action-delete svg,
+.btn-delete svg,
+.btn-danger svg,
+.btn-modal-delete svg,
+.btn-modal-danger svg,
+.btn-sm-remove svg,
+.btn-lock-user svg,
+.avatar-btn-danger svg {
+  stroke: #be123c !important;
+  transition: stroke 0.18s ease !important;
+}
+
+/* HOVER: Solid rich crimson background with crisp 100% white text */
+.btn-action-delete:hover:not(:disabled),
+.btn-delete:hover:not(:disabled),
+.btn-danger:hover:not(:disabled),
+.btn-modal-delete:hover:not(:disabled),
+.btn-modal-danger:hover:not(:disabled),
+.btn-sm-remove:hover:not(:disabled),
+.btn-lock-user:hover:not(:disabled),
+.btn-remove-chip:hover:not(:disabled),
+.avatar-btn-danger:hover:not(:disabled) {
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+  border-color: #be123c !important;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+.btn-action-delete:hover:not(:disabled) *,
+.btn-delete:hover:not(:disabled) *,
+.btn-danger:hover:not(:disabled) *,
+.btn-modal-delete:hover:not(:disabled) *,
+.btn-modal-danger:hover:not(:disabled) *,
+.btn-sm-remove:hover:not(:disabled) *,
+.btn-lock-user:hover:not(:disabled) *,
+.avatar-btn-danger:hover:not(:disabled) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* 2. EDIT BUTTONS */
+.btn-action-edit,
+.btn-edit,
+.btn-sm-edit,
+.btn-edit-user {
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border: 1.5px solid #bfdbfe !important;
+  font-weight: 600;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-action-edit svg,
+.btn-edit svg,
+.btn-sm-edit svg,
+.btn-edit-user svg {
+  stroke: #1d4ed8 !important;
+  transition: stroke 0.18s ease !important;
+}
+
+.btn-action-edit:hover:not(:disabled),
+.btn-edit:hover:not(:disabled),
+.btn-sm-edit:hover:not(:disabled),
+.btn-edit-user:hover:not(:disabled) {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+.btn-action-edit:hover:not(:disabled) *,
+.btn-edit:hover:not(:disabled) *,
+.btn-sm-edit:hover:not(:disabled) *,
+.btn-edit-user:hover:not(:disabled) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* 3. VIEW / DETAIL BUTTONS */
+.btn-action-view,
+.btn-view,
+.btn-action-structure,
+.btn-action-sessions,
+.btn-manage-role,
+.btn-sm-prereq,
+.btn-action-roster,
+.btn-action-enroll {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 600;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-action-view svg,
+.btn-view svg,
+.btn-action-structure svg,
+.btn-action-sessions svg,
+.btn-manage-role svg,
+.btn-sm-prereq svg,
+.btn-action-roster svg,
+.btn-action-enroll svg {
+  stroke: #334155 !important;
+  transition: stroke 0.18s ease !important;
+}
+
+.btn-action-view:hover:not(:disabled),
+.btn-view:hover:not(:disabled),
+.btn-action-structure:hover:not(:disabled),
+.btn-action-sessions:hover:not(:disabled),
+.btn-manage-role:hover:not(:disabled),
+.btn-sm-prereq:hover:not(:disabled),
+.btn-action-roster:hover:not(:disabled),
+.btn-action-enroll:hover:not(:disabled) {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 4px 12px rgba(51, 65, 85, 0.3) !important;
+  transform: translateY(-1px);
+}
+
+.btn-action-view:hover:not(:disabled) *,
+.btn-view:hover:not(:disabled) *,
+.btn-action-structure:hover:not(:disabled) *,
+.btn-action-sessions:hover:not(:disabled) *,
+.btn-manage-role:hover:not(:disabled) *,
+.btn-sm-prereq:hover:not(:disabled) *,
+.btn-action-roster:hover:not(:disabled) *,
+.btn-action-enroll:hover:not(:disabled) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* 4. PRIMARY BUTTONS (Create, Submit, Save, Apply) */
+.btn-primary,
+.btn-create-program,
+.btn-create-subject,
+.btn-open-class,
+.btn-primary-add,
+.btn-modal-submit,
+.btn-filter,
+.btn-filter-apply,
+.btn-confirm-primary,
+.btn-save-assign,
+.btn-save-status,
+.btn-add-care-log,
+.btn-save-callback-date,
+.btn-bulk-assign {
+  background: linear-gradient(135deg, #0874c9 0%, #065ca3 100%) !important;
+  color: #ffffff !important;
+  border: 1.5px solid #065ca3 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 6px rgba(8, 116, 201, 0.25) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-primary svg,
+.btn-create-program svg,
+.btn-create-subject svg,
+.btn-open-class svg,
+.btn-primary-add svg,
+.btn-modal-submit svg,
+.btn-filter svg,
+.btn-filter-apply svg,
+.btn-confirm-primary svg,
+.btn-save-assign svg,
+.btn-save-status svg,
+.btn-add-care-log svg,
+.btn-save-callback-date svg,
+.btn-bulk-assign svg {
+  stroke: #ffffff !important;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-create-program:hover:not(:disabled),
+.btn-create-subject:hover:not(:disabled),
+.btn-open-class:hover:not(:disabled),
+.btn-primary-add:hover:not(:disabled),
+.btn-modal-submit:hover:not(:disabled),
+.btn-filter:hover:not(:disabled),
+.btn-filter-apply:hover:not(:disabled),
+.btn-confirm-primary:hover:not(:disabled),
+.btn-save-assign:hover:not(:disabled),
+.btn-save-status:hover:not(:disabled),
+.btn-add-care-log:hover:not(:disabled),
+.btn-save-callback-date:hover:not(:disabled),
+.btn-bulk-assign:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0984e3 0%, #0874c9 100%) !important;
+  color: #ffffff !important;
+  border-color: #0874c9 !important;
+  box-shadow: 0 4px 14px rgba(8, 116, 201, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+.btn-primary:hover:not(:disabled) *,
+.btn-create-program:hover:not(:disabled) *,
+.btn-create-subject:hover:not(:disabled) *,
+.btn-open-class:hover:not(:disabled) *,
+.btn-primary-add:hover:not(:disabled) *,
+.btn-modal-submit:hover:not(:disabled) *,
+.btn-filter:hover:not(:disabled) *,
+.btn-filter-apply:hover:not(:disabled) *,
+.btn-confirm-primary:hover:not(:disabled) *,
+.btn-save-assign:hover:not(:disabled) *,
+.btn-save-status:hover:not(:disabled) *,
+.btn-add-care-log:hover:not(:disabled) *,
+.btn-save-callback-date:hover:not(:disabled) *,
+.btn-bulk-assign:hover:not(:disabled) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* 5. SECONDARY BUTTONS (Cancel, Reset, Close) */
+.btn-secondary,
+.btn-modal-cancel,
+.btn-clear-filter,
+.btn-clear-filters,
+.btn-filter-reset,
+.btn-confirm-cancel,
+.btn-delete-cancel,
+.btn-clear-callback-date,
+.btn-bulk-cancel {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+  transition: all 0.18s ease !important;
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-modal-cancel:hover:not(:disabled),
+.btn-clear-filter:hover:not(:disabled),
+.btn-clear-filters:hover:not(:disabled),
+.btn-filter-reset:hover:not(:disabled),
+.btn-confirm-cancel:hover:not(:disabled),
+.btn-delete-cancel:hover:not(:disabled),
+.btn-clear-callback-date:hover:not(:disabled),
+.btn-bulk-cancel:hover:not(:disabled) {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Disabled states across all buttons */
+button:disabled,
+.btn-action-view:disabled,
+.btn-action-edit:disabled,
+.btn-action-delete:disabled,
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-modal-submit:disabled,
+.btn-modal-cancel:disabled {
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Standard Badges */
+.ictu-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
+
+.ictu-badge-success {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.ictu-badge-danger {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.ictu-badge-warning {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.ictu-badge-info {
+  background-color: #e0f2fe;
+  color: #0284c7;
+}
+
+.ictu-badge-neutral {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* Standard Empty State */
+.ictu-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  color: #64748b;
+}
+
+.ictu-empty-icon {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  color: #94a3b8;
+  opacity: 0.7;
+}
+
+.ictu-empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+}
+
+.ictu-empty-desc {
+  font-size: 0.86rem;
+  color: #64748b;
+  max-width: 420px;
+  margin: 0 0 16px 0;
+  line-height: 1.45;
+}
+
+/* Standard Loading Box */
+.ictu-loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 42px 20px;
+  gap: 12px;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.ictu-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0874c9;
+  border-radius: 50%;
+  animation: session-spin 0.75s linear infinite;
+}
+
+/* =========================================================================
+   Accessibility & Responsive Baseline (A9)
+   ========================================================================= */
+:focus-visible {
+  outline: 2px solid var(--color-ictu-blue);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .ictu-card {
+    padding: 16px;
+    border-radius: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    font-size: 13px;
+  }
+  .ictu-btn {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+  }
+  .ictu-card {
+    padding: 12px;
+  }
+}
+
+
