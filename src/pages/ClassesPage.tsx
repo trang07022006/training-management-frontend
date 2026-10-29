@@ -601,7 +601,7 @@ function ClassesPageBase({
                                     gap: '6px',
                                 }}
                             >
-                                🏖️ Ngày nghỉ lễ
+                                Ngày nghỉ lễ
                             </button>
                             <button
                                 type="button"
@@ -853,7 +853,7 @@ function ClassesPageBase({
                                                     gap: '4px',
                                                 }}
                                             >
-                                                📊 Chuyên cần
+                                                Chuyên cần
                                             </button>
                                             <button
                                                 type="button"
